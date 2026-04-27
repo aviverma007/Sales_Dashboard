@@ -102,10 +102,11 @@ export default function App() {
   const monthlyData = useMemo(() => {
     const map = {};
     fPdrn.filter(r => r.bookingStatus === 'ACTIVE' && r.month).forEach(r => {
-      if (!map[r.month]) map[r.month] = { month: r.month, demand: 0, received: 0, bookings: 0 };
+      if (!map[r.month]) map[r.month] = { month: r.month, demand: 0, received: 0, bookings: 0, sales: 0 };
       map[r.month].demand += r.totalDemand;
       map[r.month].received += r.totalReceived;
       map[r.month].bookings++;
+      map[r.month].sales += r.totalBSP;
     });
     return Object.values(map).sort((a, b) => a.month.localeCompare(b.month));
   }, [fPdrn]);
@@ -340,6 +341,22 @@ export default function App() {
                     <YAxis tick={{ fill:'#8b7355', fontSize:9 }} axisLine={false} tickLine={false} />
                     <Tooltip contentStyle={tooltipStyle} />
                     <Bar dataKey="bookings" fill="#3b82c4" name="Bookings" radius={[5,5,0,0]} animationDuration={1400} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </GlassCard>
+              {/* Sales vs Demand vs Collections (compact card) */}
+              <GlassCard title="Sales vs Demand vs Collections" icon={<Activity size={15}/>} color="var(--brown-dark)" delay={0.7} style={{ flex:1 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={monthlyData} barSize={6} barGap={2} margin={{ top:4, right:8, left:0, bottom:20 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(30,58,95,0.07)" />
+                    <XAxis dataKey="month" tick={{ fill:'#8b7355', fontSize:7 }} axisLine={false} tickLine={false}
+                      tickFormatter={v => { const [y,m]=v.split('-'); return `${['','J','F','M','A','M','J','J','A','S','O','N','D'][+m]}'${y.slice(2)}`; }} />
+                    <YAxis tick={{ fill:'#8b7355', fontSize:7 }} axisLine={false} tickLine={false} tickFormatter={v => fmtShort(v)} width={32} />
+                    <Tooltip contentStyle={tooltipStyle} formatter={(value, name) => [`₹ ${fmtShort(value)}`, name]} />
+                    <Legend wrapperStyle={{ fontSize:9, color:'#5c4a3a', paddingTop:2 }} iconType="circle" iconSize={6} />
+                    <Bar dataKey="sales" name="Sales" fill="#1e3a5f" radius={[3,3,0,0]} animationDuration={1200} />
+                    <Bar dataKey="demand" name="Demand" fill="#b07d56" radius={[3,3,0,0]} animationDuration={1400} animationBegin={150} />
+                    <Bar dataKey="received" name="Collections" fill="#4caf7d" radius={[3,3,0,0]} animationDuration={1600} animationBegin={300} />
                   </BarChart>
                 </ResponsiveContainer>
               </GlassCard>
