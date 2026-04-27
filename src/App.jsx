@@ -139,7 +139,7 @@ export default function App() {
   );
 
   return (
-    <div style={{ minHeight:'100vh', overflow:'auto', background:'var(--bg)', display:'flex', flexDirection:'column', position:'relative' }}>
+    <div style={{ height:'100vh', overflow:'hidden', background:'var(--bg)', display:'flex', flexDirection:'column', position:'relative' }}>
       {/* Animated orbs */}
       <div style={{ position:'fixed', inset:0, pointerEvents:'none', zIndex:0, overflow:'hidden' }}>
         <div style={{ position:'absolute', top:'3%', left:'8%', width:350, height:350, borderRadius:'50%', background:'radial-gradient(circle, rgba(30,58,95,0.1) 0%, transparent 65%)', animation:'orb-1 14s ease-in-out infinite', filter:'blur(50px)' }}/>
@@ -189,8 +189,8 @@ export default function App() {
         </div>
       </header>
 
-      <div style={{ flex:1, overflow:'hidden', display:'flex', flexDirection:'column', position:'relative', zIndex:1 }}>
-        <div style={{ maxWidth:1800, margin:'0 auto', padding:'10px 20px', width:'100%', flex:1, display:'flex', flexDirection:'column', overflow:'hidden', gap:10 }}>
+      <div style={{ flex:1, overflow:'auto', display:'flex', flexDirection:'column', position:'relative', zIndex:1 }}>
+        <div style={{ maxWidth:1800, margin:'0 auto', padding:'10px 20px', width:'100%', display:'flex', flexDirection:'column', overflow:'visible', gap:10 }}>
 
           {/* Filters */}
           <div style={{
@@ -364,64 +364,49 @@ export default function App() {
           </div>
         </div>
 
-        {/* ── Bottom Scrollable Cards Section ── */}
-        <div style={{
-          padding: '20px 28px',
-          overflowX: 'auto',
-          overflowY: 'hidden',
-          display: 'flex',
-          gap: '16px',
-          scrollBehavior: 'smooth',
-          WebkitOverflowScrolling: 'touch',
-          minHeight: '320px'
-        }}>
+        {/* ── Page 2: Bottom Cards Section ── */}
+        <div style={{ padding: '20px 28px', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', minHeight: '400px' }}>
           {/* Collection Progress Card */}
-          <div style={{ minWidth: '280px', flex: '0 0 auto' }}>
-            <GlassCard title="Collection Progress" icon={<IndianRupee size={15}/>} color="var(--blue)" delay={0.5} style={{ height: '100%' }}>
-              <div style={{ position:'relative', height:'240px', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center' }}>
-                <div style={{ fontFamily:"'Space Mono',monospace", fontSize:36, fontWeight:700, color:'var(--blue)' }}>{collection}%</div>
-                <div style={{ fontSize:12, color:'var(--text3)', fontWeight:600, textTransform:'uppercase', letterSpacing:1, marginTop:8 }}>Collected</div>
-                <div style={{ fontSize:13, color:'var(--text2)', marginTop:12, textAlign:'center' }}>
-                  ₹ {fmt(kpi.received)}
-                </div>
+          <GlassCard title="Collection Progress" icon={<IndianRupee size={15}/>} color="var(--blue)" delay={0.5}>
+            <div style={{ position:'relative', height:'280px', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center' }}>
+              <div style={{ fontFamily:"'Space Mono',monospace", fontSize:40, fontWeight:700, color:'var(--blue)' }}>{collection}%</div>
+              <div style={{ fontSize:12, color:'var(--text3)', fontWeight:600, textTransform:'uppercase', letterSpacing:1, marginTop:12 }}>Collected</div>
+              <div style={{ fontSize:14, color:'var(--text2)', marginTop:16, textAlign:'center' }}>
+                ₹ {fmt(kpi.received)}
               </div>
-            </GlassCard>
-          </div>
+            </div>
+          </GlassCard>
 
           {/* Monthly Bookings Card */}
-          <div style={{ minWidth: '280px', flex: '0 0 auto' }}>
-            <GlassCard title="Monthly Bookings" icon={<BarChart3 size={15}/>} color="var(--blue-accent)" delay={0.6} style={{ height: '100%' }}>
-              <ResponsiveContainer width="100%" height={240}>
-                <BarChart data={monthlyData} barSize={16}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(30,58,95,0.07)" />
-                  <XAxis dataKey="month" tick={{ fill:'#8b7355', fontSize:8 }} axisLine={false} tickLine={false}
-                    tickFormatter={v => { const [y,m]=v.split('-'); return `${['','J','F','M','A','M','J','J','A','S','O','N','D'][+m]}'${y.slice(2)}`; }} />
-                  <YAxis tick={{ fill:'#8b7355', fontSize:8 }} axisLine={false} tickLine={false} />
-                  <Tooltip contentStyle={tooltipStyle} />
-                  <Bar dataKey="bookings" fill="#3b82c4" name="Bookings" radius={[5,5,0,0]} animationDuration={1400} />
-                </BarChart>
-              </ResponsiveContainer>
-            </GlassCard>
-          </div>
+          <GlassCard title="Monthly Bookings" icon={<BarChart3 size={15}/>} color="var(--blue-accent)" delay={0.6}>
+            <ResponsiveContainer width="100%" height={280}>
+              <BarChart data={monthlyData} barSize={16}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(30,58,95,0.07)" />
+                <XAxis dataKey="month" tick={{ fill:'#8b7355', fontSize:8 }} axisLine={false} tickLine={false}
+                  tickFormatter={v => { const [y,m]=v.split('-'); return `${['','J','F','M','A','M','J','J','A','S','O','N','D'][+m]}'${y.slice(2)}`; }} />
+                <YAxis tick={{ fill:'#8b7355', fontSize:8 }} axisLine={false} tickLine={false} />
+                <Tooltip contentStyle={tooltipStyle} />
+                <Bar dataKey="bookings" fill="#3b82c4" name="Bookings" radius={[5,5,0,0]} animationDuration={1400} />
+              </BarChart>
+            </ResponsiveContainer>
+          </GlassCard>
 
           {/* Sales vs Demand vs Collections Card */}
-          <div style={{ minWidth: '280px', flex: '0 0 auto' }}>
-            <GlassCard title="Sales vs Demand vs Collections" icon={<Activity size={15}/>} color="var(--brown-dark)" delay={0.7} style={{ height: '100%' }}>
-              <ResponsiveContainer width="100%" height={240}>
-                <BarChart data={monthlyData} barSize={5} barGap={2} margin={{ top:4, right:8, left:0, bottom:20 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(30,58,95,0.07)" />
-                  <XAxis dataKey="month" tick={{ fill:'#8b7355', fontSize:7 }} axisLine={false} tickLine={false}
-                    tickFormatter={v => { const [y,m]=v.split('-'); return `${['','J','F','M','A','M','J','J','A','S','O','N','D'][+m]}'${y.slice(2)}`; }} />
-                  <YAxis tick={{ fill:'#8b7355', fontSize:7 }} axisLine={false} tickLine={false} tickFormatter={v => fmtShort(v)} width={28} />
-                  <Tooltip contentStyle={tooltipStyle} formatter={(value, name) => [`₹ ${fmtShort(value)}`, name]} />
-                  <Legend wrapperStyle={{ fontSize:8, color:'#5c4a3a', paddingTop:2 }} iconType="circle" iconSize={6} />
-                  <Bar dataKey="sales" name="Sales" fill="#1e3a5f" radius={[3,3,0,0]} animationDuration={1200} />
-                  <Bar dataKey="demand" name="Demand" fill="#b07d56" radius={[3,3,0,0]} animationDuration={1400} animationBegin={150} />
-                  <Bar dataKey="received" name="Collections" fill="#4caf7d" radius={[3,3,0,0]} animationDuration={1600} animationBegin={300} />
-                </BarChart>
-              </ResponsiveContainer>
-            </GlassCard>
-          </div>
+          <GlassCard title="Sales vs Demand vs Collections" icon={<Activity size={15}/>} color="var(--brown-dark)" delay={0.7}>
+            <ResponsiveContainer width="100%" height={280}>
+              <BarChart data={monthlyData} barSize={7} barGap={2} margin={{ top:4, right:8, left:0, bottom:20 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(30,58,95,0.07)" />
+                <XAxis dataKey="month" tick={{ fill:'#8b7355', fontSize:7 }} axisLine={false} tickLine={false}
+                  tickFormatter={v => { const [y,m]=v.split('-'); return `${['','J','F','M','A','M','J','J','A','S','O','N','D'][+m]}'${y.slice(2)}`; }} />
+                <YAxis tick={{ fill:'#8b7355', fontSize:7 }} axisLine={false} tickLine={false} tickFormatter={v => fmtShort(v)} width={28} />
+                <Tooltip contentStyle={tooltipStyle} formatter={(value, name) => [`₹ ${fmtShort(value)}`, name]} />
+                <Legend wrapperStyle={{ fontSize:8, color:'#5c4a3a', paddingTop:4 }} iconType="circle" iconSize={6} />
+                <Bar dataKey="sales" name="Sales" fill="#1e3a5f" radius={[3,3,0,0]} animationDuration={1200} />
+                <Bar dataKey="demand" name="Demand" fill="#b07d56" radius={[3,3,0,0]} animationDuration={1400} animationBegin={150} />
+                <Bar dataKey="received" name="Collections" fill="#4caf7d" radius={[3,3,0,0]} animationDuration={1600} animationBegin={300} />
+              </BarChart>
+            </ResponsiveContainer>
+          </GlassCard>
         </div>
       </div>
     </div>
