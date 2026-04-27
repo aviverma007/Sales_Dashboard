@@ -189,8 +189,8 @@ export default function App() {
         </div>
       </header>
 
-      <div style={{ flex:1, overflow:'hidden', display:'flex', flexDirection:'column', position:'relative', zIndex:1 }}>
-        <div style={{ maxWidth:1800, margin:'0 auto', padding:'10px 20px', width:'100%', flex:1, display:'flex', flexDirection:'column', overflow:'hidden', gap:10 }}>
+      <div style={{ flex:1, overflow:'auto', display:'flex', flexDirection:'column', position:'relative', zIndex:1 }}>
+        <div style={{ maxWidth:1800, margin:'0 auto', padding:'10px 20px', width:'100%', display:'flex', flexDirection:'column', overflow:'visible', gap:10 }}>
 
           {/* Filters */}
           <div style={{
