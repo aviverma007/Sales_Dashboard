@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { loadExcel, parseINVR, parsePDRN } from './dataLoader';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
-  PieChart, Pie, Cell, AreaChart, Area, Legend
+  PieChart, Pie, Cell, AreaChart, Area, Legend, ReferenceLine
 } from 'recharts';
 import {
   Building2, IndianRupee, TrendingUp, Home, LayoutGrid,
@@ -233,17 +233,29 @@ export default function App() {
           {/* Charts */}
           <div style={{ flex:1, minHeight:0, display:'grid', gridTemplateColumns:'1.6fr 1fr 1.6fr 1fr', gap:10 }}>
             <GlassCard title="Tower-wise Distribution" icon={<BarChart3 size={15}/>} color="var(--blue)" delay={0.2}>
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={towerData} barGap={3}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(30,58,95,0.07)" />
-                  <XAxis dataKey="tower" tick={{ fill:'#8b7355', fontSize:11 }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fill:'#8b7355', fontSize:10 }} axisLine={false} tickLine={false} />
-                  <Tooltip contentStyle={tooltipStyle} cursor={{ fill:'rgba(30,58,95,0.04)' }} />
-                  <Bar dataKey="booked" fill="#1e3a5f" name="Booked" radius={[5,5,0,0]} animationDuration={1400} />
-                  <Bar dataKey="available" fill="#b07d56" name="Available" radius={[5,5,0,0]} animationDuration={1400} animationBegin={300} />
-                  <Legend wrapperStyle={{ fontSize:11, color:'#5c4a3a', paddingTop:4 }} />
-                </BarChart>
-              </ResponsiveContainer>
+              <div style={{ position:'relative', height:'100%', display:'flex', flexDirection:'column' }}>
+                {/* Totals Row */}
+                <div style={{ display:'flex', justifyContent:'space-around', marginBottom:8, paddingBottom:8, borderBottom:'2px solid rgba(30,58,95,0.1)' }}>
+                  {towerData.map(t => (
+                    <div key={t.tower} style={{ textAlign:'center', fontSize:10, fontWeight:700, color:'#1e3a5f' }}>
+                      <div>Total</div>
+                      <div style={{ fontSize:13 }}>{t.booked + t.available}</div>
+                    </div>
+                  ))}
+                </div>
+                {/* Chart */}
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={towerData} barGap={20} margin={{ top:10, right:15, left:0, bottom:35 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(30,58,95,0.07)" />
+                    <XAxis dataKey="tower" tick={{ fill:'#8b7355', fontSize:12, fontWeight:600 }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fill:'#8b7355', fontSize:11 }} axisLine={false} tickLine={false} />
+                    <Tooltip contentStyle={tooltipStyle} cursor={{ fill:'rgba(30,58,95,0.04)' }} labelFormatter={(v) => `Tower ${v}`} formatter={(value, name) => name === 'booked' ? [value, 'Booked'] : [value, 'Available']} />
+                    <Bar dataKey="booked" stackId="stack" fill="#1e3a5f" name="Booked" radius={[5,5,0,0]} animationDuration={1400} label={{ position:'insideBottomLeft', offset:6, fill:'#fff', fontSize:10, fontWeight:700 }} />
+                    <Bar dataKey="available" stackId="stack" fill="#b07d56" name="Available" radius={[5,5,0,0]} animationDuration={1400} animationBegin={200} label={{ position:'insideBottomRight', offset:6, fill:'#fff', fontSize:10, fontWeight:700 }} />
+                    <Legend wrapperStyle={{ fontSize:11, color:'#5c4a3a', paddingTop:6 }} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
             </GlassCard>
 
             <div style={{ display:'flex', flexDirection:'column', gap:10, minHeight:0 }}>
