@@ -2,11 +2,11 @@ import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { loadExcel, parseINVR, parsePDRN } from './dataLoader';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
-  PieChart, Pie, Cell, AreaChart, Area, Legend, Cell as BarCell, ComposedChart
+  PieChart, Pie, Cell, AreaChart, Area, Legend, ComposedChart, LineChart, Line
 } from 'recharts';
 import {
   Building2, IndianRupee, TrendingUp, Home, LayoutGrid,
-  RotateCcw, Loader2, BarChart3, PieChart as PieIcon, Users, Landmark,
+  RotateCcw, Loader2, BarChart3, PieChart as PieIcon,
   Activity, Wallet, MapPin, AlertCircle
 } from 'lucide-react';
 
@@ -104,33 +104,28 @@ export default function App() {
   const projectSalesData = useMemo(() => {
     const map = {};
     invr.forEach(r => {
-      if (!map[r.projectName]) map[r.projectName] = { project: r.projectName, sales: 0, units: 0 };
-      if (r.status === 'Booked') {
-        map[r.projectName].sales += r.netBasicPrice;
-        map[r.projectName].units++;
+      if (r['Status'] === 'Booked') {
+        if (!map[r['Project Name']]) map[r['Project Name']] = { project: r['Project Name'], sales: 0, units: 0 };
+        map[r['Project Name']].sales += Number(r['Net Basic Price'])||0;
+        map[r['Project Name']].units++;
       }
     });
     const demand = {};
-    pdrn.forEach(r => {
-      if (r.bookingStatus === 'ACTIVE') {
-        if (!demand[r.projectName]) demand[r.projectName] = 0;
-        demand[r.projectName] += r.totalDemand;
-      }
-    });
     const received = {};
     pdrn.forEach(r => {
-      if (r.bookingStatus === 'ACTIVE') {
-        if (!received[r.projectName]) received[r.projectName] = 0;
-        received[r.projectName] += r.totalReceived;
+      if (r['Booking Status'] === 'ACTIVE') {
+        if (!demand[r['Project Name']]) demand[r['Project Name']] = 0;
+        if (!received[r['Project Name']]) received[r['Project Name']] = 0;
+        demand[r['Project Name']] += Number(r['Total Demand Amount'])||0;
+        received[r['Project Name']] += Number(r['Total Received'])||0;
       }
     });
     return Object.keys(map).map(p => ({
-      project: p.substring(0, 15),
+      name: p.substring(0, 12),
       sales: map[p].sales,
       demand: demand[p] || 0,
-      received: received[p] || 0,
-      units: map[p].units
-    })).sort((a, b) => b.sales - a.sales).slice(0, 8);
+      received: received[p] || 0
+    })).sort((a, b) => b.sales - a.sales);
   }, [invr, pdrn]);
 
   const monthlyData = useMemo(() => {
@@ -144,14 +139,13 @@ export default function App() {
     return Object.values(map).sort((a, b) => a.month.localeCompare(b.month));
   }, [fPdrn]);
 
-  // Due Outstanding = Demand - Received (for past months)
   const dueOutstandingData = useMemo(() => {
     const map = {};
     pdrn.forEach(r => {
       if (r.bookingStatus === 'ACTIVE' && r.month) {
         const monthDate = new Date(r.year, parseInt(r.month.split('-')[1]) - 1);
         const now = new Date();
-        if (monthDate < now) { // Past months
+        if (monthDate < now) {
           if (!map[r.month]) map[r.month] = 0;
           map[r.month] += Math.max(0, r.totalDemand - r.totalReceived);
         }
@@ -159,19 +153,17 @@ export default function App() {
     });
     return Object.entries(map).map(([month, outstanding]) => ({
       month,
-      outstanding,
-      pct: Math.round((outstanding / (pdrn.filter(p => p.month === month && p.bookingStatus === 'ACTIVE').reduce((s, p) => s + p.totalDemand, 0) || 1)) * 100)
-    })).sort((a, b) => a.month.localeCompare(b.month));
+      outstanding
+    })).sort((a, b) => a.month.localeCompare(b.month)).slice(0, 6);
   }, [pdrn]);
 
-  // Undue Upcoming = Future months demand
   const undueDemandData = useMemo(() => {
     const map = {};
     pdrn.forEach(r => {
       if (r.bookingStatus === 'ACTIVE' && r.month) {
         const monthDate = new Date(r.year, parseInt(r.month.split('-')[1]) - 1);
         const now = new Date();
-        if (monthDate >= now) { // Future months
+        if (monthDate >= now) {
           if (!map[r.month]) map[r.month] = 0;
           map[r.month] += r.totalDemand;
         }
@@ -179,9 +171,8 @@ export default function App() {
     });
     return Object.entries(map).map(([month, demand]) => ({
       month,
-      demand,
-      fmt: fmt(demand)
-    })).sort((a, b) => a.month.localeCompare(b.month));
+      demand
+    })).sort((a, b) => a.month.localeCompare(b.month)).slice(0, 6);
   }, [pdrn]);
 
   const statusPie = useMemo(() => [
@@ -203,75 +194,64 @@ export default function App() {
 
   if (loading) return (
     <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100vh', gap:16, flexDirection:'column', background:'var(--bg)' }}>
-      <div style={{ position:'relative' }}>
-        <Loader2 size={48} style={{ animation:'spin 1s linear infinite', color:'var(--blue)' }} />
-        <div style={{ position:'absolute', inset:-10, borderRadius:'50%', border:'2px solid var(--blue)', opacity:0.2, animation:'pulse-ring 1.5s ease-out infinite' }}/>
-      </div>
+      <Loader2 size={48} style={{ animation:'spin 1s linear infinite', color:'var(--blue)' }} />
       <span style={{ color:'var(--text2)', fontSize:16, fontWeight:500 }}>Loading Dashboard...</span>
     </div>
   );
 
   return (
     <div style={{ minHeight:'100vh', overflow:'auto', background:'var(--bg)', display:'flex', flexDirection:'column', position:'relative' }}>
-      {/* Animated orbs */}
+      {/* Animated orbs background */}
       <div style={{ position:'fixed', inset:0, pointerEvents:'none', zIndex:0, overflow:'hidden' }}>
-        <div style={{ position:'absolute', top:'3%', left:'8%', width:350, height:350, borderRadius:'50%', background:'radial-gradient(circle, rgba(30,58,95,0.1) 0%, transparent 65%)', animation:'orb-1 14s ease-in-out infinite', filter:'blur(50px)' }}/>
-        <div style={{ position:'absolute', top:'55%', right:'3%', width:300, height:300, borderRadius:'50%', background:'radial-gradient(circle, rgba(139,94,60,0.09) 0%, transparent 65%)', animation:'orb-2 18s ease-in-out infinite', filter:'blur(60px)' }}/>
-        <div style={{ position:'absolute', bottom:'5%', left:'35%', width:250, height:250, borderRadius:'50%', background:'radial-gradient(circle, rgba(196,154,60,0.08) 0%, transparent 65%)', animation:'orb-3 12s ease-in-out infinite', filter:'blur(45px)' }}/>
-        <svg width="100%" height="100%" style={{ opacity:0.035 }}>
-          <defs><pattern id="grid" width="50" height="50" patternUnits="userSpaceOnUse">
-            <path d="M 50 0 L 0 0 0 50" fill="none" stroke="#1e3a5f" strokeWidth="0.5"/>
-          </pattern></defs>
-          <rect width="100%" height="100%" fill="url(#grid)"/>
-        </svg>
+        <div style={{ position:'absolute', top:'3%', left:'8%', width:400, height:400, borderRadius:'50%', background:'radial-gradient(circle, rgba(30,58,95,0.12) 0%, transparent 70%)', animation:'orb-1 16s ease-in-out infinite', filter:'blur(60px)' }}/>
+        <div style={{ position:'absolute', top:'50%', right:'5%', width:350, height:350, borderRadius:'50%', background:'radial-gradient(circle, rgba(139,94,60,0.1) 0%, transparent 70%)', animation:'orb-2 20s ease-in-out infinite', filter:'blur(70px)' }}/>
+        <div style={{ position:'absolute', bottom:'8%', left:'30%', width:300, height:300, borderRadius:'50%', background:'radial-gradient(circle, rgba(196,154,60,0.09) 0%, transparent 70%)', animation:'orb-3 14s ease-in-out infinite', filter:'blur(50px)' }}/>
       </div>
 
       {/* Header */}
       <header style={{
-        padding:'12px 28px', display:'flex', alignItems:'center', justifyContent:'space-between',
+        padding:'16px 32px', display:'flex', alignItems:'center', justifyContent:'space-between',
         background:'linear-gradient(135deg, #1e3a5f 0%, #2c5282 50%, #1e3a5f 100%)',
         backgroundSize:'200% 200%', animation:'grad-shift 8s ease infinite',
-        color:'#fff', flexShrink:0, position:'relative', zIndex:10,
-        boxShadow:'0 6px 30px rgba(30,58,95,0.35)'
+        color:'#fff', flexShrink:0, position:'relative', zIndex:20,
+        boxShadow:'0 8px 32px rgba(30,58,95,0.35)'
       }}>
         <div style={{ position:'absolute', inset:0, background:'linear-gradient(90deg, transparent, rgba(255,255,255,0.04), transparent)', pointerEvents:'none' }}/>
-        <div style={{ display:'flex', alignItems:'center', gap:14, position:'relative' }}>
+        <div style={{ display:'flex', alignItems:'center', gap:16, position:'relative' }}>
           <div style={{
-            width:42, height:42, borderRadius:12,
-            background:'rgba(255,255,255,0.14)', backdropFilter:'blur(12px)',
+            width:48, height:48, borderRadius:14,
+            background:'rgba(255,255,255,0.15)', backdropFilter:'blur(12px)',
             display:'flex', alignItems:'center', justifyContent:'center',
-            border:'1px solid rgba(255,255,255,0.22)',
-            boxShadow:'0 6px 20px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.15)',
+            border:'1.5px solid rgba(255,255,255,0.3)',
+            boxShadow:'0 8px 24px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.2)',
             transform:'perspective(600px) rotateY(-5deg)'
           }}>
-            <Building2 size={22} color="#fff" />
+            <Building2 size={26} color="#fff" strokeWidth={1.5} />
           </div>
           <div>
-            <h1 style={{ fontSize:20, fontWeight:700, letterSpacing:'-0.5px', textShadow:'0 2px 4px rgba(0,0,0,0.2)' }}>Smartworld Sky Arc</h1>
-            <span style={{ fontSize:11, color:'rgba(255,255,255,0.65)' }}>Real Estate Sales Dashboard</span>
+            <h1 style={{ fontSize:24, fontWeight:700, letterSpacing:'-0.8px', textShadow:'0 2px 8px rgba(0,0,0,0.25)', margin:0 }}>Smartworld Sky Arc</h1>
+            <span style={{ fontSize:12, color:'rgba(255,255,255,0.7)' }}>Real Estate Sales Dashboard</span>
           </div>
         </div>
-        <div style={{ display:'flex', alignItems:'center', gap:14, position:'relative' }}>
+        <div style={{ display:'flex', alignItems:'center', gap:18, position:'relative' }}>
           <span style={{
-            padding:'5px 16px', borderRadius:20, fontSize:11, fontWeight:600,
-            background:'rgba(45,122,79,0.3)', color:'#80eeaa', border:'1px solid rgba(45,122,79,0.4)',
-            boxShadow:'0 0 16px rgba(45,122,79,0.25)', animation:'glow-breathe 3s ease-in-out infinite',
-            '--glow-color':'rgba(45,122,79,0.2)'
+            padding:'6px 18px', borderRadius:24, fontSize:12, fontWeight:600,
+            background:'rgba(45,122,79,0.35)', color:'#a8ffd4', border:'1.5px solid rgba(45,122,79,0.5)',
+            boxShadow:'0 0 20px rgba(45,122,79,0.3)'
           }}>● LIVE</span>
-          <span style={{ fontSize:11, color:'rgba(255,255,255,0.6)' }}>{invr.length} units · {pdrn.length} bookings</span>
+          <span style={{ fontSize:12, color:'rgba(255,255,255,0.75)', fontWeight:500 }}>{invr.length} units  •  {pdrn.length} bookings</span>
         </div>
       </header>
 
-      <div style={{ flex:1, display:'flex', flexDirection:'column', position:'relative', zIndex:1 }}>
-        <div style={{ maxWidth:'100%', margin:'0 auto', padding:'10px 20px', width:'100%', display:'flex', flexDirection:'column', gap:10 }}>
+      <div style={{ flex:1, display:'flex', flexDirection:'column', position:'relative', zIndex:10 }}>
+        <div style={{ padding:'20px 32px', width:'100%', display:'flex', flexDirection:'column', gap:14 }}>
 
           {/* Filters */}
           <div style={{
-            background:'var(--bg-glass)', backdropFilter:'blur(20px)', WebkitBackdropFilter:'blur(20px)',
-            border:'1px solid var(--border-glass)', borderRadius:'var(--radius)',
-            padding:'10px 18px', display:'flex', flexWrap:'wrap', gap:10, alignItems:'flex-end',
-            boxShadow:'0 4px 16px rgba(30,58,95,0.06), inset 0 1px 0 rgba(255,255,255,0.6)',
-            animation:'slide-up 0.5s ease-out'
+            background:'var(--bg-glass)', backdropFilter:'blur(24px)', WebkitBackdropFilter:'blur(24px)',
+            border:'1.5px solid rgba(255,255,255,0.65)', borderRadius:'18px',
+            padding:'14px 20px', display:'flex', flexWrap:'wrap', gap:12, alignItems:'center',
+            boxShadow:'0 6px 20px rgba(30,58,95,0.08), inset 0 1.5px 0 rgba(255,255,255,0.7)',
           }}>
             <FilterSelect label="Project" value={filters.project} options={options.projects} onChange={v => setFilters(f=>({...f, project:v}))} />
             <FilterSelect label="Company" value={filters.company} options={options.companies} onChange={v => setFilters(f=>({...f, company:v}))} />
@@ -280,213 +260,153 @@ export default function App() {
             <FilterSelect label="Year" value={filters.year} options={options.years.map(String)} onChange={v => setFilters(f=>({...f, year:v}))} />
             <button onClick={reset} style={{
               background:'linear-gradient(135deg, #b8443a, #8b2e26)', border:'none',
-              color:'#fff', padding:'9px 20px', borderRadius:10, fontFamily:'inherit',
-              fontSize:12, fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', gap:6,
-              boxShadow:'0 4px 14px rgba(184,68,58,0.35), inset 0 1px 0 rgba(255,255,255,0.15)',
-              transition:'all 0.25s',
+              color:'#fff', padding:'10px 24px', borderRadius:12, fontFamily:'inherit',
+              fontSize:13, fontWeight:600, cursor:'pointer', display:'flex', alignItems:'center', gap:7,
+              boxShadow:'0 6px 16px rgba(184,68,58,0.38), inset 0 1px 0 rgba(255,255,255,0.18)',
+              transition:'all 0.3s',
             }}
-            onMouseEnter={e => { e.currentTarget.style.transform='translateY(-2px) scale(1.04)'; e.currentTarget.style.boxShadow='0 8px 24px rgba(184,68,58,0.45)'; }}
-            onMouseLeave={e => { e.currentTarget.style.transform='none'; e.currentTarget.style.boxShadow='0 4px 14px rgba(184,68,58,0.35)'; }}
-            ><RotateCcw size={13}/> Reset</button>
+            onMouseEnter={e => { e.currentTarget.style.transform='translateY(-3px)'; e.currentTarget.style.boxShadow='0 10px 28px rgba(184,68,58,0.5)'; }}
+            onMouseLeave={e => { e.currentTarget.style.transform='none'; e.currentTarget.style.boxShadow='0 6px 16px rgba(184,68,58,0.38)'; }}
+            ><RotateCcw size={14}/> Reset</button>
           </div>
 
-          {/* KPI Row */}
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(4, 1fr)', gap:10, flexShrink:0 }}>
-            <KPI3D icon={<LayoutGrid size={20}/>} label="Total Units" value={kpi.totalUnits} sub={`${kpi.booked} booked · ${kpi.available} available`} color="#1e3a5f" delay={0} />
-            <KPI3D icon={<Home size={20}/>} label="Booked Units" value={kpi.booked} sub={`${occupancy}% occupancy`} color="#8b5e3c" delay={1} ring={occupancy} />
-            <KPI3D icon={<Building2 size={20}/>} label="Available Units" value={kpi.available} sub={fmtArea(kpi.availArea)} color="#c49a3c" delay={2} />
-            <KPI3D icon={<IndianRupee size={20}/>} label="Total Sales (BSP)" value={fmt(kpi.totalSales)} color="#111" delay={3} sub="Net Basic Price" />
+          {/* KPI Grid - 2 rows of 4 */}
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(4, 1fr)', gap:12 }}>
+            <KPI3D icon={<LayoutGrid size={22}/>} label="Total Units" value={kpi.totalUnits} sub={`${kpi.booked} booked · ${kpi.available} available`} color="#1e3a5f" delay={0} />
+            <KPI3D icon={<Home size={22}/>} label="Booked Units" value={kpi.booked} sub={`${occupancy}% occupancy`} color="#8b5e3c" delay={0.1} ring={occupancy} />
+            <KPI3D icon={<Building2 size={22}/>} label="Available Units" value={kpi.available} sub={fmtArea(kpi.availArea)} color="#c49a3c" delay={0.2} />
+            <KPI3D icon={<IndianRupee size={22}/>} label="Total Sales BSP" value={fmt(kpi.totalSales)} color="#111" delay={0.3} sub="Net Basic Price" />
           </div>
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(4, 1fr)', gap:10, flexShrink:0 }}>
-            <KPI3D icon={<TrendingUp size={20}/>} label="Total Demand" value={fmt(kpi.demand)} color="#b07d56" delay={4} sub="Active bookings" />
-            <KPI3D icon={<Wallet size={20}/>} label="Received Amount" value={fmt(kpi.received)} color="#2d7a4f" delay={5} ring={collection} sub={`${collection}% collected`} />
-            <KPI3D icon={<BarChart3 size={20}/>} label="TCV (With Tax)" value={fmt(kpi.tcv)} color="#b8443a" delay={6} sub="Total Contract Value" />
-            <KPI3D icon={<MapPin size={20}/>} label="Booked Area" value={fmtArea(kpi.bookedArea)} color="#3b82c4" delay={7} sub="Super Built-up Area" />
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(4, 1fr)', gap:12 }}>
+            <KPI3D icon={<TrendingUp size={22}/>} label="Total Demand" value={fmt(kpi.demand)} color="#b07d56" delay={0.4} sub="Active Bookings" />
+            <KPI3D icon={<Wallet size={22}/>} label="Received Amount" value={fmt(kpi.received)} color="#2d7a4f" delay={0.5} ring={collection} sub={`${collection}% collected`} />
+            <KPI3D icon={<BarChart3 size={22}/>} label="TCV (With Tax)" value={fmt(kpi.tcv)} color="#b8443a" delay={0.6} sub="Total Contract Value" />
+            <KPI3D icon={<MapPin size={22}/>} label="Booked Area" value={fmtArea(kpi.bookedArea)} color="#3b82c4" delay={0.7} sub="Super Built-up Area" />
           </div>
 
-          {/* MAIN CHARTS — 2x3 Grid */}
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
+          {/* Charts Grid - 2x3 */}
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:14, marginTop:8 }}>
             
-            {/* 1. Tower-wise Distribution (Stacked Bar) */}
-            <GlassCard title="Tower-wise Distribution (Booked + Available)" icon={<BarChart3 size={15}/>} color="var(--blue)" delay={0.2}>
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={towerData} barGap={0}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(30,58,95,0.07)" />
-                  <XAxis dataKey="tower" tick={{ fill:'#8b7355', fontSize:11 }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fill:'#8b7355', fontSize:10 }} axisLine={false} tickLine={false} />
-                  <Tooltip 
-                    contentStyle={tooltipStyle}
-                    cursor={{ fill:'rgba(30,58,95,0.04)' }}
-                    labelFormatter={(v) => `Tower ${v}`}
-                    formatter={(value, name) => {
-                      if (name === 'booked') return [value, 'Booked'];
-                      if (name === 'available') return [value, 'Available'];
-                      return [value, name];
-                    }}
-                    content={({ active, payload }) => {
-                      if (active && payload && payload.length) {
-                        const data = payload[0].payload;
-                        return (
-                          <div style={tooltipStyle}>
-                            <p style={{ margin: '0 0 4px 0', fontWeight: 600 }}>{`Tower ${data.tower}`}</p>
-                            <p style={{ margin: '2px 0', fontSize: 11 }}>Booked: {data.booked}</p>
-                            <p style={{ margin: '2px 0', fontSize: 11 }}>Available: {data.available}</p>
-                            <p style={{ margin: '4px 0 0 0', fontWeight: 600, color: '#1e3a5f' }}>Total: {data.total}</p>
-                          </div>
-                        );
-                      }
-                      return null;
-                    }}
-                  />
-                  <Bar dataKey="booked" stackId="a" fill="#1e3a5f" name="Booked" radius={[5,5,0,0]} animationDuration={1400} label={{ position: 'insideBottomLeft', offset: 5, fill: '#fff', fontSize: 11, fontWeight: 600 }} />
-                  <Bar dataKey="available" stackId="a" fill="#b07d56" name="Available" radius={[5,5,0,0]} animationDuration={1400} animationBegin={300} label={{ position: 'insideBottomRight', offset: 5, fill: '#fff', fontSize: 11, fontWeight: 600 }} />
+            {/* 1. Tower Distribution - Stacked Bar with Labels */}
+            <GlassCard title="Tower-wise Distribution (Booked + Available)" icon={<BarChart3 size={16}/>} color="var(--blue)" delay={0}>
+              <ResponsiveContainer width="100%" height={320}>
+                <BarChart data={towerData} barGap={0} margin={{ top:20, right:20, left:0, bottom:60 }}>
+                  <CartesianGrid strokeDasharray="3 4" stroke="rgba(30,58,95,0.08)" vertical={false} />
+                  <XAxis dataKey="tower" tick={{ fill:'#8b7355', fontSize:12, fontWeight:500 }} axisLine={false} tickLine={false} angle={0} />
+                  <YAxis tick={{ fill:'#8b7355', fontSize:12, fontWeight:500 }} axisLine={false} tickLine={false} label={{ value: 'Units', angle: -90, position: 'insideLeft', offset:10, style:{fill:'#8b7355', fontSize:12, fontWeight:600} }} />
+                  <Tooltip contentStyle={tooltipStyle} cursor={{ fill:'rgba(30,58,95,0.06)' }} formatter={(value, name) => name === 'booked' ? [value, 'Booked'] : [value, 'Available']} labelFormatter={(label) => `Tower ${label}`} />
+                  <Bar dataKey="booked" stackId="stack" fill="#1e3a5f" name="Booked" radius={[8,8,0,0]} animationDuration={1600} label={{ position: 'insideBottomLeft', offset: 6, fill: '#fff', fontSize: 12, fontWeight: 600 }} />
+                  <Bar dataKey="available" stackId="stack" fill="#b07d56" name="Available" radius={[8,8,0,0]} animationDuration={1600} animationBegin={300} label={{ position: 'insideBottomRight', offset: 6, fill: '#fff', fontSize: 12, fontWeight: 600 }} />
+                  <Legend wrapperStyle={{ paddingTop: 16, fontSize: 12 }} />
                 </BarChart>
               </ResponsiveContainer>
             </GlassCard>
 
-            {/* 2. Demand vs Collection (Bar Chart) */}
-            <GlassCard title="Demand vs Collection Overview" icon={<IndianRupee size={15}/>} color="var(--gold)" delay={0.3}>
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={[{ name: 'Amount', demand: kpi.demand, received: kpi.received, pending: kpi.demand - kpi.received }]} barGap={30}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(30,58,95,0.07)" />
-                  <XAxis dataKey="name" tick={{ fill:'#8b7355', fontSize:11 }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fill:'#8b7355', fontSize:10 }} axisLine={false} tickLine={false} tickFormatter={v => fmtShort(v)} />
+            {/* 2. Demand vs Collection - Bar */}
+            <GlassCard title="Demand vs Collection Overview" icon={<IndianRupee size={16}/>} color="var(--gold)" delay={0.1}>
+              <ResponsiveContainer width="100%" height={320}>
+                <BarChart data={[{ name: 'Amount', demand: kpi.demand, received: kpi.received, pending: kpi.demand - kpi.received }]} barGap={45} margin={{ top:20, right:20, left:0, bottom:40 }}>
+                  <CartesianGrid strokeDasharray="3 4" stroke="rgba(30,58,95,0.08)" vertical={false} />
+                  <XAxis dataKey="name" tick={{ fill:'#8b7355', fontSize:12, fontWeight:500 }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fill:'#8b7355', fontSize:12, fontWeight:500 }} axisLine={false} tickLine={false} tickFormatter={v => fmtShort(v)} label={{ value: 'Amount (Crores)', angle: -90, position: 'insideLeft', offset:10, style:{fill:'#8b7355', fontSize:12, fontWeight:600} }} />
                   <Tooltip contentStyle={tooltipStyle} formatter={(v) => fmt(v)} />
-                  <Bar dataKey="demand" fill="#8b5e3c" name="Total Demand" radius={[5,5,0,0]} animationDuration={1200} />
-                  <Bar dataKey="received" fill="#2d7a4f" name="Received" radius={[5,5,0,0]} animationDuration={1200} animationBegin={200} />
-                  <Bar dataKey="pending" fill="#c49a3c" name="Pending" radius={[5,5,0,0]} animationDuration={1200} animationBegin={400} />
+                  <Bar dataKey="demand" fill="#8b5e3c" name="Total Demand" radius={[8,8,0,0]} animationDuration={1400} label={{ position: 'top', fill: '#8b5e3c', fontSize: 11, fontWeight: 600 }} />
+                  <Bar dataKey="received" fill="#2d7a4f" name="Received" radius={[8,8,0,0]} animationDuration={1400} animationBegin={200} label={{ position: 'top', fill: '#2d7a4f', fontSize: 11, fontWeight: 600 }} />
+                  <Bar dataKey="pending" fill="#c49a3c" name="Pending" radius={[8,8,0,0]} animationDuration={1400} animationBegin={400} label={{ position: 'top', fill: '#c49a3c', fontSize: 11, fontWeight: 600 }} />
+                  <Legend wrapperStyle={{ paddingTop: 16, fontSize: 12 }} />
                 </BarChart>
               </ResponsiveContainer>
             </GlassCard>
 
             {/* 3. All Projects - Sales vs Demand vs Collections */}
-            <GlassCard title="All Projects: Sales vs Demand vs Collections" icon={<BarChart3 size={15}/>} color="var(--brown)" delay={0.35}>
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={projectSalesData} barGap={8}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(30,58,95,0.07)" />
-                  <XAxis dataKey="project" tick={{ fill:'#8b7355', fontSize:9 }} axisLine={false} tickLine={false} angle={-45} textAnchor="end" height={60} />
-                  <YAxis tick={{ fill:'#8b7355', fontSize:9 }} axisLine={false} tickLine={false} tickFormatter={v => fmtShort(v)} />
+            <GlassCard title="All Projects: Sales vs Demand vs Collections" icon={<BarChart3 size={16}/>} color="var(--brown)" delay={0.2} style={{ gridColumn: '1 / -1' }}>
+              <ResponsiveContainer width="100%" height={320}>
+                <BarChart data={projectSalesData} barGap={8} margin={{ top:20, right:20, left:0, bottom:80 }}>
+                  <CartesianGrid strokeDasharray="3 4" stroke="rgba(30,58,95,0.08)" vertical={false} />
+                  <XAxis dataKey="name" tick={{ fill:'#8b7355', fontSize:11, fontWeight:500 }} axisLine={false} tickLine={false} angle={-45} textAnchor="end" height={100} />
+                  <YAxis tick={{ fill:'#8b7355', fontSize:12, fontWeight:500 }} axisLine={false} tickLine={false} tickFormatter={v => fmtShort(v)} label={{ value: 'Amount (Crores)', angle: -90, position: 'insideLeft', offset:10, style:{fill:'#8b7355', fontSize:12, fontWeight:600} }} />
                   <Tooltip contentStyle={tooltipStyle} formatter={(v) => fmt(v)} />
-                  <Legend wrapperStyle={{ fontSize:10, paddingTop:8 }} />
-                  <Bar dataKey="sales" fill="#1e3a5f" name="Sales BSP" radius={[4,4,0,0]} animationDuration={1400} />
-                  <Bar dataKey="demand" fill="#8b5e3c" name="Demand" radius={[4,4,0,0]} animationDuration={1400} animationBegin={200} />
-                  <Bar dataKey="received" fill="#2d7a4f" name="Collected" radius={[4,4,0,0]} animationDuration={1400} animationBegin={400} />
+                  <Bar dataKey="sales" fill="#1e3a5f" name="Sales BSP" radius={[6,6,0,0]} animationDuration={1600} />
+                  <Bar dataKey="demand" fill="#8b5e3c" name="Total Demand" radius={[6,6,0,0]} animationDuration={1600} animationBegin={250} />
+                  <Bar dataKey="received" fill="#2d7a4f" name="Collections" radius={[6,6,0,0]} animationDuration={1600} animationBegin={500} />
+                  <Legend wrapperStyle={{ paddingTop: 20, fontSize: 12 }} />
                 </BarChart>
               </ResponsiveContainer>
             </GlassCard>
 
             {/* 4. Due Outstanding */}
-            <GlassCard title="Due Outstanding (Past Months)" icon={<AlertCircle size={15}/>} color="var(--rose)" delay={0.4}>
-              <ResponsiveContainer width="100%" height="100%">
-                <ComposedChart data={dueOutstandingData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(30,58,95,0.07)" />
-                  <XAxis dataKey="month" tick={{ fill:'#8b7355', fontSize:9 }} axisLine={false} tickLine={false}
-                    tickFormatter={v => { const [y,m]=v.split('-'); return `${['','J','F','M','A','M','J','J','A','S','O','N','D'][+m]}'${y.slice(2)}`; }} />
-                  <YAxis tick={{ fill:'#8b7355', fontSize:9 }} axisLine={false} tickLine={false} tickFormatter={v => fmtShort(v)} />
+            <GlassCard title="Due Outstanding Amount (Past Months)" icon={<AlertCircle size={16}/>} color="var(--rose)" delay={0.3}>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={dueOutstandingData} margin={{ top:20, right:20, left:0, bottom:50 }}>
+                  <CartesianGrid strokeDasharray="3 4" stroke="rgba(30,58,95,0.08)" vertical={false} />
+                  <XAxis dataKey="month" tick={{ fill:'#8b7355', fontSize:11, fontWeight:500 }} axisLine={false} tickLine={false} angle={-45} textAnchor="end" tickFormatter={v => { const [y,m]=v.split('-'); return `${['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][+m]}'${y.slice(2)}`; }} height={80} />
+                  <YAxis tick={{ fill:'#8b7355', fontSize:11, fontWeight:500 }} axisLine={false} tickLine={false} tickFormatter={v => fmtShort(v)} label={{ value: 'Outstanding (Cr)', angle: -90, position: 'insideLeft', offset:10, style:{fill:'#8b7355', fontSize:11, fontWeight:600} }} />
                   <Tooltip contentStyle={tooltipStyle} formatter={(v) => fmt(v)} />
-                  <Bar dataKey="outstanding" fill="#b8443a" name="Outstanding Amount" radius={[4,4,0,0]} animationDuration={1400} />
-                </ComposedChart>
-              </ResponsiveContainer>
-            </GlassCard>
-
-            {/* 5. Undue Upcoming Demand (Future Months) */}
-            <GlassCard title="Undue Upcoming Demand (Month-wise)" icon={<Activity size={15}/>} color="var(--green)" delay={0.45}>
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={undueDemandData} barSize={20}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(30,58,95,0.07)" />
-                  <XAxis dataKey="month" tick={{ fill:'#8b7355', fontSize:9 }} axisLine={false} tickLine={false}
-                    tickFormatter={v => { const [y,m]=v.split('-'); return `${['','J','F','M','A','M','J','J','A','S','O','N','D'][+m]}'${y.slice(2)}`; }} />
-                  <YAxis tick={{ fill:'#8b7355', fontSize:9 }} axisLine={false} tickLine={false} tickFormatter={v => fmtShort(v)} />
-                  <Tooltip contentStyle={tooltipStyle} formatter={(v) => fmt(v)} />
-                  <Bar dataKey="demand" fill="#2d7a4f" name="Upcoming Demand" radius={[4,4,0,0]} animationDuration={1400} />
+                  <Bar dataKey="outstanding" fill="#b8443a" name="Outstanding Amount" radius={[6,6,0,0]} animationDuration={1600} label={{ position: 'top', fill: '#b8443a', fontSize: 11, fontWeight: 600 }} />
                 </BarChart>
               </ResponsiveContainer>
             </GlassCard>
 
-            {/* 6. Monthly Bookings & Demand Trend */}
-            <GlassCard title="Monthly Bookings vs Demand Trend" icon={<Activity size={15}/>} color="var(--blue-accent)" delay={0.5}>
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={monthlyData}>
-                  <defs>
-                    <linearGradient id="gDemand" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#8b5e3c" stopOpacity={0.4}/>
-                      <stop offset="100%" stopColor="#8b5e3c" stopOpacity={0.02}/>
-                    </linearGradient>
-                    <linearGradient id="gReceived" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#1e3a5f" stopOpacity={0.4}/>
-                      <stop offset="100%" stopColor="#1e3a5f" stopOpacity={0.02}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(30,58,95,0.07)" />
-                  <XAxis dataKey="month" tick={{ fill:'#8b7355', fontSize:8 }} axisLine={false} tickLine={false}
-                    tickFormatter={v => { const [y,m]=v.split('-'); return `${['','J','F','M','A','M','J','J','A','S','O','N','D'][+m]}'${y.slice(2)}`; }} />
-                  <YAxis tick={{ fill:'#8b7355', fontSize:9 }} axisLine={false} tickLine={false} tickFormatter={v => fmtShort(v)} />
-                  <Tooltip contentStyle={tooltipStyle} formatter={(v) => [fmt(v)]} />
-                  <Area type="monotone" dataKey="demand" stroke="#8b5e3c" fill="url(#gDemand)" strokeWidth={2.5} name="Demand" animationDuration={1800} dot={{ r:3, fill:'#fff', stroke:'#8b5e3c', strokeWidth:2 }} />
-                  <Area type="monotone" dataKey="received" stroke="#1e3a5f" fill="url(#gReceived)" strokeWidth={2.5} name="Received" animationDuration={1800} animationBegin={400} dot={{ r:3, fill:'#fff', stroke:'#1e3a5f', strokeWidth:2 }} />
-                  <Legend wrapperStyle={{ fontSize:10, paddingTop:8 }} />
-                </AreaChart>
+            {/* 5. Undue Upcoming Demand */}
+            <GlassCard title="Undue Upcoming Demand (Month-wise Future)" icon={<Activity size={16}/>} color="var(--green)" delay={0.4}>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={undueDemandData} margin={{ top:20, right:20, left:0, bottom:50 }}>
+                  <CartesianGrid strokeDasharray="3 4" stroke="rgba(30,58,95,0.08)" vertical={false} />
+                  <XAxis dataKey="month" tick={{ fill:'#8b7355', fontSize:11, fontWeight:500 }} axisLine={false} tickLine={false} angle={-45} textAnchor="end" tickFormatter={v => { const [y,m]=v.split('-'); return `${['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][+m]}'${y.slice(2)}`; }} height={80} />
+                  <YAxis tick={{ fill:'#8b7355', fontSize:11, fontWeight:500 }} axisLine={false} tickLine={false} tickFormatter={v => fmtShort(v)} label={{ value: 'Demand (Crores)', angle: -90, position: 'insideLeft', offset:10, style:{fill:'#8b7355', fontSize:11, fontWeight:600} }} />
+                  <Tooltip contentStyle={tooltipStyle} formatter={(v) => fmt(v)} />
+                  <Bar dataKey="demand" fill="#2d7a4f" name="Upcoming Demand" radius={[6,6,0,0]} animationDuration={1600} label={{ position: 'top', fill: '#2d7a4f', fontSize: 11, fontWeight: 600 }} />
+                </BarChart>
               </ResponsiveContainer>
             </GlassCard>
 
             {/* Booking Status Pie */}
-            <GlassCard title="Booking Status" icon={<PieIcon size={15}/>} color="var(--brown)" delay={0.55}>
-              <div style={{ position:'relative', height:'100%' }}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie data={statusPie} cx="50%" cy="48%" innerRadius="42%" outerRadius="72%" dataKey="value" paddingAngle={4} strokeWidth={0} animationDuration={1200}>
-                      {statusPie.map((e, i) => <Cell key={i} fill={e.color} />)}
-                    </Pie>
-                    <Tooltip contentStyle={tooltipStyle} />
-                  </PieChart>
-                </ResponsiveContainer>
-                <div style={{ position:'absolute', top:'40%', left:'50%', transform:'translate(-50%,-50%)', textAlign:'center', pointerEvents:'none' }}>
-                  <div style={{ fontFamily:"'Space Mono',monospace", fontSize:24, fontWeight:700, color:'var(--blue)' }}>{kpi.totalUnits}</div>
-                  <div style={{ fontSize:9, color:'var(--text3)', fontWeight:600, textTransform:'uppercase', letterSpacing:1 }}>Units</div>
-                </div>
-              </div>
+            <GlassCard title="Booking Status Breakdown" icon={<PieIcon size={16}/>} color="var(--brown)" delay={0.5}>
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie data={statusPie} cx="50%" cy="50%" innerRadius={70} outerRadius={100} dataKey="value" paddingAngle={5} strokeWidth={2} stroke="#fff" animationDuration={1200}>
+                    {statusPie.map((e, i) => <Cell key={i} fill={e.color} />)}
+                  </Pie>
+                  <Tooltip contentStyle={tooltipStyle} formatter={(v) => v} />
+                  <Legend verticalAlign="bottom" height={36} fontSize={12} />
+                </PieChart>
+              </ResponsiveContainer>
             </GlassCard>
 
             {/* Collection Progress Pie */}
-            <GlassCard title="Collection Progress" icon={<Wallet size={15}/>} color="var(--blue)" delay={0.6}>
-              <div style={{ position:'relative', height:'100%' }}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie data={collectionPie} cx="50%" cy="48%" innerRadius="42%" outerRadius="72%" dataKey="value" paddingAngle={4} strokeWidth={0} animationDuration={1200}>
-                      {collectionPie.map((e, i) => <Cell key={i} fill={e.color} />)}
-                    </Pie>
-                    <Tooltip contentStyle={tooltipStyle} formatter={(v) => [fmt(v)]} />
-                  </PieChart>
-                </ResponsiveContainer>
-                <div style={{ position:'absolute', top:'40%', left:'50%', transform:'translate(-50%,-50%)', textAlign:'center', pointerEvents:'none' }}>
-                  <div style={{ fontFamily:"'Space Mono',monospace", fontSize:20, fontWeight:700, color:'var(--blue)' }}>{collection}%</div>
-                  <div style={{ fontSize:9, color:'var(--text3)', fontWeight:600, textTransform:'uppercase', letterSpacing:1 }}>Collected</div>
-                </div>
-              </div>
+            <GlassCard title="Collection Progress" icon={<Wallet size={16}/>} color="var(--blue)" delay={0.6}>
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie data={collectionPie} cx="50%" cy="50%" innerRadius={70} outerRadius={100} dataKey="value" paddingAngle={5} strokeWidth={2} stroke="#fff" animationDuration={1200}>
+                    {collectionPie.map((e, i) => <Cell key={i} fill={e.color} />)}
+                  </Pie>
+                  <Tooltip contentStyle={tooltipStyle} formatter={(v) => fmt(v)} />
+                  <Legend verticalAlign="bottom" height={36} fontSize={12} />
+                </PieChart>
+              </ResponsiveContainer>
             </GlassCard>
           </div>
 
-          <div style={{ height: 40 }}></div>
+          <div style={{ height: 60 }}></div>
         </div>
       </div>
     </div>
   );
 }
 
-/* ─── Filter ──────────────────────────── */
 function FilterSelect({ label, value, options, onChange }) {
   return (
-    <div style={{ display:'flex', flexDirection:'column', gap:4, flex:1, minWidth:120 }}>
-      <label style={{ fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:0.8, color:'var(--text3)' }}>{label}</label>
+    <div style={{ display:'flex', flexDirection:'column', gap:5, flex:1, minWidth:130 }}>
+      <label style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:0.8, color:'var(--text3)' }}>{label}</label>
       <select value={value} onChange={e => onChange(e.target.value)}
         style={{
-          background:'rgba(255,255,255,0.65)', border:'1px solid rgba(180,160,140,0.3)', color:'var(--text)',
-          padding:'8px 12px', borderRadius:10, fontFamily:'inherit', fontSize:12, cursor:'pointer', outline:'none',
+          background:'rgba(255,255,255,0.72)', border:'1px solid rgba(180,160,140,0.25)', color:'var(--text)',
+          padding:'10px 14px', borderRadius:10, fontFamily:'inherit', fontSize:12, cursor:'pointer', outline:'none',
           backdropFilter:'blur(8px)', transition:'all 0.25s',
           boxShadow:'0 2px 6px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.7)'
         }}
-        onFocus={e => { e.target.style.borderColor='var(--blue)'; e.target.style.boxShadow='0 0 0 3px rgba(30,58,95,0.12)'; }}
-        onBlur={e => { e.target.style.borderColor='rgba(180,160,140,0.3)'; e.target.style.boxShadow='0 2px 6px rgba(0,0,0,0.04)'; }}
+        onFocus={e => { e.target.style.borderColor='#1e3a5f'; e.target.style.boxShadow='0 0 0 3px rgba(30,58,95,0.14)'; }}
+        onBlur={e => { e.target.style.borderColor='rgba(180,160,140,0.25)'; e.target.style.boxShadow='0 2px 6px rgba(0,0,0,0.04)'; }}
       >
         <option value="">All</option>
         {options.map(o => <option key={o} value={o}>{o}</option>)}
@@ -495,7 +415,6 @@ function FilterSelect({ label, value, options, onChange }) {
   );
 }
 
-/* ─── 3D KPI Card ──────────────────────────── */
 function KPI3D({ icon, label, value, color, sub, delay = 0, ring }) {
   const [hovered, setHovered] = useState(false);
   const cardRef = useRef(null);
@@ -506,12 +425,7 @@ function KPI3D({ icon, label, value, color, sub, delay = 0, ring }) {
     const rect = cardRef.current.getBoundingClientRect();
     const x = (e.clientX - rect.left) / rect.width - 0.5;
     const y = (e.clientY - rect.top) / rect.height - 0.5;
-    setTilt({ x: y * -12, y: x * 12 });
-  }, []);
-
-  const handleLeave = useCallback(() => {
-    setHovered(false);
-    setTilt({ x:0, y:0 });
+    setTilt({ x: y * -8, y: x * 8 });
   }, []);
 
   return (
@@ -519,61 +433,48 @@ function KPI3D({ icon, label, value, color, sub, delay = 0, ring }) {
       ref={cardRef}
       onMouseEnter={() => setHovered(true)}
       onMouseMove={handleMove}
-      onMouseLeave={handleLeave}
+      onMouseLeave={() => { setHovered(false); setTilt({ x:0, y:0 }); }}
       style={{
         background:'var(--bg-glass)',
         backdropFilter:'blur(20px)', WebkitBackdropFilter:'blur(20px)',
-        border:`1.5px solid ${hovered ? color+'40' : 'var(--border-glass)'}`,
-        borderRadius:'var(--radius)',
-        padding:'14px 16px 12px',
+        border:`1.5px solid ${hovered ? color+'35' : 'rgba(255,255,255,0.65)'}`,
+        borderRadius:'18px',
+        padding:'18px 16px 14px',
         position:'relative',
         overflow:'hidden',
         cursor:'default',
-        animation:`slide-up 0.6s ease-out ${delay * 0.08}s both, glow-breathe 4s ease-in-out infinite ${delay * 0.3}s`,
-        '--glow-color': `${color}18`,
-        transition:'all 0.15s ease-out',
-        transform: `perspective(600px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg) ${hovered ? 'translateY(-6px) scale(1.02)' : ''}`,
+        animation:`slide-up 0.7s ease-out ${delay}s both, glow-breathe 4.5s ease-in-out infinite ${delay * 0.4}s`,
+        '--glow-color': `${color}15`,
+        transition:'all 0.25s ease',
+        transform: `perspective(800px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg) ${hovered ? 'translateY(-8px) scale(1.03)' : ''}`,
         boxShadow: hovered
-          ? `0 20px 50px ${color}25, 0 0 0 1px ${color}15, inset 0 1px 0 rgba(255,255,255,0.6)`
-          : `0 3px 12px ${color}10, inset 0 1px 0 rgba(255,255,255,0.6)`,
+          ? `0 24px 60px ${color}28, 0 0 0 1px ${color}20, inset 0 1px 0 rgba(255,255,255,0.7)`
+          : `0 4px 16px ${color}12, inset 0 1px 0 rgba(255,255,255,0.7)`,
         transformStyle:'preserve-3d',
       }}
     >
-      <div style={{ position:'absolute', top:0, left:0, right:0, height:4, background:`linear-gradient(90deg, ${color}00, ${color}, ${color}00)`, transition:'opacity 0.3s', opacity: hovered ? 1 : 0.6 }} />
-      <div style={{ position:'absolute', inset:0, pointerEvents:'none', overflow:'hidden', borderRadius:'var(--radius)' }}>
-        <div style={{ position:'absolute', top:'-60%', left:'-60%', width:'60%', height:'220%', background:'linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)', animation:`shimmer 3.5s ease-in-out infinite ${delay * 0.15}s` }}/>
-      </div>
-      <div style={{ position:'absolute', top:-20, right:-20, width:70, height:70, borderRadius:'50%', background:`radial-gradient(circle, ${color}20 0%, transparent 65%)`, transition:'all 0.4s ease', transform: hovered ? 'scale(2)' : 'scale(1)', opacity: hovered ? 0.9 : 0.3 }}/>
-      {ring && (
-        <svg width="32" height="32" style={{ position:'absolute', top:8, right:8 }} viewBox="0 0 32 32">
-          <circle cx="16" cy="16" r="12" fill="none" stroke={`${color}18`} strokeWidth="3"/>
-          <circle cx="16" cy="16" r="12" fill="none" stroke={color} strokeWidth="3" strokeLinecap="round"
-            strokeDasharray={`${(ring / 100) * 75.4} 75.4`}
-            transform="rotate(-90 16 16)"
-            style={{ transition:'stroke-dasharray 1.2s cubic-bezier(0.4,0,0.2,1)' }}
-          />
-          <text x="16" y="17" textAnchor="middle" dominantBaseline="central" fill={color} fontSize="7" fontWeight="700" fontFamily="Space Mono">{Math.round(ring)}</text>
-        </svg>
-      )}
+      <div style={{ position:'absolute', top:0, left:0, right:0, height:5, background:`linear-gradient(90deg, ${color}00, ${color}, ${color}00)`, transition:'opacity 0.3s', opacity: hovered ? 1 : 0.5 }} />
       <div style={{
-        width:34, height:34, borderRadius:10,
-        background:`linear-gradient(145deg, ${color}15, ${color}08)`,
-        border:`1.5px solid ${color}20`,
+        width:38, height:38, borderRadius:12,
+        background:`linear-gradient(135deg, ${color}18, ${color}08)`,
+        border:`1.5px solid ${color}22`,
         display:'flex', alignItems:'center', justifyContent:'center', color,
-        marginBottom:8,
-        transition:'all 0.35s cubic-bezier(0.175,0.885,0.32,1.275)',
-        transform: hovered ? 'scale(1.15) translateZ(15px)' : 'scale(1)',
-        boxShadow: hovered ? `0 6px 20px ${color}25` : `0 2px 8px ${color}10`,
+        marginBottom:10,
+        transition:'all 0.3s',
+        transform: hovered ? 'scale(1.18)' : 'scale(1)',
+        boxShadow: hovered ? `0 8px 24px ${color}28` : `0 3px 10px ${color}12`,
       }}>{icon}</div>
-      <div style={{ fontSize:9, color:'var(--text3)', fontWeight:700, textTransform:'uppercase', letterSpacing:0.6, marginBottom:2 }}>{label}</div>
-      <div style={{ fontFamily:"'Space Mono',monospace", fontSize:18, fontWeight:700, color:'var(--black)', animation:'counter-up 0.6s ease-out both', animationDelay:`${0.3 + delay * 0.08}s` }}>{value}</div>
-      {sub && <div style={{ fontSize:10, color:'var(--text2)', marginTop:4, fontWeight:500 }}>{sub}</div>}
-      <div style={{ position:'absolute', bottom:0, left:0, right:0, height:'45%', background:'linear-gradient(to top, rgba(255,255,255,0.06), transparent)', pointerEvents:'none', borderRadius:'0 0 var(--radius) var(--radius)' }}/>
+      <div style={{ fontSize:10, color:'var(--text3)', fontWeight:700, textTransform:'uppercase', letterSpacing:0.6, marginBottom:3 }}>{label}</div>
+      <div style={{
+        fontFamily:"'Space Mono',monospace", fontSize:20, fontWeight:700, color:'var(--black)',
+        animation:'counter-up 0.7s ease-out both', animationDelay:`${0.3 + delay}s`,
+        marginBottom:4
+      }}>{value}</div>
+      {sub && <div style={{ fontSize:11, color:'var(--text2)', fontWeight:500 }}>{sub}</div>}
     </div>
   );
 }
 
-/* ─── Glass Chart Card ──────────────────────────── */
 function GlassCard({ title, icon, color, children, delay = 0, style: extraStyle }) {
   const [hovered, setHovered] = useState(false);
   return (
@@ -582,24 +483,33 @@ function GlassCard({ title, icon, color, children, delay = 0, style: extraStyle 
       onMouseLeave={() => setHovered(false)}
       style={{
         background:'var(--bg-glass)',
-        backdropFilter:'blur(20px)', WebkitBackdropFilter:'blur(20px)',
-        border:`1.5px solid ${hovered ? 'rgba(30,58,95,0.2)' : 'var(--border-glass)'}`,
-        borderRadius:'var(--radius)',
-        padding:'12px 16px',
-        display:'flex', flexDirection:'column', overflow:'hidden', minHeight: 300,
+        backdropFilter:'blur(24px)', WebkitBackdropFilter:'blur(24px)',
+        border:`1.5px solid ${hovered ? 'rgba(30,58,95,0.22)' : 'rgba(255,255,255,0.65)'}`,
+        borderRadius:'18px',
+        padding:'16px 18px',
+        display:'flex', flexDirection:'column', overflow:'hidden',
         boxShadow: hovered
-          ? '0 16px 45px rgba(30,58,95,0.14), inset 0 1px 0 rgba(255,255,255,0.6)'
-          : '0 3px 14px rgba(30,58,95,0.06), inset 0 1px 0 rgba(255,255,255,0.6)',
+          ? '0 20px 50px rgba(30,58,95,0.16), inset 0 1.5px 0 rgba(255,255,255,0.7)'
+          : '0 4px 16px rgba(30,58,95,0.08), inset 0 1.5px 0 rgba(255,255,255,0.7)',
         transition:'all 0.35s cubic-bezier(0.4,0,0.2,1)',
-        transform: hovered ? 'perspective(800px) rotateX(-1.5deg) translateY(-4px)' : 'none',
-        animation:`slide-up 0.7s ease-out ${delay}s both`,
+        transform: hovered ? 'perspective(1000px) rotateX(-1deg) translateY(-5px)' : 'none',
+        animation:`slide-up 0.8s ease-out ${delay}s both`,
         position:'relative',
         ...extraStyle
       }}
     >
-      <div style={{ position:'absolute', top:0, left:0, right:0, height:3, background:`linear-gradient(90deg, transparent, ${color}, transparent)`, opacity: hovered ? 0.7 : 0.3, transition:'opacity 0.3s' }} />
-      <div style={{ fontSize:13, fontWeight:600, marginBottom:8, display:'flex', alignItems:'center', gap:8, color:'var(--text)', flexShrink:0 }}>
-        <span style={{ color, width:26, height:26, borderRadius:8, background:`${color}10`, display:'flex', alignItems:'center', justifyContent:'center', border:`1.5px solid ${color}18`, boxShadow:`0 2px 8px ${color}10`, transition:'all 0.3s', transform: hovered ? 'scale(1.1)' : 'scale(1)' }}>{icon}</span>
+      <div style={{ position:'absolute', top:0, left:0, right:0, height:3, background:`linear-gradient(90deg, transparent, ${color}, transparent)`, opacity: hovered ? 0.8 : 0.4, transition:'opacity 0.3s' }} />
+      <div style={{
+        fontSize:14, fontWeight:600, marginBottom:12, display:'flex', alignItems:'center', gap:10,
+        color:'var(--text)', flexShrink:0
+      }}>
+        <span style={{
+          color, width:28, height:28, borderRadius:10,
+          background:`${color}12`, display:'flex', alignItems:'center', justifyContent:'center',
+          border:`1.5px solid ${color}20`, boxShadow:`0 3px 10px ${color}12`,
+          transition:'all 0.3s', transform: hovered ? 'scale(1.15)' : 'scale(1)',
+          fontSize:16
+        }}>{icon}</span>
         {title}
       </div>
       <div style={{ flex:1, minHeight:0 }}>{children}</div>
