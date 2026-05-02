@@ -297,8 +297,8 @@ export default function App() {
                       </RadialBarChart>
                     </ResponsiveContainer>
                     <div style={{position:'absolute',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:1}}>
-                      <span style={{fontSize:20,fontWeight:900,color:tgtAch>=100?T.teal:tgtAch>80?T.tealD:tgtAch>50?T.amber:T.red,letterSpacing:-1,lineHeight:1}}>{tgtAch}%</span>
-                      <span style={{fontSize:8,color:T.textM,fontWeight:700,textTransform:'uppercase',letterSpacing:0.5}}>Achieved</span>
+                      <span style={{fontSize:14,fontWeight:900,color:tgtAch>=100?T.teal:tgtAch>80?T.tealD:tgtAch>50?T.amber:T.red,letterSpacing:-0.5,lineHeight:1}}>{tgtAch}%</span>
+                      <span style={{fontSize:7,color:T.textM,fontWeight:700,textTransform:'uppercase',letterSpacing:0.5}}>Achieved</span>
                     </div>
                   </div>
                   {/* Stats */}
@@ -322,9 +322,31 @@ export default function App() {
 
               {/* Pipeline */}
               <GC style={{padding:14}} cls="kc">
-                <SH title="Pipeline" compact/>
-                <p style={{fontSize:36,fontWeight:900,color:T.tealD,margin:'4px 0 4px',letterSpacing:-1}}>{kpi.pipelineBookings}</p>
-                <p style={{color:T.textM,fontSize:10,margin:0,fontWeight:600}}>Pending Workflow</p>
+                <SH title="Upcoming Bookings" sub="Pending in Workflow" compact/>
+                <div style={{display:'flex',alignItems:'baseline',gap:6,margin:'2px 0 8px'}}>
+                  <span style={{fontSize:28,fontWeight:900,color:T.tealD,letterSpacing:-1}}>{kpi.pipelineBookings}</span>
+                  <span style={{fontSize:10,color:T.textM,fontWeight:600}}>pending approval</span>
+                </div>
+                {/* Project-wise mini bars */}
+                <div style={{display:'flex',flexDirection:'column',gap:4}}>
+                  {(()=>{
+                    const projMap={};
+                    (raw?.workflow||[]).filter(r=>r.status==='PENDING').forEach(r=>{projMap[r.project]=(projMap[r.project]||0)+1;});
+                    const entries=Object.entries(projMap).sort((a,b)=>b[1]-a[1]);
+                    const maxVal=entries[0]?.[1]||1;
+                    const SHORT={'Smartworld Sky Arc':'Sky Arc','SMARTWORLD THE EDITION':'Edition','Trump Residences Gurgaon':'Trump','Smartworld Le Courtyard':'Le Courtyard','Smartworld Suites':'Suites','Smartworld Residencies':'Residencies'};
+                    const COLS=[T.teal,T.navy,T.amber,T.red,T.greenL];
+                    return entries.map(([proj,cnt],i)=>(
+                      <div key={i} style={{display:'flex',alignItems:'center',gap:5}}>
+                        <span style={{fontSize:8,color:T.textM,fontWeight:700,width:60,flexShrink:0,textAlign:'right'}}>{SHORT[proj]||proj}</span>
+                        <div style={{flex:1,height:5,background:'rgba(0,100,140,0.1)',borderRadius:3}}>
+                          <div style={{width:`${Math.round((cnt/maxVal)*100)}%`,height:'100%',background:COLS[i%COLS.length],borderRadius:3}}/>
+                        </div>
+                        <span style={{fontSize:9,fontWeight:800,color:COLS[i%COLS.length],width:14,textAlign:'right'}}>{cnt}</span>
+                      </div>
+                    ));
+                  })()}
+                </div>
                 <div style={{position:'absolute',bottom:0,left:0,right:0,height:3,background:`linear-gradient(90deg,${T.teal},transparent)`,borderRadius:'0 0 14px 14px'}}/>
               </GC>
             </div>
