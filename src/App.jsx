@@ -19,7 +19,7 @@ const T = {
   amber:  '#f57c00', amberL:'#ffb300',
   green:  '#2e7d32', greenL:'#43a047',
   gray:   '#546e7a',
-  text:   '#0d2137', textM:'#37474f', textL:'#78909c', textW:'rgba(255,255,255,0.9)',
+  text:   '#0a1628', textM:'#1a2f45', textL:'#2d4a66', textW:'rgba(255,255,255,0.97)',
 };
 const CC = ['#0097a7','#1565c0','#2e7d32','#f57c00','#d32f2f','#6a1b9a','#00838f','#37474f'];
 
@@ -58,15 +58,15 @@ const GC = ({children,style={},cls='',dark=false}) => {
 // ─── SECTION HEADER ──────────────────────────────────────────────────────────
 const SH = ({title,sub,light=false,compact=false}) => (
   <div style={{marginBottom:compact?8:12}}>
-    <p style={{fontSize:compact?10:11,fontWeight:700,color:light?T.textW:T.tealD,letterSpacing:0.4,margin:0,textTransform:'uppercase'}}>{title}</p>
-    {sub&&<p style={{fontSize:9,color:light?'rgba(255,255,255,0.6)':T.textL,margin:'1px 0 0'}}>{sub}</p>}
+    <p style={{fontSize:compact?10:12,fontWeight:800,color:light?T.textW:T.tealD,letterSpacing:0.4,margin:0,textTransform:'uppercase',textShadow:'0 1px 2px rgba(255,255,255,0.6)'}}>{title}</p>
+    {sub&&<p style={{fontSize:10,color:light?'rgba(255,255,255,0.8)':T.textM,margin:'2px 0 0',fontWeight:600}}>{sub}</p>}
   </div>
 );
 
 // ─── FILTER SELECT ────────────────────────────────────────────────────────────
 const FSel = ({label,options,value,onChange}) => (
   <div style={{display:'flex',flexDirection:'column',gap:2}}>
-    <label style={{color:T.textL,fontSize:8,fontWeight:700,letterSpacing:1,textTransform:'uppercase'}}>{label}</label>
+    <label style={{color:T.textM,fontSize:9,fontWeight:800,letterSpacing:1,textTransform:'uppercase'}}>{label}</label>
     <select value={value} onChange={e=>onChange(e.target.value)} style={{
       background:'rgba(255,255,255,0.88)',border:`1px solid ${value?T.teal:'rgba(0,100,140,0.25)'}`,borderRadius:7,
       color:value?T.tealD:T.textM,padding:'5px 10px',fontSize:11,fontFamily:'Inter,sans-serif',
@@ -82,7 +82,7 @@ const FSel = ({label,options,value,onChange}) => (
 const Chip = ({label,value,color=T.teal,small=false}) => (
   <div style={{display:'inline-flex',alignItems:'center',gap:4,background:`${color}18`,border:`1px solid ${color}33`,borderRadius:20,padding:small?'2px 8px':'3px 10px'}}>
     <div style={{width:5,height:5,borderRadius:'50%',background:color,flexShrink:0}}/>
-    <span style={{color:T.textM,fontSize:small?9:10}}>{label}:</span>
+    <span style={{color:T.text,fontSize:small?9:10,fontWeight:700}}>{label}:</span>
     <span style={{color,fontSize:small?9:10,fontWeight:700}}>{value}</span>
   </div>
 );
@@ -159,6 +159,8 @@ export default function App() {
         select option{background:#fff;color:#0d2137}
         .tab{transition:all 0.2s;cursor:pointer}
         .tab:hover{background:rgba(255,255,255,0.5)!important}
+        .card-text{text-shadow:0 1px 3px rgba(255,255,255,0.8)}
+        .kc p,.kc span,.kc div{font-weight:inherit}
       `}</style>
 
       {/* BG overlay — very subtle darkening for readability */}
@@ -172,7 +174,7 @@ export default function App() {
             <div style={{width:36,height:36,borderRadius:9,background:'linear-gradient(135deg,#006978,#00bcd4)',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:18,boxShadow:'0 4px 14px rgba(0,188,212,0.45)',flexShrink:0}}>⬡</div>
             <div>
               <div style={{fontWeight:800,fontSize:15,letterSpacing:0.3,color:T.navy}}>SALES DASHBOARD</div>
-              <div style={{color:T.textL,fontSize:8,letterSpacing:1.5,fontWeight:600}}>SMARTWORLD GROUP · SALES INTELLIGENCE</div>
+              <div style={{color:T.textM,fontSize:9,letterSpacing:1.5,fontWeight:700}}>SMARTWORLD GROUP · SALES INTELLIGENCE</div>
             </div>
           </div>
 
@@ -182,7 +184,7 @@ export default function App() {
               <button key={t.k} className="tab" onClick={()=>setTab(t.k)} style={{
                 background:tab===t.k?'rgba(255,255,255,0.95)':'transparent',
                 border:'none',borderRadius:7,padding:'6px 16px',fontSize:11,fontWeight:tab===t.k?700:500,
-                color:tab===t.k?T.tealD:T.textM,cursor:'pointer',fontFamily:'Inter,sans-serif',
+                color:tab===t.k?T.tealD:T.text,cursor:'pointer',fontFamily:'Inter,sans-serif',fontWeight:tab===t.k?800:600,
                 boxShadow:tab===t.k?'0 2px 8px rgba(0,80,120,0.12)':'none',
               }}>{t.l}</button>
             ))}
@@ -195,7 +197,7 @@ export default function App() {
               <div style={{width:6,height:6,borderRadius:'50%',background:T.greenL,animation:'pulse 2s ease infinite'}}/>
               <span style={{color:T.green,fontSize:9,fontWeight:700}}>LIVE</span>
             </div>
-            <span style={{color:T.textL,fontSize:10,fontWeight:500}}>{new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})}</span>
+            <span style={{color:T.textM,fontSize:10,fontWeight:700}}>{new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})}</span>
           </div>
         </div>
 
@@ -262,7 +264,7 @@ export default function App() {
               <GC style={{padding:14}} cls="kc">
                 <SH title="Total Sales" compact/>
                 <p style={{fontSize:18,fontWeight:800,color:T.navy,margin:'4px 0 2px',letterSpacing:-0.5}}>{fmtCr(kpi.totalSales)}</p>
-                <p style={{color:T.textL,fontSize:9,margin:0}}>Net BSP · {kpi.activeBookings} Active</p>
+                <p style={{color:T.textM,fontSize:10,margin:0,fontWeight:600}}>Net BSP · {kpi.activeBookings} Active</p>
                 <div style={{position:'absolute',bottom:0,left:0,right:0,height:3,background:`linear-gradient(90deg,${T.navy},transparent)`,borderRadius:'0 0 14px 14px'}}/>
               </GC>
 
@@ -270,7 +272,7 @@ export default function App() {
               <GC style={{padding:14}} cls="kc">
                 <SH title="Demand (DAPP)" compact/>
                 <p style={{fontSize:18,fontWeight:800,color:T.amber,margin:'4px 0 2px',letterSpacing:-0.5}}>{fmtCr(kpi.dappDemand)}</p>
-                <p style={{color:T.textL,fontSize:9,margin:0}}>Demands Raised</p>
+                <p style={{color:T.textM,fontSize:10,margin:0,fontWeight:600}}>Demands Raised</p>
                 <div style={{position:'absolute',bottom:0,left:0,right:0,height:3,background:`linear-gradient(90deg,${T.amber},transparent)`,borderRadius:'0 0 14px 14px'}}/>
               </GC>
 
@@ -278,7 +280,7 @@ export default function App() {
               <GC style={{padding:14}} cls="kc">
                 <SH title="Received (DAPP)" compact/>
                 <p style={{fontSize:18,fontWeight:800,color:T.teal,margin:'4px 0 2px',letterSpacing:-0.5}}>{fmtCr(kpi.dappReceived)}</p>
-                <p style={{color:T.textL,fontSize:9,margin:0}}>Collections to date</p>
+                <p style={{color:T.textM,fontSize:10,margin:0,fontWeight:600}}>Collections to date</p>
                 <div style={{position:'absolute',bottom:0,left:0,right:0,height:3,background:`linear-gradient(90deg,${T.teal},transparent)`,borderRadius:'0 0 14px 14px'}}/>
               </GC>
 
@@ -308,7 +310,7 @@ export default function App() {
               <GC style={{padding:14}} cls="kc">
                 <SH title="Pipeline" compact/>
                 <p style={{fontSize:28,fontWeight:900,color:T.tealD,margin:'2px 0',letterSpacing:-1}}>{kpi.pipelineBookings}</p>
-                <p style={{color:T.textL,fontSize:9,margin:0}}>Pending Workflow</p>
+                <p style={{color:T.textM,fontSize:10,margin:0,fontWeight:600}}>Pending Workflow</p>
                 <div style={{position:'absolute',bottom:0,left:0,right:0,height:3,background:`linear-gradient(90deg,${T.teal},transparent)`,borderRadius:'0 0 14px 14px'}}/>
               </GC>
 
@@ -345,11 +347,11 @@ export default function App() {
                         <linearGradient key={id} id={id} x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor={c} stopOpacity={0.25}/><stop offset="95%" stopColor={c} stopOpacity={0}/></linearGradient>
                       ))}
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,80,120,0.1)" vertical={false}/>
-                    <XAxis dataKey="label" tick={{fill:T.textL,fontSize:8}} axisLine={false} tickLine={false} interval="preserveStartEnd" angle={-25} dy={6}/>
-                    <YAxis tick={{fill:T.textL,fontSize:8}} axisLine={false} tickLine={false} tickFormatter={v=>`${v}Cr`} width={32}/>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.2)" vertical={false}/>
+                    <XAxis dataKey="label" tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false} interval="preserveStartEnd" angle={-25} dy={6}/>
+                    <YAxis tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false} tickFormatter={v=>`${v}Cr`} width={32}/>
                     <Tooltip content={<CTip fmt={v=>`₹${v} Cr`}/>}/>
-                    <Legend wrapperStyle={{color:T.textM,fontSize:9}} iconSize={7}/>
+                    <Legend wrapperStyle={{color:T.text,fontSize:10,fontWeight:700}} iconSize={8}/>
                     <Area type="monotone" dataKey="bspCr"  name="Sales(BSP)"  stroke={T.teal}   fill="url(#a1)" strokeWidth={2} dot={false} activeDot={{r:3}}/>
                     <Area type="monotone" dataKey="demCr"  name="Demand"      stroke={T.amber}  fill="url(#a2)" strokeWidth={2} dot={false} activeDot={{r:3}}/>
                     <Area type="monotone" dataKey="recCr"  name="Received"    stroke={T.greenL} fill="url(#a3)" strokeWidth={2} dot={false} activeDot={{r:3}}/>
@@ -387,8 +389,8 @@ export default function App() {
                                   <span style={{fontSize:10,fontWeight:800,color:CC[i%CC.length]}}>{p}%</span>
                                 </div>
                                 <div style={{display:'flex',justifyContent:'space-between'}}>
-                                  <span style={{fontSize:9,color:T.textL}}>{d.units} units</span>
-                                  <span style={{fontSize:9,color:T.textL}}>₹{d.bspCr}Cr</span>
+                                  <span style={{fontSize:9,color:T.textM,fontWeight:700}}>{d.units} units</span>
+                                  <span style={{fontSize:9,color:T.textM,fontWeight:700}}>₹{d.bspCr}Cr</span>
                                 </div>
                                 <div style={{width:'100%',height:3,background:'rgba(0,100,140,0.1)',borderRadius:2,marginTop:1}}>
                                   <div style={{width:`${p}%`,height:'100%',background:CC[i%CC.length],borderRadius:2,opacity:0.8}}/>
@@ -407,9 +409,9 @@ export default function App() {
                 <SH title="Product-wise" sub="BHK Unit Distribution"/>
                 <ResponsiveContainer width="100%" height={200}>
                   <BarChart data={bhkS} layout="vertical" margin={{top:5,right:10,bottom:5,left:0}}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,80,120,0.1)" horizontal={false}/>
-                    <XAxis type="number" tick={{fill:T.textL,fontSize:8}} axisLine={false} tickLine={false}/>
-                    <YAxis type="category" dataKey="bhk" tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={80}/>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.2)" horizontal={false}/>
+                    <XAxis type="number" tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false}/>
+                    <YAxis type="category" dataKey="bhk" tick={{fill:T.text,fontSize:10,fontWeight:700}} axisLine={false} tickLine={false} width={85}/>
                     <Tooltip content={<CTip/>}/>
                     <Bar dataKey="units" name="Units" radius={[0,4,4,0]}>
                       {bhkS.map((_,i)=><Cell key={i} fill={CC[i%CC.length]}/>)}
@@ -426,9 +428,9 @@ export default function App() {
                 <SH title="Top CP-10" sub="Channel Partners by Units Booked"/>
                 <ResponsiveContainer width="100%" height={185}>
                   <BarChart data={topCP} layout="vertical" margin={{top:0,right:20,bottom:0,left:0}}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,80,120,0.1)" horizontal={false}/>
-                    <XAxis type="number" tick={{fill:T.textL,fontSize:8}} axisLine={false} tickLine={false}/>
-                    <YAxis type="category" dataKey="name" tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={140} tickFormatter={v=>v?.length>20?v.slice(0,20)+'…':v}/>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.2)" horizontal={false}/>
+                    <XAxis type="number" tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false}/>
+                    <YAxis type="category" dataKey="name" tick={{fill:T.text,fontSize:10,fontWeight:700}} axisLine={false} tickLine={false} width={145} tickFormatter={v=>v?.length>20?v.slice(0,20)+'…':v}/>
                     <Tooltip content={<CTip fmt={(v,n)=>n==='bspCr'?`₹${v} Cr`:v?.toLocaleString?.('en-IN')}/>}/>
                     <Bar dataKey="units" name="Units" radius={[0,4,4,0]}>
                       {topCP.map((_,i)=><Cell key={i} fill={CC[i%CC.length]}/>)}
@@ -441,11 +443,11 @@ export default function App() {
                 <SH title="Booking vs. Cancelled" sub="Monthly Comparison"/>
                 <ResponsiveContainer width="100%" height={185}>
                   <BarChart data={bvc.slice(-18)} margin={{top:5,right:8,bottom:18,left:0}}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,80,120,0.1)" vertical={false}/>
-                    <XAxis dataKey="label" tick={{fill:T.textL,fontSize:8}} axisLine={false} tickLine={false} angle={-25} dy={6} interval="preserveStartEnd"/>
-                    <YAxis tick={{fill:T.textL,fontSize:8}} axisLine={false} tickLine={false} width={24}/>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.2)" vertical={false}/>
+                    <XAxis dataKey="label" tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false} angle={-25} dy={6} interval="preserveStartEnd"/>
+                    <YAxis tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false} width={24}/>
                     <Tooltip content={<CTip/>}/>
-                    <Legend wrapperStyle={{color:T.textM,fontSize:9}} iconSize={7}/>
+                    <Legend wrapperStyle={{color:T.text,fontSize:10,fontWeight:700}} iconSize={8}/>
                     <Bar dataKey="booked"    name="Booked"    fill={T.teal}  radius={[2,2,0,0]} fillOpacity={0.85}/>
                     <Bar dataKey="cancelled" name="Cancelled" fill={T.red}   radius={[2,2,0,0]} fillOpacity={0.8}/>
                   </BarChart>
@@ -471,7 +473,7 @@ export default function App() {
                 {l:'Total Sales (PDRN)',v:fmtCr(kpi.totalSales),c:T.navy},
               ].map((d,i)=>(
                 <GC key={i} style={{padding:14}} cls="kc">
-                  <p style={{color:T.textL,fontSize:9,fontWeight:700,textTransform:'uppercase',letterSpacing:0.5,margin:'0 0 4px'}}>{d.l}</p>
+                  <p style={{color:T.textM,fontSize:9,fontWeight:800,textTransform:'uppercase',letterSpacing:0.5,margin:'0 0 4px'}}>{d.l}</p>
                   <p style={{fontSize:20,fontWeight:900,color:d.c,margin:0,letterSpacing:-0.5}}>{d.v}</p>
                   <div style={{position:'absolute',bottom:0,left:0,right:0,height:3,background:`linear-gradient(90deg,${d.c},transparent)`,borderRadius:'0 0 14px 14px'}}/>
                 </GC>
@@ -484,11 +486,11 @@ export default function App() {
                 <SH title="DAPP Monthly — Demand vs. Collection" sub="₹ Crores"/>
                 <ResponsiveContainer width="100%" height={230}>
                   <BarChart data={dappLast12} margin={{top:5,right:8,bottom:18,left:0}}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,80,120,0.1)" vertical={false}/>
-                    <XAxis dataKey="label" tick={{fill:T.textL,fontSize:8}} axisLine={false} tickLine={false} angle={-25} dy={6} interval="preserveStartEnd"/>
-                    <YAxis tick={{fill:T.textL,fontSize:8}} axisLine={false} tickLine={false} tickFormatter={v=>`${v}Cr`} width={30}/>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.2)" vertical={false}/>
+                    <XAxis dataKey="label" tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false} angle={-25} dy={6} interval="preserveStartEnd"/>
+                    <YAxis tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false} tickFormatter={v=>`${v}Cr`} width={30}/>
                     <Tooltip content={<CTip fmt={v=>`₹${v} Cr`}/>}/>
-                    <Legend wrapperStyle={{color:T.textM,fontSize:9}} iconSize={7}/>
+                    <Legend wrapperStyle={{color:T.text,fontSize:10,fontWeight:700}} iconSize={8}/>
                     <Bar dataKey="demCr"  name="Demand"      fill={T.amber}  radius={[3,3,0,0]} fillOpacity={0.85}/>
                     <Bar dataKey="recCr"  name="Received"    fill={T.teal}   radius={[3,3,0,0]} fillOpacity={0.85}/>
                     <Bar dataKey="outCr"  name="Outstanding" fill={T.red}    radius={[3,3,0,0]} fillOpacity={0.75}/>
@@ -500,11 +502,11 @@ export default function App() {
                 <SH title="DAPP Collection by Project" sub="₹ Crores"/>
                 <ResponsiveContainer width="100%" height={230}>
                   <BarChart data={dappByP} margin={{top:5,right:8,bottom:0,left:0}}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,80,120,0.1)" vertical={false}/>
-                    <XAxis dataKey="name" tick={{fill:T.textL,fontSize:9}} axisLine={false} tickLine={false} tickFormatter={v=>v?.split(' ').pop()}/>
-                    <YAxis tick={{fill:T.textL,fontSize:8}} axisLine={false} tickLine={false} tickFormatter={v=>`${v}Cr`} width={30}/>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.2)" vertical={false}/>
+                    <XAxis dataKey="name" tick={{fill:T.textM,fontSize:10,fontWeight:600}} axisLine={false} tickLine={false} tickFormatter={v=>v?.split(' ').pop()}/>
+                    <YAxis tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false} tickFormatter={v=>`${v}Cr`} width={30}/>
                     <Tooltip content={<CTip fmt={v=>`₹${v} Cr`}/>}/>
-                    <Legend wrapperStyle={{color:T.textM,fontSize:9}} iconSize={7}/>
+                    <Legend wrapperStyle={{color:T.text,fontSize:10,fontWeight:700}} iconSize={8}/>
                     <Bar dataKey="demCr"  name="Demand"      fill={T.amber} radius={[3,3,0,0]} fillOpacity={0.85}/>
                     <Bar dataKey="recCr"  name="Received"    fill={T.teal}  radius={[3,3,0,0]} fillOpacity={0.85}/>
                     <Bar dataKey="outCr"  name="Outstanding" fill={T.red}   radius={[3,3,0,0]} fillOpacity={0.75}/>
@@ -523,7 +525,7 @@ export default function App() {
                   return(
                     <div key={i} style={{padding:'14px 16px',background:'rgba(255,255,255,0.40)',borderRadius:12,border:'1px solid rgba(255,255,255,0.7)',boxShadow:'0 2px 12px rgba(0,80,120,0.08)'}}>
                       <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:6}}>
-                        <span style={{fontSize:11,fontWeight:700,color:T.navy,maxWidth:'70%',lineHeight:1.3}}>{d.name}</span>
+                        <span style={{fontSize:12,fontWeight:800,color:T.navy,maxWidth:'70%',lineHeight:1.3}}>{d.name}</span>
                         <span style={{fontSize:13,fontWeight:900,color:col,letterSpacing:-0.5}}>{p}%</span>
                       </div>
                       <div style={{marginBottom:8}}>
@@ -537,11 +539,11 @@ export default function App() {
                       </div>
                       <div style={{display:'flex',justifyContent:'space-between',paddingTop:6,borderTop:'1px solid rgba(0,100,140,0.08)'}}>
                         <div>
-                          <p style={{fontSize:8,color:T.textL,margin:'0 0 1px',fontWeight:600}}>RECEIVED</p>
+                          <p style={{fontSize:9,color:T.textM,margin:'0 0 1px',fontWeight:800}}>RECEIVED</p>
                           <p style={{fontSize:11,color:T.tealD,fontWeight:700,margin:0}}>₹{d.recCr}Cr</p>
                         </div>
                         <div style={{textAlign:'right'}}>
-                          <p style={{fontSize:8,color:T.textL,margin:'0 0 1px',fontWeight:600}}>OUTSTANDING</p>
+                          <p style={{fontSize:9,color:T.textM,margin:'0 0 1px',fontWeight:800}}>OUTSTANDING</p>
                           <p style={{fontSize:11,color:d.outCr>0?T.red:T.greenL,fontWeight:700,margin:0}}>₹{d.outCr}Cr</p>
                         </div>
                       </div>
@@ -593,7 +595,7 @@ export default function App() {
                 <table style={{width:'100%',borderCollapse:'collapse',fontSize:11}}>
                   <thead><tr style={{borderBottom:`2px solid rgba(0,151,167,0.2)`}}>
                     {['Customer','Project','Unit','BHK','BSP','Demand','Received','Balance','Funding','Broker','Date'].map(h=>(
-                      <th key={h} style={{padding:'6px 10px',textAlign:'left',color:T.textL,fontSize:9,fontWeight:700,letterSpacing:0.5,whiteSpace:'nowrap',textTransform:'uppercase'}}>{h}</th>
+                      <th key={h} style={{padding:'6px 10px',textAlign:'left',color:T.textM,fontSize:10,fontWeight:800,letterSpacing:0.5,whiteSpace:'nowrap',textTransform:'uppercase'}}>{h}</th>
                     ))}
                   </tr></thead>
                   <tbody>{openBkg.map((b,i)=>{
@@ -617,8 +619,8 @@ export default function App() {
                           </div>
                         </td>
                         <td style={{padding:'7px 10px'}}><Badge label={b.loanStatus==='BANK FUNDED'?'🏦 Bank':'💼 Self'} color={b.loanStatus==='BANK FUNDED'?T.teal:T.navyM}/></td>
-                        <td style={{padding:'7px 10px',color:T.textL,fontSize:10,maxWidth:120}}>{b.broker||'—'}</td>
-                        <td style={{padding:'7px 10px',color:T.textL,fontSize:10,whiteSpace:'nowrap'}}>{b.bookingDate}</td>
+                        <td style={{padding:'7px 10px',color:T.textM,fontSize:10,fontWeight:600,maxWidth:120}}>{b.broker||'—'}</td>
+                        <td style={{padding:'7px 10px',color:T.textM,fontSize:10,fontWeight:600,whiteSpace:'nowrap'}}>{b.bookingDate}</td>
                       </tr>
                     );
                   })}</tbody>
@@ -634,7 +636,7 @@ export default function App() {
                   <table style={{width:'100%',borderCollapse:'collapse',fontSize:11}}>
                     <thead><tr style={{borderBottom:`2px solid rgba(0,151,167,0.2)`}}>
                       {['Unit','Customer','Project','Company','L1 Status','L2 Status'].map(h=>(
-                        <th key={h} style={{padding:'6px 10px',textAlign:'left',color:T.textL,fontSize:9,fontWeight:700,letterSpacing:0.5,whiteSpace:'nowrap',textTransform:'uppercase'}}>{h}</th>
+                        <th key={h} style={{padding:'6px 10px',textAlign:'left',color:T.textM,fontSize:10,fontWeight:800,letterSpacing:0.5,whiteSpace:'nowrap',textTransform:'uppercase'}}>{h}</th>
                       ))}
                     </tr></thead>
                     <tbody>{pendingWF.map((r,i)=>(
@@ -662,7 +664,7 @@ export default function App() {
             <Chip label="Demand"   value={fmtCr(kpi.dappDemand)} color={T.amber} small/>
             <Chip label="Workflow" value={`${kpi.wfApproved} approved`} color={T.greenL} small/>
           </div>
-          <div style={{display:'flex',flexDirection:'column',alignItems:'flex-end',gap:1}}><span style={{color:T.textL,fontSize:9,fontWeight:600,letterSpacing:1}}>SKYARC NEXUS v2.0 · SMARTWORLD GROUP</span><span style={{color:T.tealD,fontSize:9,fontWeight:700,letterSpacing:0.5}}>✦ Created &amp; Developed by ANIRUDH VERMA</span></div>
+          <div style={{display:'flex',flexDirection:'column',alignItems:'flex-end',gap:1}}><span style={{color:T.text,fontSize:9,fontWeight:700,letterSpacing:1}}>SKYARC NEXUS v2.0 · SMARTWORLD GROUP</span><span style={{color:T.tealD,fontSize:9,fontWeight:700,letterSpacing:0.5}}>✦ Created &amp; Developed by ANIRUDH VERMA</span></div>
         </div>
       </div>
     </div>
