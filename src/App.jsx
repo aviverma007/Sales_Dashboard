@@ -7,10 +7,10 @@ import {
 
 // ─── THEME ────────────────────────────────────────────────────────────────────
 const T = {
-  glass:      'rgba(255,255,255,0.78)',
-  glassH:     'rgba(255,255,255,0.92)',
-  glassDark:  'rgba(15,35,60,0.82)',
-  glassDarkH: 'rgba(15,35,60,0.92)',
+  glass:      'rgba(255,255,255,0.45)',
+  glassH:     'rgba(255,255,255,0.60)',
+  glassDark:  'rgba(15,35,60,0.72)',
+  glassDarkH: 'rgba(15,35,60,0.82)',
   border:     'rgba(255,255,255,0.85)',
   borderB:    'rgba(255,255,255,0.2)',
   teal:   '#0097a7', tealL:'#00bcd4', tealD:'#006978',
@@ -44,7 +44,7 @@ const GC = ({children,style={},cls='',dark=false}) => {
   return (
     <div className={cls} onMouseEnter={()=>sH(true)} onMouseLeave={()=>sH(false)} style={{
       background: dark?(h?T.glassDarkH:T.glassDark):(h?T.glassH:T.glass),
-      backdropFilter:'blur(18px) saturate(160%)', WebkitBackdropFilter:'blur(18px) saturate(160%)',
+      backdropFilter:'blur(10px) saturate(140%)', WebkitBackdropFilter:'blur(10px) saturate(140%)',
       border:`1px solid ${dark?T.borderB:T.border}`,
       borderRadius:14, boxShadow: dark?'0 8px 32px rgba(0,0,0,0.35)':'0 4px 24px rgba(0,80,120,0.12)',
       transition:'all 0.25s ease', position:'relative', overflow:'hidden', ...style
@@ -165,13 +165,13 @@ export default function App() {
       <div style={{position:'fixed',inset:0,background:'rgba(0,20,40,0.25)',pointerEvents:'none',zIndex:0}}/>
 
       {/* ── HEADER ── */}
-      <header style={{position:'sticky',top:0,zIndex:200,background:'rgba(255,255,255,0.82)',backdropFilter:'blur(24px)',WebkitBackdropFilter:'blur(24px)',borderBottom:'1px solid rgba(255,255,255,0.9)',boxShadow:'0 2px 20px rgba(0,60,100,0.12)'}}>
+      <header style={{position:'sticky',top:0,zIndex:200,background:'rgba(255,255,255,0.75)',backdropFilter:'blur(16px)',WebkitBackdropFilter:'blur(24px)',borderBottom:'1px solid rgba(255,255,255,0.9)',boxShadow:'0 2px 20px rgba(0,60,100,0.12)'}}>
         <div style={{maxWidth:1440,margin:'0 auto',padding:'0 24px',display:'flex',alignItems:'center',justifyContent:'space-between',height:54}}>
           {/* Logo */}
           <div style={{display:'flex',alignItems:'center',gap:12}}>
             <div style={{width:36,height:36,borderRadius:9,background:'linear-gradient(135deg,#006978,#00bcd4)',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:18,boxShadow:'0 4px 14px rgba(0,188,212,0.45)',flexShrink:0}}>⬡</div>
             <div>
-              <div style={{fontWeight:800,fontSize:15,letterSpacing:0.3,color:T.navy}}>SKYARC NEXUS</div>
+              <div style={{fontWeight:800,fontSize:15,letterSpacing:0.3,color:T.navy}}>SALES DASHBOARD</div>
               <div style={{color:T.textL,fontSize:8,letterSpacing:1.5,fontWeight:600}}>SMARTWORLD GROUP · SALES INTELLIGENCE</div>
             </div>
           </div>
@@ -521,7 +521,7 @@ export default function App() {
                   const p=d.demCr>0?Math.min(Math.round((d.recCr/d.demCr)*100),100):0;
                   const col=p>=100?T.teal:p>80?T.tealD:p>50?T.amber:T.red;
                   return(
-                    <div key={i} style={{padding:'14px 16px',background:'rgba(255,255,255,0.55)',borderRadius:12,border:'1px solid rgba(255,255,255,0.9)',boxShadow:'0 2px 12px rgba(0,80,120,0.08)'}}>
+                    <div key={i} style={{padding:'14px 16px',background:'rgba(255,255,255,0.40)',borderRadius:12,border:'1px solid rgba(255,255,255,0.7)',boxShadow:'0 2px 12px rgba(0,80,120,0.08)'}}>
                       <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:6}}>
                         <span style={{fontSize:11,fontWeight:700,color:T.navy,maxWidth:'70%',lineHeight:1.3}}>{d.name}</span>
                         <span style={{fontSize:13,fontWeight:900,color:col,letterSpacing:-0.5}}>{p}%</span>
@@ -655,14 +655,14 @@ export default function App() {
         )}
 
         {/* FOOTER */}
-        <div style={{marginTop:16,display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:8,background:'rgba(255,255,255,0.75)',backdropFilter:'blur(12px)',WebkitBackdropFilter:'blur(12px)',borderRadius:12,padding:'8px 16px',border:'1px solid rgba(255,255,255,0.9)'}}>
+        <div style={{marginTop:16,display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:8,background:'rgba(255,255,255,0.50)',backdropFilter:'blur(8px)',WebkitBackdropFilter:'blur(8px)',borderRadius:12,padding:'8px 16px',border:'1px solid rgba(255,255,255,0.9)'}}>
           <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
             <Chip label="Units"    value={kpi.totalUnits?.toLocaleString('en-IN')} color={T.teal} small/>
             <Chip label="Active"   value={kpi.activeBookings?.toLocaleString('en-IN')} color={T.navy} small/>
             <Chip label="Demand"   value={fmtCr(kpi.dappDemand)} color={T.amber} small/>
             <Chip label="Workflow" value={`${kpi.wfApproved} approved`} color={T.greenL} small/>
           </div>
-          <span style={{color:T.textL,fontSize:9,fontWeight:600,letterSpacing:1}}>SKYARC NEXUS v2.0 · SMARTWORLD GROUP</span>
+          <div style={{display:'flex',flexDirection:'column',alignItems:'flex-end',gap:1}}><span style={{color:T.textL,fontSize:9,fontWeight:600,letterSpacing:1}}>SKYARC NEXUS v2.0 · SMARTWORLD GROUP</span><span style={{color:T.tealD,fontSize:9,fontWeight:700,letterSpacing:0.5}}>✦ Created &amp; Developed by ANIRUDH VERMA</span></div>
         </div>
       </div>
     </div>
