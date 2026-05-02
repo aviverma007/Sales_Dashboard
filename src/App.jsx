@@ -515,22 +515,35 @@ export default function App() {
 
             {/* Outstanding collection progress per project */}
             <GC style={{padding:16}}>
-              <SH title="Collection Progress by Project"/>
+              <SH title="Collection Progress by Project" sub="Total Demand · Received · Outstanding"/>
               <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(240px,1fr))',gap:12}}>
                 {dappByP.map((d,i)=>{
-                  const p=d.demCr>0?Math.round((d.recCr/d.demCr)*100):0;
+                  const p=d.demCr>0?Math.min(Math.round((d.recCr/d.demCr)*100),100):0;
+                  const col=p>=100?T.teal:p>80?T.tealD:p>50?T.amber:T.red;
                   return(
-                    <div key={i} style={{padding:'12px 14px',background:'rgba(255,255,255,0.5)',borderRadius:10,border:'1px solid rgba(255,255,255,0.8)'}}>
-                      <div style={{display:'flex',justifyContent:'space-between',marginBottom:8}}>
-                        <span style={{fontSize:11,fontWeight:700,color:T.textDark||T.navy}}>{d.name}</span>
-                        <span style={{fontSize:11,fontWeight:700,color:p>80?T.tealD:p>50?T.amber:T.red}}>{p}%</span>
+                    <div key={i} style={{padding:'14px 16px',background:'rgba(255,255,255,0.55)',borderRadius:12,border:'1px solid rgba(255,255,255,0.9)',boxShadow:'0 2px 12px rgba(0,80,120,0.08)'}}>
+                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:6}}>
+                        <span style={{fontSize:11,fontWeight:700,color:T.navy,maxWidth:'70%',lineHeight:1.3}}>{d.name}</span>
+                        <span style={{fontSize:13,fontWeight:900,color:col,letterSpacing:-0.5}}>{p}%</span>
                       </div>
-                      <div style={{width:'100%',height:6,background:'rgba(0,100,140,0.1)',borderRadius:3}}>
-                        <div style={{width:`${p}%`,height:'100%',background:`linear-gradient(90deg,${p>80?T.teal:p>50?T.amber:T.red},${p>80?T.greenL:T.amberL})`,borderRadius:3,transition:'width 0.5s ease'}}/>
+                      <div style={{marginBottom:8}}>
+                        <div style={{display:'flex',justifyContent:'space-between',marginBottom:3}}>
+                          <span style={{fontSize:9,color:T.textL,fontWeight:600}}>TOTAL DEMAND</span>
+                          <span style={{fontSize:11,fontWeight:800,color:T.navy}}>₹{d.demCr}Cr</span>
+                        </div>
+                        <div style={{width:'100%',height:7,background:'rgba(0,100,140,0.1)',borderRadius:4}}>
+                          <div style={{width:`${Math.min(p,100)}%`,height:'100%',background:`linear-gradient(90deg,${col},${p>=100?T.greenL:p>80?T.tealL:p>50?T.amberL:T.redL})`,borderRadius:4,transition:'width 0.5s ease'}}/>
+                        </div>
                       </div>
-                      <div style={{display:'flex',justifyContent:'space-between',marginTop:6}}>
-                        <span style={{fontSize:10,color:T.tealD,fontWeight:600}}>Rcvd: ₹{d.recCr}Cr</span>
-                        <span style={{fontSize:10,color:T.red,fontWeight:600}}>Out: ₹{d.outCr}Cr</span>
+                      <div style={{display:'flex',justifyContent:'space-between',paddingTop:6,borderTop:'1px solid rgba(0,100,140,0.08)'}}>
+                        <div>
+                          <p style={{fontSize:8,color:T.textL,margin:'0 0 1px',fontWeight:600}}>RECEIVED</p>
+                          <p style={{fontSize:11,color:T.tealD,fontWeight:700,margin:0}}>₹{d.recCr}Cr</p>
+                        </div>
+                        <div style={{textAlign:'right'}}>
+                          <p style={{fontSize:8,color:T.textL,margin:'0 0 1px',fontWeight:600}}>OUTSTANDING</p>
+                          <p style={{fontSize:11,color:d.outCr>0?T.red:T.greenL,fontWeight:700,margin:0}}>₹{d.outCr}Cr</p>
+                        </div>
                       </div>
                     </div>
                   );
