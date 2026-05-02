@@ -815,15 +815,20 @@ export default function App() {
   }}
 >
   <div style={{ fontWeight: 500 }}>
-    © {new Date().getFullYear()} Sales Dashboard — All Rights Reserved
-  </div>
+  © {new Date().getFullYear()} Sales Dashboard — All Rights Reserved
+  {' '} | {new Date().toLocaleDateString('en-IN',{
+    year:'numeric',
+    month:'long',
+    day:'numeric'
+  })}
+</div>
 
-  <div style={{ fontSize: 12, color: '#6b7a90' }}>
-    Designed & Developed by{' '}
-    <span style={{ color: '#2b6cb0', fontWeight: 500 }}>
-      Anirudh Verma
-    </span>
-  </div>
+<div style={{ fontSize: 12, color: '#6b7a90' }}>
+  Designed & Developed by{' '}
+  <span style={{ color: '#2b6cb0', fontWeight: 500 }}>
+    Anirudh Verma
+  </span>
+</div>
 </footer>
       </div>
     </div>
