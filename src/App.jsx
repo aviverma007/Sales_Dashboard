@@ -190,11 +190,7 @@ export default function App() {
 
           {/* Right */}
           <div style={{display:'flex',alignItems:'center',gap:14}}>
-            <div style={{display:'flex',gap:6}}>
-              {[['INVR',T.teal],['PDRN',T.navy],['DAPP',T.amber],['WF',T.green]].map(([l,c])=>(
-                <span key={l} style={{padding:'2px 8px',borderRadius:10,fontSize:9,fontWeight:700,background:`${c}15`,border:`1px solid ${c}33`,color:c}}>{l}</span>
-              ))}
-            </div>
+
             <div style={{display:'flex',alignItems:'center',gap:5,background:'rgba(46,125,50,0.1)',border:'1px solid rgba(46,125,50,0.3)',borderRadius:16,padding:'3px 10px'}}>
               <div style={{width:6,height:6,borderRadius:'50%',background:T.greenL,animation:'pulse 2s ease infinite'}}/>
               <span style={{color:T.green,fontSize:9,fontWeight:700}}>LIVE</span>
@@ -646,14 +642,14 @@ export default function App() {
         )}
 
         {/* FOOTER */}
-        <div style={{marginTop:16,display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:8}}>
+        <div style={{marginTop:16,display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:8,background:'rgba(255,255,255,0.75)',backdropFilter:'blur(12px)',WebkitBackdropFilter:'blur(12px)',borderRadius:12,padding:'8px 16px',border:'1px solid rgba(255,255,255,0.9)'}}>
           <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
             <Chip label="Units"    value={kpi.totalUnits?.toLocaleString('en-IN')} color={T.teal} small/>
             <Chip label="Active"   value={kpi.activeBookings?.toLocaleString('en-IN')} color={T.navy} small/>
             <Chip label="Demand"   value={fmtCr(kpi.dappDemand)} color={T.amber} small/>
             <Chip label="Workflow" value={`${kpi.wfApproved} approved`} color={T.greenL} small/>
           </div>
-          <span style={{color:'rgba(255,255,255,0.55)',fontSize:9,fontWeight:600,letterSpacing:1,textShadow:'0 1px 4px rgba(0,0,0,0.4)'}}>SKYARC NEXUS v2.0 · SMARTWORLD GROUP</span>
+          <span style={{color:T.textL,fontSize:9,fontWeight:600,letterSpacing:1}}>SKYARC NEXUS v2.0 · SMARTWORLD GROUP</span>
         </div>
       </div>
     </div>
