@@ -546,6 +546,160 @@ export default function App() {
                 })}
               </div>
             </GC>
+
+            {/* ── UPCOMING DEMANDS ── */}
+            <GC style={{padding:18}}>
+              <SH title="Upcoming Demands" sub="Future due dates from DAPP · by Milestone"/>
+              {(()=>{
+                const ud = raw?.upcomingDemands || {};
+                const detail = ud.detail || [];
+                const buckets = ud.bucketSummary || [];
+                const BUCKET_COLORS = {'0–30 Days':T.red,'31–60 Days':T.orange,'61–90 Days':T.amber,'91–180 Days':T.teal,'181–365 Days':T.navy,'1+ Year':T.gray};
+                // filter by current project/company filters
+                const filtered = detail.filter(r=>{
+                  if(filters.company && r.company!==filters.company) return false;
+                  if(filters.project && r.project!==filters.project) return false;
+                  return true;
+                });
+                if(filtered.length===0) return (
+                  <div style={{textAlign:'center',padding:'24px 0',color:T.textM}}>
+                    <p style={{fontSize:32,margin:'0 0 8px'}}>✅</p>
+                    <p style={{fontWeight:700,fontSize:14}}>No upcoming demands in selected period</p>
+                    <p style={{fontSize:11,color:T.textL}}>All future demands are beyond current horizon</p>
+                  </div>
+                );
+                return (
+                  <div>
+                    {/* Bucket KPI chips */}
+                    <div style={{display:'flex',gap:10,flexWrap:'wrap',marginBottom:16}}>
+                      {buckets.map((b,i)=>(
+                        <div key={i} style={{padding:'8px 14px',borderRadius:10,background:`${BUCKET_COLORS[b.bucket]||T.teal}15`,border:`1.5px solid ${BUCKET_COLORS[b.bucket]||T.teal}44`}}>
+                          <p style={{fontSize:9,fontWeight:800,color:BUCKET_COLORS[b.bucket]||T.teal,margin:'0 0 2px',textTransform:'uppercase',letterSpacing:0.5}}>{b.bucket}</p>
+                          <p style={{fontSize:15,fontWeight:900,color:T.navy,margin:'0 0 1px',letterSpacing:-0.5}}>{b.rows} <span style={{fontSize:10,fontWeight:600,color:T.textM}}>demands</span></p>
+                          <p style={{fontSize:11,fontWeight:700,color:BUCKET_COLORS[b.bucket]||T.teal,margin:0}}>₹{b.demandCr}Cr</p>
+                        </div>
+                      ))}
+                    </div>
+                    {/* Detail table */}
+                    <div style={{overflowX:'auto'}}>
+                      <table style={{width:'100%',borderCollapse:'collapse',fontSize:11}}>
+                        <thead><tr style={{borderBottom:`2px solid rgba(0,151,167,0.2)`}}>
+                          {['Due Date','Days Away','Project','Unit','Customer','Milestone','Demand','Outstanding','Status'].map(h=>(
+                            <th key={h} style={{padding:'7px 10px',textAlign:'left',color:T.textM,fontSize:9,fontWeight:800,letterSpacing:0.5,whiteSpace:'nowrap',textTransform:'uppercase'}}>{h}</th>
+                          ))}
+                        </tr></thead>
+                        <tbody>{filtered.map((r,i)=>{
+                          const col = BUCKET_COLORS[r.Bucket]||T.teal;
+                          return(
+                            <tr key={i} className="tr" style={{borderBottom:`1px solid rgba(0,100,140,0.1)`}}>
+                              <td style={{padding:'8px 10px',color:T.navy,fontWeight:700,whiteSpace:'nowrap'}}>{r.dueDate}</td>
+                              <td style={{padding:'8px 10px'}}>
+                                <span style={{background:`${col}18`,border:`1px solid ${col}33`,borderRadius:8,padding:'2px 8px',fontSize:10,fontWeight:800,color:col,whiteSpace:'nowrap'}}>{r.daysAway}d</span>
+                              </td>
+                              <td style={{padding:'8px 10px',color:T.textM,fontSize:10,whiteSpace:'nowrap'}}>{r.project?.split(' ').pop()}</td>
+                              <td style={{padding:'8px 10px',color:T.tealD,fontFamily:'monospace',fontSize:10,fontWeight:700}}>{r.unit}</td>
+                              <td style={{padding:'8px 10px',color:T.text,fontWeight:600,maxWidth:160}}>{r.customer}</td>
+                              <td style={{padding:'8px 10px',color:T.textM,fontSize:10,maxWidth:200}}>{r.milestone}</td>
+                              <td style={{padding:'8px 10px',color:T.navy,fontWeight:700,whiteSpace:'nowrap'}}>₹{((r.demand||0)/1e7).toFixed(2)}Cr</td>
+                              <td style={{padding:'8px 10px',color:(r.outstanding||0)>0?T.red:T.teal,fontWeight:700,whiteSpace:'nowrap'}}>₹{((r.outstanding||0)/1e7).toFixed(2)}Cr</td>
+                              <td style={{padding:'8px 10px'}}>
+                                <span style={{background:`${(r.outstanding||0)>0?T.red:T.teal}18`,border:`1px solid ${(r.outstanding||0)>0?T.red:T.teal}33`,borderRadius:8,padding:'2px 8px',fontSize:9,fontWeight:700,color:(r.outstanding||0)>0?T.red:T.teal}}>
+                                  {(r.outstanding||0)>0?'Pending':'Cleared'}
+                                </span>
+                              </td>
+                            </tr>
+                          );
+                        })}</tbody>
+                      </table>
+                    </div>
+                  </div>
+                );
+              })()}
+            </GC>
+
+            {/* ── ADVANCE PAYMENTS ── */}
+            <GC style={{padding:18}}>
+              <SH title="Advance Money Received" sub="Units where collections exceed demand raised"/>
+              {(()=>{
+                const ap = raw?.advancePayments || {};
+                const byProj = ap.byProject || [];
+                const top = ap.topAdvance || [];
+                const filtered = top.filter(r=>{
+                  if(filters.company && r.company!==filters.company) return false;
+                  if(filters.project && r.project!==filters.project) return false;
+                  return true;
+                });
+                return(
+                  <div>
+                    {/* Summary strip */}
+                    <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:16}}>
+                      <div style={{padding:'10px 14px',borderRadius:10,background:`${T.teal}12`,border:`1.5px solid ${T.teal}33`}}>
+                        <p style={{fontSize:9,fontWeight:800,color:T.teal,margin:'0 0 2px',textTransform:'uppercase'}}>Total Demand</p>
+                        <p style={{fontSize:18,fontWeight:900,color:T.navy,margin:0,letterSpacing:-0.5}}>₹{ap.totalDemandCr}Cr</p>
+                      </div>
+                      <div style={{padding:'10px 14px',borderRadius:10,background:`${T.teal}12`,border:`1.5px solid ${T.teal}33`}}>
+                        <p style={{fontSize:9,fontWeight:800,color:T.teal,margin:'0 0 2px',textTransform:'uppercase'}}>Total Received</p>
+                        <p style={{fontSize:18,fontWeight:900,color:T.teal,margin:0,letterSpacing:-0.5}}>₹{ap.totalReceivedCr}Cr</p>
+                      </div>
+                      <div style={{padding:'10px 14px',borderRadius:10,background:`${T.greenL}12`,border:`1.5px solid ${T.greenL}33`}}>
+                        <p style={{fontSize:9,fontWeight:800,color:T.greenL,margin:'0 0 2px',textTransform:'uppercase'}}>Net Advance (Excess)</p>
+                        <p style={{fontSize:18,fontWeight:900,color:T.greenL,margin:0,letterSpacing:-0.5}}>+₹{ap.netExcessCr}Cr</p>
+                      </div>
+                      <div style={{padding:'10px 14px',borderRadius:10,background:`${T.navy}12`,border:`1.5px solid ${T.navy}33`}}>
+                        <p style={{fontSize:9,fontWeight:800,color:T.navy,margin:'0 0 2px',textTransform:'uppercase'}}>Units with Advance</p>
+                        <p style={{fontSize:18,fontWeight:900,color:T.navy,margin:0,letterSpacing:-0.5}}>{ap.unitsWithAdvance}</p>
+                      </div>
+                    </div>
+                    {/* By project bars */}
+                    <div style={{display:'flex',gap:10,marginBottom:14,flexWrap:'wrap'}}>
+                      {byProj.filter(p=>p.excessCr>0).map((p,i)=>{
+                        const pct = p.totalDemandCr>0?Math.round((p.totalReceivedCr/p.totalDemandCr)*100):0;
+                        return(
+                          <div key={i} style={{flex:1,minWidth:160,padding:'10px 14px',borderRadius:10,background:'rgba(255,255,255,0.5)',border:'1px solid rgba(0,100,140,0.15)'}}>
+                            <div style={{display:'flex',justifyContent:'space-between',marginBottom:4}}>
+                              <span style={{fontSize:10,fontWeight:700,color:T.navy}}>{p.project?.split(' ').pop()}</span>
+                              <span style={{fontSize:11,fontWeight:900,color:T.greenL}}>+₹{p.excessCr}Cr</span>
+                            </div>
+                            <div style={{width:'100%',height:5,background:'rgba(0,100,140,0.1)',borderRadius:3,marginBottom:4}}>
+                              <div style={{width:`${Math.min(pct,100)}%`,height:'100%',background:`linear-gradient(90deg,${T.teal},${T.greenL})`,borderRadius:3}}/>
+                            </div>
+                            <div style={{display:'flex',justifyContent:'space-between'}}>
+                              <span style={{fontSize:9,color:T.textM,fontWeight:600}}>Rcvd: ₹{p.totalReceivedCr}Cr</span>
+                              <span style={{fontSize:9,color:T.tealD,fontWeight:700}}>{pct}% collected</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    {/* Top advance units table */}
+                    <div style={{overflowX:'auto'}}>
+                      <table style={{width:'100%',borderCollapse:'collapse',fontSize:11}}>
+                        <thead><tr style={{borderBottom:`2px solid rgba(0,151,167,0.2)`}}>
+                          {['#','Project','Unit','Customer','Total Demand','Total Received','Excess Advance'].map(h=>(
+                            <th key={h} style={{padding:'7px 10px',textAlign:'left',color:T.textM,fontSize:9,fontWeight:800,letterSpacing:0.5,whiteSpace:'nowrap',textTransform:'uppercase'}}>{h}</th>
+                          ))}
+                        </tr></thead>
+                        <tbody>{filtered.slice(0,20).map((r,i)=>(
+                          <tr key={i} className="tr" style={{borderBottom:`1px solid rgba(0,100,140,0.1)`}}>
+                            <td style={{padding:'7px 10px',color:T.textM,fontWeight:700,fontSize:11}}>#{i+1}</td>
+                            <td style={{padding:'7px 10px',color:T.textM,fontSize:10,whiteSpace:'nowrap'}}>{r.project?.split(' ').pop()}</td>
+                            <td style={{padding:'7px 10px',color:T.tealD,fontFamily:'monospace',fontSize:10,fontWeight:700}}>{r.unit}</td>
+                            <td style={{padding:'7px 10px',color:T.text,fontWeight:600,maxWidth:180}}>{r.customer}</td>
+                            <td style={{padding:'7px 10px',color:T.navy,fontWeight:700,whiteSpace:'nowrap'}}>₹{((r.totalDemand||0)/1e7).toFixed(2)}Cr</td>
+                            <td style={{padding:'7px 10px',color:T.teal,fontWeight:700,whiteSpace:'nowrap'}}>₹{((r.totalReceived||0)/1e7).toFixed(2)}Cr</td>
+                            <td style={{padding:'7px 10px'}}>
+                              <span style={{background:`${T.greenL}18`,border:`1px solid ${T.greenL}44`,borderRadius:8,padding:'3px 10px',fontSize:11,fontWeight:800,color:T.greenL,whiteSpace:'nowrap'}}>
+                                +₹{((r.Excess||0)/1e7).toFixed(2)}Cr
+                              </span>
+                            </td>
+                          </tr>
+                        ))}</tbody>
+                      </table>
+                    </div>
+                  </div>
+                );
+              })()}
+            </GC>
           </div>
         )}
 
