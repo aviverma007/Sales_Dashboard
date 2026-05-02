@@ -362,17 +362,49 @@ export default function App() {
               </GC>
 
               <GC style={{padding:16}}>
-                <SH title="Sales by Channel" sub="Project-wise Units"/>
-                <ResponsiveContainer width="100%" height={200}>
-                  <PieChart>
-                    <Pie data={byProj} cx="50%" cy="50%" outerRadius={75} innerRadius={36} paddingAngle={3} dataKey="units" nameKey="name"
-                      label={({name,percent})=>`${name?.split(' ').pop()} ${(percent*100).toFixed(0)}%`}
-                      labelLine={{stroke:T.teal,strokeWidth:1,opacity:0.5}} strokeWidth={2} stroke="rgba(255,255,255,0.8)">
-                      {byProj.map((_,i)=><Cell key={i} fill={CC[i%CC.length]}/>)}
-                    </Pie>
-                    <Tooltip content={<CTip/>}/>
-                  </PieChart>
-                </ResponsiveContainer>
+                <SH title="Sales by Channel" sub="Project-wise Units & BSP"/>
+                {(()=>{
+                  const SHORT={'Smartworld Sky Arc':'Sky Arc','SMARTWORLD THE EDITION':'Edition','Trump Residences Gurgaon':'Trump','Smartworld Le Courtyard':'Le Courtyard','Smartworld Suites':'Suites','Smartworld Residencies':'Residencies'};
+                  const pd=byProj.map(r=>({...r,label:SHORT[r.name]||r.name.split(' ').pop()}));
+                  const tot=pd.reduce((s,r)=>s+r.units,0);
+                  return(
+                    <div style={{display:'flex',alignItems:'center',gap:10}}>
+                      <div style={{width:130,height:130,flexShrink:0}}>
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie data={pd} cx="50%" cy="50%" outerRadius={58} innerRadius={28} paddingAngle={3} dataKey="units" nameKey="label" strokeWidth={2} stroke="rgba(255,255,255,0.9)">
+                              {pd.map((_,i)=><Cell key={i} fill={CC[i%CC.length]}/>)}
+                            </Pie>
+                            <Tooltip content={<CTip/>}/>
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </div>
+                      <div style={{flex:1,display:'flex',flexDirection:'column',gap:6}}>
+                        {pd.map((d,i)=>{
+                          const p=tot>0?Math.round((d.units/tot)*100):0;
+                          return(
+                            <div key={i} style={{display:'flex',alignItems:'center',gap:6}}>
+                              <div style={{width:8,height:8,borderRadius:2,background:CC[i%CC.length],flexShrink:0}}/>
+                              <div style={{flex:1}}>
+                                <div style={{display:'flex',justifyContent:'space-between'}}>
+                                  <span style={{fontSize:10,fontWeight:700,color:T.textM}}>{d.label}</span>
+                                  <span style={{fontSize:10,fontWeight:800,color:CC[i%CC.length]}}>{p}%</span>
+                                </div>
+                                <div style={{display:'flex',justifyContent:'space-between'}}>
+                                  <span style={{fontSize:9,color:T.textL}}>{d.units} units</span>
+                                  <span style={{fontSize:9,color:T.textL}}>₹{d.bspCr}Cr</span>
+                                </div>
+                                <div style={{width:'100%',height:3,background:'rgba(0,100,140,0.1)',borderRadius:2,marginTop:1}}>
+                                  <div style={{width:`${p}%`,height:'100%',background:CC[i%CC.length],borderRadius:2,opacity:0.8}}/>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })()}
               </GC>
 
               <GC style={{padding:16}}>
