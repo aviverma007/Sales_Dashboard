@@ -232,17 +232,18 @@ export default function App() {
         {tab==='overview'&&(
           <div style={{display:'flex',flexDirection:'column',gap:14}}>
 
-            {/* ROW 1: 8 KPI CARDS */}
-            <div style={{display:'grid',gridTemplateColumns:'repeat(8,1fr)',gap:12}}>
+            {/* ROW 1: 7 KPI CARDS — no Workflow */}
+            <div style={{display:'grid',gridTemplateColumns:'2fr 1fr 1fr 1fr 2fr 1fr',gap:12}}>
+
               {/* Units Pie */}
-              <GC style={{padding:14,gridColumn:'span 2'}} cls="kc">
+              <GC style={{padding:14}} cls="kc">
                 <SH title="Total Units" compact/>
-                <div style={{display:'flex',alignItems:'center',gap:8}}>
-                  <div style={{width:90,height:90,flexShrink:0}}>
+                <div style={{display:'flex',alignItems:'center',gap:10}}>
+                  <div style={{width:100,height:100,flexShrink:0}}>
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie data={[{name:'Booked',value:kpi.bookedUnits||0},{name:'Available',value:kpi.availableUnits||0},{name:'InProgress',value:kpi.inProgressUnits||0.01}]}
-                          cx="50%" cy="50%" innerRadius={28} outerRadius={42} paddingAngle={3} dataKey="value" strokeWidth={2} stroke="rgba(255,255,255,0.8)">
+                          cx="50%" cy="50%" innerRadius={32} outerRadius={48} paddingAngle={3} dataKey="value" strokeWidth={2} stroke="rgba(255,255,255,0.9)">
                           <Cell fill={T.teal}/><Cell fill={T.greenL}/><Cell fill={T.amberL}/>
                         </Pie>
                         <Tooltip content={<CTip/>}/>
@@ -250,8 +251,8 @@ export default function App() {
                     </ResponsiveContainer>
                   </div>
                   <div>
-                    <p style={{fontSize:22,fontWeight:900,color:T.navy,margin:'0 0 6px',letterSpacing:-0.5}}>{kpi.totalUnits?.toLocaleString('en-IN')}</p>
-                    <div style={{display:'flex',flexDirection:'column',gap:3}}>
+                    <p style={{fontSize:26,fontWeight:900,color:T.navy,margin:'0 0 6px',letterSpacing:-0.5}}>{kpi.totalUnits?.toLocaleString('en-IN')}</p>
+                    <div style={{display:'flex',flexDirection:'column',gap:4}}>
                       <Chip label="Bkd" value={kpi.bookedUnits?.toLocaleString('en-IN')} color={T.teal} small/>
                       <Chip label="Avl" value={kpi.availableUnits?.toLocaleString('en-IN')} color={T.greenL} small/>
                     </div>
@@ -283,54 +284,48 @@ export default function App() {
                 <div style={{position:'absolute',bottom:0,left:0,right:0,height:3,background:`linear-gradient(90deg,${T.teal},transparent)`,borderRadius:'0 0 14px 14px'}}/>
               </GC>
 
-              {/* Target */}
-              <GC style={{padding:14}} cls="kc">
-                <SH title="Target Ach." compact/>
-                <div style={{display:'flex',alignItems:'center',gap:8,marginTop:4}}>
-                  <div style={{position:'relative',width:56,height:56,flexShrink:0}}>
+              {/* Target Achievement — large redesigned card */}
+              <GC style={{padding:16}} cls="kc">
+                <SH title="Target Achievement" sub="Demand Raised vs. Collected (DAPP)" compact/>
+                <div style={{display:'flex',alignItems:'center',gap:16,marginTop:4}}>
+                  {/* Big radial gauge */}
+                  <div style={{position:'relative',width:90,height:90,flexShrink:0}}>
                     <ResponsiveContainer width="100%" height="100%">
-                      <RadialBarChart cx="50%" cy="50%" innerRadius="55%" outerRadius="100%" startAngle={90} endAngle={-270} data={[{value:tgtAch}]}>
-                        <RadialBar background={{fill:`rgba(0,151,167,0.1)`}} dataKey="value" fill={tgtAch>80?T.teal:tgtAch>50?T.amber:T.red} cornerRadius={4}/>
+                      <RadialBarChart cx="50%" cy="50%" innerRadius="52%" outerRadius="100%" startAngle={90} endAngle={-270} data={[{value:Math.min(tgtAch,100)}]}>
+                        <RadialBar background={{fill:'rgba(0,151,167,0.12)'}} dataKey="value"
+                          fill={tgtAch>=100?T.teal:tgtAch>80?T.tealD:tgtAch>50?T.amber:T.red} cornerRadius={6}/>
                       </RadialBarChart>
                     </ResponsiveContainer>
-                    <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center'}}>
-                      <span style={{fontSize:11,fontWeight:800,color:tgtAch>80?T.tealD:tgtAch>50?T.amber:T.red}}>{tgtAch}%</span>
+                    <div style={{position:'absolute',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:1}}>
+                      <span style={{fontSize:20,fontWeight:900,color:tgtAch>=100?T.teal:tgtAch>80?T.tealD:tgtAch>50?T.amber:T.red,letterSpacing:-1,lineHeight:1}}>{tgtAch}%</span>
+                      <span style={{fontSize:8,color:T.textM,fontWeight:700,textTransform:'uppercase',letterSpacing:0.5}}>Achieved</span>
                     </div>
                   </div>
-                  <div>
-                    <p style={{color:T.textL,fontSize:8,margin:'0 0 2px'}}>Demand vs Rcvd</p>
-                    <p style={{color:T.red,fontSize:11,fontWeight:700,margin:0}}>{fmtCr(kpi.dappOutstanding)}</p>
-                    <p style={{color:T.textL,fontSize:8,margin:0}}>Outstanding</p>
+                  {/* Stats */}
+                  <div style={{flex:1,display:'flex',flexDirection:'column',gap:6}}>
+                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'5px 10px',background:`${T.teal}12`,borderRadius:8,border:`1px solid ${T.teal}22`}}>
+                      <span style={{fontSize:10,color:T.textM,fontWeight:700}}>💰 Demand</span>
+                      <span style={{fontSize:12,color:T.navy,fontWeight:800}}>{fmtCr(kpi.dappDemand)}</span>
+                    </div>
+                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'5px 10px',background:`${T.teal}12`,borderRadius:8,border:`1px solid ${T.teal}22`}}>
+                      <span style={{fontSize:10,color:T.textM,fontWeight:700}}>✅ Received</span>
+                      <span style={{fontSize:12,color:T.teal,fontWeight:800}}>{fmtCr(kpi.dappReceived)}</span>
+                    </div>
+                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'5px 10px',background:`${T.red}10`,borderRadius:8,border:`1px solid ${T.red}22`}}>
+                      <span style={{fontSize:10,color:T.textM,fontWeight:700}}>⚠️ Outstanding</span>
+                      <span style={{fontSize:12,color:T.red,fontWeight:800}}>{fmtCr(kpi.dappOutstanding)}</span>
+                    </div>
                   </div>
                 </div>
+                <div style={{position:'absolute',bottom:0,left:0,right:0,height:3,background:`linear-gradient(90deg,${tgtAch>=100?T.teal:tgtAch>80?T.tealD:tgtAch>50?T.amber:T.red},transparent)`,borderRadius:'0 0 14px 14px'}}/>
               </GC>
 
               {/* Pipeline */}
               <GC style={{padding:14}} cls="kc">
                 <SH title="Pipeline" compact/>
-                <p style={{fontSize:28,fontWeight:900,color:T.tealD,margin:'2px 0',letterSpacing:-1}}>{kpi.pipelineBookings}</p>
+                <p style={{fontSize:36,fontWeight:900,color:T.tealD,margin:'4px 0 4px',letterSpacing:-1}}>{kpi.pipelineBookings}</p>
                 <p style={{color:T.textM,fontSize:10,margin:0,fontWeight:600}}>Pending Workflow</p>
                 <div style={{position:'absolute',bottom:0,left:0,right:0,height:3,background:`linear-gradient(90deg,${T.teal},transparent)`,borderRadius:'0 0 14px 14px'}}/>
-              </GC>
-
-              {/* Workflow */}
-              <GC style={{padding:14}} cls="kc">
-                <SH title="Workflow" compact/>
-                <div style={{height:64,marginTop:2}}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie data={[{name:'Approved',value:kpi.wfApproved||0.01},{name:'Pending',value:kpi.wfPending||0.01},{name:'Rejected',value:kpi.wfRejected||0.01}]}
-                        cx="50%" cy="50%" innerRadius={20} outerRadius={30} paddingAngle={3} dataKey="value" strokeWidth={1} stroke="rgba(255,255,255,0.8)">
-                        <Cell fill={T.teal}/><Cell fill={T.amber}/><Cell fill={T.red}/>
-                      </Pie>
-                      <Tooltip content={<CTip/>}/>
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-                <div style={{display:'flex',gap:4,flexWrap:'wrap'}}>
-                  <Chip label="✓" value={kpi.wfApproved} color={T.teal} small/>
-                  <Chip label="✕" value={kpi.wfRejected} color={T.red} small/>
-                </div>
               </GC>
             </div>
 
