@@ -44,7 +44,6 @@ const GC = ({children,style={},cls='',dark=false}) => {
   return (
     <div className={cls} onMouseEnter={()=>sH(true)} onMouseLeave={()=>sH(false)} style={{
       background: dark?(h?T.glassDarkH:T.glassDark):(h?T.glassH:T.glass),
-      ,
       border:`1px solid ${dark?T.borderB:T.border}`,
       borderRadius:14, boxShadow: dark?'0 8px 32px rgba(0,0,0,0.35)':'0 4px 24px rgba(0,80,120,0.12)',
       transition:'all 0.25s ease', position:'relative', overflow:'hidden', ...style
