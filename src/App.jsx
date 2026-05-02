@@ -44,7 +44,7 @@ const GC = ({children,style={},cls='',dark=false}) => {
   return (
     <div className={cls} onMouseEnter={()=>sH(true)} onMouseLeave={()=>sH(false)} style={{
       background: dark?(h?T.glassDarkH:T.glassDark):(h?T.glassH:T.glass),
-      backdropFilter:'blur(6px) saturate(120%)', WebkitBackdropFilter:'blur(6px) saturate(120%)',
+      backdropFilter:'blur(2px)', WebkitBackdropFilter:'blur(2px)',
       border:`1px solid ${dark?T.borderB:T.border}`,
       borderRadius:14, boxShadow: dark?'0 8px 32px rgba(0,0,0,0.35)':'0 4px 24px rgba(0,80,120,0.12)',
       transition:'all 0.25s ease', position:'relative', overflow:'hidden', ...style
@@ -167,7 +167,7 @@ export default function App() {
       <div style={{position:'fixed',inset:0,background:'rgba(0,20,40,0.25)',pointerEvents:'none',zIndex:0}}/>
 
       {/* ── HEADER ── */}
-      <header style={{position:'sticky',top:0,zIndex:200,background:'rgba(255,255,255,0.82)',backdropFilter:'blur(12px)',WebkitBackdropFilter:'blur(24px)',borderBottom:'1px solid rgba(255,255,255,0.9)',boxShadow:'0 2px 20px rgba(0,60,100,0.12)'}}>
+      <header style={{position:'sticky',top:0,zIndex:200,background:'rgba(255,255,255,0.82)',backdropFilter:'blur(8px)',WebkitBackdropFilter:'blur(24px)',borderBottom:'1px solid rgba(255,255,255,0.9)',boxShadow:'0 2px 20px rgba(0,60,100,0.12)'}}>
         <div style={{maxWidth:1440,margin:'0 auto',padding:'0 24px',display:'flex',alignItems:'center',justifyContent:'space-between',height:54}}>
           {/* Logo */}
           <div style={{display:'flex',alignItems:'center',gap:12}}>
@@ -657,7 +657,7 @@ export default function App() {
         )}
 
         {/* FOOTER */}
-        <div style={{marginTop:16,display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:8,background:'rgba(255,255,255,0.65)',backdropFilter:'blur(6px)',WebkitBackdropFilter:'blur(6px)',borderRadius:12,padding:'8px 16px',border:'1px solid rgba(255,255,255,0.9)'}}>
+        <div style={{marginTop:16,display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:8,background:'rgba(255,255,255,0.65)',backdropFilter:'blur(2px)',WebkitBackdropFilter:'blur(2px)',borderRadius:12,padding:'8px 16px',border:'1px solid rgba(255,255,255,0.9)'}}>
           <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
             <Chip label="Units"    value={kpi.totalUnits?.toLocaleString('en-IN')} color={T.teal} small/>
             <Chip label="Active"   value={kpi.activeBookings?.toLocaleString('en-IN')} color={T.navy} small/>
