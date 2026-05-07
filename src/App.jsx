@@ -415,15 +415,20 @@ export default function App() {
                     <div style={{display:'flex',flexDirection:'column',gap:10}}>
                       {/* Donut + project legend */}
                       <div style={{display:'flex',alignItems:'center',gap:10}}>
-                        <div style={{width:110,height:110,flexShrink:0}}>
+                        <div style={{width:120,height:120,flexShrink:0,position:'relative'}}>
                           <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
-                              <Pie data={pd} cx="50%" cy="50%" outerRadius={50} innerRadius={24} paddingAngle={3} dataKey="units" nameKey="label" strokeWidth={2} stroke="rgba(255,255,255,0.9)">
-                                {pd.map((_,i)=><Cell key={i} fill={CC[i%CC.length]}/>)}
+                              <Pie data={[{name:'CP',value:totalCP},{name:'Direct',value:totalDirect}]} cx="50%" cy="50%" outerRadius={52} innerRadius={26} paddingAngle={4} dataKey="value" strokeWidth={2} stroke="rgba(255,255,255,0.9)">
+                                <Cell fill={T.teal}/>
+                                <Cell fill={T.navy}/>
                               </Pie>
                               <Tooltip content={<CTip/>}/>
                             </PieChart>
                           </ResponsiveContainer>
+                          <div style={{position:'absolute',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',pointerEvents:'none'}}>
+                            <span style={{fontSize:14,fontWeight:900,color:T.tealD,lineHeight:1}}>{cpPct}%</span>
+                            <span style={{fontSize:7,fontWeight:700,color:T.textM}}>CP</span>
+                          </div>
                         </div>
                         <div style={{flex:1,display:'flex',flexDirection:'column',gap:5}}>
                           {pd.map((d,i)=>{
