@@ -123,6 +123,16 @@ export default function App() {
   const byProj=useMemo(()=>{const map={};pA.forEach(r=>{const p=r.project;if(!p)return;if(!map[p])map[p]={name:p,units:0,bspCr:0};map[p].units++;map[p].bspCr+=(r.bsp||0)/1e7;});return Object.values(map).sort((a,b)=>b.units-a.units).map(r=>({...r,bspCr:+r.bspCr.toFixed(1)}));},[pA]);
   const topCP=useMemo(()=>{const map={};pA.forEach(r=>{const b=r.broker;if(!b)return;if(!map[b])map[b]={name:b,units:0,bspCr:0};map[b].units++;map[b].bspCr+=(r.bsp||0)/1e7;});return Object.values(map).sort((a,b)=>b.units-a.units).slice(0,8).map(r=>({...r,bspCr:+r.bspCr.toFixed(1)}));},[pA]);
   const bhkS=useMemo(()=>{const map={};pA.forEach(r=>{const b=r.bhk||'Other';if(!map[b])map[b]={bhk:b,units:0,bsp:0};map[b].units++;map[b].bsp+=(r.bsp||0);});return Object.values(map).sort((a,b)=>b.units-a.units);},[pA]);
+  const cpVsDirect=useMemo(()=>{
+    const map={};
+    pA.forEach(r=>{
+      const p=r.project;if(!p)return;
+      if(!map[p])map[p]={name:p,cp:0,direct:0,cpBSP:0,directBSP:0};
+      if(r.broker&&r.broker.trim()){map[p].cp++;map[p].cpBSP+=(r.bsp||0);}
+      else{map[p].direct++;map[p].directBSP+=(r.bsp||0);}
+    });
+    return Object.values(map).sort((a,b)=>(b.cp+b.direct)-(a.cp+a.direct));
+  },[pA]);
   const dappByP=useMemo(()=>{const map={};dF.forEach(r=>{const p=r.project;if(!p)return;if(!map[p])map[p]={name:p,demCr:0,recCr:0,outCr:0};map[p].demCr+=(r.demand||0)/1e7;map[p].recCr+=(r.received||0)/1e7;map[p].outCr+=(r.outstanding||0)/1e7;});return Object.values(map).map(r=>({...r,demCr:+r.demCr.toFixed(1),recCr:+r.recCr.toFixed(1),outCr:+r.outCr.toFixed(1)}));},[dF]);
   const top10=useMemo(()=>[...pA].sort((a,b)=>(b.tcv||0)-(a.tcv||0)).slice(0,10),[pA]);
   const openBkg=useMemo(()=>[...pA].sort((a,b)=>(b.bsp||0)-(a.bsp||0)).slice(0,15),[pA]);
@@ -392,41 +402,83 @@ export default function App() {
               </GC>
 
               <GC style={{padding:16}}>
-                <SH title="Sales by Channel" sub="Project-wise Units & BSP"/>
+                <SH title="Sales by Channel" sub="Project-wise Units & BSP · CP vs Direct"/>
                 {(()=>{
                   const SHORT={'Smartworld Sky Arc':'Sky Arc','SMARTWORLD THE EDITION':'Edition','Trump Residences Gurgaon':'Trump','Smartworld Le Courtyard':'Le Courtyard','Smartworld Suites':'Suites','Smartworld Residencies':'Residencies'};
                   const pd=byProj.map(r=>({...r,label:SHORT[r.name]||r.name.split(' ').pop()}));
                   const tot=pd.reduce((s,r)=>s+r.units,0);
+                  const totalCP=cpVsDirect.reduce((s,r)=>s+r.cp,0);
+                  const totalDirect=cpVsDirect.reduce((s,r)=>s+r.direct,0);
+                  const totalAll=totalCP+totalDirect;
+                  const cpPct=totalAll>0?Math.round((totalCP/totalAll)*100):0;
                   return(
-                    <div style={{display:'flex',alignItems:'center',gap:10}}>
-                      <div style={{width:130,height:130,flexShrink:0}}>
-                        <ResponsiveContainer width="100%" height="100%">
-                          <PieChart>
-                            <Pie data={pd} cx="50%" cy="50%" outerRadius={58} innerRadius={28} paddingAngle={3} dataKey="units" nameKey="label" strokeWidth={2} stroke="rgba(255,255,255,0.9)">
-                              {pd.map((_,i)=><Cell key={i} fill={CC[i%CC.length]}/>)}
-                            </Pie>
-                            <Tooltip content={<CTip/>}/>
-                          </PieChart>
-                        </ResponsiveContainer>
+                    <div style={{display:'flex',flexDirection:'column',gap:10}}>
+                      {/* Donut + project legend */}
+                      <div style={{display:'flex',alignItems:'center',gap:10}}>
+                        <div style={{width:110,height:110,flexShrink:0}}>
+                          <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                              <Pie data={pd} cx="50%" cy="50%" outerRadius={50} innerRadius={24} paddingAngle={3} dataKey="units" nameKey="label" strokeWidth={2} stroke="rgba(255,255,255,0.9)">
+                                {pd.map((_,i)=><Cell key={i} fill={CC[i%CC.length]}/>)}
+                              </Pie>
+                              <Tooltip content={<CTip/>}/>
+                            </PieChart>
+                          </ResponsiveContainer>
+                        </div>
+                        <div style={{flex:1,display:'flex',flexDirection:'column',gap:5}}>
+                          {pd.map((d,i)=>{
+                            const p=tot>0?Math.round((d.units/tot)*100):0;
+                            return(
+                              <div key={i} style={{display:'flex',alignItems:'center',gap:6}}>
+                                <div style={{width:7,height:7,borderRadius:2,background:CC[i%CC.length],flexShrink:0}}/>
+                                <div style={{flex:1}}>
+                                  <div style={{display:'flex',justifyContent:'space-between'}}>
+                                    <span style={{fontSize:10,fontWeight:700,color:T.textM}}>{d.label}</span>
+                                    <span style={{fontSize:10,fontWeight:800,color:CC[i%CC.length]}}>{p}%</span>
+                                  </div>
+                                  <div style={{display:'flex',justifyContent:'space-between'}}>
+                                    <span style={{fontSize:8,color:T.textM,fontWeight:700}}>{d.units} units</span>
+                                    <span style={{fontSize:8,color:T.textM,fontWeight:700}}>₹{d.bspCr}Cr</span>
+                                  </div>
+                                  <div style={{width:'100%',height:3,background:'rgba(0,100,140,0.1)',borderRadius:2,marginTop:1}}>
+                                    <div style={{width:`${p}%`,height:'100%',background:CC[i%CC.length],borderRadius:2,opacity:0.8}}/>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
-                      <div style={{flex:1,display:'flex',flexDirection:'column',gap:6}}>
-                        {pd.map((d,i)=>{
-                          const p=tot>0?Math.round((d.units/tot)*100):0;
+                      {/* CP vs Direct divider */}
+                      <div style={{borderTop:'1px solid rgba(0,100,140,0.1)',paddingTop:8}}>
+                        <p style={{fontSize:9,fontWeight:800,color:T.textM,textTransform:'uppercase',letterSpacing:0.5,margin:'0 0 6px'}}>Channel Mix</p>
+                        {/* Overall CP vs Direct bar */}
+                        <div style={{marginBottom:8}}>
+                          <div style={{display:'flex',justifyContent:'space-between',marginBottom:3}}>
+                            <span style={{fontSize:9,fontWeight:700,color:T.tealD}}>🤝 CP: {totalCP} units ({cpPct}%)</span>
+                            <span style={{fontSize:9,fontWeight:700,color:T.navy}}>👤 Direct: {totalDirect} units ({100-cpPct}%)</span>
+                          </div>
+                          <div style={{width:'100%',height:6,background:'rgba(0,100,140,0.1)',borderRadius:3,overflow:'hidden'}}>
+                            <div style={{width:`${cpPct}%`,height:'100%',background:`linear-gradient(90deg,${T.teal},${T.tealL})`,borderRadius:3}}/>
+                          </div>
+                        </div>
+                        {/* Per-project CP vs Direct */}
+                        {cpVsDirect.map((d,i)=>{
+                          const tot2=d.cp+d.direct;
+                          const cpP=tot2>0?Math.round((d.cp/tot2)*100):0;
                           return(
-                            <div key={i} style={{display:'flex',alignItems:'center',gap:6}}>
-                              <div style={{width:8,height:8,borderRadius:2,background:CC[i%CC.length],flexShrink:0}}/>
-                              <div style={{flex:1}}>
-                                <div style={{display:'flex',justifyContent:'space-between'}}>
-                                  <span style={{fontSize:10,fontWeight:700,color:T.textM}}>{d.label}</span>
-                                  <span style={{fontSize:10,fontWeight:800,color:CC[i%CC.length]}}>{p}%</span>
-                                </div>
-                                <div style={{display:'flex',justifyContent:'space-between'}}>
-                                  <span style={{fontSize:9,color:T.textM,fontWeight:700}}>{d.units} units</span>
-                                  <span style={{fontSize:9,color:T.textM,fontWeight:700}}>₹{d.bspCr}Cr</span>
-                                </div>
-                                <div style={{width:'100%',height:3,background:'rgba(0,100,140,0.1)',borderRadius:2,marginTop:1}}>
-                                  <div style={{width:`${p}%`,height:'100%',background:CC[i%CC.length],borderRadius:2,opacity:0.8}}/>
-                                </div>
+                            <div key={i} style={{marginBottom:5}}>
+                              <div style={{display:'flex',justifyContent:'space-between',marginBottom:2}}>
+                                <span style={{fontSize:9,fontWeight:700,color:T.text}}>{SHORT[d.name]||d.name.split(' ').pop()}</span>
+                                <span style={{fontSize:8,color:T.textM}}>
+                                  <span style={{color:T.tealD,fontWeight:700}}>CP {d.cp}</span>
+                                  <span style={{color:T.textL}}> · </span>
+                                  <span style={{color:T.navy,fontWeight:700}}>Direct {d.direct}</span>
+                                </span>
+                              </div>
+                              <div style={{width:'100%',height:4,background:'rgba(0,100,140,0.08)',borderRadius:2,overflow:'hidden',display:'flex'}}>
+                                <div style={{width:`${cpP}%`,height:'100%',background:T.teal,opacity:0.75}}/>
+                                <div style={{width:`${100-cpP}%`,height:'100%',background:T.navy,opacity:0.4}}/>
                               </div>
                             </div>
                           );
