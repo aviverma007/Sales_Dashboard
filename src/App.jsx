@@ -448,16 +448,24 @@ export default function App() {
             <div style={{display:'grid',gridTemplateColumns:'1.3fr 1fr',gap:12}}>
 
               <GC style={{padding:16}}>
-                <SH title="Top CP-10" sub="Channel Partners by Units Booked"/>
-                <ResponsiveContainer width="100%" height={185}>
-                  <BarChart data={topCP} layout="vertical" margin={{top:0,right:20,bottom:0,left:0}}>
+                <SH title="Top CP-10" sub="Channel Partners by Units Booked · Sales Value"/>
+                <ResponsiveContainer width="100%" height={210}>
+                  <BarChart data={topCP} layout="vertical" margin={{top:0,right:80,bottom:0,left:0}}>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.2)" horizontal={false}/>
                     <XAxis type="number" tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false}/>
                     <YAxis type="category" dataKey="name" tick={{fill:T.text,fontSize:10,fontWeight:700}} axisLine={false} tickLine={false} width={145} tickFormatter={v=>v?.length>20?v.slice(0,20)+'…':v}/>
-                    <Tooltip content={<CTip fmt={(v,n)=>n==='bspCr'?`₹${v} Cr`:v?.toLocaleString?.('en-IN')}/>}/>
+                    <Tooltip content={<CTip fmt={(v,n)=>n==='Sales (₹Cr)'?`₹${v} Cr`:v?.toLocaleString?.('en-IN')}/>}/>
                     <Bar dataKey="units" name="Units" radius={[0,4,4,0]}>
                       {topCP.map((_,i)=><Cell key={i} fill={CC[i%CC.length]}/>)}
-                      <LabelList dataKey="units" position="right" style={{fill:T.textM,fontSize:9,fontWeight:700}}/>
+                      <LabelList content={({x,y,width,height,value,index})=>{
+                        const d=topCP[index];
+                        return(
+                          <g>
+                            <text x={x+width+6} y={y+height/2+1} textAnchor="start" dominantBaseline="middle" fill={T.textM} fontSize={9} fontWeight={700}>{value}</text>
+                            <text x={x+width+6} y={y+height/2+12} textAnchor="start" dominantBaseline="middle" fill={T.amber} fontSize={8} fontWeight={700}>₹{d?.bspCr}Cr</text>
+                          </g>
+                        );
+                      }}/>
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
