@@ -131,6 +131,16 @@ export default function App() {
   const last12=monthly.slice(-12);
   const dappLast12=dappM.slice(-12);
 
+  // Tower & area data from enriched JSON
+  const towerData=useMemo(()=>{
+    if(!raw?.towerData) return [];
+    return raw.towerData.filter(r=>{
+      if(filters.project && r.project!==filters.project) return false;
+      return true;
+    });
+  },[raw,filters.project]);
+  const areaSummary=useMemo(()=>raw?.areaSummary||{},[raw]);
+
   if(loading) return (
     <div style={{minHeight:'100vh',backgroundImage:'url(/bg.jpg)',backgroundSize:'cover',backgroundPosition:'center',display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:16}}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');@keyframes spin{to{transform:rotate(360deg)}}`}</style>
@@ -490,6 +500,126 @@ export default function App() {
                 </ResponsiveContainer>
               </GC>
             </div>
+
+            {/* ══ TOWER-WISE BOOKED & CANCELLED ══ */}
+            <GC style={{padding:16}}>
+              <SH title="Tower-wise Booking Status" sub="Booked · Cancelled · Booked Area (sq ft) · Avg Price/sq ft"/>
+              <div style={{overflowX:'auto'}}>
+                <table style={{width:'100%',borderCollapse:'collapse',fontSize:11}}>
+                  <thead>
+                    <tr style={{borderBottom:`2px solid rgba(0,151,167,0.18)`}}>
+                      {['Project','Tower','Booked','Cancelled','Success %','Booked Area (sq ft)','Cancelled Area (sq ft)','Total Sales','Avg ₹/sq ft'].map(h=>(
+                        <th key={h} style={{padding:'6px 10px',textAlign:'left',color:T.textM,fontSize:9,fontWeight:800,letterSpacing:0.5,textTransform:'uppercase',whiteSpace:'nowrap'}}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {towerData.map((d,i)=>{
+                      const total=d.booked+d.cancelled;
+                      const successPct=total>0?Math.round((d.booked/total)*100):0;
+                      const col=successPct>=90?T.teal:successPct>=75?T.greenL:successPct>=60?T.amber:T.red;
+                      return(
+                        <tr key={i} className="tr" style={{borderBottom:`1px solid rgba(0,100,140,0.08)`}}>
+                          <td style={{padding:'7px 10px',color:T.textM,fontSize:10,fontWeight:600,whiteSpace:'nowrap'}}>{d.project?.split(' ').slice(-2).join(' ')}</td>
+                          <td style={{padding:'7px 10px',fontWeight:700,color:T.navy,whiteSpace:'nowrap'}}>{d.tower}</td>
+                          <td style={{padding:'7px 10px'}}>
+                            <span style={{display:'inline-flex',alignItems:'center',gap:5}}>
+                              <span style={{width:8,height:8,borderRadius:2,background:T.teal,display:'inline-block'}}/>
+                              <span style={{fontWeight:700,color:T.tealD}}>{d.booked}</span>
+                            </span>
+                          </td>
+                          <td style={{padding:'7px 10px'}}>
+                            <span style={{display:'inline-flex',alignItems:'center',gap:5}}>
+                              <span style={{width:8,height:8,borderRadius:2,background:T.red,display:'inline-block'}}/>
+                              <span style={{fontWeight:700,color:T.red}}>{d.cancelled}</span>
+                            </span>
+                          </td>
+                          <td style={{padding:'7px 10px'}}>
+                            <div style={{display:'flex',alignItems:'center',gap:6}}>
+                              <div style={{width:44,height:5,background:'rgba(0,100,140,0.1)',borderRadius:3}}>
+                                <div style={{width:`${successPct}%`,height:'100%',background:col,borderRadius:3}}/>
+                              </div>
+                              <span style={{color:col,fontWeight:800,fontSize:10}}>{successPct}%</span>
+                            </div>
+                          </td>
+                          <td style={{padding:'7px 10px',color:T.textM,fontWeight:600,whiteSpace:'nowrap'}}>{d.bookedArea?.toLocaleString('en-IN')} sq ft</td>
+                          <td style={{padding:'7px 10px',color:T.textL,fontWeight:600,whiteSpace:'nowrap'}}>{d.cancelledArea?.toLocaleString('en-IN')} sq ft</td>
+                          <td style={{padding:'7px 10px',color:T.amber,fontWeight:700,whiteSpace:'nowrap'}}>₹{d.totalBSPCr} Cr</td>
+                          <td style={{padding:'7px 10px'}}>
+                            <span style={{background:`${T.teal}12`,border:`1px solid ${T.teal}30`,borderRadius:6,padding:'2px 8px',color:T.tealD,fontWeight:700,fontSize:10,whiteSpace:'nowrap'}}>
+                              ₹{d.pricePerSqft?.toLocaleString('en-IN')}/sq ft
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </GC>
+
+            {/* ══ AREA SUMMARY CARDS ══ */}
+            <div>
+              <p style={{fontSize:12,fontWeight:800,color:T.tealD,letterSpacing:0.4,margin:'0 0 10px',textTransform:'uppercase'}}>Area & Pricing Overview</p>
+              {/* Top 3 KPI cards */}
+              <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12,marginBottom:12}}>
+                {[
+                  {label:'Total Booked Area',value:`${(areaSummary.bookedArea/1e6)?.toFixed(2)}M`,sub:'sq ft',icon:'🏢',color:T.teal},
+                  {label:'Available Area',value:`${(areaSummary.availableArea/1e6)?.toFixed(2)}M`,sub:'sq ft',icon:'🔓',color:T.amber},
+                  {label:'Avg Price / sq ft',value:`₹${areaSummary.avgPricePerSqft?.toLocaleString('en-IN')}`,sub:`Range ₹${areaSummary.minPricePerSqft?.toLocaleString('en-IN')} – ₹${areaSummary.maxPricePerSqft?.toLocaleString('en-IN')}`,icon:'💰',color:T.navy},
+                ].map((d,i)=>(
+                  <GC key={i} cls="kc" style={{padding:16,display:'flex',alignItems:'center',gap:14}}>
+                    <div style={{width:44,height:44,borderRadius:12,background:`${d.color}14`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:22,flexShrink:0}}>{d.icon}</div>
+                    <div>
+                      <p style={{fontSize:9,fontWeight:800,color:T.textM,textTransform:'uppercase',letterSpacing:0.5,margin:'0 0 3px'}}>{d.label}</p>
+                      <p style={{fontSize:22,fontWeight:900,color:d.color,margin:'0 0 2px',letterSpacing:-0.5}}>{d.value} <span style={{fontSize:11,fontWeight:600,color:T.textL}}>{d.sub.split(' ')[0]}</span></p>
+                      {d.sub.includes('Range')&&<p style={{fontSize:9,color:T.textM,margin:0,fontWeight:600}}>{d.sub}</p>}
+                    </div>
+                    <div style={{position:'absolute',bottom:0,left:0,right:0,height:3,background:`linear-gradient(90deg,${d.color},transparent)`,borderRadius:'0 0 14px 14px'}}/>
+                  </GC>
+                ))}
+              </div>
+              {/* Per-project area breakdown cards */}
+              <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(220px,1fr))',gap:10}}>
+                {(areaSummary.byProject||[]).map((d,i)=>{
+                  const total=d.bookedArea+d.availableArea;
+                  const pct=total>0?Math.round((d.bookedArea/total)*100):0;
+                  const col=pct>=80?T.teal:pct>=60?T.greenL:pct>=40?T.amber:T.red;
+                  const SHORT={'SMARTWORLD THE EDITION':'The Edition','Smartworld Sky Arc':'Sky Arc','Trump Residences Gurgaon':'Trump','Smartworld Le Courtyard':'Le Courtyard','Smartworld Suites':'Suites','Smartworld Residencies':'Residencies'};
+                  return(
+                    <GC key={i} style={{padding:14}}>
+                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:8}}>
+                        <span style={{fontSize:11,fontWeight:800,color:T.navy}}>{SHORT[d.project]||d.project}</span>
+                        <span style={{fontSize:13,fontWeight:900,color:col}}>{pct}%</span>
+                      </div>
+                      {/* Booked vs Available area bar */}
+                      <div style={{width:'100%',height:6,background:'rgba(0,100,140,0.1)',borderRadius:3,marginBottom:8,overflow:'hidden'}}>
+                        <div style={{width:`${pct}%`,height:'100%',background:`linear-gradient(90deg,${col},${T.tealL})`,borderRadius:3}}/>
+                      </div>
+                      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6,marginBottom:8}}>
+                        <div style={{background:`${T.teal}0d`,borderRadius:7,padding:'6px 8px'}}>
+                          <p style={{fontSize:8,color:T.textM,fontWeight:800,margin:'0 0 2px',textTransform:'uppercase'}}>🟢 Booked</p>
+                          <p style={{fontSize:11,fontWeight:800,color:T.tealD,margin:0}}>{(d.bookedArea/1000).toFixed(0)}K sq ft</p>
+                          <p style={{fontSize:9,color:T.textM,margin:0}}>{d.bookedUnits} units</p>
+                        </div>
+                        <div style={{background:`${T.amber}0d`,borderRadius:7,padding:'6px 8px'}}>
+                          <p style={{fontSize:8,color:T.textM,fontWeight:800,margin:'0 0 2px',textTransform:'uppercase'}}>🔓 Available</p>
+                          <p style={{fontSize:11,fontWeight:800,color:T.amber,margin:0}}>{(d.availableArea/1000).toFixed(0)}K sq ft</p>
+                          <p style={{fontSize:9,color:T.textM,margin:0}}>{d.availUnits} units</p>
+                        </div>
+                      </div>
+                      {d.avgPricePerSqft>0&&(
+                        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',paddingTop:6,borderTop:'1px solid rgba(0,100,140,0.08)'}}>
+                          <span style={{fontSize:9,color:T.textM,fontWeight:700}}>Avg Rate</span>
+                          <span style={{fontSize:11,fontWeight:800,color:T.navy}}>₹{d.avgPricePerSqft?.toLocaleString('en-IN')}<span style={{fontSize:8,fontWeight:600,color:T.textL}}>/sq ft</span></span>
+                        </div>
+                      )}
+                    </GC>
+                  );
+                })}
+              </div>
+            </div>
+
           </div>
         )}
 
