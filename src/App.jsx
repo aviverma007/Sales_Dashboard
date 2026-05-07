@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-  RadialBarChart, RadialBar
+  RadialBarChart, RadialBar, LabelList
 } from 'recharts';
 
 // ─── THEME ────────────────────────────────────────────────────────────────────
@@ -368,9 +368,15 @@ export default function App() {
                     <YAxis tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false} tickFormatter={v=>`${v}Cr`} width={32}/>
                     <Tooltip content={<CTip fmt={v=>`₹${v} Cr`}/>}/>
                     <Legend wrapperStyle={{color:T.text,fontSize:10,fontWeight:700}} iconSize={8}/>
-                    <Area type="monotone" dataKey="bspCr"  name="Sales(BSP)"  stroke={T.teal}   fill="url(#a1)" strokeWidth={2} dot={false} activeDot={{r:3}}/>
-                    <Area type="monotone" dataKey="demCr"  name="Demand"      stroke={T.amber}  fill="url(#a2)" strokeWidth={2} dot={false} activeDot={{r:3}}/>
-                    <Area type="monotone" dataKey="recCr"  name="Received"    stroke={T.greenL} fill="url(#a3)" strokeWidth={2} dot={false} activeDot={{r:3}}/>
+                    <Area type="monotone" dataKey="bspCr"  name="Sales(BSP)"  stroke={T.teal}   fill="url(#a1)" strokeWidth={2} dot={false} activeDot={{r:3}}>
+                      <LabelList dataKey="bspCr"  position="top" style={{fill:T.tealD,fontSize:7,fontWeight:700}} formatter={v=>v>0?`${v}Cr`:''} />
+                    </Area>
+                    <Area type="monotone" dataKey="demCr"  name="Demand"      stroke={T.amber}  fill="url(#a2)" strokeWidth={2} dot={false} activeDot={{r:3}}>
+                      <LabelList dataKey="demCr"  position="top" style={{fill:T.amber,fontSize:7,fontWeight:700}} formatter={v=>v>0?`${v}Cr`:''} />
+                    </Area>
+                    <Area type="monotone" dataKey="recCr"  name="Received"    stroke={T.greenL} fill="url(#a3)" strokeWidth={2} dot={false} activeDot={{r:3}}>
+                      <LabelList dataKey="recCr"  position="top" style={{fill:T.greenL,fontSize:7,fontWeight:700}} formatter={v=>v>0?`${v}Cr`:''} />
+                    </Area>
                   </AreaChart>
                 </ResponsiveContainer>
               </GC>
@@ -431,6 +437,7 @@ export default function App() {
                     <Tooltip content={<CTip/>}/>
                     <Bar dataKey="units" name="Units" radius={[0,4,4,0]}>
                       {bhkS.map((_,i)=><Cell key={i} fill={CC[i%CC.length]}/>)}
+                      <LabelList dataKey="units" position="right" style={{fill:T.textM,fontSize:9,fontWeight:700}}/>
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
@@ -450,6 +457,7 @@ export default function App() {
                     <Tooltip content={<CTip fmt={(v,n)=>n==='bspCr'?`₹${v} Cr`:v?.toLocaleString?.('en-IN')}/>}/>
                     <Bar dataKey="units" name="Units" radius={[0,4,4,0]}>
                       {topCP.map((_,i)=><Cell key={i} fill={CC[i%CC.length]}/>)}
+                      <LabelList dataKey="units" position="right" style={{fill:T.textM,fontSize:9,fontWeight:700}}/>
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
@@ -464,8 +472,12 @@ export default function App() {
                     <YAxis tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false} width={24}/>
                     <Tooltip content={<CTip/>}/>
                     <Legend wrapperStyle={{color:T.text,fontSize:10,fontWeight:700}} iconSize={8}/>
-                    <Bar dataKey="booked"    name="Booked"    fill={T.teal}  radius={[2,2,0,0]} fillOpacity={0.85}/>
-                    <Bar dataKey="cancelled" name="Cancelled" fill={T.red}   radius={[2,2,0,0]} fillOpacity={0.8}/>
+                    <Bar dataKey="booked"    name="Booked"    fill={T.teal}  radius={[2,2,0,0]} fillOpacity={0.85}>
+                      <LabelList dataKey="booked"    position="top" style={{fill:T.tealD,fontSize:8,fontWeight:700}} formatter={v=>v>0?v:''}/>
+                    </Bar>
+                    <Bar dataKey="cancelled" name="Cancelled" fill={T.red}   radius={[2,2,0,0]} fillOpacity={0.8}>
+                      <LabelList dataKey="cancelled" position="top" style={{fill:T.red,fontSize:8,fontWeight:700}} formatter={v=>v>0?v:''}/>
+                    </Bar>
                   </BarChart>
                 </ResponsiveContainer>
               </GC>
@@ -507,9 +519,15 @@ export default function App() {
                     <YAxis tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false} tickFormatter={v=>`${v}Cr`} width={30}/>
                     <Tooltip content={<CTip fmt={v=>`₹${v} Cr`}/>}/>
                     <Legend wrapperStyle={{color:T.text,fontSize:10,fontWeight:700}} iconSize={8}/>
-                    <Bar dataKey="demCr"  name="Demand"      fill={T.amber}  radius={[3,3,0,0]} fillOpacity={0.85}/>
-                    <Bar dataKey="recCr"  name="Received"    fill={T.teal}   radius={[3,3,0,0]} fillOpacity={0.85}/>
-                    <Bar dataKey="outCr"  name="Outstanding" fill={T.red}    radius={[3,3,0,0]} fillOpacity={0.75}/>
+                    <Bar dataKey="demCr"  name="Demand"      fill={T.amber}  radius={[3,3,0,0]} fillOpacity={0.85}>
+                      <LabelList dataKey="demCr"  position="top" style={{fill:T.amber,fontSize:7,fontWeight:700}} formatter={v=>v>0?`${v}`:''} />
+                    </Bar>
+                    <Bar dataKey="recCr"  name="Received"    fill={T.teal}   radius={[3,3,0,0]} fillOpacity={0.85}>
+                      <LabelList dataKey="recCr"  position="top" style={{fill:T.tealD,fontSize:7,fontWeight:700}} formatter={v=>v>0?`${v}`:''} />
+                    </Bar>
+                    <Bar dataKey="outCr"  name="Outstanding" fill={T.red}    radius={[3,3,0,0]} fillOpacity={0.75}>
+                      <LabelList dataKey="outCr"  position="top" style={{fill:T.red,fontSize:7,fontWeight:700}} formatter={v=>v>0?`${v}`:''} />
+                    </Bar>
                   </BarChart>
                 </ResponsiveContainer>
               </GC>
@@ -523,9 +541,15 @@ export default function App() {
                     <YAxis tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false} tickFormatter={v=>`${v}Cr`} width={30}/>
                     <Tooltip content={<CTip fmt={v=>`₹${v} Cr`}/>}/>
                     <Legend wrapperStyle={{color:T.text,fontSize:10,fontWeight:700}} iconSize={8}/>
-                    <Bar dataKey="demCr"  name="Demand"      fill={T.amber} radius={[3,3,0,0]} fillOpacity={0.85}/>
-                    <Bar dataKey="recCr"  name="Received"    fill={T.teal}  radius={[3,3,0,0]} fillOpacity={0.85}/>
-                    <Bar dataKey="outCr"  name="Outstanding" fill={T.red}   radius={[3,3,0,0]} fillOpacity={0.75}/>
+                    <Bar dataKey="demCr"  name="Demand"      fill={T.amber} radius={[3,3,0,0]} fillOpacity={0.85}>
+                      <LabelList dataKey="demCr"  position="top" style={{fill:T.amber,fontSize:7,fontWeight:700}} formatter={v=>v>0?`${v}`:''} />
+                    </Bar>
+                    <Bar dataKey="recCr"  name="Received"    fill={T.teal}  radius={[3,3,0,0]} fillOpacity={0.85}>
+                      <LabelList dataKey="recCr"  position="top" style={{fill:T.tealD,fontSize:7,fontWeight:700}} formatter={v=>v>0?`${v}`:''} />
+                    </Bar>
+                    <Bar dataKey="outCr"  name="Outstanding" fill={T.red}   radius={[3,3,0,0]} fillOpacity={0.75}>
+                      <LabelList dataKey="outCr"  position="top" style={{fill:T.red,fontSize:7,fontWeight:700}} formatter={v=>v>0?`${v}`:''} />
+                    </Bar>
                   </BarChart>
                 </ResponsiveContainer>
               </GC>
