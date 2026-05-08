@@ -28,6 +28,40 @@ const fmtCr  = v => { if(!v||isNaN(v)) return '₹0 Cr'; const c=v/1e7; if(c>=10
 const fmtML  = m => { if(!m) return ''; const [yr,mo]=m.split('-'); return `${['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][+mo]}'${yr.slice(2)}`; };
 const pct    = (a,b) => b>0?Math.round((a/b)*100):0;
 
+const toQuarterly=(data,labelKey='label')=>{
+  const qMap={};
+  data.forEach(d=>{
+    const lbl=String(d[labelKey]||d.month||d.label||'');
+    const m=lbl.match(/([A-Za-z]{3})'(\d{2})/);
+    if(!m)return;
+    const monNum={'Jan':1,'Feb':2,'Mar':3,'Apr':4,'May':5,'Jun':6,'Jul':7,'Aug':8,'Sep':9,'Oct':10,'Nov':11,'Dec':12}[m[1]]||0;
+    const yr=m[2];
+    const q=`Q${Math.ceil(monNum/3)}'${yr}`;
+    if(!qMap[q]){qMap[q]={...d,[labelKey]:q,month:q};Object.keys(d).forEach(k=>{if(typeof d[k]==='number')qMap[q][k]=0;});}
+    Object.keys(d).forEach(k=>{if(typeof d[k]==='number')qMap[q][k]=+(qMap[q][k]+d[k]).toFixed(1);});
+  });
+  return Object.values(qMap);
+};
+
+const ChartControls=({mode,setMode,offset,setOffset,total,window:win=6})=>{
+  const maxOffset=Math.max(0,total-win);
+  return(
+    <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:8}}>
+      <div style={{display:'flex',gap:3,background:'rgba(0,100,140,0.07)',borderRadius:20,padding:2,flexShrink:0}}>
+        {[['monthly','Monthly'],['quarterly','Quarterly']].map(([k,l])=>(
+          <button key={k} onClick={()=>{setMode(k);setOffset(0);}} style={{padding:'3px 12px',borderRadius:18,border:'none',cursor:'pointer',fontSize:10,fontWeight:700,background:mode===k?'#0097a7':'transparent',color:mode===k?'#fff':'#546e7a',transition:'all 0.15s'}}>{l}</button>
+        ))}
+      </div>
+      <button onClick={()=>setOffset(o=>Math.max(0,o-1))} disabled={offset===0} style={{width:24,height:24,borderRadius:'50%',border:'1px solid rgba(0,100,140,0.2)',background:'rgba(255,255,255,0.8)',cursor:offset===0?'default':'pointer',fontSize:14,color:offset===0?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>‹</button>
+      <div style={{flex:1,height:5,background:'rgba(0,100,140,0.1)',borderRadius:3,position:'relative',cursor:'pointer',minWidth:60}} onClick={e=>{const r=e.currentTarget.getBoundingClientRect();const p=(e.clientX-r.left)/r.width;setOffset(Math.round(p*maxOffset));}}>
+        <div style={{position:'absolute',left:`${maxOffset>0?(offset/maxOffset)*(100-win/total*100):0}%`,width:`${total>0?(win/total)*100:100}%`,height:'100%',background:'linear-gradient(90deg,#0097a7,#4dd0e1)',borderRadius:3,transition:'left 0.2s'}}/>
+      </div>
+      <button onClick={()=>setOffset(o=>Math.min(maxOffset,o+1))} disabled={offset>=maxOffset} style={{width:24,height:24,borderRadius:'50%',border:'1px solid rgba(0,100,140,0.2)',background:'rgba(255,255,255,0.8)',cursor:offset>=maxOffset?'default':'pointer',fontSize:14,color:offset>=maxOffset?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>›</button>
+      <span style={{fontSize:9,color:'#90a4ae',whiteSpace:'nowrap',fontWeight:600}}>{offset+1}–{Math.min(offset+win,total)} / {total}</span>
+    </div>
+  );
+};
+
 const CTip = ({active,payload,label,fmt}) => {
   if(!active||!payload?.length) return null;
   return (
@@ -403,30 +437,40 @@ export default function App() {
             <div style={{display:'grid',gridTemplateColumns:'2fr 1fr 1fr',gap:12}}>
 
               <GC style={{padding:16}}>
-                <SH title="Monthly Sales Trend" sub="BSP · Demand · Collections — ₹ Crores"/>
-                <ResponsiveContainer width="100%" height={200}>
-                  <AreaChart data={last12} margin={{top:5,right:8,bottom:18,left:0}}>
-                    <defs>
-                      {[['a1',T.teal],['a2',T.amber],['a3',T.greenL]].map(([id,c])=>(
-                        <linearGradient key={id} id={id} x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor={c} stopOpacity={0.25}/><stop offset="95%" stopColor={c} stopOpacity={0}/></linearGradient>
-                      ))}
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.2)" vertical={false}/>
-                    <XAxis dataKey="label" tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false} interval="preserveStartEnd" angle={-25} dy={6}/>
-                    <YAxis tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false} tickFormatter={v=>`${v}Cr`} width={32}/>
-                    <Tooltip content={<CTip fmt={v=>`₹${v} Cr`}/>}/>
-                    <Legend wrapperStyle={{color:T.text,fontSize:10,fontWeight:700}} iconSize={8}/>
-                    <Area type="monotone" dataKey="bspCr"  name="Sales(BSP)"  stroke={T.teal}   fill="url(#a1)" strokeWidth={2} dot={false} activeDot={{r:3}}>
-                      <LabelList dataKey="bspCr"  position="top" style={{fill:T.tealD,fontSize:7,fontWeight:700}} formatter={v=>v>0?`${v}Cr`:''} />
-                    </Area>
-                    <Area type="monotone" dataKey="demCr"  name="Demand"      stroke={T.amber}  fill="url(#a2)" strokeWidth={2} dot={false} activeDot={{r:3}}>
-                      <LabelList dataKey="demCr"  position="top" style={{fill:T.amber,fontSize:7,fontWeight:700}} formatter={v=>v>0?`${v}Cr`:''} />
-                    </Area>
-                    <Area type="monotone" dataKey="recCr"  name="Received"    stroke={T.greenL} fill="url(#a3)" strokeWidth={2} dot={false} activeDot={{r:3}}>
-                      <LabelList dataKey="recCr"  position="top" style={{fill:T.greenL,fontSize:7,fontWeight:700}} formatter={v=>v>0?`${v}Cr`:''} />
-                    </Area>
-                  </AreaChart>
-                </ResponsiveContainer>
+                {(()=>{
+                  const [tMode,setTMode]=React.useState('monthly');
+                  const [tOff,setTOff]=React.useState(0);
+                  const WIN=6;
+                  const base=tMode==='quarterly'?toQuarterly(monthly,'label'):monthly;
+                  const slice=base.slice(tOff,tOff+WIN);
+                  return(<>
+                    <SH title="Monthly Sales Trend" sub="BSP · Demand · Collections — ₹ Crores"/>
+                    <ChartControls mode={tMode} setMode={setTMode} offset={tOff} setOffset={setTOff} total={base.length} window={WIN}/>
+                    <ResponsiveContainer width="100%" height={200}>
+                      <AreaChart data={slice} margin={{top:5,right:8,bottom:18,left:0}}>
+                        <defs>
+                          {[['a1',T.teal],['a2',T.amber],['a3',T.greenL]].map(([id,c])=>(
+                            <linearGradient key={id} id={id} x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor={c} stopOpacity={0.25}/><stop offset="95%" stopColor={c} stopOpacity={0}/></linearGradient>
+                          ))}
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.2)" vertical={false}/>
+                        <XAxis dataKey="label" tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false} interval={0} angle={-25} dy={6}/>
+                        <YAxis tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false} tickFormatter={v=>`${v}Cr`} width={38}/>
+                        <Tooltip content={<CTip fmt={v=>`₹${v} Cr`}/>}/>
+                        <Legend wrapperStyle={{color:T.text,fontSize:10,fontWeight:700}} iconSize={8}/>
+                        <Area type="monotone" dataKey="bspCr" name="Sales(BSP)" stroke={T.teal} fill="url(#a1)" strokeWidth={2} dot={{r:3,fill:T.teal}} activeDot={{r:4}}>
+                          <LabelList dataKey="bspCr" position="top" style={{fill:T.tealD,fontSize:7,fontWeight:700}} formatter={v=>v>0?`${v}Cr`:''}/>
+                        </Area>
+                        <Area type="monotone" dataKey="demCr" name="Demand" stroke={T.amber} fill="url(#a2)" strokeWidth={2} dot={{r:3,fill:T.amber}} activeDot={{r:4}}>
+                          <LabelList dataKey="demCr" position="top" style={{fill:T.amber,fontSize:7,fontWeight:700}} formatter={v=>v>0?`${v}Cr`:''}/>
+                        </Area>
+                        <Area type="monotone" dataKey="recCr" name="Received" stroke={T.greenL} fill="url(#a3)" strokeWidth={2} dot={{r:3,fill:T.greenL}} activeDot={{r:4}}>
+                          <LabelList dataKey="recCr" position="top" style={{fill:T.greenL,fontSize:7,fontWeight:700}} formatter={v=>v>0?`${v}Cr`:''}/>
+                        </Area>
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </>);
+                })()}
               </GC>
 
               <GC style={{padding:16}}>
@@ -568,45 +612,63 @@ export default function App() {
               </GC>
 
               <GC style={{padding:16}}>
-                <SH title="Booking vs. Cancelled" sub="Monthly Comparison"/>
-                <ResponsiveContainer width="100%" height={185}>
-                  <BarChart data={bvc.slice(-18)} margin={{top:5,right:8,bottom:18,left:0}}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.2)" vertical={false}/>
-                    <XAxis dataKey="label" tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false} angle={-25} dy={6} interval="preserveStartEnd"/>
-                    <YAxis tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false} width={24}/>
-                    <Tooltip content={<CTip/>}/>
-                    <Legend wrapperStyle={{color:T.text,fontSize:10,fontWeight:700}} iconSize={8}/>
-                    <Bar dataKey="booked"    name="Booked"    fill={T.teal}  radius={[2,2,0,0]} fillOpacity={0.85}>
-                      <LabelList dataKey="booked"    position="top" style={{fill:T.tealD,fontSize:8,fontWeight:700}} formatter={v=>v>0?v:''}/>
-                    </Bar>
-                    <Bar dataKey="cancelled" name="Cancelled" fill={T.red}   radius={[2,2,0,0]} fillOpacity={0.8}>
-                      <LabelList dataKey="cancelled" position="top" style={{fill:T.red,fontSize:8,fontWeight:700}} formatter={v=>v>0?v:''}/>
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
+                {(()=>{
+                  const [bMode,setBMode]=React.useState('monthly');
+                  const [bOff,setBOff]=React.useState(0);
+                  const WIN=6;
+                  const base=bMode==='quarterly'?toQuarterly(bvc,'label'):bvc;
+                  const slice=base.slice(bOff,bOff+WIN);
+                  return(<>
+                    <SH title="Booking vs. Cancelled" sub="Monthly Comparison"/>
+                    <ChartControls mode={bMode} setMode={setBMode} offset={bOff} setOffset={setBOff} total={base.length} window={WIN}/>
+                    <ResponsiveContainer width="100%" height={185}>
+                      <BarChart data={slice} margin={{top:5,right:8,bottom:18,left:0}}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.2)" vertical={false}/>
+                        <XAxis dataKey="label" tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false} angle={-25} dy={6} interval={0}/>
+                        <YAxis tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false} width={24}/>
+                        <Tooltip content={<CTip/>}/>
+                        <Legend wrapperStyle={{color:T.text,fontSize:10,fontWeight:700}} iconSize={8}/>
+                        <Bar dataKey="booked" name="Booked" fill={T.teal} radius={[2,2,0,0]} fillOpacity={0.85}>
+                          <LabelList dataKey="booked" position="top" style={{fill:T.tealD,fontSize:8,fontWeight:700}} formatter={v=>v>0?v:''}/>
+                        </Bar>
+                        <Bar dataKey="cancelled" name="Cancelled" fill={T.red} radius={[2,2,0,0]} fillOpacity={0.8}>
+                          <LabelList dataKey="cancelled" position="top" style={{fill:T.red,fontSize:8,fontWeight:700}} formatter={v=>v>0?v:''}/>
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </>);
+                })()}
               </GC>
 
               {/* Sales Value vs Cancelled Value vs Refund */}
               <GC style={{padding:16,gridColumn:'1/-1'}}>
-                <SH title="Sales Value vs. Cancellation Value vs. Refund" sub="Monthly ₹ Crores — Total Sales BSP · Cancelled BSP · Refund Given"/>
-                <ResponsiveContainer width="100%" height={210}>
-                  <BarChart data={salesVsRefund.slice(-18)} margin={{top:8,right:8,bottom:18,left:0}}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.12)" vertical={false}/>
-                    <XAxis dataKey="month" tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false} angle={-25} dy={6} interval="preserveStartEnd"/>
-                    <YAxis tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false} width={32} tickFormatter={v=>`${v}Cr`}/>
-                    <Tooltip content={<CTip fmt={(v)=>`₹${v} Cr`}/>}/>
-                    <Legend wrapperStyle={{color:T.text,fontSize:10,fontWeight:700}} iconSize={8}/>
-                    <Bar dataKey="bspCr" name="Sales BSP" fill={T.teal} radius={[3,3,0,0]} fillOpacity={0.85}>
-                      <LabelList dataKey="bspCr" position="top" style={{fill:T.tealD,fontSize:7,fontWeight:700}} formatter={v=>v>0?`${v}Cr`:''}/>
-                    </Bar>
-                    <Bar dataKey="cancelledBSPCr" name="Cancelled BSP" fill={T.amber} radius={[3,3,0,0]} fillOpacity={0.8}>
-                      <LabelList dataKey="cancelledBSPCr" position="top" style={{fill:T.amber,fontSize:7,fontWeight:700}} formatter={v=>v>0?`${v}Cr`:''}/>
-                    </Bar>
-                    <Bar dataKey="refundCr" name="Refund Given" fill={T.red} radius={[3,3,0,0]} fillOpacity={0.85}>
-                      <LabelList dataKey="refundCr" position="top" style={{fill:T.red,fontSize:7,fontWeight:700}} formatter={v=>v>0?`${v}Cr`:''}/>
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
+                {(()=>{
+                  const [sMode,setSMode]=React.useState('monthly');
+                  const [sOff,setSOff]=React.useState(0);
+                  const WIN=6;
+                  const base=sMode==='quarterly'?toQuarterly(salesVsRefund,'month'):salesVsRefund;
+                  const slice=base.slice(sOff,sOff+WIN);
+                  return(<>
+                    <SH title="Sales Value vs. Cancellation Value vs. Refund" sub="Monthly ₹ Crores — Total Sales BSP · Cancelled BSP · Refund Given"/>
+                    <ChartControls mode={sMode} setMode={setSMode} offset={sOff} setOffset={setSOff} total={base.length} window={WIN}/>
+                    <ResponsiveContainer width="100%" height={210}>
+                      <BarChart data={slice} margin={{top:8,right:8,bottom:18,left:0}}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.12)" vertical={false}/>
+                        <XAxis dataKey="month" tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false} angle={-25} dy={6} interval={0}/>
+                        <YAxis tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false} width={38} tickFormatter={v=>`${v}Cr`}/>
+                        <Tooltip content={<CTip fmt={(v)=>`₹${v} Cr`}/>}/>
+                        <Legend wrapperStyle={{color:T.text,fontSize:10,fontWeight:700}} iconSize={8}/>
+                        <Bar dataKey="bspCr" name="Sales BSP" fill={T.teal} radius={[3,3,0,0]} fillOpacity={0.85}>
+                          <LabelList dataKey="bspCr" position="top" style={{fill:T.tealD,fontSize:7,fontWeight:700}} formatter={v=>v>0?`${v}Cr`:''}/>
+                        </Bar>
+                        <Bar dataKey="cancelledBSPCr" name="Cancelled BSP" fill={T.amber} radius={[3,3,0,0]} fillOpacity={0.8}>
+                          <LabelList dataKey="cancelledBSPCr" position="top" style={{fill:T.amber,fontSize:7,fontWeight:700}} formatter={v=>v>0?`${v}Cr`:''}/>
+                        </Bar>
+                        <Bar dataKey="refundCr" name="Refund Given" fill={T.red} radius={[3,3,0,0]} fillOpacity={0.85}>
+                          <LabelList dataKey="refundCr" position="top" style={{fill:T.red,fontSize:7,fontWeight:700}} formatter={v=>v>0?`${v}Cr`:''}/>
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
                 {/* Summary totals row */}
                 {(()=>{
                   const totSales=salesVsRefund.reduce((s,r)=>s+r.bspCr,0).toFixed(1);
@@ -628,6 +690,8 @@ export default function App() {
                       ))}
                     </div>
                   );
+                })()}
+                  </>);
                 })()}
               </GC>
             </div>
