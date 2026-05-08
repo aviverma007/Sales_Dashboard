@@ -346,7 +346,7 @@ export default function App() {
                 <div style={{display:'flex',flexDirection:'column',gap:4}}>
                   {(()=>{
                     const projMap={};
-                    (raw?.workflow||[]).filter(r=>r.status==='PENDING').forEach(r=>{projMap[r.project]=(projMap[r.project]||0)+1;});
+                    wF.filter(r=>r.status==='PENDING').forEach(r=>{projMap[r.project]=(projMap[r.project]||0)+1;});
                     const entries=Object.entries(projMap).sort((a,b)=>b[1]-a[1]);
                     const maxVal=entries[0]?.[1]||1;
                     const SHORT={'Smartworld Sky Arc':'Sky Arc','SMARTWORLD THE EDITION':'Edition','Trump Residences Gurgaon':'Trump','Smartworld Le Courtyard':'Le Courtyard','Smartworld Suites':'Suites','Smartworld Residencies':'Residencies'};
