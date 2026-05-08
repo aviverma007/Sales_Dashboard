@@ -644,26 +644,32 @@ export default function App() {
                   return(<>
                     <SH title="Booking vs. Cancelled" sub="Monthly Comparison"/>
                     <ChartControls mode={bMode} setMode={setBMode} offset={bOff} setOffset={setBOff} total={base.length} window={WIN}/>
-                    <ResponsiveContainer width="100%" height={220}>
-                      <BarChart data={slice} margin={{top:5,right:8,bottom:18,left:0}} barCategoryGap="30%">
-                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.2)" vertical={false}/>
-                        <XAxis dataKey="label" tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false} angle={-25} dy={6} interval={0}/>
-                        <YAxis tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false} width={28}/>
-                        <Tooltip content={<CTip fmt={(v,n)=>n==='Remaining Target'?`${v} units left`:v}/>}/>
-                        <Legend wrapperStyle={{color:T.text,fontSize:10,fontWeight:700}} iconSize={8}/>
-                        {/* Stacked: booked (teal) + remaining target (amber) */}
-                        <Bar dataKey="booked" name="Booked" stackId="a" fill={T.teal} fillOpacity={0.9} radius={[0,0,0,0]}>
-                          <LabelList dataKey="booked" position="insideTop" style={{fill:'#fff',fontSize:8,fontWeight:800}} formatter={v=>v>0?v:''}/>
-                        </Bar>
-                        <Bar dataKey="remaining" name="Remaining Target" stackId="a" fill={T.amber} fillOpacity={0.35} radius={[3,3,0,0]}>
-                          <LabelList dataKey="remaining" position="top" style={{fill:T.amber,fontSize:7,fontWeight:700}} formatter={v=>v>0?`${v} left`:''}/>
-                        </Bar>
-                        {/* Cancelled as standalone bar */}
-                        <Bar dataKey="cancelled" name="Cancelled" fill={T.red} radius={[2,2,0,0]} fillOpacity={0.85}>
-                          <LabelList dataKey="cancelled" position="top" style={{fill:T.red,fontSize:8,fontWeight:700}} formatter={v=>v>0?v:''}/>
-                        </Bar>
-                      </BarChart>
-                    </ResponsiveContainer>
+                    {(()=>{
+                      const maxBooked=Math.max(...slice.map(d=>d.booked),1);
+                      // amber cap = 15% of maxBooked so it's a small topper
+                      const amberCap=Math.ceil(maxBooked*0.18);
+                      const sliceWithCap=slice.map(d=>({...d,targetTopper:d.remaining>0?amberCap:0}));
+                      return(
+                        <ResponsiveContainer width="100%" height={210}>
+                          <BarChart data={sliceWithCap} margin={{top:18,right:8,bottom:18,left:0}} barSize={18}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.2)" vertical={false}/>
+                            <XAxis dataKey="label" tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false} angle={-25} dy={6} interval={0}/>
+                            <YAxis tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false} width={28} domain={[0,'dataMax+5']}/>
+                            <Tooltip content={<CTip fmt={(v,n)=>{if(n==='Target Remaining')return`${slice.find(s=>s.targetTopper===v)?.remaining??v} units left`;return v;}}/>}/>
+                            <Legend wrapperStyle={{color:T.text,fontSize:10,fontWeight:700}} iconSize={8}/>
+                            <Bar dataKey="booked" name="Booked" stackId="a" fill={T.teal} fillOpacity={0.9} radius={[0,0,2,2]}>
+                              <LabelList dataKey="booked" position="insideTop" style={{fill:'#fff',fontSize:8,fontWeight:800}} formatter={v=>v>0?v:''}/>
+                            </Bar>
+                            <Bar dataKey="targetTopper" name="Target Remaining" stackId="a" fill={T.amber} fillOpacity={0.85} radius={[3,3,0,0]}>
+                              <LabelList dataKey="remaining" position="top" style={{fill:T.amber,fontSize:7,fontWeight:800}} formatter={v=>v>0?`${v}`:''}/>
+                            </Bar>
+                            <Bar dataKey="cancelled" name="Cancelled" fill={T.red} radius={[2,2,0,0]} fillOpacity={0.85}>
+                              <LabelList dataKey="cancelled" position="top" style={{fill:T.red,fontSize:8,fontWeight:700}} formatter={v=>v>0?v:''}/>
+                            </Bar>
+                          </BarChart>
+                        </ResponsiveContainer>
+                      );
+                    })()}
                   </>);
                 })()}
               </GC>
