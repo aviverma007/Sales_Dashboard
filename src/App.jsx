@@ -132,6 +132,14 @@ export default function App() {
   const [tab,setTab]=useState('overview'); // overview | collections | pipeline
   const [filters,setFilters]=useState({company:'',project:'',year:'',month:'',broker:'',bhk:''});
   const sf=useCallback((k,v)=>setFilters(p=>({...p,[k]:v})),[]);
+  // Chart controls (lifted to comply with React hooks rules)
+  const [tMode,setTMode]=useState('monthly');
+  const [tOff,setTOff]=useState(0);
+  const [bMode,setBMode]=useState('monthly');
+  const [bOff,setBOff]=useState(0);
+  const [sMode,setSMode]=useState('monthly');
+  const [sOff,setSOff]=useState(0);
+  const [cancelTab,setCancelTab]=useState('overview');
 
   useEffect(()=>{fetch('/data/dashboard_data.json').then(r=>r.json()).then(d=>{setRaw(d);setLoading(false);}).catch(()=>setLoading(false));}, []);
 
@@ -438,8 +446,6 @@ export default function App() {
 
               <GC style={{padding:16}}>
                 {(()=>{
-                  const [tMode,setTMode]=React.useState('monthly');
-                  const [tOff,setTOff]=React.useState(0);
                   const WIN=6;
                   const base=tMode==='quarterly'?toQuarterly(monthly,'label'):monthly;
                   const slice=base.slice(tOff,tOff+WIN);
@@ -613,8 +619,6 @@ export default function App() {
 
               <GC style={{padding:16}}>
                 {(()=>{
-                  const [bMode,setBMode]=React.useState('monthly');
-                  const [bOff,setBOff]=React.useState(0);
                   const WIN=6;
                   const base=bMode==='quarterly'?toQuarterly(bvc,'label'):bvc;
                   const slice=base.slice(bOff,bOff+WIN);
@@ -643,8 +647,6 @@ export default function App() {
               {/* Sales Value vs Cancelled Value vs Refund */}
               <GC style={{padding:16,gridColumn:'1/-1'}}>
                 {(()=>{
-                  const [sMode,setSMode]=React.useState('monthly');
-                  const [sOff,setSOff]=React.useState(0);
                   const WIN=6;
                   const base=sMode==='quarterly'?toQuarterly(salesVsRefund,'month'):salesVsRefund;
                   const slice=base.slice(sOff,sOff+WIN);
@@ -701,7 +703,7 @@ export default function App() {
               <SH title="Cancelled Unit Status" sub="Rebooked · Still Vacant · Vacancy Duration"/>
               {(()=>{
                 const {summary,buckets,byProject,vacantUnits}=cancelledUnitStatus;
-                const [activeTab,setActiveTab]=React.useState('overview');
+                const activeTab=cancelTab; const setActiveTab=setCancelTab;
                 const bucketColors=['#00bcd4','#f59e0b','#ef4444','#7c3aed'];
                 return(
                   <div>
