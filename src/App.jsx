@@ -144,6 +144,7 @@ export default function App() {
   const [sMode,setSMode]=useState('monthly');
   const [sOff,setSOff]=useState(9999);
   const [cancelTab,setCancelTab]=useState('overview');
+  const [towerExpanded,setTowerExpanded]=useState(false);
 
   useEffect(()=>{fetch('/data/dashboard_data.json').then(r=>r.json()).then(d=>{setRaw(d);setLoading(false);}).catch(()=>setLoading(false));}, []);
 
@@ -867,7 +868,7 @@ export default function App() {
                     </tr>
                   </thead>
                   <tbody>
-                    {towerData.map((d,i)=>{
+                    {(towerExpanded?towerData:towerData.slice(0,10)).map((d,i)=>{
                       const total=d.booked+d.cancelled;
                       const successPct=total>0?Math.round((d.booked/total)*100):0;
                       const col=successPct>=90?T.teal:successPct>=75?T.greenL:successPct>=60?T.amber:T.red;
@@ -909,6 +910,11 @@ export default function App() {
                   </tbody>
                 </table>
               </div>
+              {towerData.length>10&&(
+                <button onClick={()=>setTowerExpanded(e=>!e)} style={{display:'flex',alignItems:'center',gap:6,margin:'10px auto 0',padding:'6px 20px',background:'rgba(0,151,167,0.06)',border:'1px solid rgba(0,151,167,0.2)',borderRadius:20,cursor:'pointer',fontSize:10,fontWeight:700,color:T.tealD,transition:'all 0.15s'}}>
+                  {towerExpanded?`▲ Show less`:`▼ Show ${towerData.length-10} more towers`}
+                </button>
+              )}
             </GC>
 
             {/* ══ AREA SUMMARY CARDS ══ */}
