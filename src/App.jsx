@@ -124,15 +124,10 @@ export default function App() {
   const topCP=useMemo(()=>{const map={};pA.forEach(r=>{const b=r.broker;if(!b)return;if(!map[b])map[b]={name:b,units:0,bspCr:0};map[b].units++;map[b].bspCr+=(r.bsp||0)/1e7;});return Object.values(map).sort((a,b)=>b.units-a.units).slice(0,8).map(r=>({...r,bspCr:+r.bspCr.toFixed(1)}));},[pA]);
   const bhkS=useMemo(()=>{const map={};pA.forEach(r=>{const b=r.bhk||'Other';if(!map[b])map[b]={bhk:b,units:0,bsp:0};map[b].units++;map[b].bsp+=(r.bsp||0);});return Object.values(map).sort((a,b)=>b.units-a.units);},[pA]);
   const cpVsDirect=useMemo(()=>{
-    const map={};
-    pA.forEach(r=>{
-      const p=r.project;if(!p)return;
-      if(!map[p])map[p]={name:p,cp:0,direct:0,cpBSP:0,directBSP:0};
-      if(r.broker&&r.broker.trim()){map[p].cp++;map[p].cpBSP+=(r.bsp||0);}
-      else{map[p].direct++;map[p].directBSP+=(r.bsp||0);}
-    });
-    return Object.values(map).sort((a,b)=>(b.cp+b.direct)-(a.cp+a.direct));
-  },[pA]);
+    if(!raw?.cpVsDirect) return [];
+    if(!filters.project) return raw.cpVsDirect;
+    return raw.cpVsDirect.filter(r=>r.name===filters.project);
+  },[raw,filters.project]);
   const dappByP=useMemo(()=>{const map={};dF.forEach(r=>{const p=r.project;if(!p)return;if(!map[p])map[p]={name:p,demCr:0,recCr:0,outCr:0};map[p].demCr+=(r.demand||0)/1e7;map[p].recCr+=(r.received||0)/1e7;map[p].outCr+=(r.outstanding||0)/1e7;});return Object.values(map).map(r=>({...r,demCr:+r.demCr.toFixed(1),recCr:+r.recCr.toFixed(1),outCr:+r.outCr.toFixed(1)}));},[dF]);
   const top10=useMemo(()=>[...pA].sort((a,b)=>(b.tcv||0)-(a.tcv||0)).slice(0,10),[pA]);
   const openBkg=useMemo(()=>[...pA].sort((a,b)=>(b.bsp||0)-(a.bsp||0)).slice(0,15),[pA]);
@@ -411,6 +406,8 @@ export default function App() {
                   const totalDirect=cpVsDirect.reduce((s,r)=>s+r.direct,0);
                   const totalAll=totalCP+totalDirect;
                   const cpPct=totalAll>0?Math.round((totalCP/totalAll)*100):0;
+                  // donut: CP vs Direct from filtered data
+                  const cpDonutData=[{name:'CP',value:totalCP},{name:'Direct',value:totalDirect}];
                   return(
                     <div style={{display:'flex',flexDirection:'column',gap:10}}>
                       {/* Donut + project legend */}
@@ -418,7 +415,7 @@ export default function App() {
                         <div style={{width:120,height:120,flexShrink:0,position:'relative'}}>
                           <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
-                              <Pie data={[{name:'CP',value:totalCP},{name:'Direct',value:totalDirect}]} cx="50%" cy="50%" outerRadius={52} innerRadius={26} paddingAngle={4} dataKey="value" strokeWidth={2} stroke="rgba(255,255,255,0.9)">
+                              <Pie data={cpDonutData} cx="50%" cy="50%" outerRadius={52} innerRadius={26} paddingAngle={4} dataKey="value" strokeWidth={2} stroke="rgba(255,255,255,0.9)">
                                 <Cell fill={T.teal}/>
                                 <Cell fill={T.navy}/>
                               </Pie>
@@ -460,8 +457,8 @@ export default function App() {
                         {/* Overall CP vs Direct bar */}
                         <div style={{marginBottom:8}}>
                           <div style={{display:'flex',justifyContent:'space-between',marginBottom:3}}>
-                            <span style={{fontSize:9,fontWeight:700,color:T.tealD}}>🤝 CP: {totalCP} units ({cpPct}%)</span>
-                            <span style={{fontSize:9,fontWeight:700,color:T.navy}}>👤 Direct: {totalDirect} units ({100-cpPct}%)</span>
+                            <span style={{fontSize:9,fontWeight:700,color:T.tealD}}>🤝 CP: {totalCP} units</span>
+                            <span style={{fontSize:9,fontWeight:700,color:T.navy}}>👤 Direct: {totalDirect} units</span>
                           </div>
                           <div style={{width:'100%',height:6,background:'rgba(0,100,140,0.1)',borderRadius:3,overflow:'hidden'}}>
                             <div style={{width:`${cpPct}%`,height:'100%',background:`linear-gradient(90deg,${T.teal},${T.tealL})`,borderRadius:3}}/>
@@ -472,18 +469,17 @@ export default function App() {
                           const tot2=d.cp+d.direct;
                           const cpP=tot2>0?Math.round((d.cp/tot2)*100):0;
                           return(
-                            <div key={i} style={{marginBottom:5}}>
-                              <div style={{display:'flex',justifyContent:'space-between',marginBottom:2}}>
-                                <span style={{fontSize:9,fontWeight:700,color:T.text}}>{SHORT[d.name]||d.name.split(' ').pop()}</span>
-                                <span style={{fontSize:8,color:T.textM}}>
-                                  <span style={{color:T.tealD,fontWeight:700}}>CP {d.cp}</span>
-                                  <span style={{color:T.textL}}> · </span>
-                                  <span style={{color:T.navy,fontWeight:700}}>Direct {d.direct}</span>
-                                </span>
+                            <div key={i} style={{marginBottom:6}}>
+                              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:3}}>
+                                <span style={{fontSize:10,fontWeight:800,color:T.text}}>{d.label||SHORT[d.name]||d.name.split(' ').pop()}</span>
+                                <div style={{display:'flex',gap:8}}>
+                                  <span style={{fontSize:9,fontWeight:700,color:T.tealD}}>🤝 CP: {d.cp}</span>
+                                  <span style={{fontSize:9,fontWeight:700,color:T.navy}}>👤 Direct: {d.direct}</span>
+                                </div>
                               </div>
-                              <div style={{width:'100%',height:4,background:'rgba(0,100,140,0.08)',borderRadius:2,overflow:'hidden',display:'flex'}}>
-                                <div style={{width:`${cpP}%`,height:'100%',background:T.teal,opacity:0.75}}/>
-                                <div style={{width:`${100-cpP}%`,height:'100%',background:T.navy,opacity:0.4}}/>
+                              <div style={{width:'100%',height:5,background:'rgba(0,100,140,0.08)',borderRadius:3,overflow:'hidden',display:'flex'}}>
+                                <div style={{width:`${cpP}%`,height:'100%',background:`linear-gradient(90deg,${T.teal},${T.tealL})`}}/>
+                                <div style={{width:`${100-cpP}%`,height:'100%',background:`${T.navy}55`}}/>
                               </div>
                             </div>
                           );
