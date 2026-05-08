@@ -213,7 +213,7 @@ export default function App() {
     pA.forEach(r=>{const b=r.bhk||'Other';if(!map[b])map[b]={bhk:b,booked:0,total:0};map[b].booked++;});
     // Total from inventory (filtered)
     iF.forEach(r=>{const b=r.bhk||'Other';if(!map[b])map[b]={bhk:b,booked:0,total:0};map[b].total++;});
-    return Object.values(map).sort((a,b)=>b.booked-a.booked);
+    return Object.values(map).sort((a,b)=>b.booked-a.booked).map(r=>({...r,available:Math.max(0,r.total-r.booked)}));
   },[pA,iF]);
   const cpVsDirect=useMemo(()=>{
     if(!raw?.cpVsDirect) return [];
@@ -600,20 +600,29 @@ export default function App() {
               </GC>
 
               <GC style={{padding:16}}>
-                <SH title="Product-wise" sub="BHK — Total Inventory vs Booked"/>
+                <SH title="Product-wise" sub="BHK — Booked vs Total Inventory"/>
                 <ResponsiveContainer width="100%" height={200}>
-                  <BarChart data={bhkS} layout="vertical" margin={{top:4,right:52,bottom:4,left:0}} barCategoryGap="25%" barGap={3}>
+                  <BarChart data={bhkS} layout="vertical" margin={{top:4,right:70,bottom:4,left:0}} barCategoryGap="30%">
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.1)" horizontal={false}/>
                     <XAxis type="number" tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false}/>
                     <YAxis type="category" dataKey="bhk" tick={{fill:T.text,fontSize:10,fontWeight:700}} axisLine={false} tickLine={false} width={85}/>
                     <Tooltip content={<CTip/>}/>
                     <Legend wrapperStyle={{fontSize:9,fontWeight:700,color:T.text}} iconSize={8}/>
-                    <Bar dataKey="total" name="Total" fill="rgba(0,151,167,0.18)" radius={[0,4,4,0]} stroke={T.teal} strokeWidth={1}>
-                      <LabelList dataKey="total" position="right" style={{fill:T.textM,fontSize:9,fontWeight:700}}/>
-                    </Bar>
-                    <Bar dataKey="booked" name="Booked" radius={[0,4,4,0]}>
+                    {/* Total (background) stacked first */}
+                    <Bar dataKey="booked" name="Booked" stackId="s" radius={[0,0,0,0]}>
                       {bhkS.map((_,i)=><Cell key={i} fill={CC[i%CC.length]}/>)}
-                      <LabelList dataKey="booked" position="right" style={{fill:T.textM,fontSize:9,fontWeight:700}}/>
+                    </Bar>
+                    <Bar dataKey="available" name="Available" stackId="s" fill="rgba(0,151,167,0.15)" stroke={T.teal} strokeWidth={0} radius={[0,4,4,0]}>
+                      <LabelList content={({x,y,width,height,index})=>{
+                        const d=bhkS[index];
+                        if(!d) return null;
+                        return(
+                          <g>
+                            <text x={x+width+6} y={y+height/2-5} textAnchor="start" dominantBaseline="middle" fill={CC[index%CC.length]} fontSize={9} fontWeight={800}>{d.booked}</text>
+                            <text x={x+width+6} y={y+height/2+6} textAnchor="start" dominantBaseline="middle" fill={T.textM} fontSize={8} fontWeight={600}>/{d.total}</text>
+                          </g>
+                        );
+                      }}/>
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
