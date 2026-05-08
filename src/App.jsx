@@ -207,7 +207,14 @@ export default function App() {
   },[raw,filters.project]);
   const byProj=useMemo(()=>{const map={};pA.forEach(r=>{const p=r.project;if(!p)return;if(!map[p])map[p]={name:p,units:0,bspCr:0};map[p].units++;map[p].bspCr+=(r.bsp||0)/1e7;});return Object.values(map).sort((a,b)=>b.units-a.units).map(r=>({...r,bspCr:+r.bspCr.toFixed(1)}));},[pA]);
   const topCP=useMemo(()=>{const map={};pA.forEach(r=>{const b=r.broker;if(!b)return;if(!map[b])map[b]={name:b,units:0,bspCr:0};map[b].units++;map[b].bspCr+=(r.bsp||0)/1e7;});return Object.values(map).sort((a,b)=>b.units-a.units).slice(0,8).map(r=>({...r,bspCr:+r.bspCr.toFixed(1)}));},[pA]);
-  const bhkS=useMemo(()=>{const map={};pA.forEach(r=>{const b=r.bhk||'Other';if(!map[b])map[b]={bhk:b,units:0,bsp:0};map[b].units++;map[b].bsp+=(r.bsp||0);});return Object.values(map).sort((a,b)=>b.units-a.units);},[pA]);
+  const bhkS=useMemo(()=>{
+    const map={};
+    // Booked from pdrn (filtered)
+    pA.forEach(r=>{const b=r.bhk||'Other';if(!map[b])map[b]={bhk:b,booked:0,total:0};map[b].booked++;});
+    // Total from inventory (filtered)
+    iF.forEach(r=>{const b=r.bhk||'Other';if(!map[b])map[b]={bhk:b,booked:0,total:0};map[b].total++;});
+    return Object.values(map).sort((a,b)=>b.booked-a.booked);
+  },[pA,iF]);
   const cpVsDirect=useMemo(()=>{
     if(!raw?.cpVsDirect) return [];
     if(!filters.project) return raw.cpVsDirect;
@@ -593,16 +600,20 @@ export default function App() {
               </GC>
 
               <GC style={{padding:16}}>
-                <SH title="Product-wise" sub="BHK Unit Distribution"/>
+                <SH title="Product-wise" sub="BHK — Total Inventory vs Booked"/>
                 <ResponsiveContainer width="100%" height={200}>
-                  <BarChart data={bhkS} layout="vertical" margin={{top:5,right:10,bottom:5,left:0}}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.2)" horizontal={false}/>
+                  <BarChart data={bhkS} layout="vertical" margin={{top:4,right:52,bottom:4,left:0}} barCategoryGap="25%" barGap={3}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.1)" horizontal={false}/>
                     <XAxis type="number" tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false}/>
                     <YAxis type="category" dataKey="bhk" tick={{fill:T.text,fontSize:10,fontWeight:700}} axisLine={false} tickLine={false} width={85}/>
                     <Tooltip content={<CTip/>}/>
-                    <Bar dataKey="units" name="Units" radius={[0,4,4,0]}>
+                    <Legend wrapperStyle={{fontSize:9,fontWeight:700,color:T.text}} iconSize={8}/>
+                    <Bar dataKey="total" name="Total" fill="rgba(0,151,167,0.18)" radius={[0,4,4,0]} stroke={T.teal} strokeWidth={1}>
+                      <LabelList dataKey="total" position="right" style={{fill:T.textM,fontSize:9,fontWeight:700}}/>
+                    </Bar>
+                    <Bar dataKey="booked" name="Booked" radius={[0,4,4,0]}>
                       {bhkS.map((_,i)=><Cell key={i} fill={CC[i%CC.length]}/>)}
-                      <LabelList dataKey="units" position="right" style={{fill:T.textM,fontSize:9,fontWeight:700}}/>
+                      <LabelList dataKey="booked" position="right" style={{fill:T.textM,fontSize:9,fontWeight:700}}/>
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
