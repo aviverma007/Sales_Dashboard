@@ -623,7 +623,9 @@ export default function App() {
 
             {/* ══ AREA SUMMARY CARDS ══ */}
             <div>
-              <p style={{fontSize:12,fontWeight:800,color:T.tealD,letterSpacing:0.4,margin:'0 0 10px',textTransform:'uppercase'}}>Area & Pricing Overview</p>
+              <div style={{display:'inline-flex',alignItems:'center',gap:8,background:'rgba(255,255,255,0.92)',backdropFilter:'blur(8px)',borderRadius:8,padding:'6px 14px',marginBottom:10,boxShadow:'0 1px 6px rgba(0,80,120,0.1)'}}>
+                <span style={{fontSize:13,fontWeight:900,color:T.tealD,letterSpacing:0.5,textTransform:'uppercase'}}>📐 Area & Pricing Overview</span>
+              </div>
               {/* Top 3 KPI cards */}
               <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12,marginBottom:12}}>
                 {[
