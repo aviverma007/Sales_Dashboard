@@ -144,7 +144,17 @@ export default function App() {
       return true;
     });
   },[raw,filters.project]);
-  const areaSummary=useMemo(()=>raw?.areaSummary||{},[raw]);
+  const areaSummary=useMemo(()=>{
+    const base=raw?.areaSummary||{};
+    if(!filters.project) return base;
+    // Filter byProject to selected project, recompute top-level KPIs from that slice
+    const filtered=(base.byProject||[]).filter(d=>d.project===filters.project);
+    const bookedArea=filtered.reduce((s,d)=>s+d.bookedArea,0);
+    const availableArea=filtered.reduce((s,d)=>s+d.availableArea,0);
+    const pricedPjs=filtered.filter(d=>d.avgPricePerSqft>0);
+    const avgPricePerSqft=pricedPjs.length>0?Math.round(pricedPjs.reduce((s,d)=>s+d.avgPricePerSqft,0)/pricedPjs.length):0;
+    return{...base,bookedArea,availableArea,avgPricePerSqft,minPricePerSqft:avgPricePerSqft,maxPricePerSqft:avgPricePerSqft,byProject:filtered};
+  },[raw,filters.project]);
 
   if(loading) return (
     <div style={{minHeight:'100vh',backgroundImage:'url(/bg.jpg)',backgroundSize:'cover',backgroundPosition:'center',display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:16}}>
@@ -633,35 +643,41 @@ export default function App() {
                 ))}
               </div>
               {/* Per-project area breakdown cards */}
-              <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(220px,1fr))',gap:10}}>
+              <div style={{display:'grid',gridTemplateColumns:areaSummary.byProject?.length===1?'1fr':'repeat(auto-fit,minmax(220px,1fr))',gap:10}}>
                 {(areaSummary.byProject||[]).map((d,i)=>{
                   const total=d.bookedArea+d.availableArea;
                   const pct=total>0?Math.round((d.bookedArea/total)*100):0;
                   const col=pct>=80?T.teal:pct>=60?T.greenL:pct>=40?T.amber:T.red;
                   const SHORT={'SMARTWORLD THE EDITION':'The Edition','Smartworld Sky Arc':'Sky Arc','Trump Residences Gurgaon':'Trump','Smartworld Le Courtyard':'Le Courtyard','Smartworld Suites':'Suites','Smartworld Residencies':'Residencies'};
                   return(
-                    <GC key={i} style={{padding:14}}>
-                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:8}}>
-                        <span style={{fontSize:11,fontWeight:800,color:T.navy}}>{SHORT[d.project]||d.project}</span>
-                        <span style={{fontSize:13,fontWeight:900,color:col}}>{pct}%</span>
+                    <GC key={i} style={{padding:areaSummary.byProject?.length===1?20:14}}>
+                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
+                        <span style={{fontSize:areaSummary.byProject?.length===1?15:11,fontWeight:800,color:T.navy}}>{SHORT[d.project]||d.project}</span>
+                        <span style={{fontSize:areaSummary.byProject?.length===1?20:13,fontWeight:900,color:col}}>{pct}% sold</span>
                       </div>
-                      {/* Booked vs Available area bar */}
-                      <div style={{width:'100%',height:6,background:'rgba(0,100,140,0.1)',borderRadius:3,marginBottom:8,overflow:'hidden'}}>
-                        <div style={{width:`${pct}%`,height:'100%',background:`linear-gradient(90deg,${col},${T.tealL})`,borderRadius:3}}/>
+                      <div style={{width:'100%',height:areaSummary.byProject?.length===1?10:6,background:'rgba(0,100,140,0.1)',borderRadius:4,marginBottom:12,overflow:'hidden'}}>
+                        <div style={{width:`${pct}%`,height:'100%',background:`linear-gradient(90deg,${col},${T.tealL})`,borderRadius:4}}/>
                       </div>
-                      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6,marginBottom:8}}>
-                        <div style={{background:`${T.teal}0d`,borderRadius:7,padding:'6px 8px'}}>
-                          <p style={{fontSize:8,color:T.textM,fontWeight:800,margin:'0 0 2px',textTransform:'uppercase'}}>🟢 Booked</p>
-                          <p style={{fontSize:11,fontWeight:800,color:T.tealD,margin:0}}>{(d.bookedArea/1000).toFixed(0)}K sq ft</p>
-                          <p style={{fontSize:9,color:T.textM,margin:0}}>{d.bookedUnits} units</p>
+                      <div style={{display:'grid',gridTemplateColumns:areaSummary.byProject?.length===1?'1fr 1fr 1fr':'1fr 1fr',gap:areaSummary.byProject?.length===1?12:6,marginBottom:areaSummary.byProject?.length===1?14:8}}>
+                        <div style={{background:`${T.teal}0d`,borderRadius:8,padding:areaSummary.byProject?.length===1?'12px 16px':'6px 8px'}}>
+                          <p style={{fontSize:8,color:T.textM,fontWeight:800,margin:'0 0 4px',textTransform:'uppercase'}}>🟢 Booked</p>
+                          <p style={{fontSize:areaSummary.byProject?.length===1?18:11,fontWeight:800,color:T.tealD,margin:'0 0 2px'}}>{(d.bookedArea/1000).toFixed(0)}K <span style={{fontSize:9,fontWeight:600}}>sq ft</span></p>
+                          <p style={{fontSize:10,color:T.textM,margin:0,fontWeight:600}}>{d.bookedUnits} units</p>
                         </div>
-                        <div style={{background:`${T.amber}0d`,borderRadius:7,padding:'6px 8px'}}>
-                          <p style={{fontSize:8,color:T.textM,fontWeight:800,margin:'0 0 2px',textTransform:'uppercase'}}>🔓 Available</p>
-                          <p style={{fontSize:11,fontWeight:800,color:T.amber,margin:0}}>{(d.availableArea/1000).toFixed(0)}K sq ft</p>
-                          <p style={{fontSize:9,color:T.textM,margin:0}}>{d.availUnits} units</p>
+                        <div style={{background:`${T.amber}0d`,borderRadius:8,padding:areaSummary.byProject?.length===1?'12px 16px':'6px 8px'}}>
+                          <p style={{fontSize:8,color:T.textM,fontWeight:800,margin:'0 0 4px',textTransform:'uppercase'}}>🔓 Available</p>
+                          <p style={{fontSize:areaSummary.byProject?.length===1?18:11,fontWeight:800,color:T.amber,margin:'0 0 2px'}}>{(d.availableArea/1000).toFixed(0)}K <span style={{fontSize:9,fontWeight:600}}>sq ft</span></p>
+                          <p style={{fontSize:10,color:T.textM,margin:0,fontWeight:600}}>{d.availUnits} units</p>
                         </div>
+                        {areaSummary.byProject?.length===1&&d.avgPricePerSqft>0&&(
+                          <div style={{background:`${T.navy}08`,borderRadius:8,padding:'12px 16px'}}>
+                            <p style={{fontSize:8,color:T.textM,fontWeight:800,margin:'0 0 4px',textTransform:'uppercase'}}>💰 Avg Rate</p>
+                            <p style={{fontSize:18,fontWeight:800,color:T.navy,margin:'0 0 2px'}}>₹{d.avgPricePerSqft?.toLocaleString('en-IN')}</p>
+                            <p style={{fontSize:10,color:T.textM,margin:0,fontWeight:600}}>per sq ft</p>
+                          </div>
+                        )}
                       </div>
-                      {d.avgPricePerSqft>0&&(
+                      {areaSummary.byProject?.length!==1&&d.avgPricePerSqft>0&&(
                         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',paddingTop:6,borderTop:'1px solid rgba(0,100,140,0.08)'}}>
                           <span style={{fontSize:9,color:T.textM,fontWeight:700}}>Avg Rate</span>
                           <span style={{fontSize:11,fontWeight:800,color:T.navy}}>₹{d.avgPricePerSqft?.toLocaleString('en-IN')}<span style={{fontSize:8,fontWeight:600,color:T.textL}}>/sq ft</span></span>
