@@ -172,7 +172,7 @@ export default function App() {
     pC.forEach(r=>{if(r.bookingMonth)cM[r.bookingMonth]=(cM[r.bookingMonth]||0)+1;});
     const all=Array.from(new Set([...Object.keys(aM),...Object.keys(cM)])).sort();
     // Total inventory target from invr
-    const totalInv=(raw?.invr||[]).length||3184;
+    const totalInv=iF.length||3184;
     let cumBooked=0;
     return all.map(m=>{
       const booked=aM[m]||0;
@@ -181,7 +181,7 @@ export default function App() {
       const remaining=Math.max(0,totalInv-cumBooked);
       return{month:m,label:fmtML(m),booked,cancelled,cumBooked,remaining,totalInv};
     });
-  },[pA,pC,raw]);
+  },[pA,pC,raw,iF]);
   const salesVsRefund=useMemo(()=>{
     if(!raw?.salesVsRefund) return [];
     if(!filters.project) return raw.salesVsRefund;
