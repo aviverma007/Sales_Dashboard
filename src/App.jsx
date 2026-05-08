@@ -120,6 +120,16 @@ export default function App() {
   const monthly=useMemo(()=>{const map={};pA.forEach(r=>{const m=r.bookingMonth;if(!m)return;if(!map[m])map[m]={month:m,label:fmtML(m),units:0,bspCr:0,demCr:0,recCr:0};map[m].units++;map[m].bspCr+=(r.bsp||0)/1e7;map[m].demCr+=(r.demand||0)/1e7;map[m].recCr+=(r.received||0)/1e7;});return Object.values(map).sort((a,b)=>a.month.localeCompare(b.month)).map(r=>({...r,bspCr:+r.bspCr.toFixed(1),demCr:+r.demCr.toFixed(1),recCr:+r.recCr.toFixed(1)}));},[pA]);
   const dappM=useMemo(()=>{const map={};dF.forEach(r=>{const m=r.billMonth;if(!m)return;if(!map[m])map[m]={month:m,label:fmtML(m),demCr:0,recCr:0,outCr:0};map[m].demCr+=(r.demand||0)/1e7;map[m].recCr+=(r.received||0)/1e7;map[m].outCr+=(r.outstanding||0)/1e7;});return Object.values(map).sort((a,b)=>a.month.localeCompare(b.month)).map(r=>({...r,demCr:+r.demCr.toFixed(1),recCr:+r.recCr.toFixed(1),outCr:+r.outCr.toFixed(1)}));},[dF]);
   const bvc=useMemo(()=>{const aM={},cM={};pA.forEach(r=>{if(r.bookingMonth)aM[r.bookingMonth]=(aM[r.bookingMonth]||0)+1;});pC.forEach(r=>{if(r.bookingMonth)cM[r.bookingMonth]=(cM[r.bookingMonth]||0)+1;});const all=Array.from(new Set([...Object.keys(aM),...Object.keys(cM)])).sort();return all.map(m=>({month:m,label:fmtML(m),booked:aM[m]||0,cancelled:cM[m]||0}));},[pA,pC]);
+  const salesVsRefund=useMemo(()=>{
+    if(!raw?.salesVsRefund) return [];
+    if(!filters.project) return raw.salesVsRefund;
+    // Recompute from pdrn filtered by project
+    const aM={},cM={},rM={},bM={};
+    pA.forEach(r=>{if(r.bookingMonth){aM[r.bookingMonth]=(aM[r.bookingMonth]||0)+(r.bsp||0);}});
+    pC.forEach(r=>{if(r.bookingMonth){cM[r.bookingMonth]=(cM[r.bookingMonth]||0)+(r.bsp||0);rM[r.bookingMonth]=(rM[r.bookingMonth]||0)+(r.refund||0);}});
+    const all=Array.from(new Set([...Object.keys(aM),...Object.keys(cM)])).sort();
+    return all.map(m=>({month:fmtML(m),bspCr:Math.round((aM[m]||0)/1e7*10)/10,cancelledBSPCr:Math.round((cM[m]||0)/1e7*10)/10,refundCr:Math.round((rM[m]||0)/1e7*10)/10}));
+  },[raw,filters.project,pA,pC]);
   const byProj=useMemo(()=>{const map={};pA.forEach(r=>{const p=r.project;if(!p)return;if(!map[p])map[p]={name:p,units:0,bspCr:0};map[p].units++;map[p].bspCr+=(r.bsp||0)/1e7;});return Object.values(map).sort((a,b)=>b.units-a.units).map(r=>({...r,bspCr:+r.bspCr.toFixed(1)}));},[pA]);
   const topCP=useMemo(()=>{const map={};pA.forEach(r=>{const b=r.broker;if(!b)return;if(!map[b])map[b]={name:b,units:0,bspCr:0};map[b].units++;map[b].bspCr+=(r.bsp||0)/1e7;});return Object.values(map).sort((a,b)=>b.units-a.units).slice(0,8).map(r=>({...r,bspCr:+r.bspCr.toFixed(1)}));},[pA]);
   const bhkS=useMemo(()=>{const map={};pA.forEach(r=>{const b=r.bhk||'Other';if(!map[b])map[b]={bhk:b,units:0,bsp:0};map[b].units++;map[b].bsp+=(r.bsp||0);});return Object.values(map).sort((a,b)=>b.units-a.units);},[pA]);
@@ -561,6 +571,51 @@ export default function App() {
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
+              </GC>
+
+              {/* Sales Value vs Cancelled Value vs Refund */}
+              <GC style={{padding:16,gridColumn:'1/-1'}}>
+                <SH title="Sales Value vs. Cancellation Value vs. Refund" sub="Monthly ₹ Crores — Total Sales BSP · Cancelled BSP · Refund Given"/>
+                <ResponsiveContainer width="100%" height={210}>
+                  <BarChart data={salesVsRefund.slice(-18)} margin={{top:8,right:8,bottom:18,left:0}}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.12)" vertical={false}/>
+                    <XAxis dataKey="month" tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false} angle={-25} dy={6} interval="preserveStartEnd"/>
+                    <YAxis tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false} width={32} tickFormatter={v=>`${v}Cr`}/>
+                    <Tooltip content={<CTip fmt={(v)=>`₹${v} Cr`}/>}/>
+                    <Legend wrapperStyle={{color:T.text,fontSize:10,fontWeight:700}} iconSize={8}/>
+                    <Bar dataKey="bspCr" name="Sales BSP" fill={T.teal} radius={[3,3,0,0]} fillOpacity={0.85}>
+                      <LabelList dataKey="bspCr" position="top" style={{fill:T.tealD,fontSize:7,fontWeight:700}} formatter={v=>v>0?`${v}Cr`:''}/>
+                    </Bar>
+                    <Bar dataKey="cancelledBSPCr" name="Cancelled BSP" fill={T.amber} radius={[3,3,0,0]} fillOpacity={0.8}>
+                      <LabelList dataKey="cancelledBSPCr" position="top" style={{fill:T.amber,fontSize:7,fontWeight:700}} formatter={v=>v>0?`${v}Cr`:''}/>
+                    </Bar>
+                    <Bar dataKey="refundCr" name="Refund Given" fill={T.red} radius={[3,3,0,0]} fillOpacity={0.85}>
+                      <LabelList dataKey="refundCr" position="top" style={{fill:T.red,fontSize:7,fontWeight:700}} formatter={v=>v>0?`${v}Cr`:''}/>
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+                {/* Summary totals row */}
+                {(()=>{
+                  const totSales=salesVsRefund.reduce((s,r)=>s+r.bspCr,0).toFixed(1);
+                  const totCancelled=salesVsRefund.reduce((s,r)=>s+r.cancelledBSPCr,0).toFixed(1);
+                  const totRefund=salesVsRefund.reduce((s,r)=>s+r.refundCr,0).toFixed(1);
+                  const refundPct=totCancelled>0?Math.round((totRefund/totCancelled)*100):0;
+                  return(
+                    <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10,marginTop:10,paddingTop:10,borderTop:'1px solid rgba(0,100,140,0.08)'}}>
+                      {[
+                        {label:'Total Sales BSP',val:`₹${totSales} Cr`,color:T.teal,icon:'📈'},
+                        {label:'Total Cancelled BSP',val:`₹${totCancelled} Cr`,color:T.amber,icon:'❌'},
+                        {label:'Total Refund Given',val:`₹${totRefund} Cr`,color:T.red,icon:'💸'},
+                        {label:'Refund % of Cancelled',val:`${refundPct}%`,color:T.navy,icon:'📊'},
+                      ].map((d,i)=>(
+                        <div key={i} style={{background:`${d.color}0a`,borderRadius:8,padding:'8px 12px',border:`1px solid ${d.color}20`}}>
+                          <p style={{fontSize:8,color:T.textM,fontWeight:800,margin:'0 0 3px',textTransform:'uppercase'}}>{d.icon} {d.label}</p>
+                          <p style={{fontSize:16,fontWeight:900,color:d.color,margin:0}}>{d.val}</p>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
               </GC>
             </div>
 
