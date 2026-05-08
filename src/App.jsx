@@ -130,6 +130,19 @@ export default function App() {
     const all=Array.from(new Set([...Object.keys(aM),...Object.keys(cM)])).sort();
     return all.map(m=>({month:fmtML(m),bspCr:Math.round((aM[m]||0)/1e7*10)/10,cancelledBSPCr:Math.round((cM[m]||0)/1e7*10)/10,refundCr:Math.round((rM[m]||0)/1e7*10)/10}));
   },[raw,filters.project,pA,pC]);
+  const cancelledUnitStatus=useMemo(()=>{
+    const base=raw?.cancelledUnitStatus||{summary:{},buckets:[],byProject:[],vacantUnits:[],rebookedUnits:[]};
+    if(!filters.project) return base;
+    const label={'Smartworld Sky Arc':'Sky Arc','SMARTWORLD THE EDITION':'Edition','Trump Residences Gurgaon':'Trump','Smartworld Le Courtyard':'Le Courtyard','Smartworld Suites':'Suites','Smartworld Residencies':'Residencies'};
+    const projLabel=label[filters.project]||filters.project;
+    const vacant=(base.vacantUnits||[]).filter(u=>u.project===filters.project||u.projectLabel===projLabel);
+    const rebooked=(base.rebookedUnits||[]).filter(u=>u.project===filters.project||u.projectLabel===projLabel);
+    const byProject=(base.byProject||[]).filter(u=>u.project===projLabel);
+    const bucketMap={'0–30 days':0,'31–90 days':0,'91–180 days':0,'180+ days':0};
+    vacant.forEach(u=>{const d=u.daysVacant||0;if(d<=30)bucketMap['0–30 days']++;else if(d<=90)bucketMap['31–90 days']++;else if(d<=180)bucketMap['91–180 days']++;else bucketMap['180+ days']++;});
+    const total=vacant.length+rebooked.length;
+    return{summary:{totalCancelled:total,rebooked:rebooked.length,stillVacant:vacant.length,rebookedPct:total>0?Math.round(rebooked.length/total*100):0},buckets:(base.buckets||[]).map(b=>({...b,count:bucketMap[b.label]||0})),byProject,vacantUnits:vacant,rebookedUnits:rebooked};
+  },[raw,filters.project]);
   const byProj=useMemo(()=>{const map={};pA.forEach(r=>{const p=r.project;if(!p)return;if(!map[p])map[p]={name:p,units:0,bspCr:0};map[p].units++;map[p].bspCr+=(r.bsp||0)/1e7;});return Object.values(map).sort((a,b)=>b.units-a.units).map(r=>({...r,bspCr:+r.bspCr.toFixed(1)}));},[pA]);
   const topCP=useMemo(()=>{const map={};pA.forEach(r=>{const b=r.broker;if(!b)return;if(!map[b])map[b]={name:b,units:0,bspCr:0};map[b].units++;map[b].bspCr+=(r.bsp||0)/1e7;});return Object.values(map).sort((a,b)=>b.units-a.units).slice(0,8).map(r=>({...r,bspCr:+r.bspCr.toFixed(1)}));},[pA]);
   const bhkS=useMemo(()=>{const map={};pA.forEach(r=>{const b=r.bhk||'Other';if(!map[b])map[b]={bhk:b,units:0,bsp:0};map[b].units++;map[b].bsp+=(r.bsp||0);});return Object.values(map).sort((a,b)=>b.units-a.units);},[pA]);
@@ -618,6 +631,144 @@ export default function App() {
                 })()}
               </GC>
             </div>
+
+            {/* ══ CANCELLED UNIT STATUS — REBOOKED vs VACANT ══ */}
+            <GC style={{padding:16}}>
+              <SH title="Cancelled Unit Status" sub="Rebooked · Still Vacant · Vacancy Duration"/>
+              {(()=>{
+                const {summary,buckets,byProject,vacantUnits}=cancelledUnitStatus;
+                const [activeTab,setActiveTab]=React.useState('overview');
+                const bucketColors=['#00bcd4','#f59e0b','#ef4444','#7c3aed'];
+                return(
+                  <div>
+                    {/* KPI row */}
+                    <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10,marginBottom:14}}>
+                      {[
+                        {label:'Total Cancelled',val:summary.totalCancelled,color:T.textM,icon:'🚫'},
+                        {label:'Rebooked ✅',val:summary.rebooked,color:T.teal,icon:'🔄'},
+                        {label:'Still Vacant',val:summary.stillVacant,color:T.red,icon:'🏚️'},
+                        {label:'Rebooking Rate',val:`${summary.rebookedPct}%`,color:T.navy,icon:'📈'},
+                      ].map((d,i)=>(
+                        <div key={i} style={{background:`${d.color}0d`,border:`1px solid ${d.color}25`,borderRadius:10,padding:'10px 14px'}}>
+                          <p style={{fontSize:8,color:T.textM,fontWeight:800,margin:'0 0 4px',textTransform:'uppercase'}}>{d.icon} {d.label}</p>
+                          <p style={{fontSize:20,fontWeight:900,color:d.color,margin:0}}>{d.val}</p>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Tab switcher */}
+                    <div style={{display:'flex',gap:6,marginBottom:12}}>
+                      {[['overview','📊 Overview'],['vacant','🏚️ Vacant Units'],['rebooked','✅ Rebooked']].map(([k,l])=>(
+                        <button key={k} onClick={()=>setActiveTab(k)} style={{padding:'4px 12px',borderRadius:20,border:'none',cursor:'pointer',fontSize:10,fontWeight:700,background:activeTab===k?T.teal:'rgba(0,100,140,0.08)',color:activeTab===k?'#fff':T.textM,transition:'all 0.15s'}}>
+                          {l}
+                        </button>
+                      ))}
+                    </div>
+
+                    {activeTab==='overview'&&(
+                      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+                        {/* Vacancy duration buckets */}
+                        <div>
+                          <p style={{fontSize:9,fontWeight:800,color:T.textM,textTransform:'uppercase',margin:'0 0 8px',letterSpacing:0.4}}>Vacancy Duration (Still Vacant Units)</p>
+                          {buckets.map((b,i)=>{
+                            const max=Math.max(...buckets.map(x=>x.count),1);
+                            return(
+                              <div key={i} style={{marginBottom:8}}>
+                                <div style={{display:'flex',justifyContent:'space-between',marginBottom:3}}>
+                                  <span style={{fontSize:10,fontWeight:700,color:T.text}}>{b.label}</span>
+                                  <span style={{fontSize:11,fontWeight:800,color:bucketColors[i]}}>{b.count} units</span>
+                                </div>
+                                <div style={{width:'100%',height:7,background:'rgba(0,100,140,0.08)',borderRadius:4,overflow:'hidden'}}>
+                                  <div style={{width:`${Math.round((b.count/max)*100)}%`,height:'100%',background:bucketColors[i],borderRadius:4,transition:'width 0.4s'}}/>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                        {/* Per-project breakdown */}
+                        <div>
+                          <p style={{fontSize:9,fontWeight:800,color:T.textM,textTransform:'uppercase',margin:'0 0 8px',letterSpacing:0.4}}>Project-wise Rebooking</p>
+                          {byProject.map((d,i)=>{
+                            const total=d.rebooked+d.vacant;
+                            const pct=total>0?Math.round((d.rebooked/total)*100):0;
+                            const col=pct>=70?T.teal:pct>=50?T.amber:T.red;
+                            return(
+                              <div key={i} style={{marginBottom:9}}>
+                                <div style={{display:'flex',justifyContent:'space-between',marginBottom:3}}>
+                                  <span style={{fontSize:10,fontWeight:800,color:T.navy}}>{d.project}</span>
+                                  <span style={{fontSize:9,color:T.textM}}>
+                                    <span style={{color:T.tealD,fontWeight:700}}>✅ {d.rebooked}</span>
+                                    <span style={{color:T.textL}}> · </span>
+                                    <span style={{color:T.red,fontWeight:700}}>🏚️ {d.vacant}</span>
+                                    {d.avgVacantDays>0&&<span style={{color:T.textL}}> · avg {d.avgVacantDays}d</span>}
+                                  </span>
+                                </div>
+                                <div style={{width:'100%',height:6,background:'rgba(0,100,140,0.08)',borderRadius:3,overflow:'hidden',display:'flex'}}>
+                                  <div style={{width:`${pct}%`,height:'100%',background:`linear-gradient(90deg,${col},${T.tealL})`}}/>
+                                  <div style={{width:`${100-pct}%`,height:'100%',background:`${T.red}40`}}/>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {activeTab==='vacant'&&(
+                      <div style={{overflowX:'auto',maxHeight:280,overflowY:'auto'}}>
+                        <table style={{width:'100%',borderCollapse:'collapse',fontSize:11}}>
+                          <thead style={{position:'sticky',top:0,background:'rgba(255,255,255,0.95)',backdropFilter:'blur(6px)'}}>
+                            <tr style={{borderBottom:`2px solid rgba(0,151,167,0.15)`}}>
+                              {['Unit','Project','Tower','BHK','Cancelled On','Reason','BSP','Vacant Since'].map(h=>(
+                                <th key={h} style={{padding:'6px 10px',textAlign:'left',color:T.textM,fontSize:9,fontWeight:800,letterSpacing:0.4,textTransform:'uppercase',whiteSpace:'nowrap'}}>{h}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {vacantUnits.map((u,i)=>{
+                              const urgency=u.daysVacant>180?T.red:u.daysVacant>90?T.amber:T.greenL;
+                              return(
+                                <tr key={i} style={{borderBottom:`1px solid rgba(0,100,140,0.06)`}}>
+                                  <td style={{padding:'6px 10px',fontWeight:800,color:T.navy,whiteSpace:'nowrap'}}>{u.unit}</td>
+                                  <td style={{padding:'6px 10px',color:T.textM,fontSize:9,whiteSpace:'nowrap'}}>{u.projectLabel}</td>
+                                  <td style={{padding:'6px 10px',color:T.textM,whiteSpace:'nowrap'}}>{u.tower}</td>
+                                  <td style={{padding:'6px 10px',color:T.textM,fontSize:9,whiteSpace:'nowrap'}}>{u.bhk?.split(' ')[0]}</td>
+                                  <td style={{padding:'6px 10px',color:T.textM,fontSize:9,whiteSpace:'nowrap'}}>{u.cancelDate}</td>
+                                  <td style={{padding:'6px 10px',fontSize:9,color:T.textL,maxWidth:120,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{u.cancelReason}</td>
+                                  <td style={{padding:'6px 10px',color:T.amber,fontWeight:700,whiteSpace:'nowrap'}}>₹{u.bspCr}Cr</td>
+                                  <td style={{padding:'6px 10px',whiteSpace:'nowrap'}}>
+                                    <span style={{background:`${urgency}15`,border:`1px solid ${urgency}40`,color:urgency,borderRadius:12,padding:'2px 8px',fontSize:9,fontWeight:800}}>
+                                      {u.daysVacant}d
+                                    </span>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+
+                    {activeTab==='rebooked'&&(
+                      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(160px,1fr))',gap:8,maxHeight:280,overflowY:'auto'}}>
+                        {cancelledUnitStatus.rebookedUnits.map((u,i)=>(
+                          <div key={i} style={{background:`${T.teal}08`,border:`1px solid ${T.teal}25`,borderRadius:8,padding:'8px 10px'}}>
+                            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:3}}>
+                              <span style={{fontSize:11,fontWeight:800,color:T.navy}}>{u.unit}</span>
+                              <span style={{fontSize:8,background:`${T.teal}20`,color:T.tealD,borderRadius:10,padding:'1px 6px',fontWeight:700}}>✅ Rebooked</span>
+                            </div>
+                            <p style={{fontSize:9,color:T.textM,margin:'0 0 2px',fontWeight:600}}>{u.projectLabel} · {u.tower}</p>
+                            <p style={{fontSize:9,color:T.textL,margin:'0 0 4px'}}>{u.bhk?.split(' ')[0]}</p>
+                            <p style={{fontSize:8,color:T.textL,margin:0}}>Cancelled: {u.cancelDate}</p>
+                            <p style={{fontSize:10,color:T.amber,fontWeight:700,margin:'2px 0 0'}}>₹{u.bspCr}Cr</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+            </GC>
 
             {/* ══ TOWER-WISE BOOKED & CANCELLED ══ */}
             <GC style={{padding:16}}>
