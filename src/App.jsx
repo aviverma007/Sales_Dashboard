@@ -166,7 +166,22 @@ export default function App() {
 
   const monthly=useMemo(()=>{const map={};pA.forEach(r=>{const m=r.bookingMonth;if(!m)return;if(!map[m])map[m]={month:m,label:fmtML(m),units:0,bspCr:0,demCr:0,recCr:0};map[m].units++;map[m].bspCr+=(r.bsp||0)/1e7;map[m].demCr+=(r.demand||0)/1e7;map[m].recCr+=(r.received||0)/1e7;});return Object.values(map).sort((a,b)=>a.month.localeCompare(b.month)).map(r=>({...r,bspCr:+r.bspCr.toFixed(1),demCr:+r.demCr.toFixed(1),recCr:+r.recCr.toFixed(1)}));},[pA]);
   const dappM=useMemo(()=>{const map={};dF.forEach(r=>{const m=r.billMonth;if(!m)return;if(!map[m])map[m]={month:m,label:fmtML(m),demCr:0,recCr:0,outCr:0};map[m].demCr+=(r.demand||0)/1e7;map[m].recCr+=(r.received||0)/1e7;map[m].outCr+=(r.outstanding||0)/1e7;});return Object.values(map).sort((a,b)=>a.month.localeCompare(b.month)).map(r=>({...r,demCr:+r.demCr.toFixed(1),recCr:+r.recCr.toFixed(1),outCr:+r.outCr.toFixed(1)}));},[dF]);
-  const bvc=useMemo(()=>{const aM={},cM={};pA.forEach(r=>{if(r.bookingMonth)aM[r.bookingMonth]=(aM[r.bookingMonth]||0)+1;});pC.forEach(r=>{if(r.bookingMonth)cM[r.bookingMonth]=(cM[r.bookingMonth]||0)+1;});const all=Array.from(new Set([...Object.keys(aM),...Object.keys(cM)])).sort();return all.map(m=>({month:m,label:fmtML(m),booked:aM[m]||0,cancelled:cM[m]||0}));},[pA,pC]);
+  const bvc=useMemo(()=>{
+    const aM={},cM={};
+    pA.forEach(r=>{if(r.bookingMonth)aM[r.bookingMonth]=(aM[r.bookingMonth]||0)+1;});
+    pC.forEach(r=>{if(r.bookingMonth)cM[r.bookingMonth]=(cM[r.bookingMonth]||0)+1;});
+    const all=Array.from(new Set([...Object.keys(aM),...Object.keys(cM)])).sort();
+    // Total inventory target from invr
+    const totalInv=(raw?.invr||[]).length||3184;
+    let cumBooked=0;
+    return all.map(m=>{
+      const booked=aM[m]||0;
+      const cancelled=cM[m]||0;
+      cumBooked+=booked-cancelled;
+      const remaining=Math.max(0,totalInv-cumBooked);
+      return{month:m,label:fmtML(m),booked,cancelled,cumBooked,remaining,totalInv};
+    });
+  },[pA,pC,raw]);
   const salesVsRefund=useMemo(()=>{
     if(!raw?.salesVsRefund) return [];
     if(!filters.project) return raw.salesVsRefund;
@@ -629,17 +644,22 @@ export default function App() {
                   return(<>
                     <SH title="Booking vs. Cancelled" sub="Monthly Comparison"/>
                     <ChartControls mode={bMode} setMode={setBMode} offset={bOff} setOffset={setBOff} total={base.length} window={WIN}/>
-                    <ResponsiveContainer width="100%" height={185}>
-                      <BarChart data={slice} margin={{top:5,right:8,bottom:18,left:0}}>
+                    <ResponsiveContainer width="100%" height={220}>
+                      <BarChart data={slice} margin={{top:5,right:8,bottom:18,left:0}} barCategoryGap="30%">
                         <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.2)" vertical={false}/>
                         <XAxis dataKey="label" tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false} angle={-25} dy={6} interval={0}/>
-                        <YAxis tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false} width={24}/>
-                        <Tooltip content={<CTip/>}/>
+                        <YAxis tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false} width={28}/>
+                        <Tooltip content={<CTip fmt={(v,n)=>n==='Remaining Target'?`${v} units left`:v}/>}/>
                         <Legend wrapperStyle={{color:T.text,fontSize:10,fontWeight:700}} iconSize={8}/>
-                        <Bar dataKey="booked" name="Booked" fill={T.teal} radius={[2,2,0,0]} fillOpacity={0.85}>
-                          <LabelList dataKey="booked" position="top" style={{fill:T.tealD,fontSize:8,fontWeight:700}} formatter={v=>v>0?v:''}/>
+                        {/* Stacked: booked (teal) + remaining target (amber) */}
+                        <Bar dataKey="booked" name="Booked" stackId="a" fill={T.teal} fillOpacity={0.9} radius={[0,0,0,0]}>
+                          <LabelList dataKey="booked" position="insideTop" style={{fill:'#fff',fontSize:8,fontWeight:800}} formatter={v=>v>0?v:''}/>
                         </Bar>
-                        <Bar dataKey="cancelled" name="Cancelled" fill={T.red} radius={[2,2,0,0]} fillOpacity={0.8}>
+                        <Bar dataKey="remaining" name="Remaining Target" stackId="a" fill={T.amber} fillOpacity={0.35} radius={[3,3,0,0]}>
+                          <LabelList dataKey="remaining" position="top" style={{fill:T.amber,fontSize:7,fontWeight:700}} formatter={v=>v>0?`${v} left`:''}/>
+                        </Bar>
+                        {/* Cancelled as standalone bar */}
+                        <Bar dataKey="cancelled" name="Cancelled" fill={T.red} radius={[2,2,0,0]} fillOpacity={0.85}>
                           <LabelList dataKey="cancelled" position="top" style={{fill:T.red,fontSize:8,fontWeight:700}} formatter={v=>v>0?v:''}/>
                         </Bar>
                       </BarChart>
