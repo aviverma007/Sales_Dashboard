@@ -296,8 +296,7 @@ export default function App() {
 
         {/* Filter strip */}
         <div style={{maxWidth:1440,margin:'0 auto',padding:'0 24px 10px',display:'flex',alignItems:'flex-end',gap:12,flexWrap:'wrap'}}>
-          <FSel label="Company"  options={availComp}              value={filters.company} onChange={v=>{sf('company',v);if(v)sf('project','');}}/>
-          <FSel label="Project"  options={availProj}              value={filters.project} onChange={v=>{sf('project',v);if(v)sf('company','');}}/>
+          <FSel label="Project"  options={availProj}              value={filters.project} onChange={v=>sf('project',v)}/>
           <FSel label="Year"     options={(fo.years||[]).map(String)} value={filters.year}  onChange={v=>sf('year',v)}/>
           <FSel label="Month"    options={fo.months||[]}          value={filters.month}   onChange={v=>sf('month',v)}/>
           <FSel label="CP"       options={availBrokers}           value={filters.broker}  onChange={v=>sf('broker',v)}/>
