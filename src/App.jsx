@@ -45,6 +45,10 @@ const toQuarterly=(data,labelKey='label')=>{
 
 const ChartControls=({mode,setMode,offset,setOffset,total,window:win=6})=>{
   const maxOffset=Math.max(0,total-win);
+  // Clamp to end on first render (9999 sentinel = start at latest)
+  const clampedOffset=Math.min(offset,maxOffset);
+  if(offset!==clampedOffset&&offset===9999){setOffset(maxOffset);}
+  const displayOffset=Math.min(offset,maxOffset);
   return(
     <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:8}}>
       <div style={{display:'flex',gap:3,background:'rgba(0,100,140,0.07)',borderRadius:20,padding:2,flexShrink:0}}>
@@ -52,12 +56,12 @@ const ChartControls=({mode,setMode,offset,setOffset,total,window:win=6})=>{
           <button key={k} onClick={()=>{setMode(k);setOffset(0);}} style={{padding:'3px 12px',borderRadius:18,border:'none',cursor:'pointer',fontSize:10,fontWeight:700,background:mode===k?'#0097a7':'transparent',color:mode===k?'#fff':'#546e7a',transition:'all 0.15s'}}>{l}</button>
         ))}
       </div>
-      <button onClick={()=>setOffset(o=>Math.max(0,o-1))} disabled={offset===0} style={{width:24,height:24,borderRadius:'50%',border:'1px solid rgba(0,100,140,0.2)',background:'rgba(255,255,255,0.8)',cursor:offset===0?'default':'pointer',fontSize:14,color:offset===0?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>‹</button>
+      <button onClick={()=>setOffset(o=>Math.max(0,Math.min(o,maxOffset)-1))} disabled={displayOffset===0} style={{width:24,height:24,borderRadius:'50%',border:'1px solid rgba(0,100,140,0.2)',background:'rgba(255,255,255,0.8)',cursor:displayOffset===0?'default':'pointer',fontSize:14,color:displayOffset===0?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>‹</button>
       <div style={{flex:1,height:5,background:'rgba(0,100,140,0.1)',borderRadius:3,position:'relative',cursor:'pointer',minWidth:60}} onClick={e=>{const r=e.currentTarget.getBoundingClientRect();const p=(e.clientX-r.left)/r.width;setOffset(Math.round(p*maxOffset));}}>
-        <div style={{position:'absolute',left:`${maxOffset>0?(offset/maxOffset)*(100-win/total*100):0}%`,width:`${total>0?(win/total)*100:100}%`,height:'100%',background:'linear-gradient(90deg,#0097a7,#4dd0e1)',borderRadius:3,transition:'left 0.2s'}}/>
+        <div style={{position:'absolute',left:`${maxOffset>0?(displayOffset/maxOffset)*(100-win/total*100):0}%`,width:`${total>0?(win/total)*100:100}%`,height:'100%',background:'linear-gradient(90deg,#0097a7,#4dd0e1)',borderRadius:3,transition:'left 0.2s'}}/>
       </div>
-      <button onClick={()=>setOffset(o=>Math.min(maxOffset,o+1))} disabled={offset>=maxOffset} style={{width:24,height:24,borderRadius:'50%',border:'1px solid rgba(0,100,140,0.2)',background:'rgba(255,255,255,0.8)',cursor:offset>=maxOffset?'default':'pointer',fontSize:14,color:offset>=maxOffset?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>›</button>
-      <span style={{fontSize:9,color:'#90a4ae',whiteSpace:'nowrap',fontWeight:600}}>{offset+1}–{Math.min(offset+win,total)} / {total}</span>
+      <button onClick={()=>setOffset(o=>Math.min(maxOffset,Math.min(o,maxOffset)+1))} disabled={displayOffset>=maxOffset} style={{width:24,height:24,borderRadius:'50%',border:'1px solid rgba(0,100,140,0.2)',background:'rgba(255,255,255,0.8)',cursor:displayOffset>=maxOffset?'default':'pointer',fontSize:14,color:displayOffset>=maxOffset?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>›</button>
+      <span style={{fontSize:9,color:'#90a4ae',whiteSpace:'nowrap',fontWeight:600}}>{displayOffset+1}–{Math.min(displayOffset+win,total)} / {total}</span>
     </div>
   );
 };
@@ -134,11 +138,11 @@ export default function App() {
   const sf=useCallback((k,v)=>setFilters(p=>({...p,[k]:v})),[]);
   // Chart controls (lifted to comply with React hooks rules)
   const [tMode,setTMode]=useState('monthly');
-  const [tOff,setTOff]=useState(0);
+  const [tOff,setTOff]=useState(9999);
   const [bMode,setBMode]=useState('monthly');
-  const [bOff,setBOff]=useState(0);
+  const [bOff,setBOff]=useState(9999);
   const [sMode,setSMode]=useState('monthly');
-  const [sOff,setSOff]=useState(0);
+  const [sOff,setSOff]=useState(9999);
   const [cancelTab,setCancelTab]=useState('overview');
 
   useEffect(()=>{fetch('/data/dashboard_data.json').then(r=>r.json()).then(d=>{setRaw(d);setLoading(false);}).catch(()=>setLoading(false));}, []);
@@ -448,7 +452,7 @@ export default function App() {
                 {(()=>{
                   const WIN=6;
                   const base=tMode==='quarterly'?toQuarterly(monthly,'label'):monthly;
-                  const slice=base.slice(tOff,tOff+WIN);
+                  const slice=base.slice(Math.min(tOff,Math.max(0,base.length-WIN)),Math.min(tOff,Math.max(0,base.length-WIN))+WIN);
                   return(<>
                     <SH title="Monthly Sales Trend" sub="BSP · Demand · Collections — ₹ Crores"/>
                     <ChartControls mode={tMode} setMode={setTMode} offset={tOff} setOffset={setTOff} total={base.length} window={WIN}/>
@@ -621,7 +625,7 @@ export default function App() {
                 {(()=>{
                   const WIN=6;
                   const base=bMode==='quarterly'?toQuarterly(bvc,'label'):bvc;
-                  const slice=base.slice(bOff,bOff+WIN);
+                  const slice=base.slice(Math.min(bOff,Math.max(0,base.length-WIN)),Math.min(bOff,Math.max(0,base.length-WIN))+WIN);
                   return(<>
                     <SH title="Booking vs. Cancelled" sub="Monthly Comparison"/>
                     <ChartControls mode={bMode} setMode={setBMode} offset={bOff} setOffset={setBOff} total={base.length} window={WIN}/>
@@ -649,7 +653,7 @@ export default function App() {
                 {(()=>{
                   const WIN=6;
                   const base=sMode==='quarterly'?toQuarterly(salesVsRefund,'month'):salesVsRefund;
-                  const slice=base.slice(sOff,sOff+WIN);
+                  const slice=base.slice(Math.min(sOff,Math.max(0,base.length-WIN)),Math.min(sOff,Math.max(0,base.length-WIN))+WIN);
                   return(<>
                     <SH title="Sales Value vs. Cancellation Value vs. Refund" sub="Monthly ₹ Crores — Total Sales BSP · Cancelled BSP · Refund Given"/>
                     <ChartControls mode={sMode} setMode={setSMode} offset={sOff} setOffset={setSOff} total={base.length} window={WIN}/>
