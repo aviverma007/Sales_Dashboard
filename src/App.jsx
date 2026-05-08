@@ -145,6 +145,7 @@ export default function App() {
   const [sOff,setSOff]=useState(9999);
   const [cancelTab,setCancelTab]=useState('overview');
   const [towerExpanded,setTowerExpanded]=useState(false);
+  const [cpExpanded,setCpExpanded]=useState(false);
 
   useEffect(()=>{fetch('/data/dashboard_data.json').then(r=>r.json()).then(d=>{setRaw(d);setLoading(false);}).catch(()=>setLoading(false));}, []);
 
@@ -206,7 +207,7 @@ export default function App() {
     return{summary:{totalCancelled:total,rebooked:rebooked.length,stillVacant:vacant.length,rebookedPct:total>0?Math.round(rebooked.length/total*100):0},buckets:(base.buckets||[]).map(b=>({...b,count:bucketMap[b.label]||0})),byProject,vacantUnits:vacant,rebookedUnits:rebooked};
   },[raw,filters.project]);
   const byProj=useMemo(()=>{const map={};pA.forEach(r=>{const p=r.project;if(!p)return;if(!map[p])map[p]={name:p,units:0,bspCr:0};map[p].units++;map[p].bspCr+=(r.bsp||0)/1e7;});return Object.values(map).sort((a,b)=>b.units-a.units).map(r=>({...r,bspCr:+r.bspCr.toFixed(1)}));},[pA]);
-  const topCP=useMemo(()=>{const map={};pA.forEach(r=>{const b=r.broker;if(!b)return;if(!map[b])map[b]={name:b,units:0,bspCr:0};map[b].units++;map[b].bspCr+=(r.bsp||0)/1e7;});return Object.values(map).sort((a,b)=>b.units-a.units).slice(0,8).map(r=>({...r,bspCr:+r.bspCr.toFixed(1)}));},[pA]);
+  const topCP=useMemo(()=>{const map={};pA.forEach(r=>{const b=r.broker;if(!b)return;if(!map[b])map[b]={name:b,units:0,bspCr:0};map[b].units++;map[b].bspCr+=(r.bsp||0)/1e7;});return Object.values(map).sort((a,b)=>b.units-a.units).map(r=>({...r,bspCr:+r.bspCr.toFixed(1)}));},[pA]);
   const bhkS=useMemo(()=>{
     const map={};
     // Booked from pdrn (filtered)
@@ -633,27 +634,41 @@ export default function App() {
             <div style={{display:'grid',gridTemplateColumns:'1.3fr 1fr',gap:12}}>
 
               <GC style={{padding:16}}>
-                <SH title="Top CP-10" sub="Channel Partners by Units Booked · Sales Value"/>
-                <ResponsiveContainer width="100%" height={210}>
-                  <BarChart data={topCP} layout="vertical" margin={{top:0,right:80,bottom:0,left:0}}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.2)" horizontal={false}/>
-                    <XAxis type="number" tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false}/>
-                    <YAxis type="category" dataKey="name" tick={{fill:T.text,fontSize:10,fontWeight:700}} axisLine={false} tickLine={false} width={145} tickFormatter={v=>v?.length>20?v.slice(0,20)+'…':v}/>
-                    <Tooltip content={<CTip fmt={(v,n)=>n==='Sales (₹Cr)'?`₹${v} Cr`:v?.toLocaleString?.('en-IN')}/>}/>
-                    <Bar dataKey="units" name="Units" radius={[0,4,4,0]}>
-                      {topCP.map((_,i)=><Cell key={i} fill={CC[i%CC.length]}/>)}
-                      <LabelList content={({x,y,width,height,value,index})=>{
-                        const d=topCP[index];
-                        return(
-                          <g>
-                            <text x={x+width+6} y={y+height/2+1} textAnchor="start" dominantBaseline="middle" fill={T.textM} fontSize={9} fontWeight={700}>{value}</text>
-                            <text x={x+width+6} y={y+height/2+12} textAnchor="start" dominantBaseline="middle" fill={T.amber} fontSize={8} fontWeight={700}>₹{d?.bspCr}Cr</text>
-                          </g>
-                        );
-                      }}/>
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
+                {(()=>{
+                  const visible=cpExpanded?topCP:topCP.slice(0,10);
+                  const barH=22;
+                  const chartH=Math.max(160, visible.length*barH+40);
+                  return(<>
+                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:4}}>
+                      <SH title={`Top CP-${cpExpanded?topCP.length:Math.min(10,topCP.length)}`} sub="Channel Partners by Units Booked · Sales Value"/>
+                      {topCP.length>10&&(
+                        <button onClick={()=>setCpExpanded(e=>!e)} style={{flexShrink:0,padding:'3px 12px',background:'rgba(0,151,167,0.07)',border:'1px solid rgba(0,151,167,0.2)',borderRadius:16,cursor:'pointer',fontSize:10,fontWeight:700,color:T.tealD,whiteSpace:'nowrap'}}>
+                          {cpExpanded?`▲ Show less`:`▼ +${topCP.length-10} more`}
+                        </button>
+                      )}
+                    </div>
+                    <ResponsiveContainer width="100%" height={chartH}>
+                      <BarChart data={visible} layout="vertical" margin={{top:0,right:80,bottom:0,left:0}}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.2)" horizontal={false}/>
+                        <XAxis type="number" tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false}/>
+                        <YAxis type="category" dataKey="name" tick={{fill:T.text,fontSize:10,fontWeight:700}} axisLine={false} tickLine={false} width={145} tickFormatter={v=>v?.length>20?v.slice(0,20)+'…':v}/>
+                        <Tooltip content={<CTip fmt={(v,n)=>n==='Sales (₹Cr)'?`₹${v} Cr`:v?.toLocaleString?.('en-IN')}/>}/>
+                        <Bar dataKey="units" name="Units" radius={[0,4,4,0]}>
+                          {visible.map((_,i)=><Cell key={i} fill={CC[i%CC.length]}/>)}
+                          <LabelList content={({x,y,width,height,value,index})=>{
+                            const d=visible[index];
+                            return(
+                              <g>
+                                <text x={x+width+6} y={y+height/2+1} textAnchor="start" dominantBaseline="middle" fill={T.textM} fontSize={9} fontWeight={700}>{value}</text>
+                                <text x={x+width+6} y={y+height/2+12} textAnchor="start" dominantBaseline="middle" fill={T.amber} fontSize={8} fontWeight={700}>₹{d?.bspCr}Cr</text>
+                              </g>
+                            );
+                          }}/>
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </>);
+                })()}
               </GC>
 
               <GC style={{padding:16}}>
