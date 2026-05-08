@@ -650,8 +650,8 @@ export default function App() {
                       const amberCap=Math.ceil(maxBooked*0.18);
                       const sliceWithCap=slice.map(d=>({...d,targetTopper:d.remaining>0?amberCap:0}));
                       return(
-                        <ResponsiveContainer width="100%" height={210}>
-                          <BarChart data={sliceWithCap} margin={{top:18,right:8,bottom:18,left:0}} barSize={18}>
+                        <ResponsiveContainer width="100%" height={240}>
+                          <BarChart data={sliceWithCap} margin={{top:18,right:8,bottom:18,left:0}} barSize={28}>
                             <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.2)" vertical={false}/>
                             <XAxis dataKey="label" tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false} angle={-25} dy={6} interval={0}/>
                             <YAxis tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false} width={28} domain={[0,'dataMax+5']}/>
