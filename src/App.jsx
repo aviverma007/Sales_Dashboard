@@ -785,37 +785,52 @@ export default function App() {
                     )}
 
                     {activeTab==='vacant'&&(
-                      <div style={{overflowX:'auto',maxHeight:280,overflowY:'auto'}}>
-                        <table style={{width:'100%',borderCollapse:'collapse',fontSize:11}}>
-                          <thead style={{position:'sticky',top:0,background:'rgba(255,255,255,0.95)',backdropFilter:'blur(6px)'}}>
-                            <tr style={{borderBottom:`2px solid rgba(0,151,167,0.15)`}}>
-                              {['Unit','Project','Tower','BHK','Cancelled On','Reason','BSP','Vacant Since'].map(h=>(
-                                <th key={h} style={{padding:'6px 10px',textAlign:'left',color:T.textM,fontSize:9,fontWeight:800,letterSpacing:0.4,textTransform:'uppercase',whiteSpace:'nowrap'}}>{h}</th>
-                              ))}
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {vacantUnits.map((u,i)=>{
-                              const urgency=u.daysVacant>180?T.red:u.daysVacant>90?T.amber:T.greenL;
-                              return(
-                                <tr key={i} style={{borderBottom:`1px solid rgba(0,100,140,0.06)`}}>
-                                  <td style={{padding:'6px 10px',fontWeight:800,color:T.navy,whiteSpace:'nowrap'}}>{u.unit}</td>
-                                  <td style={{padding:'6px 10px',color:T.textM,fontSize:9,whiteSpace:'nowrap'}}>{u.projectLabel}</td>
-                                  <td style={{padding:'6px 10px',color:T.textM,whiteSpace:'nowrap'}}>{u.tower}</td>
-                                  <td style={{padding:'6px 10px',color:T.textM,fontSize:9,whiteSpace:'nowrap'}}>{u.bhk?.split(' ')[0]}</td>
-                                  <td style={{padding:'6px 10px',color:T.textM,fontSize:9,whiteSpace:'nowrap'}}>{u.cancelDate}</td>
-                                  <td style={{padding:'6px 10px',fontSize:9,color:T.textL,maxWidth:120,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{u.cancelReason}</td>
-                                  <td style={{padding:'6px 10px',color:T.amber,fontWeight:700,whiteSpace:'nowrap'}}>₹{u.bspCr}Cr</td>
-                                  <td style={{padding:'6px 10px',whiteSpace:'nowrap'}}>
-                                    <span style={{background:`${urgency}15`,border:`1px solid ${urgency}40`,color:urgency,borderRadius:12,padding:'2px 8px',fontSize:9,fontWeight:800}}>
-                                      {u.daysVacant}d
-                                    </span>
-                                  </td>
-                                </tr>
-                              );
-                            })}
-                          </tbody>
-                        </table>
+                      <div>
+                        {/* Urgency legend */}
+                        <div style={{display:'flex',gap:10,marginBottom:10,flexWrap:'wrap'}}>
+                          {[['🟢','0–90 days',T.greenL],['🟡','91–180 days',T.amber],['🔴','180+ days',T.red]].map(([ic,lbl,col])=>(
+                            <span key={lbl} style={{fontSize:9,fontWeight:700,color:col,background:`${col}12`,border:`1px solid ${col}30`,borderRadius:20,padding:'2px 10px'}}>{ic} {lbl}</span>
+                          ))}
+                          <span style={{fontSize:9,color:T.textM,marginLeft:'auto',fontWeight:600}}>{vacantUnits.length} units still vacant</span>
+                        </div>
+                        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(175px,1fr))',gap:8,maxHeight:360,overflowY:'auto'}}>
+                          {vacantUnits.map((u,i)=>{
+                            const d=u.daysVacant||0;
+                            const urgency=d>180?T.red:d>90?T.amber:T.greenL;
+                            const urgencyBg=d>180?'#ef444410':d>90?'#f59e0b10':'#22c55e10';
+                            const label=d>180?'Critical':d>90?'Ageing':'Recent';
+                            return(
+                              <div key={i} style={{background:'rgba(255,255,255,0.85)',border:`1.5px solid ${urgency}40`,borderRadius:10,padding:'10px 12px',position:'relative',overflow:'hidden'}}>
+                                {/* Top urgency stripe */}
+                                <div style={{position:'absolute',top:0,left:0,right:0,height:3,background:urgency}}/>
+                                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:4,marginTop:2}}>
+                                  <span style={{fontSize:12,fontWeight:900,color:T.navy}}>{u.unit}</span>
+                                  <span style={{fontSize:8,background:urgencyBg,color:urgency,border:`1px solid ${urgency}50`,borderRadius:10,padding:'1px 7px',fontWeight:800}}>{label}</span>
+                                </div>
+                                <p style={{fontSize:9,color:T.textM,margin:'0 0 2px',fontWeight:600}}>{u.projectLabel} · {u.tower}</p>
+                                <p style={{fontSize:9,color:T.textL,margin:'0 0 6px'}}>{u.bhk?.split('+')[0]}</p>
+                                {/* Vacant duration — prominent */}
+                                <div style={{background:urgencyBg,borderRadius:7,padding:'5px 8px',marginBottom:6,display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+                                  <span style={{fontSize:9,color:urgency,fontWeight:700}}>🏚️ Vacant for</span>
+                                  <span style={{fontSize:16,fontWeight:900,color:urgency,lineHeight:1}}>{d}<span style={{fontSize:9,fontWeight:600}}> days</span></span>
+                                </div>
+                                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',paddingTop:5,borderTop:'1px solid rgba(0,100,140,0.07)'}}>
+                                  <div>
+                                    <p style={{fontSize:8,color:T.textL,margin:0}}>Cancelled</p>
+                                    <p style={{fontSize:9,fontWeight:700,color:T.textM,margin:0}}>{u.cancelDate}</p>
+                                  </div>
+                                  <div style={{textAlign:'right'}}>
+                                    <p style={{fontSize:8,color:T.textL,margin:0}}>BSP Value</p>
+                                    <p style={{fontSize:10,fontWeight:800,color:T.amber,margin:0}}>₹{u.bspCr}Cr</p>
+                                  </div>
+                                </div>
+                                {u.cancelReason&&u.cancelReason!=='Not specified'&&(
+                                  <p style={{fontSize:8,color:T.textL,margin:'4px 0 0',borderTop:'1px solid rgba(0,100,140,0.06)',paddingTop:4,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={u.cancelReason}>📋 {u.cancelReason}</p>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
                     )}
 
