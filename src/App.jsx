@@ -131,7 +131,7 @@ const Badge = ({label,color=T.teal}) => (
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // ─── LOGIN ────────────────────────────────────────────────────────────────────
-const CREDS = { username: 'Dashboard', password: 'Smart@2026' };
+const CREDS = { username: 'Sales', password: 'Smart@2026' };
 
 function Login({ onLogin }) {
   const [u, setU] = useState('');
@@ -155,7 +155,7 @@ function Login({ onLogin }) {
           <div style={{width:56,height:56,borderRadius:16,background:'linear-gradient(135deg,#0097a7,#006978)',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 12px',boxShadow:'0 8px 24px rgba(0,151,167,0.35)'}}>
             <span style={{fontSize:26}}>📊</span>
           </div>
-          <h2 style={{fontSize:20,fontWeight:900,color:'#0d2137',margin:'0 0 4px'}}>SkyArc Nexus</h2>
+          <h2 style={{fontSize:20,fontWeight:900,color:'#0d2137',margin:'0 0 4px'}}>Smartworld Dashboard</h2>
           <p style={{fontSize:12,color:'#546e7a',margin:0,fontWeight:500}}>Sales Intelligence Dashboard</p>
         </div>
         {/* Fields */}
@@ -321,7 +321,7 @@ export default function App() {
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');@keyframes spin{to{transform:rotate(360deg)}}`}</style>
       <div style={{background:'rgba(255,255,255,0.85)',backdropFilter:'blur(20px)',borderRadius:20,padding:'32px 48px',textAlign:'center',boxShadow:'0 8px 40px rgba(0,0,0,0.2)'}}>
         <div style={{width:44,height:44,border:`3px solid rgba(0,151,167,0.2)`,borderTop:`3px solid ${T.teal}`,borderRadius:'50%',animation:'spin 0.8s linear infinite',margin:'0 auto 16px'}}/>
-        <p style={{fontFamily:'Inter,sans-serif',color:T.tealD,fontSize:14,fontWeight:700,margin:0}}>Loading SkyArc Nexus...</p>
+        <p style={{fontFamily:'Inter,sans-serif',color:T.tealD,fontSize:14,fontWeight:700,margin:0}}>Loading Smartworld Dashboard...</p>
       </div>
     </div>
   );
@@ -1493,7 +1493,7 @@ export default function App() {
           </div>
           <div style={{display:'flex',flexDirection:'column',alignItems:'flex-end',gap:1}}>
             <div style={{display:'flex',alignItems:'center',gap:10}}>
-              <span style={{color:T.text,fontSize:9,fontWeight:700,letterSpacing:1}}>SKYARC NEXUS v2.0 · SMARTWORLD GROUP</span>
+              <span style={{color:T.text,fontSize:9,fontWeight:700,letterSpacing:1}}>SMARTWORLD DASHBOARD v2.0</span>
               <button onClick={()=>{sessionStorage.removeItem('sd_auth');setAuthed(false);}} style={{padding:'2px 10px',borderRadius:10,border:'1px solid rgba(0,100,140,0.2)',background:'rgba(255,255,255,0.7)',cursor:'pointer',fontSize:9,fontWeight:700,color:T.textM}}>🔒 Logout</button>
             </div>
             <span style={{color:T.tealD,fontSize:9,fontWeight:700,letterSpacing:0.5}}>✦ Created &amp; Developed by ANIRUDH VERMA</span>
