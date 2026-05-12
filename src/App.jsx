@@ -101,19 +101,47 @@ const SH = ({title,sub,light=false,compact=false}) => (
 );
 
 // ─── FILTER SELECT ────────────────────────────────────────────────────────────
-const FSel = ({label,options,value,onChange}) => (
-  <div style={{display:'flex',flexDirection:'column',gap:2}}>
-    <label style={{color:T.textM,fontSize:9,fontWeight:800,letterSpacing:1,textTransform:'uppercase'}}>{label}</label>
-    <select value={value} onChange={e=>onChange(e.target.value)} style={{
-      background:'rgba(255,255,255,0.88)',border:`1px solid ${value?T.teal:'rgba(0,100,140,0.25)'}`,borderRadius:7,
-      color:value?T.tealD:T.textM,padding:'5px 10px',fontSize:11,fontFamily:'Inter,sans-serif',
-      minWidth:120,cursor:'pointer',outline:'none',appearance:'none',fontWeight:value?600:400,
-    }}>
-      <option value="">All</option>
-      {options.map(o=><option key={o} value={o}>{o}</option>)}
-    </select>
-  </div>
-);
+const FSel = ({label,options,value,onChange,multi=false}) => {
+  if(multi){
+    const vals=value?value.split('||').filter(Boolean):[];
+    const toggle=v=>{const n=vals.includes(v)?vals.filter(x=>x!==v):[...vals,v];onChange(n.join('||'));};
+    const [open,setOpen]=React.useState(false);
+    return(
+      <div style={{display:'flex',flexDirection:'column',gap:2,position:'relative'}}>
+        <label style={{color:T.textM,fontSize:9,fontWeight:800,letterSpacing:1,textTransform:'uppercase'}}>{label}</label>
+        <div onClick={()=>setOpen(o=>!o)} style={{background:'rgba(255,255,255,0.88)',border:`1px solid ${vals.length?T.teal:'rgba(0,100,140,0.25)'}`,borderRadius:7,color:vals.length?T.tealD:T.textM,padding:'5px 10px',fontSize:11,fontFamily:'Inter,sans-serif',minWidth:120,cursor:'pointer',fontWeight:vals.length?600:400,userSelect:'none',display:'flex',justifyContent:'space-between',alignItems:'center',gap:6}}>
+          <span style={{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:130}}>{vals.length?vals.join(', '):'All'}</span>
+          <span style={{fontSize:8,opacity:0.6}}>{open?'▲':'▼'}</span>
+        </div>
+        {open&&(
+          <div style={{position:'absolute',top:'100%',left:0,zIndex:999,background:'#fff',border:`1px solid ${T.teal}30`,borderRadius:8,boxShadow:'0 8px 24px rgba(0,80,120,0.15)',minWidth:180,maxHeight:220,overflowY:'auto',padding:4,marginTop:2}}>
+            {options.map(o=>(
+              <div key={o} onClick={()=>toggle(o)} style={{display:'flex',alignItems:'center',gap:8,padding:'5px 10px',borderRadius:5,cursor:'pointer',background:vals.includes(o)?`${T.teal}12`:'transparent',fontSize:10,fontWeight:vals.includes(o)?700:400,color:vals.includes(o)?T.tealD:T.text}}>
+                <span style={{width:12,height:12,borderRadius:3,border:`1.5px solid ${vals.includes(o)?T.teal:'rgba(0,100,140,0.3)'}`,background:vals.includes(o)?T.teal:'transparent',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+                  {vals.includes(o)&&<span style={{color:'#fff',fontSize:8,lineHeight:1}}>✓</span>}
+                </span>
+                {o}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+  return(
+    <div style={{display:'flex',flexDirection:'column',gap:2}}>
+      <label style={{color:T.textM,fontSize:9,fontWeight:800,letterSpacing:1,textTransform:'uppercase'}}>{label}</label>
+      <select value={value} onChange={e=>onChange(e.target.value)} style={{
+        background:'rgba(255,255,255,0.88)',border:`1px solid ${value?T.teal:'rgba(0,100,140,0.25)'}`,borderRadius:7,
+        color:value?T.tealD:T.textM,padding:'5px 10px',fontSize:11,fontFamily:'Inter,sans-serif',
+        minWidth:120,cursor:'pointer',outline:'none',appearance:'none',fontWeight:value?600:400,
+      }}>
+        <option value="">All</option>
+        {options.map(o=><option key={o} value={o}>{o}</option>)}
+      </select>
+    </div>
+  );
+};
 
 // ─── CHIP ────────────────────────────────────────────────────────────────────
 const Chip = ({label,value,color=T.teal,small=false}) => (
@@ -199,7 +227,7 @@ export default function App() {
   const [raw,setRaw]=useState(null);
   const [loading,setLoading]=useState(true);
   const [tab,setTab]=useState('overview'); // overview | collections | pipeline
-  const [filters,setFilters]=useState({company:'',project:'',year:'',month:'',broker:'',bhk:''});
+  const [filters,setFilters]=useState({company:'',project:'',year:'',month:'',broker:'',typology:'',fy:''});
   const sf=useCallback((k,v)=>setFilters(p=>({...p,[k]:v})),[]);
   // Chart controls (lifted to comply with React hooks rules)
   const [tMode,setTMode]=useState('monthly');
@@ -217,16 +245,48 @@ export default function App() {
   const fo=raw?.filterOptions||{};
   const availProj=useMemo(()=>(!raw||!filters.company)?fo.projects||[]:(fo.projects||[]).filter(p=>(fo.projCompany||{})[p]===filters.company),[raw,filters.company,fo]);
   const availComp=useMemo(()=>(!raw||!filters.project)?fo.companies||[]:[(fo.projCompany||{})[filters.project]].filter(Boolean),[raw,filters.project,fo]);
-  const matchMo=useCallback(m=>{if(!filters.month)return true;const idx=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'].indexOf(filters.month)+1;return m?.endsWith(`-${String(idx).padStart(2,'0')}`);},[filters.month]);
+  const matchMo=useCallback(m=>{
+    if(!filters.month) return true;
+    const QMap={'Q1':['01','02','03'],'Q2':['04','05','06'],'Q3':['07','08','09'],'Q4':['10','11','12'],'Q1 (Jan-Mar)':['01','02','03'],'Q2 (Apr-Jun)':['04','05','06'],'Q3 (Jul-Sep)':['07','08','09'],'Q4 (Oct-Dec)':['10','11','12']};
+    const MIdx={'Jan':'01','Feb':'02','Mar':'03','Apr':'04','May':'05','Jun':'06','Jul':'07','Aug':'08','Sep':'09','Oct':'10','Nov':'11','Dec':'12'};
+    const months=filters.month.split('||').filter(Boolean);
+    if(!months.length) return true;
+    return months.some(sel=>{
+      if(QMap[sel]) return QMap[sel].some(mo=>m?.endsWith(`-${mo}`));
+      const mo=MIdx[sel]; return mo?m?.endsWith(`-${mo}`):false;
+    });
+  },[filters.month]);
 
-  const pF=useMemo(()=>{if(!raw?.pdrn)return[];return raw.pdrn.filter(r=>{if(filters.company&&r.companyNorm!==filters.company)return false;if(filters.project&&r.project!==filters.project)return false;if(filters.year&&String(r.bookingYear)!==filters.year)return false;if(filters.month&&!matchMo(r.bookingMonth))return false;if(filters.broker&&r.broker!==filters.broker)return false;if(filters.bhk&&r.bhk!==filters.bhk)return false;return true;});},[raw,filters,matchMo]);
+  const pF=useMemo(()=>{if(!raw?.pdrn)return[];return raw.pdrn.filter(r=>{
+    if(filters.company&&r.companyNorm!==filters.company)return false;
+    if(filters.project&&r.project!==filters.project)return false;
+    if(filters.year&&String(r.bookingYear)!==filters.year)return false;
+    if(filters.month&&!matchMo(r.bookingMonth))return false;
+    if(filters.broker&&r.broker!==filters.broker)return false;
+    if(filters.typology){const typos=filters.typology.split('||').filter(Boolean);if(typos.length&&!typos.includes(r.bhkFull))return false;}
+    if(filters.fy){const fy=r.bookingYear?(r.bookingMonth&&parseInt(r.bookingMonth.split('-')[1])>=4?`FY${r.bookingYear}-${String(r.bookingYear+1).slice(2)}`:`FY${r.bookingYear-1}-${String(r.bookingYear).slice(2)}`):null;if(fy!==filters.fy)return false;}
+    return true;
+  });},[raw,filters,matchMo]);
   const pA=useMemo(()=>pF.filter(r=>r.status==='ACTIVE'),[pF]);
   const pC=useMemo(()=>pF.filter(r=>r.status==='CANCELLED'),[pF]);
   const dF=useMemo(()=>{if(!raw?.dapp)return[];return raw.dapp.filter(r=>{if(filters.company&&r.companyNorm!==filters.company)return false;if(filters.project&&r.project!==filters.project)return false;if(filters.year&&!r.billMonth?.startsWith(filters.year))return false;if(filters.month&&!matchMo(r.billMonth))return false;return true;});},[raw,filters,matchMo]);
-  const iF=useMemo(()=>{if(!raw?.invr)return[];return raw.invr.filter(r=>{if(filters.company&&r.companyNorm!==filters.company)return false;if(filters.project&&r.project!==filters.project)return false;if(filters.bhk&&r.bhk!==filters.bhk)return false;return true;});},[raw,filters]);
+  const iF=useMemo(()=>{if(!raw?.invr)return[];return raw.invr.filter(r=>{
+    if(filters.company&&r.companyNorm!==filters.company)return false;
+    if(filters.project&&r.project!==filters.project)return false;
+    if(filters.typology){const typos=filters.typology.split('||').filter(Boolean);if(typos.length&&r.bhk&&!typos.some(t=>t.includes(r.bhk)))return false;}
+    return true;
+  });},[raw,filters]);
   const wF=useMemo(()=>{if(!raw?.workflow)return[];return raw.workflow.filter(r=>{if(filters.company&&r.companyNorm!==filters.company)return false;if(filters.project&&r.project!==filters.project)return false;return true;});},[raw,filters]);
 
   const availBrokers=useMemo(()=>{const src=(filters.company||filters.project)?pF:(raw?.pdrn||[]);const cnt={};src.forEach(r=>{if(r.broker)cnt[r.broker]=(cnt[r.broker]||0)+1;});return Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,40).map(e=>e[0]);},[raw,pF,filters]);
+  const availTypologies=useMemo(()=>{
+    const projTypo=raw?.projTypologies||{};
+    if(filters.project) return projTypo[filters.project]||[];
+    // All typologies across all projects
+    return Object.values(projTypo).flat().filter((v,i,a)=>a.indexOf(v)===i).sort();
+  },[raw,filters.project]);
+  const MONTHS_QUARTERS=['Q1 (Jan-Mar)','Q2 (Apr-Jun)','Q3 (Jul-Sep)','Q4 (Oct-Dec)','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const MONTH_KEY_MAP={'Q1 (Jan-Mar)':'Q1','Q2 (Apr-Jun)':'Q2','Q3 (Jul-Sep)':'Q3','Q4 (Oct-Dec)':'Q4','Jan':'Jan','Feb':'Feb','Mar':'Mar','Apr':'Apr','May':'May','Jun':'Jun','Jul':'Jul','Aug':'Aug','Sep':'Sep','Oct':'Oct','Nov':'Nov','Dec':'Dec'};
 
   const kpi=useMemo(()=>{const tS=pA.reduce((s,r)=>s+(r.bsp||0),0),tD=dF.reduce((s,r)=>s+(r.demand||0),0),tR=dF.reduce((s,r)=>s+(r.received||0),0),tO=dF.reduce((s,r)=>s+(r.outstanding||0),0);const ws={APPROVED:0,PENDING:0,REJECTED:0};wF.forEach(r=>{if(ws[r.status]!==undefined)ws[r.status]++;});return{totalUnits:iF.length,bookedUnits:iF.filter(r=>r.status==='Booked').length,availableUnits:iF.filter(r=>r.status==='Available').length,inProgressUnits:iF.filter(r=>r.status==='In Progress').length,totalSales:tS,dappDemand:tD,dappReceived:tR,dappOutstanding:tO,activeBookings:pA.length,cancelledBookings:pC.length,pipelineBookings:wF.filter(r=>r.status==='PENDING').length,wfApproved:ws.APPROVED,wfPending:ws.PENDING,wfRejected:ws.REJECTED};},[pA,pC,dF,iF,wF]);
 
@@ -386,25 +446,51 @@ export default function App() {
         </div>
 
         {/* Filter strip */}
-        <div style={{maxWidth:1440,margin:'0 auto',padding:'0 24px 10px',display:'flex',alignItems:'flex-end',gap:12,flexWrap:'wrap'}}>
-          <FSel label="Project"  options={availProj}              value={filters.project} onChange={v=>sf('project',v)}/>
-          <FSel label="Year"     options={(fo.years||[]).map(String)} value={filters.year}  onChange={v=>sf('year',v)}/>
-          <FSel label="Month"    options={fo.months||[]}          value={filters.month}   onChange={v=>sf('month',v)}/>
-          <FSel label="CP"       options={availBrokers}           value={filters.broker}  onChange={v=>sf('broker',v)}/>
-          <FSel label="BHK"      options={fo.bhkCats||[]}         value={filters.bhk}     onChange={v=>sf('bhk',v)}/>
+        <div style={{maxWidth:1440,margin:'0 auto',padding:'0 24px 6px',display:'flex',alignItems:'flex-end',gap:10,flexWrap:'wrap'}}>
+          <FSel label="Project"    options={availProj}                           value={filters.project}  onChange={v=>sf('project',v)}/>
+          <FSel label="Fin. Year"  options={fo.financialYears||[]}               value={filters.fy}       onChange={v=>sf('fy',v)}/>
+          <FSel label="Year"       options={(fo.years||[]).map(String)}           value={filters.year}     onChange={v=>sf('year',v)}/>
+          <FSel label="Month/Qtr"  options={MONTHS_QUARTERS}                     value={filters.month}    onChange={v=>sf('month',v)} multi={true}/>
+          <FSel label="CP"         options={availBrokers}                         value={filters.broker}   onChange={v=>sf('broker',v)}/>
+          <FSel label="Typology"   options={availTypologies}                      value={filters.typology} onChange={v=>sf('typology',v)} multi={true}/>
           {Object.values(filters).some(Boolean)&&(
-            <button onClick={()=>setFilters({company:'',project:'',year:'',month:'',broker:'',bhk:''})}
+            <button onClick={()=>setFilters({company:'',project:'',year:'',month:'',broker:'',typology:'',fy:''})}
               style={{background:'linear-gradient(135deg,#c62828,#ef5350)',border:'none',borderRadius:7,color:'#fff',padding:'5px 14px',fontSize:10,cursor:'pointer',fontWeight:700,boxShadow:'0 2px 8px rgba(200,40,40,0.3)',alignSelf:'flex-end'}}>
               ✕ Reset
             </button>
           )}
-          {/* Active tags */}
-          {Object.entries(filters).filter(([,v])=>v).map(([k,v])=>(
-            <div key={k} onClick={()=>sf(k,'')} style={{display:'inline-flex',alignItems:'center',gap:4,background:`${T.teal}15`,border:`1px solid ${T.teal}30`,borderRadius:16,padding:'3px 8px',cursor:'pointer',fontSize:10,color:T.tealD,alignSelf:'flex-end'}}>
-              <span style={{color:T.teal,fontSize:8,fontWeight:700,textTransform:'uppercase'}}>{k}</span>: {v} <span style={{color:T.red,fontSize:10}}>✕</span>
-            </div>
-          ))}
         </div>
+
+        {/* ── PROJECT INFO BAR (below filters) ── */}
+        {(()=>{
+          const meta=raw?.projectMeta||{};
+          const projects=filters.project?[filters.project]:Object.keys(meta);
+          const items=projects.map(p=>meta[p]).filter(Boolean);
+          if(!items.length) return null;
+          return(
+            <div style={{maxWidth:1440,margin:'0 auto',padding:'0 24px 10px',display:'flex',gap:10,flexWrap:'wrap'}}>
+              {items.map((m,i)=>(
+                <div key={i} style={{display:'flex',alignItems:'center',gap:14,background:'rgba(255,255,255,0.82)',backdropFilter:'blur(8px)',borderRadius:10,padding:'6px 16px',border:`1px solid rgba(0,151,167,0.15)`,flexWrap:'wrap',gap:16}}>
+                  <span style={{fontSize:11,fontWeight:800,color:T.navy,marginRight:4}}>{m.label}</span>
+                  {[
+                    {icon:'🏗️',label:'Builtup',val:m.builtup},
+                    {icon:'🚀',label:'Launch Date',val:m.launchDate},
+                    {icon:'📐',label:'Saleable Area',val:m.saleableArea},
+                    {icon:'🏁',label:'Handover Date',val:m.handoverDate},
+                  ].map((d,j)=>(
+                    <div key={j} style={{display:'flex',alignItems:'center',gap:5}}>
+                      <span style={{fontSize:12}}>{d.icon}</span>
+                      <div>
+                        <p style={{fontSize:8,color:T.textM,fontWeight:700,margin:0,textTransform:'uppercase',letterSpacing:0.3}}>{d.label}</p>
+                        <p style={{fontSize:11,fontWeight:800,color:T.tealD,margin:0}}>{d.val}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          );
+        })()}
       </header>
 
       {/* ── MAIN CONTENT — floats on BG ── */}
@@ -415,6 +501,13 @@ export default function App() {
         ══════════════════════════════════════════════════════ */}
         {tab==='overview'&&(
           <div style={{display:'flex',flexDirection:'column',gap:14}}>
+
+            {/* ── SECTION: Sales Overview ── */}
+            <div style={{display:'flex',alignItems:'center',gap:10}}>
+              <div style={{height:3,width:24,background:`linear-gradient(90deg,${T.teal},${T.tealL})`,borderRadius:2}}/>
+              <span style={{fontSize:11,fontWeight:900,color:T.tealD,textTransform:'uppercase',letterSpacing:1}}>Sales Overview</span>
+              <div style={{flex:1,height:1,background:'rgba(0,151,167,0.1)',borderRadius:1}}/>
+            </div>
 
             {/* ROW 1: 7 KPI CARDS — no Workflow */}
             <div style={{display:'grid',gridTemplateColumns:'2fr 1fr 1fr 1fr 2fr 1fr',gap:12}}>
@@ -537,6 +630,13 @@ export default function App() {
 
             {/* ROW 2: MONTHLY TREND (wide) + SALES BY CHANNEL + BHK PIE */}
             <div style={{display:'grid',gridTemplateColumns:'2fr 1fr 1fr',gap:12}}>
+
+              {/* ── SECTION: Sales & Pricing Trend ── */}
+              <div style={{display:'flex',alignItems:'center',gap:10,gridColumn:'1/-1'}}>
+                <div style={{height:3,width:24,background:`linear-gradient(90deg,${T.amber},#fbbf24)`,borderRadius:2}}/>
+                <span style={{fontSize:11,fontWeight:900,color:T.amber,textTransform:'uppercase',letterSpacing:1}}>Sales & Pricing Trend</span>
+                <div style={{flex:1,height:1,background:'rgba(245,158,11,0.15)',borderRadius:1}}/>
+              </div>
 
               <GC style={{padding:16}}>
                 {(()=>{
@@ -699,6 +799,13 @@ export default function App() {
 
             {/* ROW 3: TOP CP + BOOKING vs CANCELLED */}
             <div style={{display:'grid',gridTemplateColumns:'1.3fr 1fr',gap:12}}>
+
+              {/* ── SECTION: Channel Partner Analysis ── */}
+              <div style={{display:'flex',alignItems:'center',gap:10,gridColumn:'1/-1'}}>
+                <div style={{height:3,width:24,background:`linear-gradient(90deg,#7c3aed,#a78bfa)`,borderRadius:2}}/>
+                <span style={{fontSize:11,fontWeight:900,color:'#7c3aed',textTransform:'uppercase',letterSpacing:1}}>Channel Partner Analysis</span>
+                <div style={{flex:1,height:1,background:'rgba(124,58,237,0.1)',borderRadius:1}}/>
+              </div>
 
               <GC style={{padding:16}}>
                 {(()=>{
@@ -982,6 +1089,13 @@ export default function App() {
                 );
               })()}
             </GC>
+
+            {/* ── SECTION: Area-wise Segregation ── */}
+            <div style={{display:'flex',alignItems:'center',gap:10}}>
+              <div style={{height:3,width:24,background:`linear-gradient(90deg,${T.greenL},#4ade80)`,borderRadius:2}}/>
+              <span style={{fontSize:11,fontWeight:900,color:T.greenL,textTransform:'uppercase',letterSpacing:1}}>Area-wise Segregation</span>
+              <div style={{flex:1,height:1,background:'rgba(34,197,94,0.12)',borderRadius:1}}/>
+            </div>
 
             {/* ══ TOWER-WISE BOOKED & CANCELLED ══ */}
             <GC style={{padding:16}}>
