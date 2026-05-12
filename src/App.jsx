@@ -564,8 +564,8 @@ export default function App() {
                   <div>
                     <p style={{fontSize:26,fontWeight:900,color:T.navy,margin:'0 0 6px',letterSpacing:-0.5}}>{kpi.totalUnits?.toLocaleString('en-IN')}</p>
                     <div style={{display:'flex',flexDirection:'column',gap:4}}>
-                      <Chip label="Bkd" value={kpi.bookedUnits?.toLocaleString('en-IN')} color={T.teal} small/>
-                      <Chip label="Avl" value={kpi.availableUnits?.toLocaleString('en-IN')} color={T.greenL} small/>
+                      <Chip label="Bkd" value={`${kpi.bookedUnits?.toLocaleString('en-IN')} (${kpi.totalUnits>0?Math.round((kpi.bookedUnits/kpi.totalUnits)*100):0}%)`} color={T.teal} small/>
+                      <Chip label="Avl" value={`${kpi.availableUnits?.toLocaleString('en-IN')} (${kpi.totalUnits>0?Math.round((kpi.availableUnits/kpi.totalUnits)*100):0}%)`} color={T.greenL} small/>
                     </div>
                   </div>
                 </div>
