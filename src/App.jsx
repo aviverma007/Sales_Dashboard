@@ -180,11 +180,11 @@ function Login({ onLogin }) {
       <div style={{background:'rgba(255,255,255,0.97)',borderRadius:20,padding:'40px 44px',width:360,boxShadow:'0 24px 80px rgba(0,40,80,0.25)',backdropFilter:'blur(12px)'}}>
         {/* Logo / brand */}
         <div style={{textAlign:'center',marginBottom:28}}>
-          <div style={{width:56,height:56,borderRadius:16,background:'linear-gradient(135deg,#0097a7,#006978)',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 12px',boxShadow:'0 8px 24px rgba(0,151,167,0.35)'}}>
-            <span style={{fontSize:26}}>📊</span>
+          <div style={{margin:'0 auto 14px',width:80,height:80,borderRadius:20,background:'#0d1f3c',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 8px 28px rgba(0,30,80,0.35)',overflow:'hidden'}}>
+            <img src="/swd-logo.png" alt="SWD" style={{width:56,height:56,objectFit:'contain',filter:'brightness(0) invert(1)'}}/>
           </div>
-          <h2 style={{fontSize:20,fontWeight:900,color:'#0d2137',margin:'0 0 4px'}}>Smartworld Dashboard</h2>
-          <p style={{fontSize:12,color:'#546e7a',margin:0,fontWeight:500}}>Sales Intelligence Dashboard</p>
+          <h2 style={{fontSize:20,fontWeight:900,color:'#0d2137',margin:'0 0 4px'}}>SWD-DASHBOARD</h2>
+          <p style={{fontSize:12,color:'#546e7a',margin:0,fontWeight:500}}>Smartworld Group · Sales Intelligence</p>
         </div>
         {/* Fields */}
         <div style={{marginBottom:14}}>
@@ -379,9 +379,15 @@ export default function App() {
   if(loading) return (
     <div style={{minHeight:'100vh',backgroundImage:'url(/bg.jpg)',backgroundSize:'cover',backgroundPosition:'center',display:'flex',alignItems:'center',justifyContent:'center',flexDirection:'column',gap:16}}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');@keyframes spin{to{transform:rotate(360deg)}}`}</style>
-      <div style={{background:'rgba(255,255,255,0.85)',backdropFilter:'blur(20px)',borderRadius:20,padding:'32px 48px',textAlign:'center',boxShadow:'0 8px 40px rgba(0,0,0,0.2)'}}>
-        <div style={{width:44,height:44,border:`3px solid rgba(0,151,167,0.2)`,borderTop:`3px solid ${T.teal}`,borderRadius:'50%',animation:'spin 0.8s linear infinite',margin:'0 auto 16px'}}/>
-        <p style={{fontFamily:'Inter,sans-serif',color:T.tealD,fontSize:14,fontWeight:700,margin:0}}>Loading Smartworld Dashboard...</p>
+      <div style={{background:'rgba(255,255,255,0.9)',backdropFilter:'blur(20px)',borderRadius:20,padding:'32px 48px',textAlign:'center',boxShadow:'0 8px 40px rgba(0,0,0,0.2)'}}>
+        <div style={{position:'relative',width:64,height:64,margin:'0 auto 16px'}}>
+          <div style={{position:'absolute',inset:0,border:'3px solid rgba(13,31,60,0.12)',borderTop:'3px solid #0d1f3c',borderRadius:'50%',animation:'spin 0.9s linear infinite'}}/>
+          <div style={{position:'absolute',inset:8,background:'#0d1f3c',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center'}}>
+            <img src="/swd-logo.png" alt="SWD" style={{width:28,height:28,objectFit:'contain',filter:'brightness(0) invert(1)'}}/>
+          </div>
+        </div>
+        <p style={{fontFamily:'Inter,sans-serif',color:'#0d1f3c',fontSize:14,fontWeight:900,margin:'0 0 4px',letterSpacing:0.5}}>SWD-DASHBOARD</p>
+        <p style={{fontFamily:'Inter,sans-serif',color:T.textM,fontSize:11,fontWeight:500,margin:0}}>Loading Smartworld Dashboard...</p>
       </div>
     </div>
   );
@@ -415,9 +421,11 @@ export default function App() {
         <div style={{maxWidth:1440,margin:'0 auto',padding:'0 24px',display:'flex',alignItems:'center',justifyContent:'space-between',height:54}}>
           {/* Logo */}
           <div style={{display:'flex',alignItems:'center',gap:12}}>
-            <div style={{width:36,height:36,borderRadius:9,background:'linear-gradient(135deg,#006978,#00bcd4)',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontSize:18,boxShadow:'0 4px 14px rgba(0,188,212,0.45)',flexShrink:0}}>⬡</div>
+            <div style={{width:38,height:38,borderRadius:9,background:'#0d1f3c',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 4px 14px rgba(0,30,80,0.3)',flexShrink:0,overflow:'hidden'}}>
+              <img src="/swd-logo.png" alt="SWD" style={{width:26,height:26,objectFit:'contain',filter:'brightness(0) invert(1)'}}/>
+            </div>
             <div>
-              <div style={{fontWeight:800,fontSize:15,letterSpacing:0.3,color:T.navy}}>SALES DASHBOARD</div>
+              <div style={{fontWeight:900,fontSize:15,letterSpacing:0.5,color:T.navy}}>SWD-DASHBOARD</div>
               <div style={{color:T.textM,fontSize:9,letterSpacing:1.5,fontWeight:700}}>SMARTWORLD GROUP · SALES INTELLIGENCE</div>
             </div>
           </div>
