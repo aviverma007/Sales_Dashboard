@@ -550,16 +550,35 @@ export default function App() {
               <GC style={{padding:14}} cls="kc">
                 <SH title="Total Units" compact/>
                 <div style={{display:'flex',alignItems:'center',gap:10}}>
-                  <div style={{width:100,height:100,flexShrink:0}}>
+                  <div style={{width:110,height:110,flexShrink:0,position:'relative'}}>
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie data={[{name:'Booked',value:kpi.bookedUnits||0},{name:'Available',value:kpi.availableUnits||0},{name:'InProgress',value:kpi.inProgressUnits||0.01}]}
-                          cx="50%" cy="50%" innerRadius={32} outerRadius={48} paddingAngle={3} dataKey="value" strokeWidth={2} stroke="rgba(255,255,255,0.9)">
+                          cx="50%" cy="50%" innerRadius={34} outerRadius={50} paddingAngle={3} dataKey="value" strokeWidth={2} stroke="rgba(255,255,255,0.9)"
+                          label={({cx,cy,midAngle,innerRadius,outerRadius,value,name})=>{
+                            if(!value) return null;
+                            const RADIAN=Math.PI/180;
+                            const radius=outerRadius+14;
+                            const x=cx+radius*Math.cos(-midAngle*RADIAN);
+                            const y=cy+radius*Math.sin(-midAngle*RADIAN);
+                            const pct=kpi.totalUnits>0?Math.round((value/kpi.totalUnits)*100):0;
+                            return pct>3?(
+                              <text x={x} y={y} textAnchor={x>cx?'start':'end'} dominantBaseline="central" fontSize={8} fontWeight={800} fill={name==='Booked'?T.tealD:name==='Available'?T.greenL:T.amber}>
+                                {pct}%
+                              </text>
+                            ):null;
+                          }}
+                          labelLine={false}>
                           <Cell fill={T.teal}/><Cell fill={T.greenL}/><Cell fill={T.amberL}/>
                         </Pie>
                         <Tooltip content={<CTip/>}/>
                       </PieChart>
                     </ResponsiveContainer>
+                    {/* Centre label */}
+                    <div style={{position:'absolute',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',pointerEvents:'none'}}>
+                      <span style={{fontSize:13,fontWeight:900,color:T.navy,lineHeight:1}}>{kpi.totalUnits>0?Math.round((kpi.bookedUnits/kpi.totalUnits)*100):0}%</span>
+                      <span style={{fontSize:7,fontWeight:700,color:T.textM,letterSpacing:0.3}}>SOLD</span>
+                    </div>
                   </div>
                   <div>
                     <p style={{fontSize:26,fontWeight:900,color:T.navy,margin:'0 0 6px',letterSpacing:-0.5}}>{kpi.totalUnits?.toLocaleString('en-IN')}</p>
