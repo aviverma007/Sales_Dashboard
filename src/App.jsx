@@ -181,7 +181,7 @@ function Login({ onLogin }) {
         {/* Logo / brand */}
         <div style={{textAlign:'center',marginBottom:28}}>
           <div style={{margin:'0 auto 14px',width:80,height:80,borderRadius:20,background:'#0d1f3c',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 8px 28px rgba(0,30,80,0.35)',overflow:'hidden'}}>
-            <img src="/swd-logo.png" alt="SWD" style={{width:56,height:56,objectFit:'contain',filter:'brightness(0) invert(1)'}}/>
+            <img src="/swd-logo.png" alt="SWD" style={{width:56,height:56,objectFit:'contain'}}/>
           </div>
           <h2 style={{fontSize:20,fontWeight:900,color:'#0d2137',margin:'0 0 4px'}}>SWD-DASHBOARD</h2>
           <p style={{fontSize:12,color:'#546e7a',margin:0,fontWeight:500}}>Smartworld Group · Sales Intelligence</p>
@@ -383,7 +383,7 @@ export default function App() {
         <div style={{position:'relative',width:64,height:64,margin:'0 auto 16px'}}>
           <div style={{position:'absolute',inset:0,border:'3px solid rgba(13,31,60,0.12)',borderTop:'3px solid #0d1f3c',borderRadius:'50%',animation:'spin 0.9s linear infinite'}}/>
           <div style={{position:'absolute',inset:8,background:'#0d1f3c',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center'}}>
-            <img src="/swd-logo.png" alt="SWD" style={{width:28,height:28,objectFit:'contain',filter:'brightness(0) invert(1)'}}/>
+            <img src="/swd-logo.png" alt="SWD" style={{width:28,height:28,objectFit:'contain'}}/>
           </div>
         </div>
         <p style={{fontFamily:'Inter,sans-serif',color:'#0d1f3c',fontSize:14,fontWeight:900,margin:'0 0 4px',letterSpacing:0.5}}>SWD-DASHBOARD</p>
@@ -422,7 +422,7 @@ export default function App() {
           {/* Logo */}
           <div style={{display:'flex',alignItems:'center',gap:12}}>
             <div style={{width:38,height:38,borderRadius:9,background:'#0d1f3c',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 4px 14px rgba(0,30,80,0.3)',flexShrink:0,overflow:'hidden'}}>
-              <img src="/swd-logo.png" alt="SWD" style={{width:26,height:26,objectFit:'contain',filter:'brightness(0) invert(1)'}}/>
+              <img src="/swd-logo.png" alt="SWD" style={{width:26,height:26,objectFit:'contain'}}/>
             </div>
             <div>
               <div style={{fontWeight:900,fontSize:15,letterSpacing:0.5,color:T.navy}}>SWD-DASHBOARD</div>
