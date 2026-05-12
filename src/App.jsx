@@ -277,23 +277,23 @@ export default function App() {
   const pF=useMemo(()=>{if(!raw?.pdrn)return[];return raw.pdrn.filter(r=>{
     if(filters.company&&r.companyNorm!==filters.company)return false;
     if(filters.project){const projs=filters.project.split('||').filter(Boolean);if(projs.length&&!projs.includes(r.project))return false;}
-    if(filters.year&&String(r.bookingYear)!==filters.year)return false;
+    if(filters.year){const yrs=filters.year.split('||').filter(Boolean);if(yrs.length&&!yrs.includes(String(r.bookingYear)))return false;}
     if(filters.month&&!matchMo(r.bookingMonth))return false;
-    if(filters.broker&&r.broker!==filters.broker)return false;
+    if(filters.broker){const brks=filters.broker.split('||').filter(Boolean);if(brks.length&&!brks.includes(r.broker))return false;}
     if(filters.typology){const typos=filters.typology.split('||').filter(Boolean);if(typos.length&&!typos.includes(r.bhkFull))return false;}
-    if(filters.fy){const fy=r.bookingYear?(r.bookingMonth&&parseInt(r.bookingMonth.split('-')[1])>=4?`FY${r.bookingYear}-${String(r.bookingYear+1).slice(2)}`:`FY${r.bookingYear-1}-${String(r.bookingYear).slice(2)}`):null;if(fy!==filters.fy)return false;}
+    if(filters.fy){const fys=filters.fy.split('||').filter(Boolean);if(fys.length){const fy=r.bookingYear?(r.bookingMonth&&parseInt(r.bookingMonth.split('-')[1])>=4?`FY${r.bookingYear}-${String(r.bookingYear+1).slice(2)}`:`FY${r.bookingYear-1}-${String(r.bookingYear).slice(2)}`):null;if(!fys.includes(fy))return false;}}
     return true;
   });},[raw,filters,matchMo]);
   const pA=useMemo(()=>pF.filter(r=>r.status==='ACTIVE'),[pF]);
   const pC=useMemo(()=>pF.filter(r=>r.status==='CANCELLED'),[pF]);
-  const dF=useMemo(()=>{if(!raw?.dapp)return[];return raw.dapp.filter(r=>{if(filters.company&&r.companyNorm!==filters.company)return false;if(filters.project&&r.project!==filters.project)return false;if(filters.year&&!r.billMonth?.startsWith(filters.year))return false;if(filters.month&&!matchMo(r.billMonth))return false;return true;});},[raw,filters,matchMo]);
+  const dF=useMemo(()=>{if(!raw?.dapp)return[];return raw.dapp.filter(r=>{if(filters.company&&r.companyNorm!==filters.company)return false;if(filters.project){const projs=filters.project.split('||').filter(Boolean);if(projs.length&&!projs.includes(r.project))return false;}if(filters.year){const yrs=filters.year.split('||').filter(Boolean);if(yrs.length&&!yrs.some(y=>r.billMonth?.startsWith(y)))return false;}if(filters.month&&!matchMo(r.billMonth))return false;return true;});},[raw,filters,matchMo]);
   const iF=useMemo(()=>{if(!raw?.invr)return[];return raw.invr.filter(r=>{
     if(filters.company&&r.companyNorm!==filters.company)return false;
     if(filters.project){const projs=filters.project.split('||').filter(Boolean);if(projs.length&&!projs.includes(r.project))return false;}
     if(filters.typology){const typos=filters.typology.split('||').filter(Boolean);if(typos.length&&r.bhk&&!typos.some(t=>t.includes(r.bhk)))return false;}
     return true;
   });},[raw,filters]);
-  const wF=useMemo(()=>{if(!raw?.workflow)return[];return raw.workflow.filter(r=>{if(filters.company&&r.companyNorm!==filters.company)return false;if(filters.project&&r.project!==filters.project)return false;return true;});},[raw,filters]);
+  const wF=useMemo(()=>{if(!raw?.workflow)return[];return raw.workflow.filter(r=>{if(filters.company&&r.companyNorm!==filters.company)return false;if(filters.project){const projs=filters.project.split('||').filter(Boolean);if(projs.length&&!projs.includes(r.project))return false;}return true;});},[raw,filters]);
 
   const availBrokers=useMemo(()=>{const src=(filters.company||filters.project)?pF:(raw?.pdrn||[]);const cnt={};src.forEach(r=>{if(r.broker)cnt[r.broker]=(cnt[r.broker]||0)+1;});return Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,40).map(e=>e[0]);},[raw,pF,filters]);
   const availTypologies=useMemo(()=>{
@@ -328,8 +328,8 @@ export default function App() {
   const salesVsRefund=useMemo(()=>{
     if(!raw?.salesVsRefund) return [];
     if(!filters.project) return raw.salesVsRefund;
-    // Recompute from pdrn filtered by project
-    const aM={},cM={},rM={},bM={};
+    // Always recompute from filtered pdrn (works for single or multiple projects)
+    const aM={},cM={},rM={};
     pA.forEach(r=>{if(r.bookingMonth){aM[r.bookingMonth]=(aM[r.bookingMonth]||0)+(r.bsp||0);}});
     pC.forEach(r=>{if(r.bookingMonth){cM[r.bookingMonth]=(cM[r.bookingMonth]||0)+(r.bsp||0);rM[r.bookingMonth]=(rM[r.bookingMonth]||0)+(r.refund||0);}});
     const all=Array.from(new Set([...Object.keys(aM),...Object.keys(cM)])).sort();
@@ -339,10 +339,11 @@ export default function App() {
     const base=raw?.cancelledUnitStatus||{summary:{},buckets:[],byProject:[],vacantUnits:[],rebookedUnits:[]};
     if(!filters.project) return base;
     const label={'Smartworld Sky Arc':'Sky Arc','SMARTWORLD THE EDITION':'Edition','Trump Residences Gurgaon':'Trump','Smartworld Le Courtyard':'Le Courtyard','Smartworld Suites':'Suites','Smartworld Residencies':'Residencies'};
-    const projLabel=label[filters.project]||filters.project;
-    const vacant=(base.vacantUnits||[]).filter(u=>u.project===filters.project||u.projectLabel===projLabel);
-    const rebooked=(base.rebookedUnits||[]).filter(u=>u.project===filters.project||u.projectLabel===projLabel);
-    const byProject=(base.byProject||[]).filter(u=>u.project===projLabel);
+    const projs=filters.project.split('||').filter(Boolean);
+    const projLabels=projs.map(p=>label[p]||p);
+    const vacant=(base.vacantUnits||[]).filter(u=>projs.includes(u.project)||projLabels.includes(u.projectLabel));
+    const rebooked=(base.rebookedUnits||[]).filter(u=>projs.includes(u.project)||projLabels.includes(u.projectLabel));
+    const byProject=(base.byProject||[]).filter(u=>projLabels.includes(u.project));
     const bucketMap={'0–30 days':0,'31–90 days':0,'91–180 days':0,'180+ days':0};
     vacant.forEach(u=>{const d=u.daysVacant||0;if(d<=30)bucketMap['0–30 days']++;else if(d<=90)bucketMap['31–90 days']++;else if(d<=180)bucketMap['91–180 days']++;else bucketMap['180+ days']++;});
     const total=vacant.length+rebooked.length;
@@ -361,7 +362,9 @@ export default function App() {
   const cpVsDirect=useMemo(()=>{
     if(!raw?.cpVsDirect) return [];
     if(!filters.project) return raw.cpVsDirect;
-    return raw.cpVsDirect.filter(r=>r.name===filters.project);
+    const projs=filters.project.split('||').filter(Boolean);
+    if(!projs.length) return raw.cpVsDirect;
+    return raw.cpVsDirect.filter(r=>projs.includes(r.name));
   },[raw,filters.project]);
   const dappByP=useMemo(()=>{const map={};dF.forEach(r=>{const p=r.project;if(!p)return;if(!map[p])map[p]={name:p,demCr:0,recCr:0,outCr:0};map[p].demCr+=(r.demand||0)/1e7;map[p].recCr+=(r.received||0)/1e7;map[p].outCr+=(r.outstanding||0)/1e7;});return Object.values(map).map(r=>({...r,demCr:+r.demCr.toFixed(1),recCr:+r.recCr.toFixed(1),outCr:+r.outCr.toFixed(1)}));},[dF]);
   const top10=useMemo(()=>[...pA].sort((a,b)=>(b.tcv||0)-(a.tcv||0)).slice(0,10),[pA]);
@@ -375,15 +378,16 @@ export default function App() {
   const towerData=useMemo(()=>{
     if(!raw?.towerData) return [];
     return raw.towerData.filter(r=>{
-      if(filters.project && r.project!==filters.project) return false;
+      if(filters.project){const _p=filters.project.split('||').filter(Boolean);if(_p.length&&!_p.includes(r.project))return false;}
       return true;
     });
   },[raw,filters.project]);
   const areaSummary=useMemo(()=>{
     const base=raw?.areaSummary||{};
     if(!filters.project) return base;
-    // Filter byProject to selected project, recompute top-level KPIs from that slice
-    const filtered=(base.byProject||[]).filter(d=>d.project===filters.project);
+    const projs=filters.project.split('||').filter(Boolean);
+    // Filter byProject to selected projects
+    const filtered=(base.byProject||[]).filter(d=>!projs.length||projs.includes(d.project));
     const bookedArea=filtered.reduce((s,d)=>s+d.bookedArea,0);
     const availableArea=filtered.reduce((s,d)=>s+d.availableArea,0);
     const pricedPjs=filtered.filter(d=>d.avgPricePerSqft>0);
@@ -1391,7 +1395,7 @@ export default function App() {
                 // filter by current project/company filters
                 const filtered = detail.filter(r=>{
                   if(filters.company && r.company!==filters.company) return false;
-                  if(filters.project && r.project!==filters.project) return false;
+                  if(filters.project){const _p=filters.project.split('||').filter(Boolean);if(_p.length&&!_p.includes(r.project))return false;}
                   return true;
                 });
                 if(filtered.length===0) return (
@@ -1459,7 +1463,7 @@ export default function App() {
                 const top = ap.topAdvance || [];
                 const filtered = top.filter(r=>{
                   if(filters.company && r.company!==filters.company) return false;
-                  if(filters.project && r.project!==filters.project) return false;
+                  if(filters.project){const _p=filters.project.split('||').filter(Boolean);if(_p.length&&!_p.includes(r.project))return false;}
                   return true;
                 });
                 return(
