@@ -259,7 +259,7 @@ export default function App() {
 
   const pF=useMemo(()=>{if(!raw?.pdrn)return[];return raw.pdrn.filter(r=>{
     if(filters.company&&r.companyNorm!==filters.company)return false;
-    if(filters.project&&r.project!==filters.project)return false;
+    if(filters.project){const projs=filters.project.split('||').filter(Boolean);if(projs.length&&!projs.includes(r.project))return false;}
     if(filters.year&&String(r.bookingYear)!==filters.year)return false;
     if(filters.month&&!matchMo(r.bookingMonth))return false;
     if(filters.broker&&r.broker!==filters.broker)return false;
@@ -272,7 +272,7 @@ export default function App() {
   const dF=useMemo(()=>{if(!raw?.dapp)return[];return raw.dapp.filter(r=>{if(filters.company&&r.companyNorm!==filters.company)return false;if(filters.project&&r.project!==filters.project)return false;if(filters.year&&!r.billMonth?.startsWith(filters.year))return false;if(filters.month&&!matchMo(r.billMonth))return false;return true;});},[raw,filters,matchMo]);
   const iF=useMemo(()=>{if(!raw?.invr)return[];return raw.invr.filter(r=>{
     if(filters.company&&r.companyNorm!==filters.company)return false;
-    if(filters.project&&r.project!==filters.project)return false;
+    if(filters.project){const projs=filters.project.split('||').filter(Boolean);if(projs.length&&!projs.includes(r.project))return false;}
     if(filters.typology){const typos=filters.typology.split('||').filter(Boolean);if(typos.length&&r.bhk&&!typos.some(t=>t.includes(r.bhk)))return false;}
     return true;
   });},[raw,filters]);
@@ -446,13 +446,13 @@ export default function App() {
         </div>
 
         {/* Filter strip */}
-        <div style={{maxWidth:1440,margin:'0 auto',padding:'0 24px 6px',display:'flex',alignItems:'flex-end',gap:10,flexWrap:'wrap'}}>
-          <FSel label="Project"    options={availProj}                           value={filters.project}  onChange={v=>sf('project',v)}/>
-          <FSel label="Fin. Year"  options={fo.financialYears||[]}               value={filters.fy}       onChange={v=>sf('fy',v)}/>
-          <FSel label="Year"       options={(fo.years||[]).map(String)}           value={filters.year}     onChange={v=>sf('year',v)}/>
-          <FSel label="Month/Qtr"  options={MONTHS_QUARTERS}                     value={filters.month}    onChange={v=>sf('month',v)} multi={true}/>
-          <FSel label="CP"         options={availBrokers}                         value={filters.broker}   onChange={v=>sf('broker',v)}/>
-          <FSel label="Typology"   options={availTypologies}                      value={filters.typology} onChange={v=>sf('typology',v)} multi={true}/>
+        <div style={{maxWidth:1440,margin:'0 auto',padding:'4px 24px 8px',display:'flex',alignItems:'flex-end',gap:10,flexWrap:'wrap'}}>
+          <FSel label="Project"    options={availProj}                           value={filters.project}  onChange={v=>sf('project',v)}   multi={true}/>
+          <FSel label="Fin. Year"  options={fo.financialYears||[]}               value={filters.fy}       onChange={v=>sf('fy',v)}         multi={true}/>
+          <FSel label="Year"       options={(fo.years||[]).map(String)}           value={filters.year}     onChange={v=>sf('year',v)}       multi={true}/>
+          <FSel label="Month / Quarter" options={MONTHS_QUARTERS}                value={filters.month}    onChange={v=>sf('month',v)}      multi={true}/>
+          <FSel label="CP"         options={availBrokers}                         value={filters.broker}   onChange={v=>sf('broker',v)}     multi={true}/>
+          <FSel label="Typology"   options={availTypologies}                      value={filters.typology} onChange={v=>sf('typology',v)}   multi={true}/>
           {Object.values(filters).some(Boolean)&&(
             <button onClick={()=>setFilters({company:'',project:'',year:'',month:'',broker:'',typology:'',fy:''})}
               style={{background:'linear-gradient(135deg,#c62828,#ef5350)',border:'none',borderRadius:7,color:'#fff',padding:'5px 14px',fontSize:10,cursor:'pointer',fontWeight:700,boxShadow:'0 2px 8px rgba(200,40,40,0.3)',alignSelf:'flex-end'}}>
@@ -461,33 +461,36 @@ export default function App() {
           )}
         </div>
 
-        {/* ── PROJECT INFO BAR (below filters) ── */}
-        {(()=>{
-          const meta=raw?.projectMeta||{};
-          const projects=filters.project?[filters.project]:Object.keys(meta);
-          const items=projects.map(p=>meta[p]).filter(Boolean);
-          if(!items.length) return null;
+        {/* ── PROJECT INFO BAR — only when single project selected ── */}
+        {filters.project&&filters.project.split('||').filter(Boolean).length===1&&(()=>{
+          const proj=filters.project.split('||')[0];
+          const m=(raw?.projectMeta||{})[proj];
+          if(!m) return null;
           return(
-            <div style={{maxWidth:1440,margin:'0 auto',padding:'0 24px 10px',display:'flex',gap:10,flexWrap:'wrap'}}>
-              {items.map((m,i)=>(
-                <div key={i} style={{display:'flex',alignItems:'center',gap:14,background:'rgba(255,255,255,0.82)',backdropFilter:'blur(8px)',borderRadius:10,padding:'6px 16px',border:`1px solid rgba(0,151,167,0.15)`,flexWrap:'wrap',gap:16}}>
-                  <span style={{fontSize:11,fontWeight:800,color:T.navy,marginRight:4}}>{m.label}</span>
-                  {[
-                    {icon:'🏗️',label:'Builtup',val:m.builtup},
-                    {icon:'🚀',label:'Launch Date',val:m.launchDate},
-                    {icon:'📐',label:'Saleable Area',val:m.saleableArea},
-                    {icon:'🏁',label:'Handover Date',val:m.handoverDate},
-                  ].map((d,j)=>(
-                    <div key={j} style={{display:'flex',alignItems:'center',gap:5}}>
-                      <span style={{fontSize:12}}>{d.icon}</span>
-                      <div>
-                        <p style={{fontSize:8,color:T.textM,fontWeight:700,margin:0,textTransform:'uppercase',letterSpacing:0.3}}>{d.label}</p>
-                        <p style={{fontSize:11,fontWeight:800,color:T.tealD,margin:0}}>{d.val}</p>
-                      </div>
-                    </div>
-                  ))}
+            <div style={{maxWidth:1440,margin:'0 auto',padding:'0 24px 8px'}}>
+              <div style={{display:'flex',alignItems:'center',gap:0,background:'linear-gradient(135deg,rgba(0,105,120,0.08),rgba(0,188,212,0.06))',border:'1px solid rgba(0,151,167,0.18)',borderRadius:12,padding:'8px 20px',flexWrap:'wrap',gap:0}}>
+                <div style={{display:'flex',alignItems:'center',gap:8,paddingRight:20,borderRight:'1px solid rgba(0,151,167,0.15)',marginRight:20}}>
+                  <div style={{width:32,height:32,borderRadius:8,background:'linear-gradient(135deg,#006978,#00bcd4)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}}>🏢</div>
+                  <div>
+                    <p style={{fontSize:9,color:T.textM,fontWeight:700,margin:0,textTransform:'uppercase',letterSpacing:0.5}}>Project</p>
+                    <p style={{fontSize:13,fontWeight:900,color:T.navy,margin:0}}>{m.label}</p>
+                  </div>
                 </div>
-              ))}
+                {[
+                  {icon:'🏗️',label:'Builtup Area',val:m.builtup,color:T.teal},
+                  {icon:'🚀',label:'Launch Date',val:m.launchDate,color:'#7c3aed'},
+                  {icon:'📐',label:'Saleable Area',val:m.saleableArea,color:T.amber},
+                  {icon:'🏁',label:'Handover Date',val:m.handoverDate,color:T.greenL},
+                ].map((d,j)=>(
+                  <div key={j} style={{display:'flex',alignItems:'center',gap:10,padding:'0 20px',borderRight:j<3?'1px solid rgba(0,151,167,0.12)':'none'}}>
+                    <div style={{width:28,height:28,borderRadius:7,background:`${d.color}15`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:14}}>{d.icon}</div>
+                    <div>
+                      <p style={{fontSize:8,color:T.textM,fontWeight:700,margin:0,textTransform:'uppercase',letterSpacing:0.4}}>{d.label}</p>
+                      <p style={{fontSize:12,fontWeight:800,color:d.color,margin:0}}>{d.val}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           );
         })()}
@@ -503,10 +506,12 @@ export default function App() {
           <div style={{display:'flex',flexDirection:'column',gap:14}}>
 
             {/* ── SECTION: Sales Overview ── */}
-            <div style={{display:'flex',alignItems:'center',gap:10}}>
-              <div style={{height:3,width:24,background:`linear-gradient(90deg,${T.teal},${T.tealL})`,borderRadius:2}}/>
-              <span style={{fontSize:11,fontWeight:900,color:T.tealD,textTransform:'uppercase',letterSpacing:1}}>Sales Overview</span>
-              <div style={{flex:1,height:1,background:'rgba(0,151,167,0.1)',borderRadius:1}}/>
+            <div style={{display:'flex',alignItems:'center',gap:12}}>
+              <div style={{background:'linear-gradient(135deg,#006978,#00bcd4)',borderRadius:10,padding:'5px 18px',display:'flex',alignItems:'center',gap:8,boxShadow:'0 2px 10px rgba(0,151,167,0.25)'}}>
+                <span style={{fontSize:13}}>📊</span>
+                <span style={{fontSize:11,fontWeight:900,color:'#fff',textTransform:'uppercase',letterSpacing:1}}>Sales Overview</span>
+              </div>
+              <div style={{flex:1,height:1,background:'rgba(0,151,167,0.15)',borderRadius:1}}/>
             </div>
 
             {/* ROW 1: 7 KPI CARDS — no Workflow */}
@@ -632,9 +637,11 @@ export default function App() {
             <div style={{display:'grid',gridTemplateColumns:'2fr 1fr 1fr',gap:12}}>
 
               {/* ── SECTION: Sales & Pricing Trend ── */}
-              <div style={{display:'flex',alignItems:'center',gap:10,gridColumn:'1/-1'}}>
-                <div style={{height:3,width:24,background:`linear-gradient(90deg,${T.amber},#fbbf24)`,borderRadius:2}}/>
-                <span style={{fontSize:11,fontWeight:900,color:T.amber,textTransform:'uppercase',letterSpacing:1}}>Sales & Pricing Trend</span>
+              <div style={{display:'flex',alignItems:'center',gap:12,gridColumn:'1/-1'}}>
+                <div style={{background:'linear-gradient(135deg,#b45309,#f59e0b)',borderRadius:10,padding:'5px 18px',display:'flex',alignItems:'center',gap:8,boxShadow:'0 2px 10px rgba(245,158,11,0.3)'}}>
+                  <span style={{fontSize:13}}>📈</span>
+                  <span style={{fontSize:11,fontWeight:900,color:'#fff',textTransform:'uppercase',letterSpacing:1}}>Sales & Pricing Trend</span>
+                </div>
                 <div style={{flex:1,height:1,background:'rgba(245,158,11,0.15)',borderRadius:1}}/>
               </div>
 
@@ -801,10 +808,12 @@ export default function App() {
             <div style={{display:'grid',gridTemplateColumns:'1.3fr 1fr',gap:12}}>
 
               {/* ── SECTION: Channel Partner Analysis ── */}
-              <div style={{display:'flex',alignItems:'center',gap:10,gridColumn:'1/-1'}}>
-                <div style={{height:3,width:24,background:`linear-gradient(90deg,#7c3aed,#a78bfa)`,borderRadius:2}}/>
-                <span style={{fontSize:11,fontWeight:900,color:'#7c3aed',textTransform:'uppercase',letterSpacing:1}}>Channel Partner Analysis</span>
-                <div style={{flex:1,height:1,background:'rgba(124,58,237,0.1)',borderRadius:1}}/>
+              <div style={{display:'flex',alignItems:'center',gap:12,gridColumn:'1/-1'}}>
+                <div style={{background:'linear-gradient(135deg,#5b21b6,#7c3aed)',borderRadius:10,padding:'5px 18px',display:'flex',alignItems:'center',gap:8,boxShadow:'0 2px 10px rgba(124,58,237,0.3)'}}>
+                  <span style={{fontSize:13}}>🤝</span>
+                  <span style={{fontSize:11,fontWeight:900,color:'#fff',textTransform:'uppercase',letterSpacing:1}}>Channel Partner Analysis</span>
+                </div>
+                <div style={{flex:1,height:1,background:'rgba(124,58,237,0.12)',borderRadius:1}}/>
               </div>
 
               <GC style={{padding:16}}>
@@ -1091,10 +1100,12 @@ export default function App() {
             </GC>
 
             {/* ── SECTION: Area-wise Segregation ── */}
-            <div style={{display:'flex',alignItems:'center',gap:10}}>
-              <div style={{height:3,width:24,background:`linear-gradient(90deg,${T.greenL},#4ade80)`,borderRadius:2}}/>
-              <span style={{fontSize:11,fontWeight:900,color:T.greenL,textTransform:'uppercase',letterSpacing:1}}>Area-wise Segregation</span>
-              <div style={{flex:1,height:1,background:'rgba(34,197,94,0.12)',borderRadius:1}}/>
+            <div style={{display:'flex',alignItems:'center',gap:12}}>
+              <div style={{background:'linear-gradient(135deg,#166534,#22c55e)',borderRadius:10,padding:'5px 18px',display:'flex',alignItems:'center',gap:8,boxShadow:'0 2px 10px rgba(34,197,94,0.3)'}}>
+                <span style={{fontSize:13}}>🗺️</span>
+                <span style={{fontSize:11,fontWeight:900,color:'#fff',textTransform:'uppercase',letterSpacing:1}}>Area-wise Segregation</span>
+              </div>
+              <div style={{flex:1,height:1,background:'rgba(34,197,94,0.15)',borderRadius:1}}/>
             </div>
 
             {/* ══ TOWER-WISE BOOKED & CANCELLED ══ */}
@@ -1161,8 +1172,12 @@ export default function App() {
 
             {/* ══ AREA SUMMARY CARDS ══ */}
             <div>
-              <div style={{display:'inline-flex',alignItems:'center',gap:8,background:'rgba(255,255,255,0.92)',backdropFilter:'blur(8px)',borderRadius:8,padding:'6px 14px',marginBottom:10,boxShadow:'0 1px 6px rgba(0,80,120,0.1)'}}>
-                <span style={{fontSize:13,fontWeight:900,color:T.tealD,letterSpacing:0.5,textTransform:'uppercase'}}>📐 Area & Pricing Overview</span>
+              <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:10}}>
+                <div style={{background:'linear-gradient(135deg,#006978,#00bcd4)',borderRadius:10,padding:'5px 18px',display:'flex',alignItems:'center',gap:8,boxShadow:'0 2px 10px rgba(0,151,167,0.25)'}}>
+                  <span style={{fontSize:13}}>📐</span>
+                  <span style={{fontSize:11,fontWeight:900,color:'#fff',textTransform:'uppercase',letterSpacing:1}}>Area & Pricing Overview</span>
+                </div>
+                <div style={{flex:1,height:1,background:'rgba(0,151,167,0.15)',borderRadius:1}}/>
               </div>
               {/* Top 3 KPI cards */}
               <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12,marginBottom:12}}>
