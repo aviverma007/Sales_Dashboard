@@ -101,15 +101,16 @@ const SH = ({title,sub,light=false,compact=false}) => (
 );
 
 // ─── FILTER SELECT ────────────────────────────────────────────────────────────
-const FSel = ({label,options,value,onChange,multi=false}) => {
+const FSel = ({label,options,value,onChange,multi=false,openId='',activeOpen=null,setActiveOpen=()=>{}}) => {
   if(multi){
     const vals=value?value.split('||').filter(Boolean):[];
     const toggle=v=>{const n=vals.includes(v)?vals.filter(x=>x!==v):[...vals,v];onChange(n.join('||'));};
-    const [open,setOpen]=React.useState(false);
+    const open=activeOpen===openId;
+    const setOpen=()=>setActiveOpen(open?null:openId);
     return(
       <div style={{display:'flex',flexDirection:'column',gap:2,position:'relative'}}>
         <label style={{color:T.textM,fontSize:9,fontWeight:800,letterSpacing:1,textTransform:'uppercase'}}>{label}</label>
-        <div onClick={()=>setOpen(o=>!o)} style={{background:'rgba(255,255,255,0.88)',border:`1px solid ${vals.length?T.teal:'rgba(0,100,140,0.25)'}`,borderRadius:7,color:vals.length?T.tealD:T.textM,padding:'5px 10px',fontSize:11,fontFamily:'Inter,sans-serif',minWidth:120,cursor:'pointer',fontWeight:vals.length?600:400,userSelect:'none',display:'flex',justifyContent:'space-between',alignItems:'center',gap:6}}>
+        <div onClick={setOpen} style={{background:'rgba(255,255,255,0.88)',border:`1px solid ${vals.length?T.teal:'rgba(0,100,140,0.25)'}`,borderRadius:7,color:vals.length?T.tealD:T.textM,padding:'5px 10px',fontSize:11,fontFamily:'Inter,sans-serif',minWidth:120,cursor:'pointer',fontWeight:vals.length?600:400,userSelect:'none',display:'flex',justifyContent:'space-between',alignItems:'center',gap:6}}>
           <span style={{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:130}}>{vals.length?vals.join(', '):'All'}</span>
           <span style={{fontSize:8,opacity:0.6}}>{open?'▲':'▼'}</span>
         </div>
@@ -238,6 +239,13 @@ export default function App() {
   const [sOff,setSOff]=useState(9999);
   const [cancelTab,setCancelTab]=useState('overview');
   const [towerExpanded,setTowerExpanded]=useState(false);
+  const [activeFilter,setActiveFilter]=useState(null);
+  // Close filter dropdown on outside click
+  React.useEffect(()=>{
+    const h=()=>setActiveFilter(null);
+    document.addEventListener('click',h);
+    return()=>document.removeEventListener('click',h);
+  },[]);
   const [cpExpanded,setCpExpanded]=useState(false);
 
   useEffect(()=>{fetch('/data/dashboard_data.json').then(r=>r.json()).then(d=>{setRaw(d);setLoading(false);}).catch(()=>setLoading(false));}, []);
@@ -454,13 +462,13 @@ export default function App() {
         </div>
 
         {/* Filter strip */}
-        <div style={{maxWidth:1440,margin:'0 auto',padding:'4px 24px 8px',display:'flex',alignItems:'flex-end',gap:10,flexWrap:'wrap'}}>
-          <FSel label="Project"    options={availProj}                           value={filters.project}  onChange={v=>sf('project',v)}   multi={true}/>
-          <FSel label="Fin. Year"  options={fo.financialYears||[]}               value={filters.fy}       onChange={v=>sf('fy',v)}         multi={true}/>
-          <FSel label="Year"       options={(fo.years||[]).map(String)}           value={filters.year}     onChange={v=>sf('year',v)}       multi={true}/>
-          <FSel label="Month / Quarter" options={MONTHS_QUARTERS}                value={filters.month}    onChange={v=>sf('month',v)}      multi={true}/>
-          <FSel label="CP"         options={availBrokers}                         value={filters.broker}   onChange={v=>sf('broker',v)}     multi={true}/>
-          <FSel label="Typology"   options={availTypologies}                      value={filters.typology} onChange={v=>sf('typology',v)}   multi={true}/>
+        <div onClick={e=>e.stopPropagation()} style={{maxWidth:1440,margin:'0 auto',padding:'4px 24px 8px',display:'flex',alignItems:'flex-end',gap:10,flexWrap:'wrap'}}>
+          <FSel label="Project"    options={availProj}                           value={filters.project}  onChange={v=>sf('project',v)}   multi={true} openId="project"    activeOpen={activeFilter} setActiveOpen={setActiveFilter}/>
+          <FSel label="Fin. Year"  options={fo.financialYears||[]}               value={filters.fy}       onChange={v=>sf('fy',v)}         multi={true} openId="fy"         activeOpen={activeFilter} setActiveOpen={setActiveFilter}/>
+          <FSel label="Year"       options={(fo.years||[]).map(String)}           value={filters.year}     onChange={v=>sf('year',v)}       multi={true} openId="year"       activeOpen={activeFilter} setActiveOpen={setActiveFilter}/>
+          <FSel label="Month / Quarter" options={MONTHS_QUARTERS}                value={filters.month}    onChange={v=>sf('month',v)}      multi={true} openId="month"      activeOpen={activeFilter} setActiveOpen={setActiveFilter}/>
+          <FSel label="CP"         options={availBrokers}                         value={filters.broker}   onChange={v=>sf('broker',v)}     multi={true} openId="cp"         activeOpen={activeFilter} setActiveOpen={setActiveFilter}/>
+          <FSel label="Typology"   options={availTypologies}                      value={filters.typology} onChange={v=>sf('typology',v)}   multi={true} openId="typology"   activeOpen={activeFilter} setActiveOpen={setActiveFilter}/>
           {Object.values(filters).some(Boolean)&&(
             <button onClick={()=>setFilters({company:'',project:'',year:'',month:'',broker:'',typology:'',fy:''})}
               style={{background:'linear-gradient(135deg,#c62828,#ef5350)',border:'none',borderRadius:7,color:'#fff',padding:'5px 14px',fontSize:10,cursor:'pointer',fontWeight:700,boxShadow:'0 2px 8px rgba(200,40,40,0.3)',alignSelf:'flex-end'}}>
