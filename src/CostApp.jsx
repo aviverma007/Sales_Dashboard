@@ -317,6 +317,9 @@ export default function CostApp() {
               <span style={{color:T.green,fontSize:9,fontWeight:700}}>LIVE</span>
             </div>
             <span style={{color:T.textM,fontSize:10,fontWeight:700}}>{new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})}</span>
+            <button onClick={()=>{sessionStorage.removeItem('cost_auth');setAuthed(false);}} style={{display:'flex',alignItems:'center',gap:6,padding:'6px 14px',borderRadius:10,border:'1px solid rgba(200,40,40,0.25)',background:'rgba(211,47,47,0.07)',cursor:'pointer',fontSize:11,fontWeight:700,color:'#d32f2f',fontFamily:'Inter,sans-serif',transition:'all 0.15s'}} onMouseOver={e=>{e.currentTarget.style.background='rgba(211,47,47,0.14)';}} onMouseOut={e=>{e.currentTarget.style.background='rgba(211,47,47,0.07)';}}>
+              🔒 Logout
+            </button>
           </div>
         </div>
 
@@ -791,7 +794,7 @@ export default function CostApp() {
           <div style={{display:'flex',flexDirection:'column',alignItems:'flex-end',gap:1}}>
             <div style={{display:'flex',alignItems:'center',gap:10}}>
               <span style={{color:T.text,fontSize:9,fontWeight:700,letterSpacing:1}}>SMARTWORLD COST INTELLIGENCE v1.0</span>
-              <button onClick={()=>{sessionStorage.removeItem('cost_auth');setAuthed(false);}} style={{padding:'2px 10px',borderRadius:10,border:'1px solid rgba(0,100,140,0.2)',background:'rgba(255,255,255,0.7)',cursor:'pointer',fontSize:9,fontWeight:700,color:T.textM}}>🔒 Logout</button>
+
             </div>
             <span style={{color:T.tealD,fontSize:9,fontWeight:700,letterSpacing:0.5}}>✦ Created &amp; Developed by ANIRUDH VERMA</span>
           </div>
