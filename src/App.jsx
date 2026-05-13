@@ -1009,12 +1009,12 @@ export default function App() {
                     <XAxis type="number" tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false}/>
                     <YAxis type="category" dataKey="bhk" tick={{fill:T.text,fontSize:10,fontWeight:700}} axisLine={false} tickLine={false} width={85}/>
                     <Tooltip content={<CTip/>}/>
-                    <Legend wrapperStyle={{fontSize:9,fontWeight:700,color:T.text}} iconSize={8}/>
+                    <Legend wrapperStyle={{fontSize:10,fontWeight:800,color:T.navy}} iconSize={9}/>
                     {/* Total (background) stacked first */}
                     <Bar dataKey="booked" name="Booked" stackId="s" radius={[0,0,0,0]}>
                       {bhkS.map((_,i)=><Cell key={i} fill={CC[i%CC.length]}/>)}
                     </Bar>
-                    <Bar dataKey="available" name="Available" stackId="s" fill="rgba(0,151,167,0.6)" stroke={T.teal} strokeWidth={0.5} radius={[0,4,4,0]}>
+                    <Bar dataKey="available" name="Available" stackId="s" fill="rgba(0,151,167,0.15)" stroke={T.teal} strokeWidth={0} radius={[0,4,4,0]}>
                       <LabelList content={({x,y,width,height,index})=>{
                         const d=bhkS[index];
                         if(!d) return null;
