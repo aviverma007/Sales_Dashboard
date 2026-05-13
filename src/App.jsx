@@ -155,6 +155,47 @@ const SectionGrid = ({sectionKey, items, cols=12, rowH=36, margin=[10,10]}) => {
   );
 };
 
+// ─── WIDGET SECTION (drag+resize within section, persisted) ─────────────────
+const WidgetSection = ({id, defaultCols, defaultLayouts, children, rowH=44}) => {
+  const SKEY = `swd_section_${id}`;
+  const [layout, setLayout] = useState(() => {
+    try { const s = localStorage.getItem(SKEY); if(s) return JSON.parse(s); } catch{}
+    return defaultLayouts;
+  });
+  const [w, setW] = useState(0);
+  const ref = useRef(null);
+  useEffect(() => {
+    if(!ref.current) return;
+    const ro = new ResizeObserver(([e]) => setW(e.contentRect.width));
+    ro.observe(ref.current);
+    return () => ro.disconnect();
+  }, []);
+  const save = l => { setLayout(l); try{localStorage.setItem(SKEY,JSON.stringify(l));}catch{} };
+  const kids = React.Children.toArray(children);
+  if(!w) return <div ref={ref} style={{minHeight:10}}/>;
+  return (
+    <div ref={ref}>
+      <GridLayout layout={layout} cols={defaultCols} rowHeight={rowH} width={w}
+        margin={[10,10]} containerPadding={[0,0]}
+        draggableHandle=".wdg-handle"
+        onLayoutChange={save}
+        resizeHandles={['e','w','se','sw','s']}
+        compactType="vertical" preventCollision={false}
+      >
+        {kids.map((child, i) => {
+          const k = layout[i]?.i || String(i);
+          return (
+            <div key={k} style={{background:'rgba(255,255,255,0.88)',backdropFilter:'blur(20px)',borderRadius:14,boxShadow:'0 2px 16px rgba(0,60,100,0.08)',border:'1px solid rgba(0,151,167,0.1)',overflow:'hidden',position:'relative',display:'flex',flexDirection:'column'}}>
+              <div className="wdg-handle" title="Drag" style={{position:'absolute',top:4,left:'50%',transform:'translateX(-50%)',width:32,height:4,borderRadius:2,background:'rgba(0,100,140,0.15)',cursor:'grab',zIndex:20,flexShrink:0}}/>
+              <div style={{flex:1,overflow:'auto',paddingTop:2}}>{child}</div>
+            </div>
+          );
+        })}
+      </GridLayout>
+    </div>
+  );
+};
+
 const CTip = ({active,payload,label,fmt}) => {
   if(!active||!payload?.length) return null;
   return (
@@ -664,8 +705,15 @@ export default function App() {
               <div style={{flex:1,height:1,background:'rgba(0,151,167,0.15)',borderRadius:1}}/>
             </div>
 
-            {/* ROW 1: 7 KPI CARDS — no Workflow */}
-            <div style={{display:'grid',gridTemplateColumns:'2fr 1fr 1fr 1fr 2fr 1fr',gap:12}}>
+            {/* ROW 1: KPI CARDS */}
+            <WidgetSection id="kpi" defaultCols={12} rowH={44} defaultLayouts={[
+              {i:'0',x:0,y:0,w:3,h:6,minW:2,minH:4},
+              {i:'1',x:3,y:0,w:2,h:6,minW:2,minH:4},
+              {i:'2',x:5,y:0,w:2,h:6,minW:2,minH:4},
+              {i:'3',x:7,y:0,w:2,h:6,minW:2,minH:4},
+              {i:'4',x:9,y:0,w:5,h:7,minW:3,minH:5},
+              {i:'5',x:0,y:6,w:4,h:7,minW:2,minH:4},
+            ]}>
 
               {/* Units Pie */}
               <GC style={{padding:14}} cls="kc">
@@ -860,10 +908,14 @@ export default function App() {
                 </div>
                 <div style={{position:'absolute',bottom:0,left:0,right:0,height:3,background:`linear-gradient(90deg,${T.teal},transparent)`,borderRadius:'0 0 14px 14px'}}/>
               </GC>
-            </div>
+            </WidgetSection>
 
-            {/* ROW 2: MONTHLY TREND (wide) + SALES BY CHANNEL + BHK PIE */}
-            <div style={{display:'grid',gridTemplateColumns:'2fr 1fr 1fr',gap:12}}>
+            {/* ROW 2: SALES & PRICING TREND */}
+            <WidgetSection id="trend" defaultCols={12} rowH={44} defaultLayouts={[
+              {i:'0',x:0,y:0,w:7,h:9,minW:4,minH:6},
+              {i:'1',x:7,y:0,w:5,h:9,minW:3,minH:6},
+              {i:'2',x:0,y:9,w:4,h:7,minW:2,minH:4},
+            ]}>
 
               {/* ── SECTION: Sales & Pricing Trend ── */}
               <div style={{display:'flex',alignItems:'center',gap:12,gridColumn:'1/-1'}}>
@@ -1031,10 +1083,14 @@ export default function App() {
                   </BarChart>
                 </ResponsiveContainer>
               </GC>
-            </div>
+            </WidgetSection>
 
-            {/* ROW 3: TOP CP + BOOKING vs CANCELLED */}
-            <div style={{display:'grid',gridTemplateColumns:'1.3fr 1fr',gap:12}}>
+            {/* ROW 3: CHANNEL PARTNER ANALYSIS */}
+            <WidgetSection id="cp" defaultCols={12} rowH={44} defaultLayouts={[
+              {i:'0',x:0,y:0,w:5,h:10,minW:3,minH:6},
+              {i:'1',x:5,y:0,w:7,h:10,minW:3,minH:6},
+              {i:'2',x:0,y:10,w:12,h:9,minW:6,minH:6},
+            ]}>
 
               {/* ── SECTION: Channel Partner Analysis ── */}
               <div style={{display:'flex',alignItems:'center',gap:12,gridColumn:'1/-1'}}>
@@ -1122,7 +1178,7 @@ export default function App() {
               </GC>
 
               {/* Sales Value vs Cancelled Value vs Refund */}
-              <GC style={{padding:16,gridColumn:'1/-1'}}>
+              <GC style={{padding:16}}>
                 {(()=>{
                   const WIN=6;
                   const base=sMode==='quarterly'?toQuarterly(salesVsRefund,'month'):salesVsRefund;
@@ -1173,7 +1229,8 @@ export default function App() {
                   </>);
                 })()}
               </GC>
-            </div>
+
+            </WidgetSection>
 
             {/* ══ CANCELLED UNIT STATUS — REBOOKED vs VACANT ══ */}
             <GC style={{padding:16}}>
@@ -1336,6 +1393,12 @@ export default function App() {
               </div>
               <div style={{flex:1,height:1,background:'rgba(34,197,94,0.15)',borderRadius:1}}/>
             </div>
+            <WidgetSection id="area" defaultCols={12} rowH={44} defaultLayouts={[
+              {i:'0',x:0,y:0,w:12,h:10,minW:6,minH:6},
+              {i:'1',x:0,y:10,w:12,h:9,minW:6,minH:6},
+              {i:'2',x:0,y:19,w:3,h:5,minW:2,minH:4},
+              {i:'3',x:3,y:19,w:9,h:9,minW:4,minH:5},
+            ]}>
 
             {/* ══ TOWER-WISE BOOKED & CANCELLED ══ */}
             <GC style={{padding:16}}>
@@ -1472,6 +1535,8 @@ export default function App() {
                 })}
               </div>
             </div>
+
+            </WidgetSection>
 
           </div>
         )}
