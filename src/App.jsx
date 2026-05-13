@@ -156,7 +156,7 @@ const SectionGrid = ({sectionKey, items, cols=12, rowH=36, margin=[10,10]}) => {
 };
 
 // ─── WIDGET SECTION (drag+resize within section, persisted) ─────────────────
-const WidgetSection = ({id, defaultCols, defaultLayouts, children, rowH=44}) => {
+const WidgetSection = ({id, defaultCols, defaultLayouts, children, rowH=36, editMode, resetKey}) => {
   const SKEY = `swd_section_${id}`;
   const [layout, setLayout] = useState(() => {
     try { const s = localStorage.getItem(SKEY); if(s) return JSON.parse(s); } catch{}
@@ -170,24 +170,42 @@ const WidgetSection = ({id, defaultCols, defaultLayouts, children, rowH=44}) => 
     ro.observe(ref.current);
     return () => ro.disconnect();
   }, []);
+  // Reset when resetKey changes
+  useEffect(() => {
+    if(resetKey > 0) {
+      setLayout(defaultLayouts);
+      try{localStorage.removeItem(SKEY);}catch{}
+    }
+  }, [resetKey]);
   const save = l => { setLayout(l); try{localStorage.setItem(SKEY,JSON.stringify(l));}catch{} };
   const kids = React.Children.toArray(children);
   if(!w) return <div ref={ref} style={{minHeight:10}}/>;
   return (
     <div ref={ref}>
       <GridLayout layout={layout} cols={defaultCols} rowHeight={rowH} width={w}
-        margin={[10,10]} containerPadding={[0,0]}
+        margin={[8,8]} containerPadding={[0,0]}
         draggableHandle=".wdg-handle"
+        isDraggable={!!editMode} isResizable={!!editMode}
         onLayoutChange={save}
-        resizeHandles={['e','w','se','sw','s']}
+        resizeHandles={['e','w','se','sw','s','n']}
         compactType="vertical" preventCollision={false}
       >
         {kids.map((child, i) => {
           const k = layout[i]?.i || String(i);
           return (
-            <div key={k} style={{background:'rgba(255,255,255,0.88)',backdropFilter:'blur(20px)',borderRadius:14,boxShadow:'0 2px 16px rgba(0,60,100,0.08)',border:'1px solid rgba(0,151,167,0.1)',overflow:'hidden',position:'relative',display:'flex',flexDirection:'column'}}>
-              <div className="wdg-handle" title="Drag" style={{position:'absolute',top:4,left:'50%',transform:'translateX(-50%)',width:32,height:4,borderRadius:2,background:'rgba(0,100,140,0.15)',cursor:'grab',zIndex:20,flexShrink:0}}/>
-              <div style={{flex:1,overflow:'auto',paddingTop:2}}>{child}</div>
+            <div key={k} style={{
+              background:'rgba(255,255,255,0.88)',backdropFilter:'blur(20px)',borderRadius:14,
+              boxShadow: editMode?'0 0 0 2px #0097a7,0 4px 20px rgba(0,151,167,0.18)':'0 2px 16px rgba(0,60,100,0.08)',
+              border:`1px solid ${editMode?'rgba(0,151,167,0.6)':'rgba(0,151,167,0.1)'}`,
+              overflow:'hidden',position:'relative',display:'flex',flexDirection:'column',
+              transition:'box-shadow 0.2s,border 0.2s'
+            }}>
+              {editMode&&(
+                <div className="wdg-handle" style={{position:'absolute',top:0,left:0,right:0,height:20,background:'rgba(0,151,167,0.1)',cursor:'grab',zIndex:20,display:'flex',alignItems:'center',justifyContent:'center',gap:4}}>
+                  <span style={{fontSize:10,color:'#0097a7',fontWeight:800,letterSpacing:2}}>⠿ DRAG</span>
+                </div>
+              )}
+              <div style={{flex:1,overflow:'auto',paddingTop:editMode?20:0}}>{child}</div>
             </div>
           );
         })}
@@ -367,6 +385,8 @@ export default function App() {
   const [raw,setRaw]=useState(null);
   const [loading,setLoading]=useState(true);
   const [tab,setTab]=useState('overview'); // overview | collections | pipeline
+  const [editMode,setEditMode]=useState(false);
+  const [resetKey,setResetKey]=useState(0);
 
   const [filters,setFilters]=useState({company:'',project:'',year:'',month:'',quarter:'',broker:'',typology:'',fy:''});
   const sf=useCallback((k,v)=>setFilters(p=>({...p,[k]:v})),[]);
@@ -696,6 +716,25 @@ export default function App() {
         {tab==='overview'&&(
           <div style={{display:'flex',flexDirection:'column',gap:14}}>
 
+            {/* ── EDIT LAYOUT TOOLBAR ── */}
+            <div style={{display:'flex',alignItems:'center',gap:8}}>
+              {!editMode?(
+                <button onClick={()=>setEditMode(true)} style={{display:'flex',alignItems:'center',gap:6,padding:'5px 14px',background:'linear-gradient(135deg,#006978,#00bcd4)',border:'none',borderRadius:8,color:'#fff',fontSize:10,fontWeight:800,cursor:'pointer',boxShadow:'0 2px 8px rgba(0,151,167,0.3)',letterSpacing:0.3}}>
+                  ✏️ Edit Layout
+                </button>
+              ):(
+                <>
+                  <button onClick={()=>setEditMode(false)} style={{display:'flex',alignItems:'center',gap:6,padding:'5px 14px',background:'linear-gradient(135deg,#166534,#22c55e)',border:'none',borderRadius:8,color:'#fff',fontSize:10,fontWeight:800,cursor:'pointer',boxShadow:'0 2px 8px rgba(34,197,94,0.3)'}}>
+                    💾 Save & Exit
+                  </button>
+                  <button onClick={()=>{setResetKey(k=>k+1);}} style={{display:'flex',alignItems:'center',gap:6,padding:'5px 14px',background:'rgba(200,40,40,0.08)',border:'1px solid rgba(200,40,40,0.3)',borderRadius:8,color:'#c62828',fontSize:10,fontWeight:800,cursor:'pointer'}}>
+                    ↺ Reset Default
+                  </button>
+                  <span style={{fontSize:9,color:'rgba(0,100,140,0.6)',fontWeight:600}}>⠿ Drag cards · Resize from edges</span>
+                </>
+              )}
+            </div>
+
             {/* ── SECTION: Sales Overview ── */}
             <div style={{display:'flex',alignItems:'center',gap:12}}>
               <div style={{background:'linear-gradient(135deg,#006978,#00bcd4)',borderRadius:10,padding:'5px 18px',display:'flex',alignItems:'center',gap:8,boxShadow:'0 2px 10px rgba(0,151,167,0.25)'}}>
@@ -706,13 +745,13 @@ export default function App() {
             </div>
 
             {/* ROW 1: KPI CARDS */}
-            <WidgetSection id="kpi" defaultCols={12} rowH={44} defaultLayouts={[
-              {i:'0',x:0,y:0,w:3,h:6,minW:2,minH:4},
-              {i:'1',x:3,y:0,w:2,h:6,minW:2,minH:4},
-              {i:'2',x:5,y:0,w:2,h:6,minW:2,minH:4},
-              {i:'3',x:7,y:0,w:2,h:6,minW:2,minH:4},
-              {i:'4',x:9,y:0,w:5,h:7,minW:3,minH:5},
-              {i:'5',x:0,y:6,w:4,h:7,minW:2,minH:4},
+            <WidgetSection id="kpi" defaultCols={12} rowH={36} editMode={editMode} resetKey={resetKey} defaultLayouts={[
+              {i:'0',x:0,y:0,w:3,h:5,minW:2,minH:3},
+              {i:'1',x:3,y:0,w:2,h:5,minW:2,minH:3},
+              {i:'2',x:5,y:0,w:2,h:5,minW:2,minH:3},
+              {i:'3',x:7,y:0,w:2,h:5,minW:2,minH:3},
+              {i:'4',x:9,y:0,w:3,h:8,minW:2,minH:4},
+              {i:'5',x:0,y:5,w:9,h:8,minW:3,minH:4},
             ]}>
 
               {/* Units Pie */}
@@ -911,7 +950,7 @@ export default function App() {
             </WidgetSection>
 
             {/* ROW 2: SALES & PRICING TREND */}
-            <WidgetSection id="trend" defaultCols={12} rowH={44} defaultLayouts={[
+            <WidgetSection id="trend" defaultCols={12} rowH={36} editMode={editMode} resetKey={resetKey} defaultLayouts={[
               {i:'0',x:0,y:0,w:7,h:9,minW:4,minH:6},
               {i:'1',x:7,y:0,w:5,h:9,minW:3,minH:6},
               {i:'2',x:0,y:9,w:4,h:7,minW:2,minH:4},
@@ -1086,7 +1125,7 @@ export default function App() {
             </WidgetSection>
 
             {/* ROW 3: CHANNEL PARTNER ANALYSIS */}
-            <WidgetSection id="cp" defaultCols={12} rowH={44} defaultLayouts={[
+            <WidgetSection id="cp" defaultCols={12} rowH={36} editMode={editMode} resetKey={resetKey} defaultLayouts={[
               {i:'0',x:0,y:0,w:5,h:10,minW:3,minH:6},
               {i:'1',x:5,y:0,w:7,h:10,minW:3,minH:6},
               {i:'2',x:0,y:10,w:12,h:9,minW:6,minH:6},
@@ -1393,7 +1432,7 @@ export default function App() {
               </div>
               <div style={{flex:1,height:1,background:'rgba(34,197,94,0.15)',borderRadius:1}}/>
             </div>
-            <WidgetSection id="area" defaultCols={12} rowH={44} defaultLayouts={[
+            <WidgetSection id="area" defaultCols={12} rowH={36} editMode={editMode} resetKey={resetKey} defaultLayouts={[
               {i:'0',x:0,y:0,w:12,h:10,minW:6,minH:6},
               {i:'1',x:0,y:10,w:12,h:9,minW:6,minH:6},
               {i:'2',x:0,y:19,w:3,h:5,minW:2,minH:4},
