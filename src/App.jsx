@@ -153,6 +153,30 @@ const SectionGrid = ({sectionKey, items, cols=12, rowH=36, margin=[10,10]}) => {
 };
 
 
+// ─── CHART FLIP (table view) ────────────────────────────────────────────────
+// Store flip states globally to avoid hook-in-callback issues
+const flipStates = {};
+const useChartFlip = (id) => {
+  const [f, setF] = React.useState(false);
+  flipStates[id] = f;
+  return [f, () => setF(v => !v)];
+};
+
+const TableView = ({title, headers, rows, onFlipBack}) => (
+  <div style={{height:'100%',display:'flex',flexDirection:'column',padding:14}}>
+    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8,flexShrink:0}}>
+      <span style={{fontSize:11,fontWeight:900,color:T.tealD,textTransform:'uppercase',letterSpacing:0.5}}>{title}</span>
+      <button onClick={onFlipBack} style={{padding:'3px 10px',borderRadius:16,border:'1px solid rgba(0,151,167,0.3)',background:T.teal,color:'#fff',fontSize:9,fontWeight:800,cursor:'pointer'}}>📊 Chart</button>
+    </div>
+    <div style={{flex:1,overflowY:'auto'}}>
+      <table style={{width:'100%',borderCollapse:'collapse',fontSize:10}}>
+        <thead><tr style={{borderBottom:'2px solid rgba(0,151,167,0.15)'}}>{headers.map((h,i)=><th key={i} style={{padding:'5px 8px',textAlign:'left',fontSize:9,fontWeight:800,color:'#546e7a',textTransform:'uppercase',whiteSpace:'nowrap'}}>{h}</th>)}</tr></thead>
+        <tbody>{rows.map((row,i)=><tr key={i} style={{borderBottom:'1px solid rgba(0,100,140,0.06)'}}>{row.map((cell,j)=><td key={j} style={{padding:'5px 8px',color:'#0d2137',fontWeight:600}}>{cell}</td>)}</tr>)}</tbody>
+      </table>
+    </div>
+  </div>
+);
+
 const CTip = ({active,payload,label,fmt}) => {
   if(!active||!payload?.length) return null;
   return (
@@ -318,6 +342,134 @@ function Login({ onLogin }) {
     </div>
   );
 }
+
+// Per-chart flip wrapper components
+const ChartCardCP = ({topCP,cpExpanded,setCpExpanded,CC,T,CTip,SH}) => {
+  const [flipped,setFlipped] = React.useState(false);
+  const visible = cpExpanded?topCP:topCP.slice(0,10);
+  const rows = visible.map((d,i)=>[i+1, d.name?.length>30?d.name.slice(0,30)+'...':d.name, d.units, '₹'+d.bspCr+'Cr']);
+  if(flipped) return <TableView title="Top Channel Partners" headers={['#','Partner','Units','Sales']} rows={rows} onFlipBack={()=>setFlipped(false)}/>;
+  const barH=22, chartH=Math.max(160, visible.length*barH+40);
+  return (<div style={{padding:16,position:'relative',height:'100%'}}>
+    <button onClick={()=>setFlipped(true)} style={{position:'absolute',top:8,right:8,zIndex:20,padding:'3px 10px',borderRadius:16,border:'1px solid rgba(0,151,167,0.25)',background:'rgba(255,255,255,0.9)',color:'#006978',fontSize:9,fontWeight:800,cursor:'pointer'}}>⊞ Table</button>
+    <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:4,paddingRight:54}}>
+      <SH title={`Top CP-${cpExpanded?topCP.length:Math.min(10,topCP.length)}`} sub="Channel Partners by Units Booked · Sales Value"/>
+      {topCP.length>10&&(<button onClick={()=>setCpExpanded(e=>!e)} style={{flexShrink:0,padding:'3px 12px',background:'rgba(0,151,167,0.07)',border:'1px solid rgba(0,151,167,0.2)',borderRadius:16,cursor:'pointer',fontSize:10,fontWeight:700,color:T.tealD,whiteSpace:'nowrap'}}>{cpExpanded?'▲ Show less':'▼ +'+String(topCP.length-10)+' more'}</button>)}
+    </div>
+    <ResponsiveContainer width="100%" height={chartH}>
+      <BarChart data={visible} layout="vertical" margin={{top:0,right:80,bottom:0,left:0}}>
+        <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.2)" horizontal={false}/>
+        <XAxis type="number" tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false}/>
+        <YAxis type="category" dataKey="name" tick={{fill:T.text,fontSize:10,fontWeight:700}} axisLine={false} tickLine={false} width={145} tickFormatter={v=>v?.length>20?v.slice(0,20)+'…':v}/>
+        <Tooltip content={<CTip fmt={(v,n)=>n==='Sales (₹Cr)'?'₹'+v+' Cr':v?.toLocaleString?.('en-IN')}/>}/>
+        <Bar dataKey="units" name="Units" radius={[0,4,4,0]}>
+          {visible.map((_,i)=><Cell key={i} fill={CC[i%CC.length]}/>)}
+          <LabelList content={({x,y,width,height,value,index})=>{
+            const d=visible[index];
+            return(<g><text x={x+width+6} y={y+height/2+1} textAnchor="start" dominantBaseline="middle" fill={T.textM} fontSize={9} fontWeight={700}>{value}</text><text x={x+width+6} y={y+height/2+12} textAnchor="start" dominantBaseline="middle" fill={T.amber} fontSize={8} fontWeight={700}>{'₹'}{d?.bspCr}Cr</text></g>);
+          }}/>
+        </Bar>
+      </BarChart>
+    </ResponsiveContainer>
+  </div>);
+};
+
+const ChartCardBvC = ({bvc,bMode,setBMode,bOff,setBOff,toQuarterly,ChartControls,T,CTip,SH}) => {
+  const [flipped,setFlipped] = React.useState(false);
+  const WIN=6;
+  const base=bMode==='quarterly'?toQuarterly(bvc,'label'):bvc;
+  const slice=base.slice(Math.min(bOff,Math.max(0,base.length-WIN)),Math.min(bOff,Math.max(0,base.length-WIN))+WIN);
+  const rows=base.map(d=>[d.label, d.booked, d.cancelled, d.remaining||'-', d.cumBooked||'-']);
+  if(flipped) return <TableView title="Booking vs. Cancelled" headers={['Month','Booked','Cancelled','Target Left','Cum.Booked']} rows={rows} onFlipBack={()=>setFlipped(false)}/>;
+  const maxBooked=Math.max(...slice.map(d=>d.booked),1);
+  const amberCap=Math.ceil(maxBooked*0.18);
+  const sliceWithCap=slice.map(d=>({...d,targetTopper:d.remaining>0?amberCap:0}));
+  return (<div style={{padding:16,position:'relative'}}>
+    <button onClick={()=>setFlipped(true)} style={{position:'absolute',top:8,right:8,zIndex:20,padding:'3px 10px',borderRadius:16,border:'1px solid rgba(0,151,167,0.25)',background:'rgba(255,255,255,0.9)',color:'#006978',fontSize:9,fontWeight:800,cursor:'pointer'}}>⊞ Table</button>
+    <SH title="Booking vs. Cancelled" sub="Monthly Comparison"/>
+    <ChartControls mode={bMode} setMode={setBMode} offset={bOff} setOffset={setBOff} total={base.length} window={WIN}/>
+    <ResponsiveContainer width="100%" height={240}>
+      <BarChart data={sliceWithCap} margin={{top:18,right:8,bottom:18,left:0}} barSize={28}>
+        <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.2)" vertical={false}/>
+        <XAxis dataKey="label" tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false} angle={-25} dy={6} interval={0}/>
+        <YAxis tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false} width={28} domain={[0,'dataMax+5']}/>
+        <Tooltip content={<CTip fmt={(v,n)=>{if(n==='Target Remaining')return(slice.find(s=>s.targetTopper===v)?.remaining||v)+' units left';return v;}}/>}/>
+        <Legend wrapperStyle={{color:T.text,fontSize:10,fontWeight:700}} iconSize={8}/>
+        <Bar dataKey="booked" name="Booked" stackId="a" fill={T.teal} fillOpacity={0.9} radius={[0,0,2,2]}>
+          <LabelList dataKey="booked" position="insideTop" style={{fill:'#fff',fontSize:8,fontWeight:800}} formatter={v=>v>0?v:''}/>
+        </Bar>
+        <Bar dataKey="targetTopper" name="Target Remaining" stackId="a" fill={T.amber} fillOpacity={0.85} radius={[3,3,0,0]}>
+          <LabelList dataKey="remaining" position="top" style={{fill:T.amber,fontSize:7,fontWeight:800}} formatter={v=>v>0?String(v):''}/>
+        </Bar>
+        <Bar dataKey="cancelled" name="Cancelled" fill={T.red} radius={[2,2,0,0]} fillOpacity={0.85}>
+          <LabelList dataKey="cancelled" position="top" style={{fill:T.red,fontSize:8,fontWeight:700}} formatter={v=>v>0?v:''}/>
+        </Bar>
+      </BarChart>
+    </ResponsiveContainer>
+  </div>);
+};
+
+const ChartCardTrend = ({monthly,tMode,setTMode,tOff,setTOff,toQuarterly,ChartControls,T,CTip,SH}) => {
+  const [flipped,setFlipped] = React.useState(false);
+  const WIN=6;
+  const base=tMode==='quarterly'?toQuarterly(monthly,'label'):monthly;
+  const slice=base.slice(Math.min(tOff,Math.max(0,base.length-WIN)),Math.min(tOff,Math.max(0,base.length-WIN))+WIN);
+  const rows=base.map(d=>[d.label, d.bspCr?'₹'+d.bspCr+'Cr':'-', d.demCr?'₹'+d.demCr+'Cr':'-', d.recCr?'₹'+d.recCr+'Cr':'-']);
+  if(flipped) return <TableView title="Monthly Sales Trend" headers={['Month','Sales BSP','Demand','Received']} rows={rows} onFlipBack={()=>setFlipped(false)}/>;
+  return (<div style={{padding:16,position:'relative'}}>
+    <button onClick={()=>setFlipped(true)} style={{position:'absolute',top:8,right:8,zIndex:20,padding:'3px 10px',borderRadius:16,border:'1px solid rgba(0,151,167,0.25)',background:'rgba(255,255,255,0.9)',color:'#006978',fontSize:9,fontWeight:800,cursor:'pointer'}}>⊞ Table</button>
+    <SH title="Monthly Sales Trend" sub="BSP · Demand · Collections — ₹ Crores"/>
+    <ChartControls mode={tMode} setMode={setTMode} offset={tOff} setOffset={setTOff} total={base.length} window={WIN}/>
+    <ResponsiveContainer width="100%" height={200}>
+      <AreaChart data={slice} margin={{top:5,right:8,bottom:18,left:0}}>
+        <defs>
+          {[['a1',T.teal],['a2',T.amber],['a3',T.greenL]].map(([id,c])=>(
+            <linearGradient key={id} id={id} x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor={c} stopOpacity={0.25}/><stop offset="95%" stopColor={c} stopOpacity={0}/></linearGradient>
+          ))}
+        </defs>
+        <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.2)" vertical={false}/>
+        <XAxis dataKey="label" tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false} interval={0} angle={-25} dy={6}/>
+        <YAxis tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false} tickFormatter={v=>v+'Cr'} width={38}/>
+        <Tooltip content={<CTip fmt={v=>'₹'+v+' Cr'}/>}/>
+        <Legend wrapperStyle={{color:T.text,fontSize:10,fontWeight:700}} iconSize={8}/>
+        <Area type="monotone" dataKey="bspCr" name="Sales(BSP)" stroke={T.teal} fill="url(#a1)" strokeWidth={2} dot={{r:3,fill:T.teal}} activeDot={{r:4}}>
+          <LabelList dataKey="bspCr" position="top" style={{fill:T.tealD,fontSize:7,fontWeight:700}} formatter={v=>v>0?v+'Cr':''}/>
+        </Area>
+        <Area type="monotone" dataKey="demCr" name="Demand" stroke={T.amber} fill="url(#a2)" strokeWidth={2} dot={{r:3,fill:T.amber}} activeDot={{r:4}}>
+          <LabelList dataKey="demCr" position="top" style={{fill:T.amber,fontSize:7,fontWeight:700}} formatter={v=>v>0?v+'Cr':''}/>
+        </Area>
+        <Area type="monotone" dataKey="recCr" name="Received" stroke={T.greenL} fill="url(#a3)" strokeWidth={2} dot={{r:3,fill:T.greenL}} activeDot={{r:4}}>
+          <LabelList dataKey="recCr" position="top" style={{fill:T.greenL,fontSize:7,fontWeight:700}} formatter={v=>v>0?v+'Cr':''}/>
+        </Area>
+      </AreaChart>
+    </ResponsiveContainer>
+  </div>);
+};
+
+const ChartCardBHK = ({bhkS,CC,T,SH}) => {
+  const [flipped,setFlipped] = React.useState(false);
+  const rows=bhkS.map(d=>[d.bhk, d.booked, d.total, d.available, d.total>0?Math.round((d.booked/d.total)*100)+'%':'0%']);
+  if(flipped) return <TableView title="Product-wise (BHK)" headers={['Type','Booked','Total','Available','% Sold']} rows={rows} onFlipBack={()=>setFlipped(false)}/>;
+  return (<div style={{padding:16,position:'relative'}}>
+    <button onClick={()=>setFlipped(true)} style={{position:'absolute',top:8,right:8,zIndex:20,padding:'3px 10px',borderRadius:16,border:'1px solid rgba(0,151,167,0.25)',background:'rgba(255,255,255,0.9)',color:'#006978',fontSize:9,fontWeight:800,cursor:'pointer'}}>⊞ Table</button>
+    <SH title="Product-wise" sub="BHK — Booked vs Total Inventory"/>
+    <ResponsiveContainer width="100%" height={200}>
+      <BarChart data={bhkS} layout="vertical" margin={{top:4,right:70,bottom:4,left:0}} barCategoryGap="30%">
+        <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.1)" horizontal={false}/>
+        <XAxis type="number" tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false}/>
+        <YAxis type="category" dataKey="bhk" tick={{fill:T.text,fontSize:10,fontWeight:700}} axisLine={false} tickLine={false} width={85}/>
+        <Tooltip content={({active,payload,label})=>{if(!active||!payload?.length)return null;return(<div style={{background:'rgba(255,255,255,0.97)',border:'1px solid rgba(0,151,167,0.3)',borderRadius:10,padding:'8px 12px',boxShadow:'0 8px 32px rgba(0,80,120,0.18)',fontFamily:'Inter,sans-serif',fontSize:11}}><p style={{color:T.tealD,fontWeight:700,margin:'0 0 4px'}}>{label}</p>{payload.map((p,i)=>(<div key={i} style={{display:'flex',justifyContent:'space-between',gap:16,marginBottom:2}}><span style={{color:T.textM,fontWeight:600,fontSize:10}}>{p.name}</span><span style={{color:T.navy,fontWeight:800,fontSize:10}}>{p.value}</span></div>))}</div>);}}/>
+        <Legend iconSize={10} formatter={(value)=>(<span style={{color:T.navy,fontSize:10,fontWeight:800}}>{value}</span>)}/>
+        <Bar dataKey="booked" name="Booked" stackId="s" radius={[0,0,0,0]}>
+          {bhkS.map((_,i)=><Cell key={i} fill={CC[i%CC.length]}/>)}
+        </Bar>
+        <Bar dataKey="available" name="Available" stackId="s" fill="rgba(0,151,167,0.15)" stroke={T.teal} strokeWidth={0} radius={[0,4,4,0]}>
+          <LabelList content={({x,y,width,height,index})=>{const d=bhkS[index];if(!d)return null;return(<g><text x={x+width+6} y={y+height/2-5} textAnchor="start" dominantBaseline="middle" fill={CC[index%CC.length]} fontSize={9} fontWeight={800}>{d.booked}</text><text x={x+width+6} y={y+height/2+6} textAnchor="start" dominantBaseline="middle" fill={T.textM} fontSize={8} fontWeight={600}>{'/'}{d.total}</text></g>);}}/>
+        </Bar>
+      </BarChart>
+    </ResponsiveContainer>
+  </div>);
+};
 
 export default function App() {
   const [authed, setAuthed] = useState(()=>sessionStorage.getItem('sd_auth')==='1');
@@ -885,39 +1037,8 @@ export default function App() {
                 <div style={{flex:1,height:1,background:'rgba(245,158,11,0.15)',borderRadius:1}}/>
               </div>
 
-              <GC style={{padding:16}}>
-                {(()=>{
-                  const WIN=6;
-                  const base=tMode==='quarterly'?toQuarterly(monthly,'label'):monthly;
-                  const slice=base.slice(Math.min(tOff,Math.max(0,base.length-WIN)),Math.min(tOff,Math.max(0,base.length-WIN))+WIN);
-                  return(<>
-                    <SH title="Monthly Sales Trend" sub="BSP · Demand · Collections — ₹ Crores"/>
-                    <ChartControls mode={tMode} setMode={setTMode} offset={tOff} setOffset={setTOff} total={base.length} window={WIN}/>
-                    <ResponsiveContainer width="100%" height={200}>
-                      <AreaChart data={slice} margin={{top:5,right:8,bottom:18,left:0}}>
-                        <defs>
-                          {[['a1',T.teal],['a2',T.amber],['a3',T.greenL]].map(([id,c])=>(
-                            <linearGradient key={id} id={id} x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor={c} stopOpacity={0.25}/><stop offset="95%" stopColor={c} stopOpacity={0}/></linearGradient>
-                          ))}
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.2)" vertical={false}/>
-                        <XAxis dataKey="label" tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false} interval={0} angle={-25} dy={6}/>
-                        <YAxis tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false} tickFormatter={v=>`${v}Cr`} width={38}/>
-                        <Tooltip content={<CTip fmt={v=>`₹${v} Cr`}/>}/>
-                        <Legend wrapperStyle={{color:T.text,fontSize:10,fontWeight:700}} iconSize={8}/>
-                        <Area type="monotone" dataKey="bspCr" name="Sales(BSP)" stroke={T.teal} fill="url(#a1)" strokeWidth={2} dot={{r:3,fill:T.teal}} activeDot={{r:4}}>
-                          <LabelList dataKey="bspCr" position="top" style={{fill:T.tealD,fontSize:7,fontWeight:700}} formatter={v=>v>0?`${v}Cr`:''}/>
-                        </Area>
-                        <Area type="monotone" dataKey="demCr" name="Demand" stroke={T.amber} fill="url(#a2)" strokeWidth={2} dot={{r:3,fill:T.amber}} activeDot={{r:4}}>
-                          <LabelList dataKey="demCr" position="top" style={{fill:T.amber,fontSize:7,fontWeight:700}} formatter={v=>v>0?`${v}Cr`:''}/>
-                        </Area>
-                        <Area type="monotone" dataKey="recCr" name="Received" stroke={T.greenL} fill="url(#a3)" strokeWidth={2} dot={{r:3,fill:T.greenL}} activeDot={{r:4}}>
-                          <LabelList dataKey="recCr" position="top" style={{fill:T.greenL,fontSize:7,fontWeight:700}} formatter={v=>v>0?`${v}Cr`:''}/>
-                        </Area>
-                      </AreaChart>
-                    </ResponsiveContainer>
-                  </>);
-                })()}
+              <GC style={{padding:0,overflow:'hidden'}}>
+                <ChartCardTrend monthly={monthly} tMode={tMode} setTMode={setTMode} tOff={tOff} setTOff={setTOff} toQuarterly={toQuarterly} ChartControls={ChartControls} T={T} CTip={CTip} SH={SH}/>
               </GC>
 
               <GC style={{padding:16}}>
@@ -1014,43 +1135,8 @@ export default function App() {
                 })()}
               </GC>
 
-              <GC style={{padding:16}}>
-                <SH title="Product-wise" sub="BHK — Booked vs Total Inventory"/>
-                <ResponsiveContainer width="100%" height={200}>
-                  <BarChart data={bhkS} layout="vertical" margin={{top:4,right:70,bottom:4,left:0}} barCategoryGap="30%">
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.1)" horizontal={false}/>
-                    <XAxis type="number" tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false}/>
-                    <YAxis type="category" dataKey="bhk" tick={{fill:T.text,fontSize:10,fontWeight:700}} axisLine={false} tickLine={false} width={85}/>
-                    <Tooltip content={({active,payload,label})=>{
-                      if(!active||!payload?.length) return null;
-                      return(
-                        <div style={{background:'rgba(255,255,255,0.97)',border:'1px solid rgba(0,151,167,0.3)',borderRadius:10,padding:'8px 12px',boxShadow:'0 8px 32px rgba(0,80,120,0.18)',fontFamily:'Inter,sans-serif',fontSize:11}}>
-                          <p style={{color:T.tealD,fontWeight:700,margin:'0 0 4px'}}>{label}</p>
-                          {payload.map((p,i)=>(<div key={i} style={{display:'flex',justifyContent:'space-between',gap:16,marginBottom:2}}><span style={{color:T.textM,fontWeight:600,fontSize:10}}>{p.name}</span><span style={{color:T.navy,fontWeight:800,fontSize:10}}>{p.value}</span></div>))}
-                        </div>
-                      );
-                    }}/>
-                    <Legend iconSize={10} formatter={(value)=>(
-                      <span style={{color:T.navy,fontSize:10,fontWeight:800}}>{value}</span>
-                    )}/>
-                    {/* Total (background) stacked first */}
-                    <Bar dataKey="booked" name="Booked" stackId="s" radius={[0,0,0,0]}>
-                      {bhkS.map((_,i)=><Cell key={i} fill={CC[i%CC.length]}/>)}
-                    </Bar>
-                    <Bar dataKey="available" name="Available" stackId="s" fill="rgba(0,151,167,0.15)" stroke={T.teal} strokeWidth={0} radius={[0,4,4,0]}>
-                      <LabelList content={({x,y,width,height,index})=>{
-                        const d=bhkS[index];
-                        if(!d) return null;
-                        return(
-                          <g>
-                            <text x={x+width+6} y={y+height/2-5} textAnchor="start" dominantBaseline="middle" fill={CC[index%CC.length]} fontSize={9} fontWeight={800}>{d.booked}</text>
-                            <text x={x+width+6} y={y+height/2+6} textAnchor="start" dominantBaseline="middle" fill={T.textM} fontSize={8} fontWeight={600}>/{d.total}</text>
-                          </g>
-                        );
-                      }}/>
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
+              <GC style={{padding:0,overflow:'hidden'}}>
+                <ChartCardBHK bhkS={bhkS} CC={CC} T={T} SH={SH}/>
               </GC>
             </div>
 
@@ -1066,80 +1152,12 @@ export default function App() {
                 <div style={{flex:1,height:1,background:'rgba(124,58,237,0.12)',borderRadius:1}}/>
               </div>
 
-              <GC style={{padding:16}}>
-                {(()=>{
-                  const visible=cpExpanded?topCP:topCP.slice(0,10);
-                  const barH=22;
-                  const chartH=Math.max(160, visible.length*barH+40);
-                  return(<>
-                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:4}}>
-                      <SH title={`Top CP-${cpExpanded?topCP.length:Math.min(10,topCP.length)}`} sub="Channel Partners by Units Booked · Sales Value"/>
-                      {topCP.length>10&&(
-                        <button onClick={()=>setCpExpanded(e=>!e)} style={{flexShrink:0,padding:'3px 12px',background:'rgba(0,151,167,0.07)',border:'1px solid rgba(0,151,167,0.2)',borderRadius:16,cursor:'pointer',fontSize:10,fontWeight:700,color:T.tealD,whiteSpace:'nowrap'}}>
-                          {cpExpanded?`▲ Show less`:`▼ +${topCP.length-10} more`}
-                        </button>
-                      )}
-                    </div>
-                    <ResponsiveContainer width="100%" height={chartH}>
-                      <BarChart data={visible} layout="vertical" margin={{top:0,right:80,bottom:0,left:0}}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.2)" horizontal={false}/>
-                        <XAxis type="number" tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false}/>
-                        <YAxis type="category" dataKey="name" tick={{fill:T.text,fontSize:10,fontWeight:700}} axisLine={false} tickLine={false} width={145} tickFormatter={v=>v?.length>20?v.slice(0,20)+'…':v}/>
-                        <Tooltip content={<CTip fmt={(v,n)=>n==='Sales (₹Cr)'?`₹${v} Cr`:v?.toLocaleString?.('en-IN')}/>}/>
-                        <Bar dataKey="units" name="Units" radius={[0,4,4,0]}>
-                          {visible.map((_,i)=><Cell key={i} fill={CC[i%CC.length]}/>)}
-                          <LabelList content={({x,y,width,height,value,index})=>{
-                            const d=visible[index];
-                            return(
-                              <g>
-                                <text x={x+width+6} y={y+height/2+1} textAnchor="start" dominantBaseline="middle" fill={T.textM} fontSize={9} fontWeight={700}>{value}</text>
-                                <text x={x+width+6} y={y+height/2+12} textAnchor="start" dominantBaseline="middle" fill={T.amber} fontSize={8} fontWeight={700}>₹{d?.bspCr}Cr</text>
-                              </g>
-                            );
-                          }}/>
-                        </Bar>
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </>);
-                })()}
+              <GC style={{padding:0,overflow:'hidden'}}>
+                <ChartCardCP topCP={topCP} cpExpanded={cpExpanded} setCpExpanded={setCpExpanded} CC={CC} T={T} CTip={CTip} SH={SH}/>
               </GC>
 
-              <GC style={{padding:16}}>
-                {(()=>{
-                  const WIN=6;
-                  const base=bMode==='quarterly'?toQuarterly(bvc,'label'):bvc;
-                  const slice=base.slice(Math.min(bOff,Math.max(0,base.length-WIN)),Math.min(bOff,Math.max(0,base.length-WIN))+WIN);
-                  return(<>
-                    <SH title="Booking vs. Cancelled" sub="Monthly Comparison"/>
-                    <ChartControls mode={bMode} setMode={setBMode} offset={bOff} setOffset={setBOff} total={base.length} window={WIN}/>
-                    {(()=>{
-                      const maxBooked=Math.max(...slice.map(d=>d.booked),1);
-                      // amber cap = 15% of maxBooked so it's a small topper
-                      const amberCap=Math.ceil(maxBooked*0.18);
-                      const sliceWithCap=slice.map(d=>({...d,targetTopper:d.remaining>0?amberCap:0}));
-                      return(
-                        <ResponsiveContainer width="100%" height={240}>
-                          <BarChart data={sliceWithCap} margin={{top:18,right:8,bottom:18,left:0}} barSize={28}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.2)" vertical={false}/>
-                            <XAxis dataKey="label" tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false} angle={-25} dy={6} interval={0}/>
-                            <YAxis tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false} width={28} domain={[0,'dataMax+5']}/>
-                            <Tooltip content={<CTip fmt={(v,n)=>{if(n==='Target Remaining')return`${slice.find(s=>s.targetTopper===v)?.remaining??v} units left`;return v;}}/>}/>
-                            <Legend wrapperStyle={{color:T.text,fontSize:10,fontWeight:700}} iconSize={8}/>
-                            <Bar dataKey="booked" name="Booked" stackId="a" fill={T.teal} fillOpacity={0.9} radius={[0,0,2,2]}>
-                              <LabelList dataKey="booked" position="insideTop" style={{fill:'#fff',fontSize:8,fontWeight:800}} formatter={v=>v>0?v:''}/>
-                            </Bar>
-                            <Bar dataKey="targetTopper" name="Target Remaining" stackId="a" fill={T.amber} fillOpacity={0.85} radius={[3,3,0,0]}>
-                              <LabelList dataKey="remaining" position="top" style={{fill:T.amber,fontSize:7,fontWeight:800}} formatter={v=>v>0?`${v}`:''}/>
-                            </Bar>
-                            <Bar dataKey="cancelled" name="Cancelled" fill={T.red} radius={[2,2,0,0]} fillOpacity={0.85}>
-                              <LabelList dataKey="cancelled" position="top" style={{fill:T.red,fontSize:8,fontWeight:700}} formatter={v=>v>0?v:''}/>
-                            </Bar>
-                          </BarChart>
-                        </ResponsiveContainer>
-                      );
-                    })()}
-                  </>);
-                })()}
+              <GC style={{padding:0,overflow:'hidden'}}>
+                <ChartCardBvC bvc={bvc} bMode={bMode} setBMode={setBMode} bOff={bOff} setBOff={setBOff} toQuarterly={toQuarterly} ChartControls={ChartControls} T={T} CTip={CTip} SH={SH}/>
               </GC>
 
               {/* Sales Value vs Cancelled Value vs Refund */}
