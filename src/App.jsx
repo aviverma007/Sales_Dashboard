@@ -637,37 +637,42 @@ export default function App() {
                   const availArea=areaSummary.availableArea||0;
                   const total=soldArea+availArea;
                   const soldPct=total>0?Math.round((soldArea/total)*100):0;
+                  const fmt=v=>v>=1e6?`${(v/1e6).toFixed(2)}M`:`${(v/1000).toFixed(0)}K`;
                   return(
-                    <div style={{display:'flex',alignItems:'center',gap:10}}>
-                      <div style={{width:90,height:90,flexShrink:0,position:'relative'}}>
-                        <ResponsiveContainer width="100%" height="100%">
-                          <PieChart>
-                            <Pie data={[{name:'Sold',value:soldArea||0.01},{name:'Available',value:availArea||0.01}]}
-                              cx="50%" cy="50%" innerRadius={28} outerRadius={42} paddingAngle={3} dataKey="value" strokeWidth={2} stroke="rgba(255,255,255,0.9)"
-                              label={({cx,cy,midAngle,outerRadius,value,name})=>{
-                                if(!value||value===0.01)return null;
-                                const RADIAN=Math.PI/180;
-                                const r=outerRadius+14;
-                                const x=cx+r*Math.cos(-midAngle*RADIAN);
-                                const y=cy+r*Math.sin(-midAngle*RADIAN);
-                                const pct=total>0?Math.round((value/total)*100):0;
-                                return pct>5?<text x={x} y={y} textAnchor={x>cx?'start':'end'} dominantBaseline="central" fontSize={8} fontWeight={800} fill={name==='Sold'?T.teal:T.greenL}>{pct}%</text>:null;
-                              }} labelLine={false}>
-                              <Cell fill={T.teal}/><Cell fill={T.greenL}/>
-                            </Pie>
-                            <Tooltip content={<CTip fmt={v=>`${(v/1000).toFixed(0)}K sq ft`}/>}/>
-                          </PieChart>
-                        </ResponsiveContainer>
-                        <div style={{position:'absolute',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',pointerEvents:'none'}}>
-                          <span style={{fontSize:12,fontWeight:900,color:T.tealD,lineHeight:1}}>{soldPct}%</span>
-                          <span style={{fontSize:7,fontWeight:700,color:T.textM}}>SOLD</span>
+                    <div style={{display:'flex',flexDirection:'column',gap:6}}>
+                      <div style={{display:'flex',alignItems:'center',gap:8}}>
+                        {/* Donut */}
+                        <div style={{width:72,height:72,flexShrink:0,position:'relative'}}>
+                          <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                              <Pie data={[{name:'Sold',value:soldArea||0.01},{name:'Available',value:availArea||0.01}]}
+                                cx="50%" cy="50%" innerRadius={22} outerRadius={34} paddingAngle={3} dataKey="value" strokeWidth={1.5} stroke="rgba(255,255,255,0.9)" labelLine={false}>
+                                <Cell fill={T.teal}/><Cell fill={T.greenL}/>
+                              </Pie>
+                              <Tooltip content={<CTip fmt={v=>`${fmt(v)} sq ft`}/>}/>
+                            </PieChart>
+                          </ResponsiveContainer>
+                          <div style={{position:'absolute',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',pointerEvents:'none'}}>
+                            <span style={{fontSize:11,fontWeight:900,color:T.tealD,lineHeight:1}}>{soldPct}%</span>
+                            <span style={{fontSize:6,fontWeight:700,color:T.textM}}>SOLD</span>
+                          </div>
+                        </div>
+                        {/* Stats */}
+                        <div style={{flex:1,display:'flex',flexDirection:'column',gap:5}}>
+                          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                            <span style={{fontSize:9,color:T.textM,fontWeight:700,display:'flex',alignItems:'center',gap:4}}><span style={{width:7,height:7,borderRadius:2,background:T.teal,display:'inline-block'}}/>Sold</span>
+                            <span style={{fontSize:11,fontWeight:800,color:T.tealD}}>{fmt(soldArea)} sqft</span>
+                          </div>
+                          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                            <span style={{fontSize:9,color:T.textM,fontWeight:700,display:'flex',alignItems:'center',gap:4}}><span style={{width:7,height:7,borderRadius:2,background:T.greenL,display:'inline-block'}}/>Avl</span>
+                            <span style={{fontSize:11,fontWeight:800,color:T.greenL}}>{fmt(availArea)} sqft</span>
+                          </div>
+                          <div style={{width:'100%',height:4,background:'rgba(0,100,140,0.08)',borderRadius:2,overflow:'hidden'}}>
+                            <div style={{width:`${soldPct}%`,height:'100%',background:T.teal,borderRadius:2}}/>
+                          </div>
                         </div>
                       </div>
-                      <div style={{display:'flex',flexDirection:'column',gap:4}}>
-                        <Chip label="Sold" value={`${(soldArea/1000).toFixed(0)}K sqft`} color={T.teal} small/>
-                        <Chip label="Avl"  value={`${(availArea/1000).toFixed(0)}K sqft`} color={T.greenL} small/>
-                        <p style={{fontSize:9,color:T.textM,margin:'2px 0 0',fontWeight:600}}>{(total/1e6).toFixed(2)}M total</p>
-                      </div>
+                      <p style={{fontSize:9,color:T.textM,margin:0,fontWeight:600,borderTop:'1px solid rgba(0,100,140,0.07)',paddingTop:4}}>{fmt(total)} sq ft total inventory</p>
                     </div>
                   );
                 })()}
