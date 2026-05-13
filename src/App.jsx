@@ -690,7 +690,20 @@ export default function App() {
                           labelLine={false}>
                           <Cell fill={T.teal}/><Cell fill={T.greenL}/><Cell fill={T.amberL}/>
                         </Pie>
-                        <Tooltip content={<CTip/>}/>
+                        <Tooltip content={({active,payload,label})=>{
+                      if(!active||!payload?.length) return null;
+                      return(
+                        <div style={{background:'rgba(255,255,255,0.97)',border:'1px solid rgba(0,151,167,0.3)',borderRadius:10,padding:'8px 12px',boxShadow:'0 8px 32px rgba(0,80,120,0.18)',fontFamily:'Inter,sans-serif',fontSize:11}}>
+                          <p style={{color:T.tealD,fontWeight:700,marginBottom:4}}>{label}</p>
+                          {payload.map((p,i)=>(
+                            <div key={i} style={{display:'flex',justifyContent:'space-between',gap:16,color:p.name==='Available'?T.navy:p.color,fontWeight:600,fontSize:10}}>
+                              <span>{p.name}</span>
+                              <span style={{fontWeight:800}}>{p.value}</span>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    }}/>
                       </PieChart>
                     </ResponsiveContainer>
                     {/* Centre label */}
@@ -1008,8 +1021,18 @@ export default function App() {
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.1)" horizontal={false}/>
                     <XAxis type="number" tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false}/>
                     <YAxis type="category" dataKey="bhk" tick={{fill:T.text,fontSize:10,fontWeight:700}} axisLine={false} tickLine={false} width={85}/>
-                    <Tooltip content={<CTip/>}/>
-                    <Legend wrapperStyle={{fontSize:10,fontWeight:800,color:T.navy}} iconSize={9}/>
+                    <Tooltip content={({active,payload,label})=>{
+                      if(!active||!payload?.length) return null;
+                      return(
+                        <div style={{background:'rgba(255,255,255,0.97)',border:'1px solid rgba(0,151,167,0.3)',borderRadius:10,padding:'8px 12px',boxShadow:'0 8px 32px rgba(0,80,120,0.18)',fontFamily:'Inter,sans-serif',fontSize:11}}>
+                          <p style={{color:T.tealD,fontWeight:700,margin:'0 0 4px'}}>{label}</p>
+                          {payload.map((p,i)=>(<div key={i} style={{display:'flex',justifyContent:'space-between',gap:16,marginBottom:2}}><span style={{color:T.textM,fontWeight:600,fontSize:10}}>{p.name}</span><span style={{color:T.navy,fontWeight:800,fontSize:10}}>{p.value}</span></div>))}
+                        </div>
+                      );
+                    }}/>
+                    <Legend iconSize={10} formatter={(value)=>(
+                      <span style={{color:T.navy,fontSize:10,fontWeight:800}}>{value}</span>
+                    )}/>
                     {/* Total (background) stacked first */}
                     <Bar dataKey="booked" name="Booked" stackId="s" radius={[0,0,0,0]}>
                       {bhkS.map((_,i)=><Cell key={i} fill={CC[i%CC.length]}/>)}
