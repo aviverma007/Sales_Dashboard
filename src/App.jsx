@@ -193,7 +193,7 @@ function Login({ onLogin }) {
           <div style={{margin:'0 auto 14px',width:80,height:80,borderRadius:20,background:'#0d1f3c',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 8px 28px rgba(0,30,80,0.35)',overflow:'hidden'}}>
             <img src="/swd-logo.png" alt="SWD" style={{width:56,height:56,objectFit:'contain'}}/>
           </div>
-          <h2 style={{fontSize:20,fontWeight:900,color:'#0d2137',margin:'0 0 4px'}}>SWD-DASHBOARD</h2>
+          <h2 style={{fontSize:20,fontWeight:900,color:'#0d2137',margin:'0 0 4px'}}>Project Snapshot</h2>
           <p style={{fontSize:12,color:'#546e7a',margin:0,fontWeight:500}}>Smartworld Group · Sales Intelligence</p>
         </div>
         {/* Fields */}
@@ -237,7 +237,7 @@ export default function App() {
   const [raw,setRaw]=useState(null);
   const [loading,setLoading]=useState(true);
   const [tab,setTab]=useState('overview'); // overview | collections | pipeline
-  const [filters,setFilters]=useState({company:'',project:'',year:'',month:'',broker:'',typology:'',fy:''});
+  const [filters,setFilters]=useState({company:'',project:'',year:'',month:'',quarter:'',broker:'',typology:'',fy:''});
   const sf=useCallback((k,v)=>setFilters(p=>({...p,[k]:v})),[]);
   // Chart controls (lifted to comply with React hooks rules)
   const [tMode,setTMode]=useState('monthly');
@@ -263,16 +263,30 @@ export default function App() {
   const availProj=useMemo(()=>(!raw||!filters.company)?fo.projects||[]:(fo.projects||[]).filter(p=>(fo.projCompany||{})[p]===filters.company),[raw,filters.company,fo]);
   const availComp=useMemo(()=>(!raw||!filters.project)?fo.companies||[]:[(fo.projCompany||{})[filters.project]].filter(Boolean),[raw,filters.project,fo]);
   const matchMo=useCallback(m=>{
-    if(!filters.month) return true;
-    const QMap={'Q1':['01','02','03'],'Q2':['04','05','06'],'Q3':['07','08','09'],'Q4':['10','11','12'],'Q1 (Jan-Mar)':['01','02','03'],'Q2 (Apr-Jun)':['04','05','06'],'Q3 (Jul-Sep)':['07','08','09'],'Q4 (Oct-Dec)':['10','11','12']};
     const MIdx={'Jan':'01','Feb':'02','Mar':'03','Apr':'04','May':'05','Jun':'06','Jul':'07','Aug':'08','Sep':'09','Oct':'10','Nov':'11','Dec':'12'};
-    const months=filters.month.split('||').filter(Boolean);
-    if(!months.length) return true;
-    return months.some(sel=>{
-      if(QMap[sel]) return QMap[sel].some(mo=>m?.endsWith(`-${mo}`));
-      const mo=MIdx[sel]; return mo?m?.endsWith(`-${mo}`):false;
-    });
-  },[filters.month]);
+    // FY Quarter map: Q1=Apr-Jun, Q2=Jul-Sep, Q3=Oct-Dec, Q4=Jan-Mar
+    const FYQ={'Q1':['04','05','06'],'Q2':['07','08','09'],'Q3':['10','11','12'],'Q4':['01','02','03']};
+    // Month filter
+    if(filters.month){
+      const months=filters.month.split('||').filter(Boolean);
+      if(months.length&&!months.some(sel=>{const mo=MIdx[sel];return mo&&m?.endsWith(`-${mo}`);}))return false;
+    }
+    // Quarter filter: "FY2024-25 Q1" format
+    if(filters.quarter){
+      const quarters=filters.quarter.split('||').filter(Boolean);
+      if(quarters.length&&!quarters.some(sel=>{
+        const parts=sel.match(/FY(\d{4}-\d{2})\s+(Q\d)/);
+        if(!parts)return false;
+        const [,fy,q]=parts;
+        const fyStart=parseInt(fy.split('-')[0]);
+        const mos=FYQ[q]||[];
+        // Q4 belongs to next year (Jan-Mar)
+        const year=q==='Q4'?fyStart+1:fyStart;
+        return mos.some(mo=>m===`${year}-${mo}`);
+      }))return false;
+    }
+    return true;
+  },[filters.month,filters.quarter]);
 
   const pF=useMemo(()=>{if(!raw?.pdrn)return[];return raw.pdrn.filter(r=>{
     if(filters.company&&r.companyNorm!==filters.company)return false;
@@ -302,8 +316,14 @@ export default function App() {
     // All typologies across all projects
     return Object.values(projTypo).flat().filter((v,i,a)=>a.indexOf(v)===i).sort();
   },[raw,filters.project]);
-  const MONTHS_QUARTERS=['Q1 (Jan-Mar)','Q2 (Apr-Jun)','Q3 (Jul-Sep)','Q4 (Oct-Dec)','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const MONTH_KEY_MAP={'Q1 (Jan-Mar)':'Q1','Q2 (Apr-Jun)':'Q2','Q3 (Jul-Sep)':'Q3','Q4 (Oct-Dec)':'Q4','Jan':'Jan','Feb':'Feb','Mar':'Mar','Apr':'Apr','May':'May','Jun':'Jun','Jul':'Jul','Aug':'Aug','Sep':'Sep','Oct':'Oct','Nov':'Nov','Dec':'Dec'};
+  const MONTHS_LIST=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  // FY quarters: FY2024-25 Q1, Q2, Q3, Q4
+  const FY_QUARTERS=useMemo(()=>{
+    const fys=fo.financialYears||[];
+    const qs=[];
+    fys.forEach(fy=>{ ['Q1 (Apr-Jun)','Q2 (Jul-Sep)','Q3 (Oct-Dec)','Q4 (Jan-Mar)'].forEach(q=>qs.push(`${fy} ${q.split(' ')[0]}`)); });
+    return qs;
+  },[fo]);
 
   const kpi=useMemo(()=>{const tS=pA.reduce((s,r)=>s+(r.bsp||0),0),tD=dF.reduce((s,r)=>s+(r.demand||0),0),tR=dF.reduce((s,r)=>s+(r.received||0),0),tO=dF.reduce((s,r)=>s+(r.outstanding||0),0);const ws={APPROVED:0,PENDING:0,REJECTED:0};wF.forEach(r=>{if(ws[r.status]!==undefined)ws[r.status]++;});return{totalUnits:iF.length,bookedUnits:iF.filter(r=>r.status==='Booked').length,availableUnits:iF.filter(r=>r.status==='Available').length,inProgressUnits:iF.filter(r=>r.status==='In Progress').length,totalSales:tS,dappDemand:tD,dappReceived:tR,dappOutstanding:tO,activeBookings:pA.length,cancelledBookings:pC.length,pipelineBookings:wF.filter(r=>r.status==='PENDING').length,wfApproved:ws.APPROVED,wfPending:ws.PENDING,wfRejected:ws.REJECTED};},[pA,pC,dF,iF,wF]);
 
@@ -407,8 +427,8 @@ export default function App() {
             <img src="/swd-logo.png" alt="SWD" style={{width:28,height:28,objectFit:'contain'}}/>
           </div>
         </div>
-        <p style={{fontFamily:'Inter,sans-serif',color:'#0d1f3c',fontSize:14,fontWeight:900,margin:'0 0 4px',letterSpacing:0.5}}>SWD-DASHBOARD</p>
-        <p style={{fontFamily:'Inter,sans-serif',color:T.textM,fontSize:11,fontWeight:500,margin:0}}>Loading Smartworld Dashboard...</p>
+        <p style={{fontFamily:'Inter,sans-serif',color:'#0d1f3c',fontSize:14,fontWeight:900,margin:'0 0 4px',letterSpacing:0.5}}>Project Snapshot</p>
+        <p style={{fontFamily:'Inter,sans-serif',color:T.textM,fontSize:11,fontWeight:500,margin:0}}>Loading Project Snapshot...</p>
       </div>
     </div>
   );
@@ -446,7 +466,7 @@ export default function App() {
               <img src="/swd-logo.png" alt="SWD" style={{width:26,height:26,objectFit:'contain'}}/>
             </div>
             <div>
-              <div style={{fontWeight:900,fontSize:15,letterSpacing:0.5,color:T.navy}}>SWD-DASHBOARD</div>
+              <div style={{fontWeight:900,fontSize:15,letterSpacing:0.5,color:T.navy}}>Project Snapshot</div>
               <div style={{color:T.textM,fontSize:9,letterSpacing:1.5,fontWeight:700}}>SMARTWORLD GROUP · SALES INTELLIGENCE</div>
             </div>
           </div>
@@ -479,47 +499,58 @@ export default function App() {
           <FSel label="Project"    options={availProj}                           value={filters.project}  onChange={v=>sf('project',v)}   multi={true} openId="project"    activeOpen={activeFilter} setActiveOpen={setActiveFilter}/>
           <FSel label="Fin. Year"  options={fo.financialYears||[]}               value={filters.fy}       onChange={v=>sf('fy',v)}         multi={true} openId="fy"         activeOpen={activeFilter} setActiveOpen={setActiveFilter}/>
           <FSel label="Year"       options={(fo.years||[]).map(String)}           value={filters.year}     onChange={v=>sf('year',v)}       multi={true} openId="year"       activeOpen={activeFilter} setActiveOpen={setActiveFilter}/>
-          <FSel label="Month / Quarter" options={MONTHS_QUARTERS}                value={filters.month}    onChange={v=>sf('month',v)}      multi={true} openId="month"      activeOpen={activeFilter} setActiveOpen={setActiveFilter}/>
+          <FSel label="Month"        options={MONTHS_LIST}                              value={filters.month}    onChange={v=>sf('month',v)}      multi={true} openId="month"      activeOpen={activeFilter} setActiveOpen={setActiveFilter}/>
+          <FSel label="Quarter"       options={FY_QUARTERS}                              value={filters.quarter}  onChange={v=>sf('quarter',v)}    multi={true} openId="quarter"    activeOpen={activeFilter} setActiveOpen={setActiveFilter}/>
           <FSel label="CP"         options={availBrokers}                         value={filters.broker}   onChange={v=>sf('broker',v)}     multi={true} openId="cp"         activeOpen={activeFilter} setActiveOpen={setActiveFilter}/>
           <FSel label="Typology"   options={availTypologies}                      value={filters.typology} onChange={v=>sf('typology',v)}   multi={true} openId="typology"   activeOpen={activeFilter} setActiveOpen={setActiveFilter}/>
           {Object.values(filters).some(Boolean)&&(
-            <button onClick={()=>setFilters({company:'',project:'',year:'',month:'',broker:'',typology:'',fy:''})}
+            <button onClick={()=>setFilters({company:'',project:'',year:'',month:'',quarter:'',broker:'',typology:'',fy:''})}
               style={{background:'linear-gradient(135deg,#c62828,#ef5350)',border:'none',borderRadius:7,color:'#fff',padding:'5px 14px',fontSize:10,cursor:'pointer',fontWeight:700,boxShadow:'0 2px 8px rgba(200,40,40,0.3)',alignSelf:'flex-end'}}>
               ✕ Reset
             </button>
           )}
         </div>
 
-        {/* ── PROJECT INFO BAR — only when single project selected ── */}
-        {filters.project&&filters.project.split('||').filter(Boolean).length===1&&(()=>{
-          const proj=filters.project.split('||')[0];
-          const m=(raw?.projectMeta||{})[proj];
-          if(!m) return null;
+        {/* ── PROJECT SNAPSHOT BAR ── */}
+        {(()=>{
+          const meta=raw?.projectMeta||{};
+          const projs=filters.project?filters.project.split('||').filter(Boolean):[];
+          const isSingle=projs.length===1;
+          const isMulti=projs.length>1;
+          const isAll=projs.length===0;
+          // Items to show
+          const items=isSingle?[meta[projs[0]]].filter(Boolean):isMulti?projs.map(p=>meta[p]).filter(Boolean):Object.values(meta);
+          if(!items.length) return null;
           return(
             <div style={{maxWidth:1440,margin:'0 auto',padding:'0 24px 8px'}}>
-              <div style={{display:'flex',alignItems:'center',gap:0,background:'linear-gradient(135deg,rgba(0,105,120,0.08),rgba(0,188,212,0.06))',border:'1px solid rgba(0,151,167,0.18)',borderRadius:12,padding:'8px 20px',flexWrap:'wrap',gap:0}}>
-                <div style={{display:'flex',alignItems:'center',gap:8,paddingRight:20,borderRight:'1px solid rgba(0,151,167,0.15)',marginRight:20}}>
-                  <div style={{width:32,height:32,borderRadius:8,background:'linear-gradient(135deg,#006978,#00bcd4)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16}}>🏢</div>
-                  <div>
-                    <p style={{fontSize:9,color:T.textM,fontWeight:700,margin:0,textTransform:'uppercase',letterSpacing:0.5}}>Project</p>
-                    <p style={{fontSize:13,fontWeight:900,color:T.navy,margin:0}}>{m.label}</p>
-                  </div>
-                </div>
-                {[
-                  {icon:'🏗️',label:'Builtup Area',val:m.builtup,color:T.teal},
-                  {icon:'🚀',label:'Launch Date',val:m.launchDate,color:'#7c3aed'},
-                  {icon:'📐',label:'Saleable Area',val:m.saleableArea,color:T.amber},
-                  {icon:'🏁',label:'Handover Date',val:m.handoverDate,color:T.greenL},
-                ].map((d,j)=>(
-                  <div key={j} style={{display:'flex',alignItems:'center',gap:10,padding:'0 20px',borderRight:j<3?'1px solid rgba(0,151,167,0.12)':'none'}}>
-                    <div style={{width:28,height:28,borderRadius:7,background:`${d.color}15`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:14}}>{d.icon}</div>
+              {items.map((m,idx)=>(
+                <div key={idx} style={{display:'flex',alignItems:'center',background:'linear-gradient(135deg,rgba(0,105,120,0.07),rgba(0,188,212,0.05))',border:'1px solid rgba(0,151,167,0.15)',borderRadius:10,padding:'7px 20px',marginBottom:idx<items.length-1?6:0,flexWrap:'wrap',gap:0}}>
+                  <div style={{display:'flex',alignItems:'center',gap:8,paddingRight:16,borderRight:'1px solid rgba(0,151,167,0.12)',marginRight:16}}>
+                    <div style={{width:28,height:28,borderRadius:7,background:'linear-gradient(135deg,#006978,#00bcd4)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:14}}>🏢</div>
                     <div>
-                      <p style={{fontSize:8,color:T.textM,fontWeight:700,margin:0,textTransform:'uppercase',letterSpacing:0.4}}>{d.label}</p>
-                      <p style={{fontSize:12,fontWeight:800,color:d.color,margin:0}}>{d.val}</p>
+                      <p style={{fontSize:8,color:T.textM,fontWeight:700,margin:0,textTransform:'uppercase',letterSpacing:0.4}}>Project Snapshot</p>
+                      <p style={{fontSize:12,fontWeight:900,color:T.navy,margin:0}}>{m.label}</p>
                     </div>
                   </div>
-                ))}
-              </div>
+                  {/* Always show: Builtup + Saleable */}
+                  {[
+                    {icon:'🏗️',label:'Builtup Area',val:m.builtup,color:T.teal},
+                    {icon:'📐',label:'Saleable Area',val:m.saleableArea,color:T.amber},
+                    ...(isSingle?[
+                      {icon:'🚀',label:'Launch Date',val:m.launchDate,color:'#7c3aed'},
+                      {icon:'🏁',label:'Project HO Date',val:m.handoverDate,color:T.greenL},
+                    ]:[])
+                  ].map((d,j,arr)=>(
+                    <div key={j} style={{display:'flex',alignItems:'center',gap:10,padding:'0 16px',borderRight:j<arr.length-1?'1px solid rgba(0,151,167,0.1)':'none'}}>
+                      <div style={{width:26,height:26,borderRadius:6,background:`${d.color}15`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:13}}>{d.icon}</div>
+                      <div>
+                        <p style={{fontSize:8,color:T.textM,fontWeight:700,margin:0,textTransform:'uppercase',letterSpacing:0.3}}>{d.label}</p>
+                        <p style={{fontSize:12,fontWeight:800,color:d.color,margin:0}}>{d.val}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ))}
             </div>
           );
         })()}
@@ -598,21 +629,76 @@ export default function App() {
                 <div style={{position:'absolute',bottom:0,left:0,right:0,height:3,background:`linear-gradient(90deg,${T.navy},transparent)`,borderRadius:'0 0 14px 14px'}}/>
               </GC>
 
-              {/* Demand */}
+              {/* Sold Area Pie */}
               <GC style={{padding:14}} cls="kc">
-                <SH title="Demand (DAPP)" compact/>
-                <p style={{fontSize:18,fontWeight:800,color:T.amber,margin:'4px 0 2px',letterSpacing:-0.5}}>{fmtCr(kpi.dappDemand)}</p>
-                <p style={{color:T.textM,fontSize:10,margin:0,fontWeight:600}}>Demands Raised</p>
+                <SH title="Sold Area" compact/>
+                {(()=>{
+                  const soldArea=areaSummary.bookedArea||0;
+                  const availArea=areaSummary.availableArea||0;
+                  const total=soldArea+availArea;
+                  const soldPct=total>0?Math.round((soldArea/total)*100):0;
+                  return(
+                    <div style={{display:'flex',alignItems:'center',gap:10}}>
+                      <div style={{width:90,height:90,flexShrink:0,position:'relative'}}>
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie data={[{name:'Sold',value:soldArea||0.01},{name:'Available',value:availArea||0.01}]}
+                              cx="50%" cy="50%" innerRadius={28} outerRadius={42} paddingAngle={3} dataKey="value" strokeWidth={2} stroke="rgba(255,255,255,0.9)"
+                              label={({cx,cy,midAngle,outerRadius,value,name})=>{
+                                if(!value||value===0.01)return null;
+                                const RADIAN=Math.PI/180;
+                                const r=outerRadius+14;
+                                const x=cx+r*Math.cos(-midAngle*RADIAN);
+                                const y=cy+r*Math.sin(-midAngle*RADIAN);
+                                const pct=total>0?Math.round((value/total)*100):0;
+                                return pct>5?<text x={x} y={y} textAnchor={x>cx?'start':'end'} dominantBaseline="central" fontSize={8} fontWeight={800} fill={name==='Sold'?T.teal:T.greenL}>{pct}%</text>:null;
+                              }} labelLine={false}>
+                              <Cell fill={T.teal}/><Cell fill={T.greenL}/>
+                            </Pie>
+                            <Tooltip content={<CTip fmt={v=>`${(v/1000).toFixed(0)}K sq ft`}/>}/>
+                          </PieChart>
+                        </ResponsiveContainer>
+                        <div style={{position:'absolute',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',pointerEvents:'none'}}>
+                          <span style={{fontSize:12,fontWeight:900,color:T.tealD,lineHeight:1}}>{soldPct}%</span>
+                          <span style={{fontSize:7,fontWeight:700,color:T.textM}}>SOLD</span>
+                        </div>
+                      </div>
+                      <div style={{display:'flex',flexDirection:'column',gap:4}}>
+                        <Chip label="Sold" value={`${(soldArea/1000).toFixed(0)}K sqft`} color={T.teal} small/>
+                        <Chip label="Avl"  value={`${(availArea/1000).toFixed(0)}K sqft`} color={T.greenL} small/>
+                        <p style={{fontSize:9,color:T.textM,margin:'2px 0 0',fontWeight:600}}>{(total/1e6).toFixed(2)}M total</p>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </GC>
+
+              {/* Avg Price Card */}
+              <GC style={{padding:14}} cls="kc">
+                <SH title="Avg Price / sq ft" compact/>
+                {(()=>{
+                  const avg=areaSummary.avgPricePerSqft||0;
+                  const mn=areaSummary.minPricePerSqft||0;
+                  const mx=areaSummary.maxPricePerSqft||0;
+                  const pct=mx>mn?Math.round(((avg-mn)/(mx-mn))*100):50;
+                  return(
+                    <div>
+                      <p style={{fontSize:24,fontWeight:900,color:T.navy,margin:'4px 0 2px',letterSpacing:-0.5}}>₹{avg?.toLocaleString('en-IN')}</p>
+                      <p style={{fontSize:9,color:T.textM,fontWeight:600,margin:'0 0 8px'}}>per sq ft</p>
+                      <div style={{width:'100%',height:5,background:'rgba(0,100,140,0.1)',borderRadius:3,position:'relative',marginBottom:6}}>
+                        <div style={{position:'absolute',left:0,top:0,width:`${pct}%`,height:'100%',background:`linear-gradient(90deg,${T.greenL},${T.teal})`,borderRadius:3}}/>
+                      </div>
+                      <div style={{display:'flex',justifyContent:'space-between'}}>
+                        <span style={{fontSize:8,color:T.greenL,fontWeight:700}}>₹{mn?.toLocaleString('en-IN')}</span>
+                        <span style={{fontSize:8,color:T.textM,fontWeight:600}}>Range</span>
+                        <span style={{fontSize:8,color:T.red,fontWeight:700}}>₹{mx?.toLocaleString('en-IN')}</span>
+                      </div>
+                    </div>
+                  );
+                })()}
                 <div style={{position:'absolute',bottom:0,left:0,right:0,height:3,background:`linear-gradient(90deg,${T.amber},transparent)`,borderRadius:'0 0 14px 14px'}}/>
               </GC>
 
-              {/* Received */}
-              <GC style={{padding:14}} cls="kc">
-                <SH title="Received (DAPP)" compact/>
-                <p style={{fontSize:18,fontWeight:800,color:T.teal,margin:'4px 0 2px',letterSpacing:-0.5}}>{fmtCr(kpi.dappReceived)}</p>
-                <p style={{color:T.textM,fontSize:10,margin:0,fontWeight:600}}>Collections to date</p>
-                <div style={{position:'absolute',bottom:0,left:0,right:0,height:3,background:`linear-gradient(90deg,${T.teal},transparent)`,borderRadius:'0 0 14px 14px'}}/>
-              </GC>
 
               {/* Target Achievement — large redesigned card */}
               <GC style={{padding:16}} cls="kc">
