@@ -28,6 +28,46 @@ const fmtCr  = v => { if(!v||isNaN(v)) return '₹0 Cr'; const c=v/1e7; if(c>=10
 const fmtML  = m => { if(!m) return ''; const [yr,mo]=m.split('-'); return `${['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][+mo]}'${yr.slice(2)}`; };
 const pct    = (a,b) => b>0?Math.round((a/b)*100):0;
 
+// ─── WIDGET GRID ─────────────────────────────────────────────────────────────
+const DEFAULT_LAYOUT = [
+  {i:'units',    x:0,  y:0,  w:3, h:5},
+  {i:'sales',    x:3,  y:0,  w:3, h:5},
+  {i:'soldArea', x:6,  y:0,  w:3, h:5},
+  {i:'avgPrice', x:9,  y:0,  w:3, h:5},
+  {i:'target',   x:0,  y:5,  w:5, h:6},
+  {i:'upcoming', x:5,  y:5,  w:3, h:6},
+  {i:'trend',    x:0,  y:11, w:8, h:8},
+  {i:'channel',  x:8,  y:11, w:4, h:8},
+  {i:'bhk',      x:0,  y:19, w:4, h:7},
+  {i:'topcp',    x:4,  y:19, w:4, h:7},
+  {i:'bvc',      x:8,  y:19, w:4, h:7},
+  {i:'svr',      x:0,  y:26, w:12,h:9},
+  {i:'cancelled',x:0,  y:35, w:12,h:10},
+  {i:'tower',    x:0,  y:45, w:12,h:8},
+  {i:'areakpi',  x:0,  y:53, w:12,h:5},
+  {i:'areaproj', x:0,  y:58, w:12,h:8},
+];
+
+const STORAGE_KEY = 'swd_widget_layout_v1';
+
+function useWindowWidth() {
+  const [w, setW] = useState(window.innerWidth);
+  useEffect(() => {
+    const h = () => setW(window.innerWidth);
+    window.addEventListener('resize', h);
+    return () => window.removeEventListener('resize', h);
+  }, []);
+  return w;
+}
+
+// Widget wrapper with drag handle
+const Widget = ({children, style={}}) => (
+  <div style={{height:'100%',background:'rgba(255,255,255,0.88)',backdropFilter:'blur(20px)',borderRadius:14,boxShadow:'0 2px 16px rgba(0,60,100,0.08)',border:'1px solid rgba(0,151,167,0.1)',overflow:'hidden',position:'relative',...style}}>
+    <div className="drag-handle" style={{position:'absolute',top:4,right:6,cursor:'grab',opacity:0.25,fontSize:12,lineHeight:1,userSelect:'none',zIndex:10,color:'#0d2137'}}>⠿⠿</div>
+    <div style={{height:'100%',overflow:'auto'}}>{children}</div>
+  </div>
+);
+
 const toQuarterly=(data,labelKey='label')=>{
   const qMap={};
   data.forEach(d=>{
@@ -237,6 +277,7 @@ export default function App() {
   const [raw,setRaw]=useState(null);
   const [loading,setLoading]=useState(true);
   const [tab,setTab]=useState('overview'); // overview | collections | pipeline
+
   const [filters,setFilters]=useState({company:'',project:'',year:'',month:'',quarter:'',broker:'',typology:'',fy:''});
   const sf=useCallback((k,v)=>setFilters(p=>({...p,[k]:v})),[]);
   // Chart controls (lifted to comply with React hooks rules)
