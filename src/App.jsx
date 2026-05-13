@@ -1014,7 +1014,7 @@ export default function App() {
                     <Bar dataKey="booked" name="Booked" stackId="s" radius={[0,0,0,0]}>
                       {bhkS.map((_,i)=><Cell key={i} fill={CC[i%CC.length]}/>)}
                     </Bar>
-                    <Bar dataKey="available" name="Available" stackId="s" fill="rgba(0,151,167,0.15)" stroke={T.teal} strokeWidth={0} radius={[0,4,4,0]}>
+                    <Bar dataKey="available" name="Available" stackId="s" fill="rgba(0,151,167,0.35)" stroke={T.teal} strokeWidth={0.5} radius={[0,4,4,0]}>
                       <LabelList content={({x,y,width,height,index})=>{
                         const d=bhkS[index];
                         if(!d) return null;
