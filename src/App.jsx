@@ -516,41 +516,41 @@ export default function App() {
           const meta=raw?.projectMeta||{};
           const projs=filters.project?filters.project.split('||').filter(Boolean):[];
           const isSingle=projs.length===1;
-          const isMulti=projs.length>1;
-          const isAll=projs.length===0;
-          // Items to show
-          const items=isSingle?[meta[projs[0]]].filter(Boolean):isMulti?projs.map(p=>meta[p]).filter(Boolean):Object.values(meta);
-          if(!items.length) return null;
+          const allMeta=isSingle?[meta[projs[0]]].filter(Boolean):(projs.length>1?projs.map(p=>meta[p]).filter(Boolean):Object.values(meta));
+          if(!allMeta.length) return null;
+          // Aggregate builtup & saleable as sum (numeric acres and lakh sqft)
+          const sumBuiltup=allMeta.reduce((s,m)=>s+parseFloat(m.builtup),0).toFixed(1);
+          const sumSaleable=allMeta.reduce((s,m)=>s+parseFloat(m.saleableArea),0).toFixed(1);
+          const m=isSingle?allMeta[0]:null;
+          const label=isSingle?m.label:`${allMeta.length} Projects`;
+          const fields=[
+            {icon:'🏗️',label:'Builtup Area',val:`${sumBuiltup} Acres`,color:T.teal},
+            {icon:'📐',label:'Saleable Area',val:`${sumSaleable} Lakh sq ft`,color:T.amber},
+            ...(isSingle&&m?[
+              {icon:'🚀',label:'Launch Date',val:m.launchDate,color:'#7c3aed'},
+              {icon:'🏁',label:'Project HO Date',val:m.handoverDate,color:T.greenL},
+            ]:[]),
+          ];
           return(
             <div style={{maxWidth:1440,margin:'0 auto',padding:'0 24px 8px'}}>
-              {items.map((m,idx)=>(
-                <div key={idx} style={{display:'flex',alignItems:'center',background:'linear-gradient(135deg,rgba(0,105,120,0.07),rgba(0,188,212,0.05))',border:'1px solid rgba(0,151,167,0.15)',borderRadius:10,padding:'7px 20px',marginBottom:idx<items.length-1?6:0,flexWrap:'wrap',gap:0}}>
-                  <div style={{display:'flex',alignItems:'center',gap:8,paddingRight:16,borderRight:'1px solid rgba(0,151,167,0.12)',marginRight:16}}>
-                    <div style={{width:28,height:28,borderRadius:7,background:'linear-gradient(135deg,#006978,#00bcd4)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:14}}>🏢</div>
+              <div style={{display:'flex',alignItems:'center',background:'linear-gradient(135deg,rgba(0,105,120,0.07),rgba(0,188,212,0.05))',border:'1px solid rgba(0,151,167,0.15)',borderRadius:10,padding:'7px 20px',gap:0,flexWrap:'wrap'}}>
+                <div style={{display:'flex',alignItems:'center',gap:8,paddingRight:16,borderRight:'1px solid rgba(0,151,167,0.12)',marginRight:16,flexShrink:0}}>
+                  <div style={{width:28,height:28,borderRadius:7,background:'linear-gradient(135deg,#006978,#00bcd4)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:14}}>🏢</div>
+                  <div>
+                    <p style={{fontSize:8,color:T.textM,fontWeight:700,margin:0,textTransform:'uppercase',letterSpacing:0.4}}>Project Snapshot</p>
+                    <p style={{fontSize:12,fontWeight:900,color:T.navy,margin:0}}>{label}</p>
+                  </div>
+                </div>
+                {fields.map((d,j)=>(
+                  <div key={j} style={{display:'flex',alignItems:'center',gap:8,padding:'0 16px',borderRight:j<fields.length-1?'1px solid rgba(0,151,167,0.1)':'none',flexShrink:0}}>
+                    <div style={{width:24,height:24,borderRadius:6,background:`${d.color}15`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:12}}>{d.icon}</div>
                     <div>
-                      <p style={{fontSize:8,color:T.textM,fontWeight:700,margin:0,textTransform:'uppercase',letterSpacing:0.4}}>Project Snapshot</p>
-                      <p style={{fontSize:12,fontWeight:900,color:T.navy,margin:0}}>{m.label}</p>
+                      <p style={{fontSize:8,color:T.textM,fontWeight:700,margin:0,textTransform:'uppercase',letterSpacing:0.3}}>{d.label}</p>
+                      <p style={{fontSize:12,fontWeight:800,color:d.color,margin:0}}>{d.val}</p>
                     </div>
                   </div>
-                  {/* Always show: Builtup + Saleable */}
-                  {[
-                    {icon:'🏗️',label:'Builtup Area',val:m.builtup,color:T.teal},
-                    {icon:'📐',label:'Saleable Area',val:m.saleableArea,color:T.amber},
-                    ...(isSingle?[
-                      {icon:'🚀',label:'Launch Date',val:m.launchDate,color:'#7c3aed'},
-                      {icon:'🏁',label:'Project HO Date',val:m.handoverDate,color:T.greenL},
-                    ]:[])
-                  ].map((d,j,arr)=>(
-                    <div key={j} style={{display:'flex',alignItems:'center',gap:10,padding:'0 16px',borderRight:j<arr.length-1?'1px solid rgba(0,151,167,0.1)':'none'}}>
-                      <div style={{width:26,height:26,borderRadius:6,background:`${d.color}15`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:13}}>{d.icon}</div>
-                      <div>
-                        <p style={{fontSize:8,color:T.textM,fontWeight:700,margin:0,textTransform:'uppercase',letterSpacing:0.3}}>{d.label}</p>
-                        <p style={{fontSize:12,fontWeight:800,color:d.color,margin:0}}>{d.val}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           );
         })()}
