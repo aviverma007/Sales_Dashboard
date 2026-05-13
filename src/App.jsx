@@ -380,7 +380,7 @@ export default function App() {
     if(filters.company&&r.companyNorm!==filters.company)return false;
     if(filters.project){const projs=filters.project.split('||').filter(Boolean);if(projs.length&&!projs.includes(r.project))return false;}
     if(filters.year){const yrs=filters.year.split('||').filter(Boolean);if(yrs.length&&!yrs.includes(String(r.bookingYear)))return false;}
-    if(filters.month&&!matchMo(r.bookingMonth))return false;
+    if((filters.month||filters.quarter)&&!matchMo(r.bookingMonth))return false;
     if(filters.broker){const brks=filters.broker.split('||').filter(Boolean);if(brks.length&&!brks.includes(r.broker))return false;}
     if(filters.typology){const typos=filters.typology.split('||').filter(Boolean);if(typos.length&&!typos.includes(r.bhkFull))return false;}
     if(filters.fy){const fys=filters.fy.split('||').filter(Boolean);if(fys.length){const fy=r.bookingYear?(r.bookingMonth&&parseInt(r.bookingMonth.split('-')[1])>=4?`FY${r.bookingYear}-${String(r.bookingYear+1).slice(2)}`:`FY${r.bookingYear-1}-${String(r.bookingYear).slice(2)}`):null;if(!fys.includes(fy))return false;}}
@@ -388,7 +388,7 @@ export default function App() {
   });},[raw,filters,matchMo]);
   const pA=useMemo(()=>pF.filter(r=>r.status==='ACTIVE'),[pF]);
   const pC=useMemo(()=>pF.filter(r=>r.status==='CANCELLED'),[pF]);
-  const dF=useMemo(()=>{if(!raw?.dapp)return[];return raw.dapp.filter(r=>{if(filters.company&&r.companyNorm!==filters.company)return false;if(filters.project){const projs=filters.project.split('||').filter(Boolean);if(projs.length&&!projs.includes(r.project))return false;}if(filters.year){const yrs=filters.year.split('||').filter(Boolean);if(yrs.length&&!yrs.some(y=>r.billMonth?.startsWith(y)))return false;}if(filters.month&&!matchMo(r.billMonth))return false;return true;});},[raw,filters,matchMo]);
+  const dF=useMemo(()=>{if(!raw?.dapp)return[];return raw.dapp.filter(r=>{if(filters.company&&r.companyNorm!==filters.company)return false;if(filters.project){const projs=filters.project.split('||').filter(Boolean);if(projs.length&&!projs.includes(r.project))return false;}if(filters.year){const yrs=filters.year.split('||').filter(Boolean);if(yrs.length&&!yrs.some(y=>r.billMonth?.startsWith(y)))return false;}if((filters.month||filters.quarter)&&!matchMo(r.billMonth))return false;return true;});},[raw,filters,matchMo]);
   const iF=useMemo(()=>{if(!raw?.invr)return[];return raw.invr.filter(r=>{
     if(filters.company&&r.companyNorm!==filters.company)return false;
     if(filters.project){const projs=filters.project.split('||').filter(Boolean);if(projs.length&&!projs.includes(r.project))return false;}
