@@ -661,11 +661,11 @@ export default function App() {
                         <div style={{flex:1,display:'flex',flexDirection:'column',gap:5}}>
                           <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
                             <span style={{fontSize:9,color:T.textM,fontWeight:700,display:'flex',alignItems:'center',gap:4}}><span style={{width:7,height:7,borderRadius:2,background:T.teal,display:'inline-block'}}/>Sold</span>
-                            <span style={{fontSize:11,fontWeight:800,color:T.tealD}}>{fmt(soldArea)} sqft</span>
+                            <span style={{fontSize:9,fontWeight:800,color:T.tealD}}>{fmt(soldArea)} sqft</span>
                           </div>
                           <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
                             <span style={{fontSize:9,color:T.textM,fontWeight:700,display:'flex',alignItems:'center',gap:4}}><span style={{width:7,height:7,borderRadius:2,background:T.greenL,display:'inline-block'}}/>Avl</span>
-                            <span style={{fontSize:11,fontWeight:800,color:T.greenL}}>{fmt(availArea)} sqft</span>
+                            <span style={{fontSize:9,fontWeight:800,color:T.greenL}}>{fmt(availArea)} sqft</span>
                           </div>
                           <div style={{width:'100%',height:4,background:'rgba(0,100,140,0.08)',borderRadius:2,overflow:'hidden'}}>
                             <div style={{width:`${soldPct}%`,height:'100%',background:T.teal,borderRadius:2}}/>
