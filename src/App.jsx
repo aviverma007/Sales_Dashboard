@@ -1,4 +1,7 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import GridLayout from 'react-grid-layout';
+import 'react-grid-layout/css/styles.css';
+import 'react-resizable/css/styles.css';
 import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
@@ -102,6 +105,52 @@ const ChartControls=({mode,setMode,offset,setOffset,total,window:win=6})=>{
       </div>
       <button onClick={()=>setOffset(o=>Math.min(maxOffset,Math.min(o,maxOffset)+1))} disabled={displayOffset>=maxOffset} style={{width:24,height:24,borderRadius:'50%',border:'1px solid rgba(0,100,140,0.2)',background:'rgba(255,255,255,0.8)',cursor:displayOffset>=maxOffset?'default':'pointer',fontSize:14,color:displayOffset>=maxOffset?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>›</button>
       <span style={{fontSize:9,color:'#90a4ae',whiteSpace:'nowrap',fontWeight:600}}>{displayOffset+1}–{Math.min(displayOffset+win,total)} / {total}</span>
+    </div>
+  );
+};
+
+// ─── SECTION GRID (drag & resize within section, persisted) ─────────────────
+const SectionGrid = ({sectionKey, items, cols=12, rowH=36, margin=[10,10]}) => {
+  const storageKey = `swd_layout_${sectionKey}`;
+  const [layout, setLayout] = useState(() => {
+    try { const s = localStorage.getItem(storageKey); if(s) return JSON.parse(s); } catch{}
+    return items.map(it => it.defaultLayout);
+  });
+  const [containerW, setContainerW] = useState(0);
+  const ref = useRef(null);
+  useEffect(() => {
+    if(!ref.current) return;
+    const ro = new ResizeObserver(([e]) => setContainerW(e.contentRect.width));
+    ro.observe(ref.current);
+    return () => ro.disconnect();
+  }, []);
+  const saveLayout = (l) => {
+    setLayout(l);
+    try { localStorage.setItem(storageKey, JSON.stringify(l)); } catch{}
+  };
+  if(!containerW) return <div ref={ref} style={{minHeight:40}}/>;
+  return (
+    <div ref={ref} style={{position:'relative'}}>
+      <GridLayout
+        layout={layout} cols={cols} rowHeight={rowH} width={containerW}
+        margin={margin} containerPadding={[0,0]}
+        draggableHandle=".wdg-drag"
+        onLayoutChange={saveLayout}
+        resizeHandles={['e','w','se','sw']}
+        compactType="vertical"
+        preventCollision={false}
+      >
+        {items.map(it => (
+          <div key={it.key} style={{background:'rgba(255,255,255,0.88)',backdropFilter:'blur(20px)',borderRadius:14,boxShadow:'0 2px 16px rgba(0,60,100,0.08)',border:'1px solid rgba(0,151,167,0.1)',overflow:'hidden',position:'relative'}}>
+            <div className="wdg-drag" title="Drag to move" style={{position:'absolute',top:0,left:0,right:0,height:20,cursor:'grab',zIndex:10,display:'flex',alignItems:'center',justifyContent:'center'}}>
+              <div style={{width:28,height:3,borderRadius:2,background:'rgba(0,100,140,0.15)',marginTop:5}}/>
+            </div>
+            <div style={{height:'100%',paddingTop:2,overflow:'auto',boxSizing:'border-box'}}>
+              {it.content}
+            </div>
+          </div>
+        ))}
+      </GridLayout>
     </div>
   );
 };
