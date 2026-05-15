@@ -859,92 +859,144 @@ function AppInner() {
               </div>
               <div style={{flex:1,height:1,background:'rgba(0,151,167,0.15)',borderRadius:1}}/>
             </div>
-            {/* ROW 1: KPI CARDS — 2 Unit + 2 Area + 2 TSV + 1 AvgRate */}
-            <div style={{display:'grid',gridTemplateColumns:'repeat(7,1fr)',gap:10}}>
+            {/* ROW 1: KPI CARDS — Merged pairs with pie charts */}
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1fr 1fr',gap:10}}>
 
-              {/* CARD 1: Units Booked */}
+              {/* CARD A: Units — pie chart with booked+available */}
               <GC style={{padding:12}} cls="kc">
-                <SH title="Units Booked" compact/>
-                <div style={{textAlign:'center',padding:'4px 0'}}>
-                  <p style={{fontSize:28,fontWeight:900,color:T.teal,margin:'0 0 2px',letterSpacing:-1}}>{kpi.bookedUnits?.toLocaleString('en-IN')}</p>
-                  <p style={{fontSize:9,color:T.textM,fontWeight:600,margin:'0 0 6px'}}>of {kpi.totalUnits?.toLocaleString('en-IN')} total</p>
-                  <div style={{width:'100%',height:5,background:'rgba(0,100,140,0.08)',borderRadius:3,overflow:'hidden',marginBottom:6}}>
-                    <div style={{width:kpi.totalUnits>0?(kpi.bookedUnits/kpi.totalUnits*100)+'%':'0%',height:'100%',background:`linear-gradient(90deg,${T.teal},${T.tealL})`,borderRadius:3}}/>
+                <SH title="Total Units" compact/>
+                <div style={{display:'flex',alignItems:'center',gap:8}}>
+                  <div style={{width:80,height:80,flexShrink:0,position:'relative'}}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie data={[{name:'Booked',value:kpi.bookedUnits||0},{name:'Available',value:kpi.availableUnits||0}]}
+                          cx="50%" cy="50%" innerRadius={24} outerRadius={38} paddingAngle={3} dataKey="value" strokeWidth={1.5} stroke="rgba(255,255,255,0.9)" labelLine={false}>
+                          <Cell fill={T.teal}/><Cell fill={T.amber}/>
+                        </Pie>
+                        <Tooltip content={<CTip/>}/>
+                      </PieChart>
+                    </ResponsiveContainer>
+                    <div style={{position:'absolute',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',pointerEvents:'none'}}>
+                      <span style={{fontSize:10,fontWeight:900,color:T.tealD,lineHeight:1}}>{kpi.totalUnits>0?Math.round((kpi.bookedUnits/kpi.totalUnits)*100):0}%</span>
+                      <span style={{fontSize:6,fontWeight:700,color:T.textM}}>SOLD</span>
+                    </div>
                   </div>
-                  <Chip label="Sold" value={kpi.totalUnits>0?Math.round(kpi.bookedUnits/kpi.totalUnits*100)+'%':'0%'} color={T.teal} small/>
-                </div>
-                <div style={{position:'absolute',bottom:0,left:0,right:0,height:3,background:`linear-gradient(90deg,${T.teal},transparent)`,borderRadius:'0 0 14px 14px'}}/>
-              </GC>
-
-              {/* CARD 2: Units Available */}
-              <GC style={{padding:12}} cls="kc">
-                <SH title="Units Available" compact/>
-                <div style={{textAlign:'center',padding:'4px 0'}}>
-                  <p style={{fontSize:28,fontWeight:900,color:T.amber,margin:'0 0 2px',letterSpacing:-1}}>{kpi.availableUnits?.toLocaleString('en-IN')}</p>
-                  <p style={{fontSize:9,color:T.textM,fontWeight:600,margin:'0 0 6px'}}>of {kpi.totalUnits?.toLocaleString('en-IN')} total</p>
-                  <div style={{width:'100%',height:5,background:'rgba(0,100,140,0.08)',borderRadius:3,overflow:'hidden',marginBottom:6}}>
-                    <div style={{width:kpi.totalUnits>0?(kpi.availableUnits/kpi.totalUnits*100)+'%':'0%',height:'100%',background:`linear-gradient(90deg,${T.amber},#fbbf24)`,borderRadius:3}}/>
-                  </div>
-                  <Chip label="Avl" value={kpi.totalUnits>0?Math.round(kpi.availableUnits/kpi.totalUnits*100)+'%':'0%'} color={T.amber} small/>
-                </div>
-                <div style={{position:'absolute',bottom:0,left:0,right:0,height:3,background:`linear-gradient(90deg,${T.amber},transparent)`,borderRadius:'0 0 14px 14px'}}/>
-              </GC>
-
-              {/* CARD 3: Area Sold */}
-              <GC style={{padding:12}} cls="kc">
-                <SH title="Area Sold" compact/>
-                <div style={{textAlign:'center',padding:'4px 0'}}>
-                  <p style={{fontSize:22,fontWeight:900,color:T.teal,margin:'0 0 2px',letterSpacing:-0.5}}>{((kpiEx.bookedAreaSqft||0)/1000).toFixed(0)}K</p>
-                  <p style={{fontSize:9,color:T.textM,fontWeight:600,margin:'0 0 4px'}}>sq ft booked</p>
-                  <p style={{fontSize:10,fontWeight:700,color:T.textM,margin:'0 0 4px'}}>{((kpiEx.carpetAreaSqft||0)/1000).toFixed(0)}K carpet</p>
-                  <div style={{width:'100%',height:5,background:'rgba(0,100,140,0.08)',borderRadius:3,overflow:'hidden'}}>
-                    {(()=>{const tot=(kpiEx.bookedAreaSqft||0)+(kpiEx.availAreaSqft||0);return<div style={{width:tot>0?(kpiEx.bookedAreaSqft/tot*100)+'%':'0%',height:'100%',background:`linear-gradient(90deg,${T.teal},${T.tealL})`,borderRadius:3}}/>;})()}
+                  <div style={{flex:1,display:'flex',flexDirection:'column',gap:4}}>
+                    <div>
+                      <p style={{fontSize:7,color:T.textM,fontWeight:700,margin:'0 0 1px',textTransform:'uppercase'}}>Total</p>
+                      <p style={{fontSize:16,fontWeight:900,color:T.navy,margin:0,letterSpacing:-0.5}}>{kpi.totalUnits?.toLocaleString('en-IN')}</p>
+                    </div>
+                    <div style={{display:'flex',gap:6}}>
+                      <div style={{flex:1,background:`${T.teal}0d`,borderRadius:5,padding:'3px 5px'}}>
+                        <p style={{fontSize:7,color:T.textM,fontWeight:700,margin:'0 0 1px'}}>Booked</p>
+                        <p style={{fontSize:12,fontWeight:900,color:T.tealD,margin:0}}>{kpi.bookedUnits?.toLocaleString('en-IN')}</p>
+                      </div>
+                      <div style={{flex:1,background:`${T.amber}0d`,borderRadius:5,padding:'3px 5px'}}>
+                        <p style={{fontSize:7,color:T.textM,fontWeight:700,margin:'0 0 1px'}}>Avail</p>
+                        <p style={{fontSize:12,fontWeight:900,color:T.amber,margin:0}}>{kpi.availableUnits?.toLocaleString('en-IN')}</p>
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <div style={{position:'absolute',bottom:0,left:0,right:0,height:3,background:`linear-gradient(90deg,${T.teal},transparent)`,borderRadius:'0 0 14px 14px'}}/>
+                <div style={{position:'absolute',bottom:0,left:0,right:0,height:3,background:`linear-gradient(90deg,${T.teal},${T.amber})`,borderRadius:'0 0 14px 14px'}}/>
               </GC>
 
-              {/* CARD 4: Area Available */}
+              {/* CARD B: Area — pie chart with sold+available */}
               <GC style={{padding:12}} cls="kc">
-                <SH title="Area Available" compact/>
-                <div style={{textAlign:'center',padding:'4px 0'}}>
-                  <p style={{fontSize:22,fontWeight:900,color:T.amber,margin:'0 0 2px',letterSpacing:-0.5}}>{((kpiEx.availAreaSqft||0)/1000).toFixed(0)}K</p>
-                  <p style={{fontSize:9,color:T.textM,fontWeight:600,margin:'0 0 6px'}}>sq ft available</p>
-                  {(()=>{const tot=(kpiEx.bookedAreaSqft||0)+(kpiEx.availAreaSqft||0);const pct=tot>0?Math.round((kpiEx.availAreaSqft/tot)*100):0;return<Chip label="Avl" value={pct+'%'} color={T.amber} small/>;})()}
-                </div>
-                <div style={{position:'absolute',bottom:0,left:0,right:0,height:3,background:`linear-gradient(90deg,${T.amber},transparent)`,borderRadius:'0 0 14px 14px'}}/>
+                <SH title="Area (sq ft)" compact/>
+                {(()=>{
+                  const sold=kpiEx.bookedAreaSqft||0;
+                  const avail=kpiEx.availAreaSqft||0;
+                  const tot=sold+avail;
+                  const pct=tot>0?Math.round((sold/tot)*100):0;
+                  return(
+                    <div style={{display:'flex',alignItems:'center',gap:8}}>
+                      <div style={{width:80,height:80,flexShrink:0,position:'relative'}}>
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie data={[{name:'Sold',value:sold||0.01},{name:'Available',value:avail||0.01}]}
+                              cx="50%" cy="50%" innerRadius={24} outerRadius={38} paddingAngle={3} dataKey="value" strokeWidth={1.5} stroke="rgba(255,255,255,0.9)" labelLine={false}>
+                              <Cell fill={T.teal}/><Cell fill={T.amber}/>
+                            </Pie>
+                            <Tooltip content={<CTip fmt={v=>(v/1000).toFixed(0)+'K sqft'}/>}/>
+                          </PieChart>
+                        </ResponsiveContainer>
+                        <div style={{position:'absolute',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',pointerEvents:'none'}}>
+                          <span style={{fontSize:10,fontWeight:900,color:T.tealD,lineHeight:1}}>{pct}%</span>
+                          <span style={{fontSize:6,fontWeight:700,color:T.textM}}>SOLD</span>
+                        </div>
+                      </div>
+                      <div style={{flex:1,display:'flex',flexDirection:'column',gap:4}}>
+                        <div>
+                          <p style={{fontSize:7,color:T.textM,fontWeight:700,margin:'0 0 1px',textTransform:'uppercase'}}>Total</p>
+                          <p style={{fontSize:14,fontWeight:900,color:T.navy,margin:0}}>{(tot/1000).toFixed(0)}K</p>
+                          <p style={{fontSize:7,color:T.textM,margin:0}}>Carpet: {(kpiEx.carpetAreaSqft/1000).toFixed(0)}K</p>
+                        </div>
+                        <div style={{display:'flex',gap:6}}>
+                          <div style={{flex:1,background:`${T.teal}0d`,borderRadius:5,padding:'3px 5px'}}>
+                            <p style={{fontSize:7,color:T.textM,fontWeight:700,margin:'0 0 1px'}}>Sold</p>
+                            <p style={{fontSize:11,fontWeight:900,color:T.tealD,margin:0}}>{(sold/1000).toFixed(0)}K</p>
+                          </div>
+                          <div style={{flex:1,background:`${T.amber}0d`,borderRadius:5,padding:'3px 5px'}}>
+                            <p style={{fontSize:7,color:T.textM,fontWeight:700,margin:'0 0 1px'}}>Avl</p>
+                            <p style={{fontSize:11,fontWeight:900,color:T.amber,margin:0}}>{(avail/1000).toFixed(0)}K</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+                <div style={{position:'absolute',bottom:0,left:0,right:0,height:3,background:`linear-gradient(90deg,${T.teal},${T.amber})`,borderRadius:'0 0 14px 14px'}}/>
               </GC>
 
-              {/* CARD 5: TSV (Sales BSP) */}
+              {/* CARD C: TSV — BSP + TCV pie */}
               <GC style={{padding:12}} cls="kc">
-                <SH title="Total Sales (BSP)" compact/>
-                <div style={{textAlign:'center',padding:'4px 0'}}>
-                  <p style={{fontSize:20,fontWeight:900,color:T.teal,margin:'0 0 2px',letterSpacing:-0.5}}>₹{((kpiEx.totalBSPCr||0)/1000).toFixed(1)}K Cr</p>
-                  <p style={{fontSize:9,color:T.textM,fontWeight:600,margin:'0 0 4px'}}>Net BSP · {kpi.bookedUnits} Active</p>
-                  <p style={{fontSize:10,fontWeight:700,color:T.red,margin:0}}>-₹{kpiEx.cancelledBSPCr||0} Cr cancelled</p>
-                </div>
-                <div style={{position:'absolute',bottom:0,left:0,right:0,height:3,background:`linear-gradient(90deg,${T.teal},transparent)`,borderRadius:'0 0 14px 14px'}}/>
+                <SH title="Total Sales Value" compact/>
+                {(()=>{
+                  const bsp=kpiEx.totalBSPCr||0;
+                  const tax=(kpiEx.totalTCVCr||0)-bsp;
+                  return(
+                    <div style={{display:'flex',alignItems:'center',gap:8}}>
+                      <div style={{width:80,height:80,flexShrink:0,position:'relative'}}>
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie data={[{name:'BSP',value:bsp||0.01},{name:'Tax/Charges',value:tax||0.01}]}
+                              cx="50%" cy="50%" innerRadius={24} outerRadius={38} paddingAngle={3} dataKey="value" strokeWidth={1.5} stroke="rgba(255,255,255,0.9)" labelLine={false}>
+                              <Cell fill={T.teal}/><Cell fill={'#7c3aed'}/>
+                            </Pie>
+                            <Tooltip content={<CTip fmt={v=>'₹'+v.toFixed(1)+' Cr'}/>}/>
+                          </PieChart>
+                        </ResponsiveContainer>
+                        <div style={{position:'absolute',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',pointerEvents:'none'}}>
+                          <span style={{fontSize:9,fontWeight:900,color:T.tealD,lineHeight:1}}>₹{((kpiEx.totalTCVCr||0)/1000).toFixed(1)}K</span>
+                          <span style={{fontSize:6,fontWeight:700,color:T.textM}}>TCV Cr</span>
+                        </div>
+                      </div>
+                      <div style={{flex:1,display:'flex',flexDirection:'column',gap:4}}>
+                        <div style={{background:`${T.teal}0d`,borderRadius:5,padding:'4px 6px'}}>
+                          <p style={{fontSize:7,color:T.textM,fontWeight:700,margin:'0 0 1px'}}>BSP (Net)</p>
+                          <p style={{fontSize:13,fontWeight:900,color:T.tealD,margin:0}}>₹{((kpiEx.totalBSPCr||0)/1000).toFixed(1)}K Cr</p>
+                          <p style={{fontSize:7,color:T.red,margin:0}}>-₹{(kpiEx.cancelledBSPCr||0).toFixed(0)}Cr cancelled</p>
+                        </div>
+                        <div style={{background:'rgba(124,58,237,0.06)',borderRadius:5,padding:'3px 6px'}}>
+                          <p style={{fontSize:7,color:T.textM,fontWeight:700,margin:'0 0 1px'}}>TCV incl. tax</p>
+                          <p style={{fontSize:11,fontWeight:900,color:'#7c3aed',margin:0}}>₹{((kpiEx.totalTCVCr||0)/1000).toFixed(1)}K Cr</p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+                <div style={{position:'absolute',bottom:0,left:0,right:0,height:3,background:`linear-gradient(90deg,${T.teal},#7c3aed)`,borderRadius:'0 0 14px 14px'}}/>
               </GC>
 
-              {/* CARD 6: TSV (TCV with Tax) */}
-              <GC style={{padding:12}} cls="kc">
-                <SH title="Total Sales (TCV)" compact/>
-                <div style={{textAlign:'center',padding:'4px 0'}}>
-                  <p style={{fontSize:20,fontWeight:900,color:'#7c3aed',margin:'0 0 2px',letterSpacing:-0.5}}>₹{((kpiEx.totalTCVCr||0)/1000).toFixed(1)}K Cr</p>
-                  <p style={{fontSize:9,color:T.textM,fontWeight:600,margin:'0 0 4px'}}>TCV incl. tax</p>
-                  {(()=>{const diff=((kpiEx.totalTCVCr||0)-(kpiEx.totalBSPCr||0)).toFixed(1);return<p style={{fontSize:10,fontWeight:700,color:T.textM,margin:0}}>+₹{diff} Cr tax/charges</p>;})()}
-                </div>
-                <div style={{position:'absolute',bottom:0,left:0,right:0,height:3,background:`linear-gradient(90deg,#7c3aed,transparent)`,borderRadius:'0 0 14px 14px'}}/>
-              </GC>
-
-              {/* CARD 7: Avg Price per Sqft */}
+              {/* CARD D: Avg Price per Sqft */}
               <GC style={{padding:12}} cls="kc">
                 <SH title="Avg ₹/sq ft" compact/>
                 <div style={{textAlign:'center',padding:'4px 0'}}>
-                  <p style={{fontSize:18,fontWeight:900,color:T.navy,margin:'0 0 2px',letterSpacing:-0.5}}>₹{(kpiEx.avgRatePerSqft||0).toLocaleString('en-IN')}</p>
-                  <p style={{fontSize:9,color:T.textM,fontWeight:600,margin:'0 0 6px'}}>per sq ft</p>
-                  <div style={{width:'100%',height:5,background:'rgba(0,100,140,0.08)',borderRadius:3,position:'relative',marginBottom:4}}>
-                    {(()=>{const mn=10000,mx=45000,avg=kpiEx.avgRatePerSqft||0;const pct=Math.round(((avg-mn)/(mx-mn))*100);return<div style={{position:'absolute',left:pct+'%',top:-2,width:9,height:9,borderRadius:'50%',background:T.navy,border:'2px solid #fff',boxShadow:'0 1px 4px rgba(0,0,0,0.2)'}}/>;})()}
+                  <p style={{fontSize:20,fontWeight:900,color:T.navy,margin:'0 0 2px',letterSpacing:-0.5}}>₹{(kpiEx.avgRatePerSqft||0).toLocaleString('en-IN')}</p>
+                  <p style={{fontSize:9,color:T.textM,fontWeight:600,margin:'0 0 8px'}}>per sq ft</p>
+                  <div style={{width:'100%',height:6,background:'rgba(0,100,140,0.08)',borderRadius:3,position:'relative',marginBottom:4}}>
+                    {(()=>{const mn=10000,mx=45000,avg=kpiEx.avgRatePerSqft||0;const pct=Math.min(100,Math.max(0,Math.round(((avg-mn)/(mx-mn))*100)));return<><div style={{position:'absolute',left:0,top:0,width:pct+'%',height:'100%',background:`linear-gradient(90deg,${T.greenL},${T.teal})`,borderRadius:3}}/><div style={{position:'absolute',left:pct+'%',top:-3,width:11,height:11,borderRadius:'50%',background:T.navy,border:'2px solid #fff',boxShadow:'0 1px 4px rgba(0,0,0,0.2)',transform:'translateX(-50%)'}}/></>;})()}
                   </div>
                   <div style={{display:'flex',justifyContent:'space-between'}}>
                     <span style={{fontSize:8,color:T.greenL,fontWeight:700}}>₹10K</span>
@@ -954,8 +1006,43 @@ function AppInner() {
                 <div style={{position:'absolute',bottom:0,left:0,right:0,height:3,background:`linear-gradient(90deg,${T.navy},transparent)`,borderRadius:'0 0 14px 14px'}}/>
               </GC>
 
-            </div>
+              {/* CARD E: Target Achievement (restored) */}
+              <GC style={{padding:12}} cls="kc">
+                <SH title="Target Achievement" sub="Demand Raised vs. Collected (DAPP)" compact/>
+                {(()=>{
+                  const tgtAch=kpi.dappDemand>0?Math.round((kpi.dappReceived/kpi.dappDemand)*100):0;
+                  const col=tgtAch>=100?T.teal:tgtAch>=75?T.greenL:tgtAch>=50?T.amber:T.red;
+                  return(
+                    <div style={{display:'flex',flexDirection:'column',gap:5}}>
+                      <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:12}}>
+                        <div style={{position:'relative',width:60,height:60}}>
+                          <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                              <Pie data={[{value:Math.min(tgtAch,100)},{value:Math.max(0,100-tgtAch)}]} cx="50%" cy="50%" innerRadius={20} outerRadius={28} startAngle={90} endAngle={-270} dataKey="value" strokeWidth={0}>
+                                <Cell fill={col}/><Cell fill="rgba(0,100,140,0.06)"/>
+                              </Pie>
+                            </PieChart>
+                          </ResponsiveContainer>
+                          <div style={{position:'absolute',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center'}}>
+                            <span style={{fontSize:10,fontWeight:900,color:col,lineHeight:1}}>{tgtAch}%</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div style={{display:'flex',flexDirection:'column',gap:3}}>
+                        {[{label:'Demand',val:fmtCr(kpi.dappDemand),color:T.amber,icon:'🔥'},{label:'Received',val:fmtCr(kpi.dappReceived),color:T.teal,icon:'✅'},{label:'Outstanding',val:fmtCr(kpi.dappOutstanding),color:T.red,icon:'⚠️'}].map((d,i)=>(
+                          <div key={i} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'2px 4px',background:`${d.color}08`,borderRadius:4}}>
+                            <span style={{fontSize:8,color:T.textM,fontWeight:700}}>{d.icon} {d.label}</span>
+                            <span style={{fontSize:9,fontWeight:800,color:d.color}}>{d.val}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
+                <div style={{position:'absolute',bottom:0,left:0,right:0,height:3,background:`linear-gradient(90deg,${T.teal},transparent)`,borderRadius:'0 0 14px 14px'}}/>
+              </GC>
 
+            </div>
 
             {/* ROW 2: SALES & PRICING TREND — Target vs Achieved */}
             <div style={{display:'flex',flexDirection:'column',gap:12}}>
