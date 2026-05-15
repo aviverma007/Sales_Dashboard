@@ -1125,7 +1125,6 @@ export default function App() {
                       return{label:d.label,booked:d.isFuture?null:booked,available:d.isFuture?null:avail,targetUnits:d.isFuture?(d.targetUnits||null):null,isFuture:d.isFuture};
                     });
                     const WIN=13;
-                    const WIN=13;
                     const _suInit=data.findIndex(d=>d.label===curLabel);
                     const _suDefault=_suInit>=1?_suInit-1:Math.max(0,data.length-WIN);
                     const suOffClamped=Math.min(Math.max(suOff===0?_suDefault:suOff,0),Math.max(0,data.length-WIN));
