@@ -433,10 +433,6 @@ export default function App() {
 }
 
 function AppInner() {
-  return <AppErrorBoundary><AppInner/></AppErrorBoundary>;
-}
-
-function AppInner() {
   const [authed, setAuthed] = useState(()=>sessionStorage.getItem('sd_auth')==='1');
   const [raw,setRaw]=useState(null);
   const [loading,setLoading]=useState(true);
