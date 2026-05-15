@@ -972,25 +972,29 @@ function AppInner() {
               {/* 2x2 chart grid */}
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
 
-                {/* Chart 1: Units — Booked vs Available (past → current → future) */}
+                {/* Chart 1: Units — Booked stacked + Available on top, running total */}
                 <GC style={{padding:16}}>
-                  <SH title="Units — Booked & Available" sub="Past actuals · Current month · Future targets (grey)"/>
+                  <SH title="Units — Booked & Available" sub="Booked (teal) · Remaining available (amber) · Future target (grey)"/>
                   {(()=>{
                     const curLabel=TODAY_LABEL;
-                    // Build combined timeline: past booked, current, future targets
                     const _totalInv=iF.length||3184;
-                    let _cum=0;
-                    const _cumMap={};
-                    monthlyWithTargets.forEach(d=>{_cum+=(d.bookedUnits||0);_cumMap[d.label]=_cum;});
-                    const data=monthlyWithTargets.map(d=>({
-                      label:d.label,
-                      booked:d.isFuture?null:(d.bookedUnits||0),
-                      targetUnits:d.isFuture?(d.targetUnits||0):null,
-                      available:d.isFuture?null:Math.max(0,_totalInv-(_cumMap[d.label]||0)),
-                      isFuture:d.isFuture,
-                      isCurrent:d.label===curLabel,
-                    }));
-                    // Show last 6 past + current + next 6 future, with slider
+                    // Running cumulative booked — each month shows booked THAT month (not cumulative)
+                    // available = total inventory - cumulative booked so far
+                    let _cumSoFar=0;
+                    const data=monthlyWithTargets.map(d=>{
+                      const monthBooked=d.bookedUnits||0;
+                      if(!d.isFuture) _cumSoFar+=monthBooked;
+                      const remaining=d.isFuture?null:Math.max(0,_totalInv-_cumSoFar);
+                      return{
+                        label:d.label,
+                        booked:d.isFuture?null:monthBooked,
+                        available:remaining,
+                        targetUnits:d.isFuture?(d.targetUnits||null):null,
+                        total:d.isFuture?null:_totalInv,
+                        isFuture:d.isFuture,
+                        isCurrent:d.label===curLabel,
+                      };
+                    });
                     const WIN=13;
                     const _uInit=data.findIndex(d=>d.label===curLabel);
                     const _uDefault=_uInit>=1?_uInit-1:Math.max(0,data.length-WIN);
@@ -998,36 +1002,57 @@ function AppInner() {
                     const slice=data.slice(uOffClamped,uOffClamped+WIN);
                     return(<>
                       <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
-                        <button onClick={()=>setUOff(Math.max(0,uOffClamped-1))} disabled={uOffClamped===0} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:uOff===0?'default':'pointer',fontSize:13,color:uOff===0?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>‹</button>
+                        <button onClick={()=>setUOff(Math.max(0,uOffClamped-1))} disabled={uOffClamped===0} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:uOffClamped===0?'default':'pointer',fontSize:13,color:uOffClamped===0?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>‹</button>
                         <div style={{flex:1,height:4,background:'rgba(0,151,167,0.1)',borderRadius:2,overflow:'hidden'}}>
-                          <div style={{width:(WIN/data.length*100)+'%',marginLeft:(uOff/data.length*100)+'%',height:'100%',background:'#0097a7',borderRadius:2}}/>
+                          <div style={{width:(WIN/data.length*100)+'%',marginLeft:(uOffClamped/data.length*100)+'%',height:'100%',background:'#0097a7',borderRadius:2}}/>
                         </div>
-                        <button onClick={()=>setUOff(Math.min(data.length-WIN,uOffClamped+1))} disabled={uOffClamped>=data.length-WIN} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:uOff>=data.length-WIN?'default':'pointer',fontSize:13,color:uOff>=data.length-WIN?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>›</button>
+                        <button onClick={()=>setUOff(Math.min(data.length-WIN,uOffClamped+1))} disabled={uOffClamped>=data.length-WIN} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:uOffClamped>=data.length-WIN?'default':'pointer',fontSize:13,color:uOffClamped>=data.length-WIN?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>›</button>
                       </div>
-                      <ResponsiveContainer width="100%" height={190}>
-                        <BarChart data={slice} margin={{top:20,right:8,bottom:18,left:0}} barSize={20} barGap={0}>
+                      <ResponsiveContainer width="100%" height={210}>
+                        <BarChart data={slice} margin={{top:28,right:8,bottom:18,left:0}} barSize={28} stackOffset="none">
                           <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.1)" vertical={false}/>
                           <XAxis dataKey="label" tick={({x,y,payload})=>{
                             const d=slice.find(s=>s.label===payload.value);
-                            return <text x={x} y={y+10} textAnchor="middle" fontSize={9} fill={d?.isCurrent?T.tealD:d?.isFuture?'#aaa':T.textM} fontWeight={d?.isCurrent?900:600}>{payload.value}</text>;
+                            return <text x={x} y={y+10} textAnchor="middle" fontSize={9} fill={d?.isCurrent?T.tealD:d?.isFuture?'#90a4ae':T.textM} fontWeight={d?.isCurrent?900:600}>{payload.value}</text>;
                           }} axisLine={false} tickLine={false}/>
-                          <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={28}/>
+                          <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={38}/>
                           <Tooltip content={({active,payload,label})=>{
                             if(!active||!payload?.length)return null;
                             const d=slice.find(s=>s.label===label);
-                            return(<div style={{background:'rgba(255,255,255,0.97)',border:'1px solid rgba(0,151,167,0.3)',borderRadius:10,padding:'8px 12px',fontSize:10}}>
-                              <p style={{color:T.tealD,fontWeight:700,margin:'0 0 4px'}}>{label}{d?.isFuture?' (Target)':d?.isCurrent?' (Current)':' (Actual)'}</p>
-                              {payload.map((p,i)=><div key={i} style={{color:T.navy,fontWeight:600}}>{p.name}: {p.value}</div>)}
+                            const booked=d?.booked||0;
+                            const avail=d?.available||0;
+                            const target=d?.targetUnits||0;
+                            return(<div style={{background:'rgba(255,255,255,0.97)',border:'1px solid rgba(0,151,167,0.3)',borderRadius:10,padding:'8px 12px',fontSize:10,fontFamily:'Inter,sans-serif'}}>
+                              <p style={{color:T.tealD,fontWeight:800,margin:'0 0 6px'}}>{label}{d?.isFuture?' · Target':d?.isCurrent?' · Current Month':' · Actual'}</p>
+                              {d?.isFuture?<div style={{color:'#607d8b',fontWeight:600}}>Target: {target} units</div>:<>
+                                <div style={{color:T.tealD,fontWeight:700}}>Booked this month: {booked}</div>
+                                <div style={{color:T.amber,fontWeight:700}}>Remaining available: {avail}</div>
+                                <div style={{color:T.navy,fontWeight:700,borderTop:'1px solid rgba(0,100,140,0.1)',marginTop:4,paddingTop:4}}>Total inventory: {d?.total}</div>
+                              </>}
                             </div>);
                           }}/>
                           <Legend wrapperStyle={{fontSize:9,fontWeight:700,color:T.text}} iconSize={8}/>
-                          {/* Actual booked bars (teal) */}
-                          <Bar dataKey="booked" name="Booked (Actual)" fill={T.teal} fillOpacity={0.9} radius={[3,3,0,0]}>
-                            {slice.map((d,i)=><Cell key={i} fill={d.isCurrent?T.tealD:T.teal} fillOpacity={d.isCurrent?1:0.8}/>)}
-                            <LabelList dataKey="booked" position="top" style={{fill:T.tealD,fontSize:8,fontWeight:700}} formatter={v=>v>0?v:''}/>
+                          {/* Booked bottom (teal) */}
+                          <Bar dataKey="booked" name="Booked" stackId="s" fill={T.teal} radius={[0,0,2,2]}>
+                            {slice.map((d,i)=><Cell key={i} fill={d.isCurrent?T.tealD:T.teal} fillOpacity={d.isCurrent?1:0.85}/>)}
+                            <LabelList dataKey="booked" position="insideTop" style={{fill:'#fff',fontSize:8,fontWeight:800}} formatter={v=>v>0?v:''}/>
                           </Bar>
-                          {/* Future target bars (grey) */}
-                          <Bar dataKey="targetUnits" name="Target (Future)" fill="#b0bec5" fillOpacity={0.7} radius={[3,3,0,0]}>
+                          {/* Available on top (amber) */}
+                          <Bar dataKey="available" name="Available" stackId="s" fill={T.amber} fillOpacity={0.45} radius={[3,3,0,0]}>
+                            <LabelList content={({x,y,width,height,index})=>{
+                              const d=slice[index];
+                              if(!d||d.isFuture) return null;
+                              const total=(d.booked||0)+(d.available||0);
+                              return(
+                                <g>
+                                  <text x={x+width/2} y={y-10} textAnchor="middle" fill={T.navy} fontSize={8} fontWeight={800}>{total}</text>
+                                  <text x={x+width/2} y={y-2} textAnchor="middle" fill={T.amber} fontSize={7} fontWeight={700}>{d.available}</text>
+                                </g>
+                              );
+                            }}/>
+                          </Bar>
+                          {/* Future target (grey) */}
+                          <Bar dataKey="targetUnits" name="Target" stackId="s" fill="#b0bec5" fillOpacity={0.7} radius={[3,3,0,0]}>
                             <LabelList dataKey="targetUnits" position="top" style={{fill:'#607d8b',fontSize:8,fontWeight:700}} formatter={v=>v>0?v:''}/>
                           </Bar>
                         </BarChart>
