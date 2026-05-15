@@ -676,6 +676,10 @@ function AppInner() {
         targetRate:target.targetRate||null,
         isFuture:!isActual,
         actualRate:(raw?.monthlyActualRates||{})[label]||null,
+        // For lines: show target on ALL months so line is continuous
+        targetUnitsLine:target.units||null,
+        targetTsvLine:target.tsvCr||null,
+        targetRateLine:target.targetRate||null,
       };
     });
   },[monthly,raw,pA]);
@@ -862,7 +866,7 @@ function AppInner() {
               <div style={{flex:1,height:1,background:'rgba(0,151,167,0.15)',borderRadius:1}}/>
             </div>
             {/* ROW 1: KPI CARDS — Merged pairs with pie charts */}
-            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1fr 1fr',gap:10}}>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:10}}>
 
               {/* CARD A: Units — pie chart with booked+available */}
               <GC style={{padding:12}} cls="kc">
@@ -991,59 +995,6 @@ function AppInner() {
                 <div style={{position:'absolute',bottom:0,left:0,right:0,height:3,background:`linear-gradient(90deg,${T.teal},#7c3aed)`,borderRadius:'0 0 14px 14px'}}/>
               </GC>
 
-              {/* CARD D: Avg Price per Sqft */}
-              <GC style={{padding:12}} cls="kc">
-                <SH title="Avg ₹/sq ft" compact/>
-                <div style={{textAlign:'center',padding:'4px 0'}}>
-                  <p style={{fontSize:20,fontWeight:900,color:T.navy,margin:'0 0 2px',letterSpacing:-0.5}}>₹{(kpiEx.avgRatePerSqft||0).toLocaleString('en-IN')}</p>
-                  <p style={{fontSize:9,color:T.textM,fontWeight:600,margin:'0 0 8px'}}>per sq ft</p>
-                  <div style={{width:'100%',height:6,background:'rgba(0,100,140,0.08)',borderRadius:3,position:'relative',marginBottom:4}}>
-                    {(()=>{const mn=10000,mx=45000,avg=kpiEx.avgRatePerSqft||0;const pct=Math.min(100,Math.max(0,Math.round(((avg-mn)/(mx-mn))*100)));return<><div style={{position:'absolute',left:0,top:0,width:pct+'%',height:'100%',background:`linear-gradient(90deg,${T.greenL},${T.teal})`,borderRadius:3}}/><div style={{position:'absolute',left:pct+'%',top:-3,width:11,height:11,borderRadius:'50%',background:T.navy,border:'2px solid #fff',boxShadow:'0 1px 4px rgba(0,0,0,0.2)',transform:'translateX(-50%)'}}/></>;})()}
-                  </div>
-                  <div style={{display:'flex',justifyContent:'space-between'}}>
-                    <span style={{fontSize:8,color:T.greenL,fontWeight:700}}>₹10K</span>
-                    <span style={{fontSize:8,color:T.red,fontWeight:700}}>₹45K</span>
-                  </div>
-                </div>
-                <div style={{position:'absolute',bottom:0,left:0,right:0,height:3,background:`linear-gradient(90deg,${T.navy},transparent)`,borderRadius:'0 0 14px 14px'}}/>
-              </GC>
-
-              {/* CARD E: Target Achievement (restored) */}
-              <GC style={{padding:12}} cls="kc">
-                <SH title="Target Achievement" sub="Demand Raised vs. Collected (DAPP)" compact/>
-                {(()=>{
-                  const tgtAch=kpi.dappDemand>0?Math.round((kpi.dappReceived/kpi.dappDemand)*100):0;
-                  const col=tgtAch>=100?T.teal:tgtAch>=75?T.greenL:tgtAch>=50?T.amber:T.red;
-                  return(
-                    <div style={{display:'flex',flexDirection:'column',gap:5}}>
-                      <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:12}}>
-                        <div style={{position:'relative',width:60,height:60}}>
-                          <ResponsiveContainer width="100%" height="100%">
-                            <PieChart>
-                              <Pie data={[{value:Math.min(tgtAch,100)},{value:Math.max(0,100-tgtAch)}]} cx="50%" cy="50%" innerRadius={20} outerRadius={28} startAngle={90} endAngle={-270} dataKey="value" strokeWidth={0}>
-                                <Cell fill={col}/><Cell fill="rgba(0,100,140,0.06)"/>
-                              </Pie>
-                            </PieChart>
-                          </ResponsiveContainer>
-                          <div style={{position:'absolute',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center'}}>
-                            <span style={{fontSize:10,fontWeight:900,color:col,lineHeight:1}}>{tgtAch}%</span>
-                          </div>
-                        </div>
-                      </div>
-                      <div style={{display:'flex',flexDirection:'column',gap:3}}>
-                        {[{label:'Demand',val:fmtCr(kpi.dappDemand),color:T.amber,icon:'🔥'},{label:'Received',val:fmtCr(kpi.dappReceived),color:T.teal,icon:'✅'},{label:'Outstanding',val:fmtCr(kpi.dappOutstanding),color:T.red,icon:'⚠️'}].map((d,i)=>(
-                          <div key={i} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'2px 4px',background:`${d.color}08`,borderRadius:4}}>
-                            <span style={{fontSize:8,color:T.textM,fontWeight:700}}>{d.icon} {d.label}</span>
-                            <span style={{fontSize:9,fontWeight:800,color:d.color}}>{d.val}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })()}
-                <div style={{position:'absolute',bottom:0,left:0,right:0,height:3,background:`linear-gradient(90deg,${T.teal},transparent)`,borderRadius:'0 0 14px 14px'}}/>
-              </GC>
-
             </div>
 
             {/* ROW 2: SALES & PRICING TREND — Target vs Achieved */}
@@ -1141,6 +1092,7 @@ function AppInner() {
                             <LabelList dataKey="targetUnits" position="top" style={{fill:'#607d8b',fontSize:9,fontWeight:800}} formatter={v=>v>0?v:''}/>
                           </Bar>
                           <Line type="monotone" dataKey="booked" stroke={T.tealD} strokeWidth={2} dot={{r:3,fill:T.tealD,stroke:'#fff',strokeWidth:1.5}} activeDot={{r:4}} legendType="none" name="_line" connectNulls={false}/>
+                          <Line type="monotone" dataKey="targetUnitsLine" stroke="#90a4ae" strokeWidth={2} strokeDasharray="5 3" dot={{r:3,fill:'#90a4ae',stroke:'#fff',strokeWidth:1.5}} activeDot={{r:4}} legendType="none" name="_tline" connectNulls={true}/>
                         </ComposedChart>
                       </ResponsiveContainer>
                     </>);
@@ -1184,6 +1136,7 @@ function AppInner() {
                             <LabelList dataKey="targetTsvCr" position="top" style={{fill:'#607d8b',fontSize:7,fontWeight:700}} formatter={v=>v>0?v+'Cr':''}/>
                           </Bar>
                           <Line type="monotone" dataKey="bspCr" stroke={T.tealD} strokeWidth={2} dot={{r:3,fill:T.tealD,stroke:'#fff',strokeWidth:1.5}} activeDot={{r:4}} legendType="none" name="_line" connectNulls={false}/>
+                          <Line type="monotone" dataKey="targetTsvLine" stroke="#90a4ae" strokeWidth={2} strokeDasharray="5 3" dot={{r:3,fill:'#90a4ae',stroke:'#fff',strokeWidth:1.5}} activeDot={{r:4}} legendType="none" name="_tline" connectNulls={true}/>
                         </ComposedChart>
                       </ResponsiveContainer>
                     </>);
@@ -1232,6 +1185,7 @@ function AppInner() {
                             <LabelList dataKey="targetRate" position="top" style={{fill:'#607d8b',fontSize:7,fontWeight:700}} formatter={v=>v?'₹'+v.toLocaleString('en-IN'):''}/>
                           </Bar>
                           <Line type="monotone" dataKey="actualRate" stroke={T.tealD} strokeWidth={2} dot={{r:3,fill:T.tealD,stroke:'#fff',strokeWidth:1.5}} activeDot={{r:4}} legendType="none" name="_line" connectNulls={false}/>
+                          <Line type="monotone" dataKey="targetRateLine" stroke="#90a4ae" strokeWidth={2} strokeDasharray="5 3" dot={{r:3,fill:'#90a4ae',stroke:'#fff',strokeWidth:1.5}} activeDot={{r:4}} legendType="none" name="_tline" connectNulls={true}/>
                         </ComposedChart>
                       </ResponsiveContainer>
                     </>);
@@ -1290,6 +1244,7 @@ function AppInner() {
                             <LabelList dataKey="targetUnits" position="top" style={{fill:'#607d8b',fontSize:7,fontWeight:700}} formatter={v=>v>0?v:''}/>
                           </Bar>
                           <Line type="monotone" dataKey="booked" stroke={T.tealD} strokeWidth={2} dot={{r:3,fill:T.tealD,stroke:'#fff',strokeWidth:1.5}} activeDot={{r:4}} legendType="none" name="_line" connectNulls={false}/>
+                          <Line type="monotone" dataKey="targetUnitsLine" stroke="#90a4ae" strokeWidth={2} strokeDasharray="5 3" dot={{r:3,fill:'#90a4ae',stroke:'#fff',strokeWidth:1.5}} activeDot={{r:4}} legendType="none" name="_tline" connectNulls={true}/>
                         </ComposedChart>
                       </ResponsiveContainer>
                     </>);
