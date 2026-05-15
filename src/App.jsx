@@ -1084,9 +1084,9 @@ function AppInner() {
                         isCurrent:d.label===curLabel,
                       };
                     });
-                    const WIN=8;
+                    const WIN=10;
                     const _uInit=data.findIndex(d=>d.label===curLabel);
-                    const _uDefault=_uInit>=1?_uInit-1:(_uInit===0?0:Math.max(0,data.length-WIN));
+                    const _uDefault=_uInit>=2?_uInit-2:(_uInit>=1?_uInit-1:Math.max(0,data.length-WIN));
                     const uOffClamped=Math.min(Math.max(uOff<0?_uDefault:uOff,0),Math.max(0,data.length-WIN));
                     const slice=data.slice(uOffClamped,uOffClamped+WIN);
                     return(<>
@@ -1153,9 +1153,9 @@ function AppInner() {
                   {(()=>{
                     const curLabel=TODAY_LABEL;
                     const data=monthlyWithTargets;
-                    const WIN=8;
+                    const WIN=10;
                     const _tsvInit=data.findIndex(d=>d.label===curLabel);
-                    const _tsvDefault=_tsvInit>=1?_tsvInit-1:(_tsvInit===0?0:Math.max(0,data.length-WIN));
+                    const _tsvDefault=_tsvInit>=2?_tsvInit-2:(_tsvInit>=1?_tsvInit-1:Math.max(0,data.length-WIN));
                     const tsvOffClamped=Math.min(Math.max(tsvOff<0?_tsvDefault:tsvOff,0),Math.max(0,data.length-WIN));
                     const slice=data.slice(tsvOffClamped,tsvOffClamped+WIN);
                     return(<>
@@ -1201,9 +1201,9 @@ function AppInner() {
                       actualRate:d.actualRate||null,
                     }));
                     const curLabel=TODAY_LABEL;
-                    const WIN=8;
+                    const WIN=10;
                     const _rInit=data.findIndex(d=>d.label===curLabel);
-                    const _rDefault=_rInit>=1?_rInit-1:(_rInit===0?0:Math.max(0,data.length-WIN));
+                    const _rDefault=_rInit>=2?_rInit-2:(_rInit>=1?_rInit-1:Math.max(0,data.length-WIN));
                     const rOffClamped=Math.min(Math.max(rOff<0?_rDefault:rOff,0),Math.max(0,data.length-WIN));
                     const slice=data.slice(rOffClamped,rOffClamped+WIN);
                     return(<>
@@ -1257,9 +1257,9 @@ function AppInner() {
                       const avail=d.isFuture?null:Math.max(0,totalInv-(cumMap[d.label]||0));
                       return{label:d.label,booked:d.isFuture?null:booked,available:avail,targetUnits:d.isFuture?(d.targetUnits||null):null,isFuture:d.isFuture};
                     });
-                    const WIN=8;
+                    const WIN=10;
                     const _suInit=data.findIndex(d=>d.label===curLabel);
-                    const _suDefault=_suInit>=1?_suInit-1:(_suInit===0?0:Math.max(0,data.length-WIN));
+                    const _suDefault=_suInit>=2?_suInit-2:(_suInit>=1?_suInit-1:Math.max(0,data.length-WIN));
                     const suOffClamped=Math.min(Math.max(suOff<0?_suDefault:suOff,0),Math.max(0,data.length-WIN));
                     const slice=data.slice(suOffClamped,suOffClamped+WIN);
                     return(<>
