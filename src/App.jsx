@@ -1009,7 +1009,7 @@ function AppInner() {
                         <button onClick={()=>setUOff(Math.min(data.length-WIN,uOffClamped+1))} disabled={uOffClamped>=data.length-WIN} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:uOffClamped>=data.length-WIN?'default':'pointer',fontSize:13,color:uOffClamped>=data.length-WIN?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>›</button>
                       </div>
                       <ResponsiveContainer width="100%" height={210}>
-                        <BarChart data={slice} margin={{top:28,right:8,bottom:18,left:0}} barSize={28} stackOffset="none">
+                        <BarChart data={slice} margin={{top:28,right:8,bottom:18,left:0}} barCategoryGap="35%">
                           <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.1)" vertical={false}/>
                           <XAxis dataKey="label" tick={({x,y,payload})=>{
                             const d=slice.find(s=>s.label===payload.value);
@@ -1032,28 +1032,24 @@ function AppInner() {
                             </div>);
                           }}/>
                           <Legend wrapperStyle={{fontSize:9,fontWeight:700,color:T.text}} iconSize={8}/>
-                          {/* Booked bottom (teal) */}
-                          <Bar dataKey="booked" name="Booked" stackId="s" fill={T.teal} radius={[0,0,2,2]}>
+                          {/* Booked bar (teal) - full height */}
+                          <Bar dataKey="booked" name="Booked" fill={T.teal} radius={[3,3,0,0]} barSize={28}>
                             {slice.map((d,i)=><Cell key={i} fill={d.isCurrent?T.tealD:T.teal} fillOpacity={d.isCurrent?1:0.85}/>)}
-                            <LabelList dataKey="booked" position="insideTop" style={{fill:'#fff',fontSize:8,fontWeight:800}} formatter={v=>v>0?v:''}/>
-                          </Bar>
-                          {/* Available on top (amber) */}
-                          <Bar dataKey="available" name="Available" stackId="s" fill={T.amber} fillOpacity={0.45} radius={[3,3,0,0]}>
                             <LabelList content={({x,y,width,height,index})=>{
                               const d=slice[index];
                               if(!d||d.isFuture) return null;
-                              const total=(d.booked||0)+(d.available||0);
                               return(
                                 <g>
-                                  <text x={x+width/2} y={y-10} textAnchor="middle" fill={T.navy} fontSize={8} fontWeight={800}>{total}</text>
-                                  <text x={x+width/2} y={y-2} textAnchor="middle" fill={T.amber} fontSize={7} fontWeight={700}>{d.available}</text>
+                                  <text x={x+width/2} y={y-14} textAnchor="middle" fill={T.textM} fontSize={8} fontWeight={700}>Total:{d.total}</text>
+                                  <text x={x+width/2} y={y-4} textAnchor="middle" fill={T.amber} fontSize={8} fontWeight={800}>Avl:{d.available}</text>
+                                  <text x={x+width/2} y={y+12} textAnchor="middle" fill='#fff' fontSize={9} fontWeight={900}>{d.booked}</text>
                                 </g>
                               );
                             }}/>
                           </Bar>
                           {/* Future target (grey) */}
-                          <Bar dataKey="targetUnits" name="Target" stackId="s" fill="#b0bec5" fillOpacity={0.7} radius={[3,3,0,0]}>
-                            <LabelList dataKey="targetUnits" position="top" style={{fill:'#607d8b',fontSize:8,fontWeight:700}} formatter={v=>v>0?v:''}/>
+                          <Bar dataKey="targetUnits" name="Target" fill="#b0bec5" fillOpacity={0.7} radius={[3,3,0,0]} barSize={28}>
+                            <LabelList dataKey="targetUnits" position="top" style={{fill:'#607d8b',fontSize:9,fontWeight:800}} formatter={v=>v>0?v:''}/>
                           </Bar>
                         </BarChart>
                       </ResponsiveContainer>
@@ -1139,10 +1135,10 @@ function AppInner() {
                           <Legend wrapperStyle={{fontSize:9,fontWeight:700,color:T.text}} iconSize={8}/>
                           <Bar dataKey="actualRate" name="Actual Rate" fill={T.teal} radius={[3,3,0,0]}>
                             {slice.map((d,i)=><Cell key={i} fill={d.label===curLabel?T.tealD:T.teal} fillOpacity={d.label===curLabel?1:0.8}/>)}
-                            <LabelList dataKey="actualRate" position="top" style={{fill:T.tealD,fontSize:7,fontWeight:700}} formatter={v=>v?'₹'+Math.round(v/1000)+'K':''}/>
+                            <LabelList dataKey="actualRate" position="top" style={{fill:T.tealD,fontSize:7,fontWeight:700}} formatter={v=>v?'₹'+v.toLocaleString('en-IN'):''}/>
                           </Bar>
                           <Bar dataKey="targetRate" name="Target Rate" fill="#b0bec5" fillOpacity={0.7} radius={[3,3,0,0]}>
-                            <LabelList dataKey="targetRate" position="top" style={{fill:'#607d8b',fontSize:7,fontWeight:700}} formatter={v=>v?'₹'+Math.round(v/1000)+'K':''}/>
+                            <LabelList dataKey="targetRate" position="top" style={{fill:'#607d8b',fontSize:7,fontWeight:700}} formatter={v=>v?'₹'+v.toLocaleString('en-IN'):''}/>
                           </Bar>
                         </BarChart>
                       </ResponsiveContainer>
