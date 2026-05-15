@@ -431,11 +431,11 @@ export default function App() {
   // Sales & Pricing Trend chart offsets (must be at component level — hooks rules)
   const TODAY_LABEL=(()=>{const d=new Date();return d.toLocaleString('en-US',{month:'short'}).slice(0,3)+"'"+String(d.getFullYear()).slice(2);})();
   // Initialize offset so current month is bar #2 (index 1 in view), show 1 past + current + 11 future
-  const _initOff=(data,WIN=13)=>{const idx=data.findIndex(d=>d.label===TODAY_LABEL);return idx>=0?Math.max(0,idx-1):Math.max(0,data.length-WIN);};
-  const [uOff,setUOff]=useState(()=>_initOff([]));
-  const [tsvOff,setTsvOff]=useState(()=>_initOff([]));
-  const [rOff,setROff]=useState(()=>_initOff([]));
-  const [suOff,setSuOff]=useState(()=>_initOff([]));
+  const _initOff=(data,WIN=13)=>{const idx=data.findIndex(d=>d.label===TODAY_LABEL);return idx>=1?idx-1:Math.max(0,idx);};
+  const [uOff,setUOff]=useState(0);
+  const [tsvOff,setTsvOff]=useState(0);
+  const [rOff,setROff]=useState(0);
+  const [suOff,setSuOff]=useState(0);
   const [towerExpanded,setTowerExpanded]=useState(false);
   const [activeFilter,setActiveFilter]=useState(null);
   // Close filter dropdown on outside click
@@ -622,28 +622,31 @@ export default function App() {
     const targets=raw?.monthlyTargets||[];
     const actualMap={};
     monthly.forEach(m=>{actualMap[m.label]=m;});
-    // Build bookedUnits per month from pdrn
+    // Build bookedUnits per month from FILTERED pA (respects all filters)
     const unitMap={};
     const areaMap={};
-    (raw?.pdrn||[]).filter(r=>r.status==='ACTIVE'&&r.bookingMonth).forEach(r=>{
+    const bspMap={};
+    pA.filter(r=>r.bookingMonth).forEach(r=>{
       const lbl=fmtML(r.bookingMonth);
       unitMap[lbl]=(unitMap[lbl]||0)+1;
       areaMap[lbl]=(areaMap[lbl]||0)+(r.superArea||0);
+      bspMap[lbl]=(bspMap[lbl]||0)+(r.bsp||0);
     });
     // Build unified timeline: actual months + future target months
     const targetMap={};
     targets.forEach(t=>{targetMap[t.label]=t;});
-    // All labels from actual + target
-    const allLabels=[...new Set([...monthly.map(m=>m.label),...targets.map(t=>t.label)])];
-    // Sort by year/month
+    // All labels from actual pA months + target months
+    const actualLabels=Object.keys(unitMap);
+    const allLabels=[...new Set([...actualLabels,...targets.map(t=>t.label)])];
     const parseLabel=l=>{const m=l.match(/([A-Za-z]{3})'(\d{2})/);if(!m)return 0;const mon={Jan:1,Feb:2,Mar:3,Apr:4,May:5,Jun:6,Jul:7,Aug:8,Sep:9,Oct:10,Nov:11,Dec:12};return (2000+parseInt(m[2]))*100+(mon[m[1]]||0);};
     allLabels.sort((a,b)=>parseLabel(a)-parseLabel(b));
     return allLabels.map(label=>{
       const actual=actualMap[label]||{};
       const target=targetMap[label]||{};
+      const isActual=!!unitMap[label];
       return{
         label,
-        bspCr:actual.bspCr||null,
+        bspCr:isActual?(+(bspMap[label]/1e7).toFixed(1)):null,
         demCr:actual.demCr||null,
         recCr:actual.recCr||null,
         bookedUnits:unitMap[label]||null,
@@ -652,10 +655,10 @@ export default function App() {
         targetAreaSqft:target.areaSqft||null,
         targetTsvCr:target.tsvCr||null,
         targetRate:target.targetRate||null,
-        isFuture:!actualMap[label],
+        isFuture:!isActual,
       };
     });
-  },[monthly,raw]);
+  },[monthly,raw,pA]);
 
   const towerData=useMemo(()=>{
     if(!raw?.towerData) return [];
@@ -968,8 +971,8 @@ export default function App() {
                     // Show last 6 past + current + next 6 future, with slider
                     const WIN=13;
                     const _uInit=data.findIndex(d=>d.label===curLabel);
-                    const uOffReal= uOff===0&&_uInit>0?Math.max(0,_uInit-1):Math.min(uOff,Math.max(0,data.length-WIN));
-                    const uOffClamped=uOffReal;
+                    const _uDefault=_uInit>=1?_uInit-1:Math.max(0,data.length-WIN);
+                    const uOffClamped=Math.min(Math.max(uOff===0?_uDefault:uOff,0),Math.max(0,data.length-WIN));
                     const slice=data.slice(uOffClamped,uOffClamped+WIN);
                     return(<>
                       <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
@@ -1019,8 +1022,8 @@ export default function App() {
                     const data=monthlyWithTargets;
                     const WIN=13;
                     const _tsvInit=data.findIndex(d=>d.label===curLabel);
-                    const tsvOffReal=tsvOff===0&&_tsvInit>0?Math.max(0,_tsvInit-1):Math.min(tsvOff,Math.max(0,data.length-WIN));
-                    const tsvOffClamped=tsvOffReal;
+                    const _tsvDefault=_tsvInit>=1?_tsvInit-1:Math.max(0,data.length-WIN);
+                    const tsvOffClamped=Math.min(Math.max(tsvOff===0?_tsvDefault:tsvOff,0),Math.max(0,data.length-WIN));
                     const slice=data.slice(tsvOffClamped,tsvOffClamped+WIN);
                     return(<>
                       <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
@@ -1073,8 +1076,8 @@ export default function App() {
                     const curLabel=TODAY_LABEL;
                     const WIN=13;
                     const _rInit=data.findIndex(d=>d.label===curLabel);
-                    const rOffReal=rOff===0&&_rInit>0?Math.max(0,_rInit-1):Math.min(rOff,Math.max(0,data.length-WIN));
-                    const rOffClamped=rOffReal;
+                    const _rDefault=_rInit>=1?_rInit-1:Math.max(0,data.length-WIN);
+                    const rOffClamped=Math.min(Math.max(rOff===0?_rDefault:rOff,0),Math.max(0,data.length-WIN));
                     const slice=data.slice(rOffClamped,rOffClamped+WIN);
                     return(<>
                       <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
@@ -1122,9 +1125,10 @@ export default function App() {
                       return{label:d.label,booked:d.isFuture?null:booked,available:d.isFuture?null:avail,targetUnits:d.isFuture?(d.targetUnits||null):null,isFuture:d.isFuture};
                     });
                     const WIN=13;
-                    const baseOffset=Math.max(0,data.findIndex(d=>d.label===curLabel)-5);
-                    const suOffClamped=Math.min(suOff,Math.max(0,data.length-WIN));
-                    const slice=data.slice(suOffClamped,suOffClamped+WIN);
+                    const WIN=13;
+                    const _suInit=data.findIndex(d=>d.label===curLabel);
+                    const _suDefault=_suInit>=1?_suInit-1:Math.max(0,data.length-WIN);
+                    const suOffClamped=Math.min(Math.max(suOff===0?_suDefault:suOff,0),Math.max(0,data.length-WIN));
                     return(<>
                       <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
                         <button onClick={()=>setSuOff(Math.max(0,suOffClamped-1))} disabled={suOffClamped===0} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:suOffClamped===0?'default':'pointer',fontSize:13,color:suOffClamped===0?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>‹</button>
