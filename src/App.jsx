@@ -85,9 +85,6 @@ const toQuarterly=(data,labelKey='label')=>{
 
 const ChartControls=({mode,setMode,offset,setOffset,total,window:win=6})=>{
   const maxOffset=Math.max(0,total-win);
-  // Clamp to end on first render (9999 sentinel = start at latest)
-  const clampedOffset=Math.min(offset,maxOffset);
-  if(offset!==clampedOffset&&offset===9999){setOffset(maxOffset);}
   const displayOffset=Math.min(offset,maxOffset);
   return(
     <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:8}}>
