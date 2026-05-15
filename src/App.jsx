@@ -536,7 +536,29 @@ export default function App() {
       return{month:m,label:fmtML(m),booked,cancelled,cumBooked,remaining,totalInv};
     });
   },[pA,pC,raw,iF]);
-  const kpiEx=useMemo(()=>raw?.kpiExtra||{},[raw]);
+  const kpiEx=useMemo(()=>{
+    // Compute from filtered data so it responds to all filters
+    const bookedAreaSqft = pA.reduce((s,r)=>s+(r.superArea||0),0);
+    const carpetAreaSqft = pA.reduce((s,r)=>s+(r.carpet||0),0);
+    const availAreaSqft  = iF.filter(r=>r.status==='Available').reduce((s,r)=>s+(r.superArea||r.superBuiltupArea||0),0);
+    const totalBSPCr     = +(pA.reduce((s,r)=>s+(r.bsp||0),0)/1e7).toFixed(1);
+    const totalTCVCr     = +(pA.reduce((s,r)=>s+(r.tcv||0),0)/1e7).toFixed(1);
+    const cancelledBSPCr = +(pC.reduce((s,r)=>s+(r.bsp||0),0)/1e7).toFixed(1);
+    const cancelledAreaSqft = pC.reduce((s,r)=>s+(r.superArea||0),0);
+    const avgRatePerSqft = bookedAreaSqft>0?Math.round(pA.reduce((s,r)=>s+(r.bsp||0),0)/bookedAreaSqft):0;
+    // Fall back to static JSON values for area if pdrn has no superArea
+    const base = raw?.kpiExtra||{};
+    return {
+      bookedAreaSqft:  bookedAreaSqft>0?bookedAreaSqft:base.bookedAreaSqft||0,
+      carpetAreaSqft:  carpetAreaSqft>0?carpetAreaSqft:base.carpetAreaSqft||0,
+      availAreaSqft:   availAreaSqft>0?availAreaSqft:base.availAreaSqft||0,
+      totalBSPCr:      totalBSPCr>0?totalBSPCr:base.totalBSPCr||0,
+      totalTCVCr:      totalTCVCr>0?totalTCVCr:base.totalTCVCr||0,
+      cancelledBSPCr:  cancelledBSPCr>0?cancelledBSPCr:base.cancelledBSPCr||0,
+      cancelledAreaSqft: cancelledAreaSqft>0?cancelledAreaSqft:base.cancelledAreaSqft||0,
+      avgRatePerSqft:  avgRatePerSqft>0?avgRatePerSqft:base.avgRatePerSqft||0,
+    };
+  },[pA,pC,iF,raw]);
   const salesVsRefund=useMemo(()=>{
     if(!raw?.salesVsRefund) return [];
     if(!filters.project) return raw.salesVsRefund;
@@ -921,134 +943,215 @@ export default function App() {
               {/* 2x2 chart grid */}
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
 
-                {/* Chart 1: Target vs Achieved — Units */}
+                {/* Chart 1: Units — Booked vs Available (past → current → future) */}
                 <GC style={{padding:16}}>
-                  <SH title="Units — Target vs Achieved" sub="Monthly: Target units vs Booked units"/>
+                  <SH title="Units — Booked & Available" sub="Past actuals · Current month · Future targets (grey)"/>
                   {(()=>{
-                    const data=monthlyWithTargets.slice(-18);
-                    return(
-                      <ResponsiveContainer width="100%" height={200}>
-                        <BarChart data={data} margin={{top:8,right:8,bottom:18,left:0}} barGap={2}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.12)" vertical={false}/>
-                          <XAxis dataKey="label" tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} angle={-30} dy={8} interval="preserveStartEnd"/>
-                          <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={24}/>
-                          <Tooltip content={<CTip/>}/>
+                    const today=new Date();
+                    const curLabel=today.toLocaleString('en-US',{month:'short'}).slice(0,3)+"'"+String(today.getFullYear()).slice(2);
+                    // Build combined timeline: past booked, current, future targets
+                    const data=monthlyWithTargets.map(d=>({
+                      label:d.label,
+                      booked:   d.isFuture?null:d.bookedUnits,
+                      targetUnits: d.isFuture?(d.targetUnits||0):null,
+                      available: d.isFuture?null:(raw?.invr||[]).filter(r=>r.status==='Available').length,
+                      isFuture:d.isFuture,
+                      isCurrent:d.label===curLabel,
+                    }));
+                    // Show last 6 past + current + next 6 future, with slider
+                    const WIN=13;
+                    const baseOffset=Math.max(0,data.findIndex(d=>d.isCurrent)-5);
+                    const [uOff,setUOff]=React.useState(baseOffset);
+                    const slice=data.slice(uOff,uOff+WIN);
+                    return(<>
+                      <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
+                        <button onClick={()=>setUOff(o=>Math.max(0,o-1))} disabled={uOff===0} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:uOff===0?'default':'pointer',fontSize:13,color:uOff===0?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>‹</button>
+                        <div style={{flex:1,height:4,background:'rgba(0,151,167,0.1)',borderRadius:2,overflow:'hidden'}}>
+                          <div style={{width:(WIN/data.length*100)+'%',marginLeft:(uOff/data.length*100)+'%',height:'100%',background:'#0097a7',borderRadius:2}}/>
+                        </div>
+                        <button onClick={()=>setUOff(o=>Math.min(data.length-WIN,o+1))} disabled={uOff>=data.length-WIN} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:uOff>=data.length-WIN?'default':'pointer',fontSize:13,color:uOff>=data.length-WIN?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>›</button>
+                      </div>
+                      <ResponsiveContainer width="100%" height={190}>
+                        <BarChart data={slice} margin={{top:20,right:8,bottom:18,left:0}} barSize={20} barGap={0}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.1)" vertical={false}/>
+                          <XAxis dataKey="label" tick={({x,y,payload})=>{
+                            const d=slice.find(s=>s.label===payload.value);
+                            return <text x={x} y={y+10} textAnchor="middle" fontSize={9} fill={d?.isCurrent?T.tealD:d?.isFuture?'#aaa':T.textM} fontWeight={d?.isCurrent?900:600}>{payload.value}</text>;
+                          }} axisLine={false} tickLine={false}/>
+                          <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={28}/>
+                          <Tooltip content={({active,payload,label})=>{
+                            if(!active||!payload?.length)return null;
+                            const d=slice.find(s=>s.label===label);
+                            return(<div style={{background:'rgba(255,255,255,0.97)',border:'1px solid rgba(0,151,167,0.3)',borderRadius:10,padding:'8px 12px',fontSize:10}}>
+                              <p style={{color:T.tealD,fontWeight:700,margin:'0 0 4px'}}>{label}{d?.isFuture?' (Target)':d?.isCurrent?' (Current)':' (Actual)'}</p>
+                              {payload.map((p,i)=><div key={i} style={{color:T.navy,fontWeight:600}}>{p.name}: {p.value}</div>)}
+                            </div>);
+                          }}/>
                           <Legend wrapperStyle={{fontSize:9,fontWeight:700,color:T.text}} iconSize={8}/>
-                          <Bar dataKey="targetUnits" name="Target" fill={T.amber} fillOpacity={0.7} radius={[2,2,0,0]} barSize={10}>
-                            <LabelList dataKey="targetUnits" position="top" style={{fill:T.amber,fontSize:7,fontWeight:700}} formatter={v=>v>0?v:''}/>
+                          {/* Actual booked bars (teal) */}
+                          <Bar dataKey="booked" name="Booked (Actual)" fill={T.teal} fillOpacity={0.9} radius={[3,3,0,0]}>
+                            {slice.map((d,i)=><Cell key={i} fill={d.isCurrent?T.tealD:T.teal} fillOpacity={d.isCurrent?1:0.8}/>)}
+                            <LabelList dataKey="booked" position="top" style={{fill:T.tealD,fontSize:8,fontWeight:700}} formatter={v=>v>0?v:''}/>
                           </Bar>
-                          <Bar dataKey="bookedUnits" name="Achieved" fill={T.teal} fillOpacity={0.9} radius={[2,2,0,0]} barSize={10}>
-                            <LabelList dataKey="bookedUnits" position="top" style={{fill:T.tealD,fontSize:7,fontWeight:700}} formatter={v=>v>0?v:''}/>
+                          {/* Future target bars (grey) */}
+                          <Bar dataKey="targetUnits" name="Target (Future)" fill="#b0bec5" fillOpacity={0.7} radius={[3,3,0,0]}>
+                            <LabelList dataKey="targetUnits" position="top" style={{fill:'#607d8b',fontSize:8,fontWeight:700}} formatter={v=>v>0?v:''}/>
                           </Bar>
                         </BarChart>
                       </ResponsiveContainer>
-                    );
+                    </>);
                   })()}
                 </GC>
 
-                {/* Chart 2: Units Available vs Sold */}
+                {/* Chart 2: TSV — Target vs Achieved with past/future */}
                 <GC style={{padding:16}}>
-                  <SH title="Units — Sold vs Available" sub="Cumulative sold units vs inventory available"/>
+                  <SH title="TSV — Target vs Achieved" sub="Monthly ₹ Cr: actual sales · future target (grey)"/>
                   {(()=>{
-                    const soldTot=kpi.bookedUnits||0;
-                    const availTot=kpi.availableUnits||0;
-                    const pieData=[{name:'Sold',value:soldTot},{name:'Available',value:availTot}];
-                    const byProjData=byProj.map(r=>({name:r.name?.split(' ').pop(),sold:r.units,bsp:r.bspCr}));
-                    return(
-                      <div style={{display:'flex',gap:12,alignItems:'center'}}>
-                        <div style={{width:120,height:120,flexShrink:0,position:'relative'}}>
-                          <ResponsiveContainer width="100%" height="100%">
-                            <PieChart>
-                              <Pie data={pieData} cx="50%" cy="50%" innerRadius={34} outerRadius={54} paddingAngle={3} dataKey="value" strokeWidth={2} stroke="rgba(255,255,255,0.9)" labelLine={false}>
-                                <Cell fill={T.teal}/><Cell fill={T.amber}/>
-                              </Pie>
-                              <Tooltip content={<CTip/>}/>
-                            </PieChart>
-                          </ResponsiveContainer>
-                          <div style={{position:'absolute',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',pointerEvents:'none'}}>
-                            <span style={{fontSize:12,fontWeight:900,color:T.tealD}}>{kpi.totalUnits>0?Math.round((soldTot/kpi.totalUnits)*100):0}%</span>
-                            <span style={{fontSize:7,color:T.textM,fontWeight:700}}>SOLD</span>
-                          </div>
+                    const today=new Date();
+                    const curLabel=today.toLocaleString('en-US',{month:'short'}).slice(0,3)+"'"+String(today.getFullYear()).slice(2);
+                    const data=monthlyWithTargets;
+                    const WIN=13;
+                    const baseOffset=Math.max(0,data.findIndex(d=>d.label===curLabel)-5);
+                    const [tsvOff,setTsvOff]=React.useState(baseOffset);
+                    const slice=data.slice(tsvOff,tsvOff+WIN);
+                    return(<>
+                      <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
+                        <button onClick={()=>setTsvOff(o=>Math.max(0,o-1))} disabled={tsvOff===0} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:tsvOff===0?'default':'pointer',fontSize:13,color:tsvOff===0?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>‹</button>
+                        <div style={{flex:1,height:4,background:'rgba(0,151,167,0.1)',borderRadius:2,overflow:'hidden'}}>
+                          <div style={{width:(WIN/data.length*100)+'%',marginLeft:(tsvOff/data.length*100)+'%',height:'100%',background:'#0097a7',borderRadius:2}}/>
                         </div>
-                        <div style={{flex:1,display:'flex',flexDirection:'column',gap:8}}>
-                          {[{label:'Sold',val:soldTot,color:T.teal},{label:'Available',val:availTot,color:T.amber},{label:'Total',val:kpi.totalUnits,color:T.navy}].map((d,i)=>(
-                            <div key={i}>
-                              <div style={{display:'flex',justifyContent:'space-between',marginBottom:2}}>
-                                <span style={{fontSize:10,fontWeight:700,color:T.textM}}>{d.label}</span>
-                                <span style={{fontSize:11,fontWeight:900,color:d.color}}>{d.val?.toLocaleString('en-IN')}</span>
-                              </div>
-                              {i<2&&<div style={{width:'100%',height:4,background:'rgba(0,100,140,0.08)',borderRadius:2}}><div style={{width:kpi.totalUnits>0?(d.val/kpi.totalUnits*100)+'%':'0%',height:'100%',background:d.color,borderRadius:2}}/></div>}
-                            </div>
-                          ))}
-                        </div>
+                        <button onClick={()=>setTsvOff(o=>Math.min(data.length-WIN,o+1))} disabled={tsvOff>=data.length-WIN} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:tsvOff>=data.length-WIN?'default':'pointer',fontSize:13,color:tsvOff>=data.length-WIN?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>›</button>
                       </div>
-                    );
-                  })()}
-                </GC>
-
-                {/* Chart 3: Total Sales Value vs Target TSV */}
-                <GC style={{padding:16}}>
-                  <SH title="TSV — Target vs Achieved" sub="Monthly ₹ Cr: Target TSV vs Actual Sales BSP"/>
-                  {(()=>{
-                    const data=monthlyWithTargets.slice(-18);
-                    return(
-                      <ResponsiveContainer width="100%" height={200}>
-                        <BarChart data={data} margin={{top:8,right:8,bottom:18,left:0}} barGap={2}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.12)" vertical={false}/>
-                          <XAxis dataKey="label" tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} angle={-30} dy={8} interval="preserveStartEnd"/>
-                          <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={32} tickFormatter={v=>v+'Cr'}/>
+                      <ResponsiveContainer width="100%" height={190}>
+                        <BarChart data={slice} margin={{top:20,right:8,bottom:18,left:0}} barSize={20} barGap={0}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.1)" vertical={false}/>
+                          <XAxis dataKey="label" tick={({x,y,payload})=>{
+                            const d=slice.find(s=>s.label===payload.value);
+                            return <text x={x} y={y+10} textAnchor="middle" fontSize={9} fill={d?.label===curLabel?T.tealD:d?.isFuture?'#aaa':T.textM} fontWeight={d?.label===curLabel?900:600}>{payload.value}</text>;
+                          }} axisLine={false} tickLine={false}/>
+                          <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={36} tickFormatter={v=>v+'Cr'}/>
                           <Tooltip content={<CTip fmt={v=>v?'₹'+v+' Cr':'-'}/>}/>
                           <Legend wrapperStyle={{fontSize:9,fontWeight:700,color:T.text}} iconSize={8}/>
-                          <Bar dataKey="targetTsvCr" name="Target TSV" fill={T.amber} fillOpacity={0.7} radius={[2,2,0,0]} barSize={10}>
-                            <LabelList dataKey="targetTsvCr" position="top" style={{fill:T.amber,fontSize:7,fontWeight:700}} formatter={v=>v>0?v+'Cr':''}/>
-                          </Bar>
-                          <Bar dataKey="bspCr" name="Actual BSP" fill={T.teal} fillOpacity={0.9} radius={[2,2,0,0]} barSize={10}>
+                          <Bar dataKey="bspCr" name="Actual BSP" fill={T.teal} fillOpacity={0.9} radius={[3,3,0,0]}>
+                            {slice.map((d,i)=><Cell key={i} fill={d.label===curLabel?T.tealD:T.teal} fillOpacity={d.label===curLabel?1:0.8}/>)}
                             <LabelList dataKey="bspCr" position="top" style={{fill:T.tealD,fontSize:7,fontWeight:700}} formatter={v=>v>0?v+'Cr':''}/>
+                          </Bar>
+                          <Bar dataKey="targetTsvCr" name="Target TSV" fill="#b0bec5" fillOpacity={0.7} radius={[3,3,0,0]}>
+                            <LabelList dataKey="targetTsvCr" position="top" style={{fill:'#607d8b',fontSize:7,fontWeight:700}} formatter={v=>v>0?v+'Cr':''}/>
                           </Bar>
                         </BarChart>
                       </ResponsiveContainer>
-                    );
+                    </>);
                   })()}
                 </GC>
 
-                {/* Chart 4: Average Rate — Target vs Actual */}
+                {/* Chart 3: Avg Rate Target vs Actual */}
                 <GC style={{padding:16}}>
-                  <SH title="Avg Rate — Target vs Actual" sub="₹ per sq ft: target rate vs actual avg rate"/>
+                  <SH title="Avg Rate — Target vs Actual" sub="₹/sqft: target rate vs actual avg booking rate"/>
                   {(()=>{
-                    // Build monthly avg rate from actual data
                     const rateMap={};
-                    (raw?.pdrn||[]).filter(r=>r.status==='ACTIVE'&&r.bookingMonth&&r.bsp&&r.superArea).forEach(r=>{
+                    pA.filter(r=>r.bookingMonth).forEach(r=>{
                       const lbl=fmtML(r.bookingMonth);
                       if(!rateMap[lbl])rateMap[lbl]={bspSum:0,areaSum:0};
                       rateMap[lbl].bspSum+=(r.bsp||0);
                       rateMap[lbl].areaSum+=(r.superArea||0);
                     });
-                    const data=monthlyWithTargets.slice(-18).map(d=>({
+                    const data=monthlyWithTargets.map(d=>({
                       label:d.label,
+                      isFuture:d.isFuture,
                       targetRate:d.targetRate||null,
                       actualRate:rateMap[d.label]?.areaSum>0?Math.round(rateMap[d.label].bspSum/rateMap[d.label].areaSum):null,
                     }));
-                    return(
-                      <ResponsiveContainer width="100%" height={200}>
-                        <BarChart data={data} margin={{top:8,right:8,bottom:18,left:0}} barGap={2}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.12)" vertical={false}/>
-                          <XAxis dataKey="label" tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} angle={-30} dy={8} interval="preserveStartEnd"/>
+                    const today=new Date();
+                    const curLabel=today.toLocaleString('en-US',{month:'short'}).slice(0,3)+"'"+String(today.getFullYear()).slice(2);
+                    const WIN=13;
+                    const baseOffset=Math.max(0,data.findIndex(d=>d.label===curLabel)-5);
+                    const [rOff,setROff]=React.useState(baseOffset);
+                    const slice=data.slice(rOff,rOff+WIN);
+                    return(<>
+                      <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
+                        <button onClick={()=>setROff(o=>Math.max(0,o-1))} disabled={rOff===0} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:rOff===0?'default':'pointer',fontSize:13,color:rOff===0?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>‹</button>
+                        <div style={{flex:1,height:4,background:'rgba(0,151,167,0.1)',borderRadius:2,overflow:'hidden'}}>
+                          <div style={{width:(WIN/data.length*100)+'%',marginLeft:(rOff/data.length*100)+'%',height:'100%',background:'#0097a7',borderRadius:2}}/>
+                        </div>
+                        <button onClick={()=>setROff(o=>Math.min(data.length-WIN,o+1))} disabled={rOff>=data.length-WIN} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:rOff>=data.length-WIN?'default':'pointer',fontSize:13,color:rOff>=data.length-WIN?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>›</button>
+                      </div>
+                      <ResponsiveContainer width="100%" height={190}>
+                        <BarChart data={slice} margin={{top:20,right:8,bottom:18,left:0}} barSize={20} barGap={0}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.1)" vertical={false}/>
+                          <XAxis dataKey="label" tick={({x,y,payload})=>{
+                            const d=slice.find(s=>s.label===payload.value);
+                            return <text x={x} y={y+10} textAnchor="middle" fontSize={9} fill={d?.label===curLabel?T.tealD:d?.isFuture?'#aaa':T.textM} fontWeight={d?.label===curLabel?900:600}>{payload.value}</text>;
+                          }} axisLine={false} tickLine={false}/>
                           <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={40} tickFormatter={v=>'₹'+Math.round(v/1000)+'K'}/>
                           <Tooltip content={<CTip fmt={v=>v?'₹'+v.toLocaleString('en-IN')+'/sqft':'-'}/>}/>
                           <Legend wrapperStyle={{fontSize:9,fontWeight:700,color:T.text}} iconSize={8}/>
-                          <Bar dataKey="targetRate" name="Target Rate" fill={T.amber} fillOpacity={0.7} radius={[2,2,0,0]} barSize={10}>
-                            <LabelList dataKey="targetRate" position="top" style={{fill:T.amber,fontSize:7,fontWeight:700}} formatter={v=>v?'₹'+Math.round(v/1000)+'K':''}/>
-                          </Bar>
-                          <Bar dataKey="actualRate" name="Actual Rate" fill={T.teal} fillOpacity={0.9} radius={[2,2,0,0]} barSize={10}>
+                          <Bar dataKey="actualRate" name="Actual Rate" fill={T.teal} radius={[3,3,0,0]}>
+                            {slice.map((d,i)=><Cell key={i} fill={d.label===curLabel?T.tealD:T.teal} fillOpacity={d.label===curLabel?1:0.8}/>)}
                             <LabelList dataKey="actualRate" position="top" style={{fill:T.tealD,fontSize:7,fontWeight:700}} formatter={v=>v?'₹'+Math.round(v/1000)+'K':''}/>
+                          </Bar>
+                          <Bar dataKey="targetRate" name="Target Rate" fill="#b0bec5" fillOpacity={0.7} radius={[3,3,0,0]}>
+                            <LabelList dataKey="targetRate" position="top" style={{fill:'#607d8b',fontSize:7,fontWeight:700}} formatter={v=>v?'₹'+Math.round(v/1000)+'K':''}/>
                           </Bar>
                         </BarChart>
                       </ResponsiveContainer>
-                    );
+                    </>);
+                  })()}
+                </GC>
+
+                {/* Chart 4: Units Booked vs Available stacked (total avail on top, booked below) */}
+                <GC style={{padding:16}}>
+                  <SH title="Units — Sold + Available Stack" sub="Total available on top · Booked stacked below per month"/>
+                  {(()=>{
+                    const totalInv=iF.length||3184;
+                    const today=new Date();
+                    const curLabel=today.toLocaleString('en-US',{month:'short'}).slice(0,3)+"'"+String(today.getFullYear()).slice(2);
+                    const unitMap={};
+                    pA.filter(r=>r.bookingMonth).forEach(r=>{const l=fmtML(r.bookingMonth);unitMap[l]=(unitMap[l]||0)+1;});
+                    const data=monthlyWithTargets.map(d=>{
+                      const booked=unitMap[d.label]||0;
+                      const avail=d.isFuture?(d.targetUnits?totalInv-Object.values(unitMap).reduce((s,v)=>s+v,0):null):Math.max(0,totalInv-Object.values(unitMap).filter((_,i)=>i<=Object.keys(unitMap).indexOf(d.label)).reduce((s,v)=>s+v,0));
+                      return{label:d.label,booked:d.isFuture?null:booked,available:d.isFuture?null:avail,targetUnits:d.isFuture?(d.targetUnits||null):null,isFuture:d.isFuture};
+                    });
+                    const WIN=13;
+                    const baseOffset=Math.max(0,data.findIndex(d=>d.label===curLabel)-5);
+                    const [suOff,setSuOff]=React.useState(baseOffset);
+                    const slice=data.slice(suOff,suOff+WIN);
+                    return(<>
+                      <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
+                        <button onClick={()=>setSuOff(o=>Math.max(0,o-1))} disabled={suOff===0} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:suOff===0?'default':'pointer',fontSize:13,color:suOff===0?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>‹</button>
+                        <div style={{flex:1,height:4,background:'rgba(0,151,167,0.1)',borderRadius:2,overflow:'hidden'}}>
+                          <div style={{width:(WIN/data.length*100)+'%',marginLeft:(suOff/data.length*100)+'%',height:'100%',background:'#0097a7',borderRadius:2}}/>
+                        </div>
+                        <button onClick={()=>setSuOff(o=>Math.min(data.length-WIN,o+1))} disabled={suOff>=data.length-WIN} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:suOff>=data.length-WIN?'default':'pointer',fontSize:13,color:suOff>=data.length-WIN?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>›</button>
+                      </div>
+                      <ResponsiveContainer width="100%" height={190}>
+                        <BarChart data={slice} margin={{top:20,right:8,bottom:18,left:0}} barSize={24}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.1)" vertical={false}/>
+                          <XAxis dataKey="label" tick={({x,y,payload})=>{
+                            const d=slice.find(s=>s.label===payload.value);
+                            return <text x={x} y={y+10} textAnchor="middle" fontSize={9} fill={d?.label===curLabel?T.tealD:d?.isFuture?'#aaa':T.textM} fontWeight={d?.label===curLabel?900:600}>{payload.value}</text>;
+                          }} axisLine={false} tickLine={false}/>
+                          <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={32}/>
+                          <Tooltip content={<CTip/>}/>
+                          <Legend wrapperStyle={{fontSize:9,fontWeight:700,color:T.text}} iconSize={8}/>
+                          <Bar dataKey="booked" name="Booked" stackId="s" fill={T.teal} radius={[0,0,0,0]}>
+                            {slice.map((d,i)=><Cell key={i} fill={d.label===curLabel?T.tealD:T.teal} fillOpacity={d.label===curLabel?1:0.85}/>)}
+                          </Bar>
+                          <Bar dataKey="available" name="Available" stackId="s" fill={T.amber} fillOpacity={0.5} radius={[3,3,0,0]}>
+                            <LabelList dataKey="available" position="top" style={{fill:T.amber,fontSize:7,fontWeight:700}} formatter={v=>v>0?v:''}/>
+                          </Bar>
+                          <Bar dataKey="targetUnits" name="Future Target" fill="#b0bec5" fillOpacity={0.7} radius={[3,3,0,0]}>
+                            <LabelList dataKey="targetUnits" position="top" style={{fill:'#607d8b',fontSize:7,fontWeight:700}} formatter={v=>v>0?v:''}/>
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </>);
                   })()}
                 </GC>
 
               </div>
+
 
               {/* Area: Total Sold vs Available */}
               <GC style={{padding:16}}>
