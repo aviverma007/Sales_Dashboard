@@ -415,7 +415,7 @@ export default function App() {
   const [loading,setLoading]=useState(true);
   const [tab,setTab]=useState('overview'); // overview | collections | pipeline
 
-  const [filters,setFilters]=useState({company:'',project:'',year:'',month:'',quarter:'',broker:'',typology:'',fy:''});
+  const [filters,setFilters]=useState({company:'',project:'',month:'',quarter:'',broker:'',typology:'',fy:''});
   const sf=useCallback((k,v)=>setFilters(p=>({...p,[k]:v})),[]);
   // Chart controls (lifted to comply with React hooks rules)
   const [tMode,setTMode]=useState('monthly');
@@ -469,7 +469,7 @@ export default function App() {
   const pF=useMemo(()=>{if(!raw?.pdrn)return[];return raw.pdrn.filter(r=>{
     if(filters.company&&r.companyNorm!==filters.company)return false;
     if(filters.project){const projs=filters.project.split('||').filter(Boolean);if(projs.length&&!projs.includes(r.project))return false;}
-    if(filters.year){const yrs=filters.year.split('||').filter(Boolean);if(yrs.length&&!yrs.includes(String(r.bookingYear)))return false;}
+
     if((filters.month||filters.quarter)&&!matchMo(r.bookingMonth))return false;
     if(filters.broker){const brks=filters.broker.split('||').filter(Boolean);if(brks.length&&!brks.includes(r.broker))return false;}
     if(filters.typology){const typos=filters.typology.split('||').filter(Boolean);if(typos.length&&!typos.includes(r.bhkFull))return false;}
@@ -478,7 +478,7 @@ export default function App() {
   });},[raw,filters,matchMo]);
   const pA=useMemo(()=>pF.filter(r=>r.status==='ACTIVE'),[pF]);
   const pC=useMemo(()=>pF.filter(r=>r.status==='CANCELLED'),[pF]);
-  const dF=useMemo(()=>{if(!raw?.dapp)return[];return raw.dapp.filter(r=>{if(filters.company&&r.companyNorm!==filters.company)return false;if(filters.project){const projs=filters.project.split('||').filter(Boolean);if(projs.length&&!projs.includes(r.project))return false;}if(filters.year){const yrs=filters.year.split('||').filter(Boolean);if(yrs.length&&!yrs.some(y=>r.billMonth?.startsWith(y)))return false;}if((filters.month||filters.quarter)&&!matchMo(r.billMonth))return false;return true;});},[raw,filters,matchMo]);
+  const dF=useMemo(()=>{if(!raw?.dapp)return[];return raw.dapp.filter(r=>{if(filters.company&&r.companyNorm!==filters.company)return false;if(filters.project){const projs=filters.project.split('||').filter(Boolean);if(projs.length&&!projs.includes(r.project))return false;}if((filters.month||filters.quarter)&&!matchMo(r.billMonth))return false;return true;});},[raw,filters,matchMo]);
   const iF=useMemo(()=>{if(!raw?.invr)return[];return raw.invr.filter(r=>{
     if(filters.company&&r.companyNorm!==filters.company)return false;
     if(filters.project){const projs=filters.project.split('||').filter(Boolean);if(projs.length&&!projs.includes(r.project))return false;}
@@ -494,14 +494,24 @@ export default function App() {
     // All typologies across all projects
     return Object.values(projTypo).flat().filter((v,i,a)=>a.indexOf(v)===i).sort();
   },[raw,filters.project]);
-  const MONTHS_LIST=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  // FY quarters: FY2024-25 Q1, Q2, Q3, Q4
+  const MONTHS_LIST=useMemo(()=>{
+    // If quarter selected, show only months in that quarter; else all months
+    const qMonths={'Q1':['Apr','May','Jun'],'Q2':['Jul','Aug','Sep'],'Q3':['Oct','Nov','Dec'],'Q4':['Jan','Feb','Mar']};
+    if(filters.quarter){
+      const qs=filters.quarter.split('||').filter(Boolean);
+      const ms=new Set();
+      qs.forEach(q=>{const m=q.match(/Q(\d)$/);if(m)(qMonths['Q'+m[1]]||[]).forEach(x=>ms.add(x));});
+      return ms.size>0?[...ms]:['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    }
+    return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  },[filters.quarter]);
+
   const FY_QUARTERS=useMemo(()=>{
-    const fys=fo.financialYears||[];
+    const fys=filters.fy?filters.fy.split('||').filter(Boolean):(fo.financialYears||[]);
     const qs=[];
-    fys.forEach(fy=>{ ['Q1 (Apr-Jun)','Q2 (Jul-Sep)','Q3 (Oct-Dec)','Q4 (Jan-Mar)'].forEach(q=>qs.push(`${fy} ${q.split(' ')[0]}`)); });
+    fys.forEach(fy=>{ ['Q1 (Apr-Jun)','Q2 (Jul-Sep)','Q3 (Oct-Dec)','Q4 (Jan-Mar)'].forEach(q=>qs.push(fy+' '+q.split(' ')[0])); });
     return qs;
-  },[fo]);
+  },[fo,filters.fy]);
 
   const kpi=useMemo(()=>{const tS=pA.reduce((s,r)=>s+(r.bsp||0),0),tD=dF.reduce((s,r)=>s+(r.demand||0),0),tR=dF.reduce((s,r)=>s+(r.received||0),0),tO=dF.reduce((s,r)=>s+(r.outstanding||0),0);const ws={APPROVED:0,PENDING:0,REJECTED:0};wF.forEach(r=>{if(ws[r.status]!==undefined)ws[r.status]++;});return{totalUnits:iF.length,bookedUnits:iF.filter(r=>r.status==='Booked').length,availableUnits:iF.filter(r=>r.status==='Available').length,inProgressUnits:iF.filter(r=>r.status==='In Progress').length,totalSales:tS,dappDemand:tD,dappReceived:tR,dappOutstanding:tO,activeBookings:pA.length,cancelledBookings:pC.length,pipelineBookings:wF.filter(r=>r.status==='PENDING').length,wfApproved:ws.APPROVED,wfPending:ws.PENDING,wfRejected:ws.REJECTED};},[pA,pC,dF,iF,wF]);
 
@@ -573,6 +583,46 @@ export default function App() {
   const dappLast12=dappM.slice(-12);
 
   // Tower & area data from enriched JSON
+  // Merge actual monthly data with future targets (up to Mar 2027)
+  const monthlyWithTargets=useMemo(()=>{
+    const targets=raw?.monthlyTargets||[];
+    const actualMap={};
+    monthly.forEach(m=>{actualMap[m.label]=m;});
+    // Build bookedUnits per month from pdrn
+    const unitMap={};
+    const areaMap={};
+    (raw?.pdrn||[]).filter(r=>r.status==='ACTIVE'&&r.bookingMonth).forEach(r=>{
+      const lbl=fmtML(r.bookingMonth);
+      unitMap[lbl]=(unitMap[lbl]||0)+1;
+      areaMap[lbl]=(areaMap[lbl]||0)+(r.superArea||0);
+    });
+    // Build unified timeline: actual months + future target months
+    const targetMap={};
+    targets.forEach(t=>{targetMap[t.label]=t;});
+    // All labels from actual + target
+    const allLabels=[...new Set([...monthly.map(m=>m.label),...targets.map(t=>t.label)])];
+    // Sort by year/month
+    const parseLabel=l=>{const m=l.match(/([A-Za-z]{3})'(\d{2})/);if(!m)return 0;const mon={Jan:1,Feb:2,Mar:3,Apr:4,May:5,Jun:6,Jul:7,Aug:8,Sep:9,Oct:10,Nov:11,Dec:12};return (2000+parseInt(m[2]))*100+(mon[m[1]]||0);};
+    allLabels.sort((a,b)=>parseLabel(a)-parseLabel(b));
+    return allLabels.map(label=>{
+      const actual=actualMap[label]||{};
+      const target=targetMap[label]||{};
+      return{
+        label,
+        bspCr:actual.bspCr||null,
+        demCr:actual.demCr||null,
+        recCr:actual.recCr||null,
+        bookedUnits:unitMap[label]||null,
+        bookedAreaSqft:areaMap[label]||null,
+        targetUnits:target.units||null,
+        targetAreaSqft:target.areaSqft||null,
+        targetTsvCr:target.tsvCr||null,
+        targetRate:target.targetRate||null,
+        isFuture:!actualMap[label],
+      };
+    });
+  },[monthly,raw]);
+
   const towerData=useMemo(()=>{
     if(!raw?.towerData) return [];
     return raw.towerData.filter(r=>{
@@ -679,7 +729,6 @@ export default function App() {
         <div onClick={e=>e.stopPropagation()} style={{maxWidth:1440,margin:'0 auto',padding:'4px 24px 8px',display:'flex',alignItems:'flex-end',gap:10,flexWrap:'wrap'}}>
           <FSel label="Project"    options={availProj}                           value={filters.project}  onChange={v=>sf('project',v)}   multi={true} openId="project"    activeOpen={activeFilter} setActiveOpen={setActiveFilter}/>
           <FSel label="Fin. Year"  options={fo.financialYears||[]}               value={filters.fy}       onChange={v=>sf('fy',v)}         multi={true} openId="fy"         activeOpen={activeFilter} setActiveOpen={setActiveFilter}/>
-          <FSel label="Year"       options={(fo.years||[]).map(String)}           value={filters.year}     onChange={v=>sf('year',v)}       multi={true} openId="year"       activeOpen={activeFilter} setActiveOpen={setActiveFilter}/>
           <FSel label="Month"        options={MONTHS_LIST}                              value={filters.month}    onChange={v=>sf('month',v)}      multi={true} openId="month"      activeOpen={activeFilter} setActiveOpen={setActiveFilter}/>
           <FSel label="Quarter"       options={FY_QUARTERS}                              value={filters.quarter}  onChange={v=>sf('quarter',v)}    multi={true} openId="quarter"    activeOpen={activeFilter} setActiveOpen={setActiveFilter}/>
           <FSel label="CP"         options={availBrokers}                         value={filters.broker}   onChange={v=>sf('broker',v)}     multi={true} openId="cp"         activeOpen={activeFilter} setActiveOpen={setActiveFilter}/>
@@ -705,10 +754,11 @@ export default function App() {
           const m=isSingle?allMeta[0]:null;
           const label=isSingle?m.label:`${allMeta.length} Projects`;
           const fields=[
-            {icon:'🏗️',label:'Builtup Area',val:`${sumBuiltup} Acres`,color:T.teal},
+            {icon:'🌍',label:'Land Area',val:`${sumBuiltup} Acres`,color:T.teal},
+            {icon:'🏗️',label:'Builtup Area',val:isSingle&&m?m.builtupSqft:`${(parseFloat(sumBuiltup)*100000).toLocaleString('en-IN')} sq ft`,color:'#7c3aed'},
             {icon:'📐',label:'Saleable Area',val:`${sumSaleable} Lakh sq ft`,color:T.amber},
             ...(isSingle&&m?[
-              {icon:'🚀',label:'Launch Date',val:m.launchDate,color:'#7c3aed'},
+              {icon:'🚀',label:'Launch Date',val:m.launchDate,color:'#0097a7'},
               {icon:'🏁',label:'Project HO Date',val:m.handoverDate,color:T.greenL},
             ]:[]),
           ];
@@ -755,8 +805,8 @@ export default function App() {
               <div style={{flex:1,height:1,background:'rgba(0,151,167,0.15)',borderRadius:1}}/>
             </div>
 
-            {/* ROW 1: 7 KPI CARDS */}
-            <div style={{display:'grid',gridTemplateColumns:'2fr 1fr 1fr 1fr 2fr 1fr',gap:12}}>
+            {/* ROW 1: KPI CARDS */}
+            <div style={{display:'grid',gridTemplateColumns:'repeat(7,1fr)',gap:12}}>
 
               {/* Units Pie */}
               <GC style={{padding:14}} cls="kc">
@@ -966,11 +1016,11 @@ export default function App() {
               </GC>
             </div>
 
-            {/* ROW 2: MONTHLY TREND (wide) + SALES BY CHANNEL + BHK PIE */}
-            <div style={{display:'grid',gridTemplateColumns:'2fr 1fr 1fr',gap:12}}>
+            {/* ROW 2: SALES & PRICING TREND — Target vs Achieved */}
+            <div style={{display:'flex',flexDirection:'column',gap:12}}>
 
               {/* ── SECTION: Sales & Pricing Trend ── */}
-              <div style={{display:'flex',alignItems:'center',gap:12,gridColumn:'1/-1'}}>
+              <div style={{display:'flex',alignItems:'center',gap:12}}>
                 <div style={{background:'linear-gradient(135deg,#b45309,#f59e0b)',borderRadius:10,padding:'5px 18px',display:'flex',alignItems:'center',gap:8,boxShadow:'0 2px 10px rgba(245,158,11,0.3)'}}>
                   <span style={{fontSize:13}}>📈</span>
                   <span style={{fontSize:11,fontWeight:900,color:'#fff',textTransform:'uppercase',letterSpacing:1}}>Sales & Pricing Trend</span>
@@ -978,179 +1028,164 @@ export default function App() {
                 <div style={{flex:1,height:1,background:'rgba(245,158,11,0.15)',borderRadius:1}}/>
               </div>
 
-              <GC style={{padding:0,overflow:'hidden'}}>
-                <ChartCardTrend monthly={monthly} tMode={tMode} setTMode={setTMode} tOff={tOff} setTOff={setTOff} toQuarterly={toQuarterly} ChartControls={ChartControls} T={T} CTip={CTip} SH={SH}/>
-              </GC>
+              {/* 2x2 chart grid */}
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
 
-              <GC style={{padding:16}}>
-                <SH title="Sales by Channel" sub="Project-wise Units & BSP · CP vs Direct"/>
-                {(()=>{
-                  const SHORT={'Smartworld Sky Arc':'Sky Arc','SMARTWORLD THE EDITION':'Edition','Trump Residences Gurgaon':'Trump','Smartworld Le Courtyard':'Le Courtyard','Smartworld Suites':'Suites','Smartworld Residencies':'Residencies'};
-                  const pd=byProj.map(r=>({...r,label:SHORT[r.name]||r.name.split(' ').pop()}));
-                  const tot=pd.reduce((s,r)=>s+r.units,0);
-                  const totalCP=cpVsDirect.reduce((s,r)=>s+r.cp,0);
-                  const totalDirect=cpVsDirect.reduce((s,r)=>s+r.direct,0);
-                  const totalAll=totalCP+totalDirect;
-                  const cpPct=totalAll>0?Math.round((totalCP/totalAll)*100):0;
-                  // donut: CP vs Direct from filtered data
-                  const cpDonutData=[{name:'CP',value:totalCP},{name:'Direct',value:totalDirect}];
-                  return(
-                    <div style={{display:'flex',flexDirection:'column',gap:10}}>
-                      {/* Donut + project legend */}
-                      <div style={{display:'flex',alignItems:'center',gap:10}}>
+                {/* Chart 1: Target vs Achieved — Units */}
+                <GC style={{padding:16}}>
+                  <SH title="Units — Target vs Achieved" sub="Monthly: Target units vs Booked units"/>
+                  {(()=>{
+                    const data=monthlyWithTargets.slice(-18);
+                    return(
+                      <ResponsiveContainer width="100%" height={200}>
+                        <BarChart data={data} margin={{top:8,right:8,bottom:18,left:0}} barGap={2}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.12)" vertical={false}/>
+                          <XAxis dataKey="label" tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} angle={-30} dy={8} interval="preserveStartEnd"/>
+                          <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={24}/>
+                          <Tooltip content={<CTip/>}/>
+                          <Legend wrapperStyle={{fontSize:9,fontWeight:700,color:T.text}} iconSize={8}/>
+                          <Bar dataKey="targetUnits" name="Target" fill={T.amber} fillOpacity={0.7} radius={[2,2,0,0]} barSize={10}>
+                            <LabelList dataKey="targetUnits" position="top" style={{fill:T.amber,fontSize:7,fontWeight:700}} formatter={v=>v>0?v:''}/>
+                          </Bar>
+                          <Bar dataKey="bookedUnits" name="Achieved" fill={T.teal} fillOpacity={0.9} radius={[2,2,0,0]} barSize={10}>
+                            <LabelList dataKey="bookedUnits" position="top" style={{fill:T.tealD,fontSize:7,fontWeight:700}} formatter={v=>v>0?v:''}/>
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    );
+                  })()}
+                </GC>
+
+                {/* Chart 2: Units Available vs Sold */}
+                <GC style={{padding:16}}>
+                  <SH title="Units — Sold vs Available" sub="Cumulative sold units vs inventory available"/>
+                  {(()=>{
+                    const soldTot=kpi.bookedUnits||0;
+                    const availTot=kpi.availableUnits||0;
+                    const pieData=[{name:'Sold',value:soldTot},{name:'Available',value:availTot}];
+                    const byProjData=byProj.map(r=>({name:r.name?.split(' ').pop(),sold:r.units,bsp:r.bspCr}));
+                    return(
+                      <div style={{display:'flex',gap:12,alignItems:'center'}}>
                         <div style={{width:120,height:120,flexShrink:0,position:'relative'}}>
                           <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
-                              <Pie data={cpDonutData} cx="50%" cy="50%" outerRadius={52} innerRadius={26} paddingAngle={4} dataKey="value" strokeWidth={2} stroke="rgba(255,255,255,0.9)">
-                                <Cell fill={T.teal}/>
-                                <Cell fill={T.navy}/>
+                              <Pie data={pieData} cx="50%" cy="50%" innerRadius={34} outerRadius={54} paddingAngle={3} dataKey="value" strokeWidth={2} stroke="rgba(255,255,255,0.9)" labelLine={false}>
+                                <Cell fill={T.teal}/><Cell fill={T.amber}/>
                               </Pie>
                               <Tooltip content={<CTip/>}/>
                             </PieChart>
                           </ResponsiveContainer>
                           <div style={{position:'absolute',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',pointerEvents:'none'}}>
-                            <span style={{fontSize:14,fontWeight:900,color:T.tealD,lineHeight:1}}>{cpPct}%</span>
-                            <span style={{fontSize:7,fontWeight:700,color:T.textM}}>CP</span>
+                            <span style={{fontSize:12,fontWeight:900,color:T.tealD}}>{kpi.totalUnits>0?Math.round((soldTot/kpi.totalUnits)*100):0}%</span>
+                            <span style={{fontSize:7,color:T.textM,fontWeight:700}}>SOLD</span>
                           </div>
                         </div>
-                        <div style={{flex:1,display:'flex',flexDirection:'column',gap:5}}>
-                          {pd.map((d,i)=>{
-                            const p=tot>0?Math.round((d.units/tot)*100):0;
-                            return(
-                              <div key={i} style={{display:'flex',alignItems:'center',gap:6}}>
-                                <div style={{width:7,height:7,borderRadius:2,background:CC[i%CC.length],flexShrink:0}}/>
-                                <div style={{flex:1}}>
-                                  <div style={{display:'flex',justifyContent:'space-between'}}>
-                                    <span style={{fontSize:10,fontWeight:700,color:T.textM}}>{d.label}</span>
-                                    <span style={{fontSize:10,fontWeight:800,color:CC[i%CC.length]}}>{p}%</span>
-                                  </div>
-                                  <div style={{display:'flex',justifyContent:'space-between'}}>
-                                    <span style={{fontSize:8,color:T.textM,fontWeight:700}}>{d.units} units</span>
-                                    <span style={{fontSize:8,color:T.textM,fontWeight:700}}>₹{d.bspCr}Cr</span>
-                                  </div>
-                                  <div style={{width:'100%',height:3,background:'rgba(0,100,140,0.1)',borderRadius:2,marginTop:1}}>
-                                    <div style={{width:`${p}%`,height:'100%',background:CC[i%CC.length],borderRadius:2,opacity:0.8}}/>
-                                  </div>
-                                </div>
+                        <div style={{flex:1,display:'flex',flexDirection:'column',gap:8}}>
+                          {[{label:'Sold',val:soldTot,color:T.teal},{label:'Available',val:availTot,color:T.amber},{label:'Total',val:kpi.totalUnits,color:T.navy}].map((d,i)=>(
+                            <div key={i}>
+                              <div style={{display:'flex',justifyContent:'space-between',marginBottom:2}}>
+                                <span style={{fontSize:10,fontWeight:700,color:T.textM}}>{d.label}</span>
+                                <span style={{fontSize:11,fontWeight:900,color:d.color}}>{d.val?.toLocaleString('en-IN')}</span>
                               </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                      {/* CP vs Direct divider */}
-                      <div style={{borderTop:'1px solid rgba(0,100,140,0.1)',paddingTop:8}}>
-                        <p style={{fontSize:9,fontWeight:800,color:T.textM,textTransform:'uppercase',letterSpacing:0.5,margin:'0 0 6px'}}>Channel Mix</p>
-                        {/* Overall CP vs Direct bar */}
-                        <div style={{marginBottom:8}}>
-                          <div style={{display:'flex',justifyContent:'space-between',marginBottom:3}}>
-                            <span style={{fontSize:9,fontWeight:700,color:T.tealD}}>🤝 CP: {totalCP} units</span>
-                            <span style={{fontSize:9,fontWeight:700,color:T.navy}}>👤 Direct: {totalDirect} units</span>
-                          </div>
-                          <div style={{width:'100%',height:6,background:'rgba(0,100,140,0.1)',borderRadius:3,overflow:'hidden'}}>
-                            <div style={{width:`${cpPct}%`,height:'100%',background:`linear-gradient(90deg,${T.teal},${T.tealL})`,borderRadius:3}}/>
-                          </div>
-                        </div>
-                        {/* Per-project CP vs Direct */}
-                        {cpVsDirect.map((d,i)=>{
-                          const tot2=d.cp+d.direct;
-                          const cpP=tot2>0?Math.round((d.cp/tot2)*100):0;
-                          return(
-                            <div key={i} style={{marginBottom:6}}>
-                              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:3}}>
-                                <span style={{fontSize:10,fontWeight:800,color:T.text}}>{d.label||SHORT[d.name]||d.name.split(' ').pop()}</span>
-                                <div style={{display:'flex',gap:8}}>
-                                  <span style={{fontSize:9,fontWeight:700,color:T.tealD}}>🤝 CP: {d.cp}</span>
-                                  <span style={{fontSize:9,fontWeight:700,color:T.navy}}>👤 Direct: {d.direct}</span>
-                                </div>
-                              </div>
-                              <div style={{width:'100%',height:5,background:'rgba(0,100,140,0.08)',borderRadius:3,overflow:'hidden',display:'flex'}}>
-                                <div style={{width:`${cpP}%`,height:'100%',background:`linear-gradient(90deg,${T.teal},${T.tealL})`}}/>
-                                <div style={{width:`${100-cpP}%`,height:'100%',background:`${T.navy}55`}}/>
-                              </div>
+                              {i<2&&<div style={{width:'100%',height:4,background:'rgba(0,100,140,0.08)',borderRadius:2}}><div style={{width:kpi.totalUnits>0?(d.val/kpi.totalUnits*100)+'%':'0%',height:'100%',background:d.color,borderRadius:2}}/></div>}
                             </div>
-                          );
-                        })}
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })()}
-              </GC>
+                    );
+                  })()}
+                </GC>
 
-              <GC style={{padding:0,overflow:'hidden'}}>
-                <ChartCardBHK bhkS={bhkS} CC={CC} T={T} SH={SH}/>
-              </GC>
-            </div>
+                {/* Chart 3: Total Sales Value vs Target TSV */}
+                <GC style={{padding:16}}>
+                  <SH title="TSV — Target vs Achieved" sub="Monthly ₹ Cr: Target TSV vs Actual Sales BSP"/>
+                  {(()=>{
+                    const data=monthlyWithTargets.slice(-18);
+                    return(
+                      <ResponsiveContainer width="100%" height={200}>
+                        <BarChart data={data} margin={{top:8,right:8,bottom:18,left:0}} barGap={2}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.12)" vertical={false}/>
+                          <XAxis dataKey="label" tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} angle={-30} dy={8} interval="preserveStartEnd"/>
+                          <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={32} tickFormatter={v=>v+'Cr'}/>
+                          <Tooltip content={<CTip fmt={v=>v?'₹'+v+' Cr':'-'}/>}/>
+                          <Legend wrapperStyle={{fontSize:9,fontWeight:700,color:T.text}} iconSize={8}/>
+                          <Bar dataKey="targetTsvCr" name="Target TSV" fill={T.amber} fillOpacity={0.7} radius={[2,2,0,0]} barSize={10}>
+                            <LabelList dataKey="targetTsvCr" position="top" style={{fill:T.amber,fontSize:7,fontWeight:700}} formatter={v=>v>0?v+'Cr':''}/>
+                          </Bar>
+                          <Bar dataKey="bspCr" name="Actual BSP" fill={T.teal} fillOpacity={0.9} radius={[2,2,0,0]} barSize={10}>
+                            <LabelList dataKey="bspCr" position="top" style={{fill:T.tealD,fontSize:7,fontWeight:700}} formatter={v=>v>0?v+'Cr':''}/>
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    );
+                  })()}
+                </GC>
 
-            {/* ROW 3: TOP CP + BOOKING vs CANCELLED */}
-            <div style={{display:'grid',gridTemplateColumns:'1.3fr 1fr',gap:12}}>
+                {/* Chart 4: Average Rate — Target vs Actual */}
+                <GC style={{padding:16}}>
+                  <SH title="Avg Rate — Target vs Actual" sub="₹ per sq ft: target rate vs actual avg rate"/>
+                  {(()=>{
+                    // Build monthly avg rate from actual data
+                    const rateMap={};
+                    (raw?.pdrn||[]).filter(r=>r.status==='ACTIVE'&&r.bookingMonth&&r.bsp&&r.superArea).forEach(r=>{
+                      const lbl=fmtML(r.bookingMonth);
+                      if(!rateMap[lbl])rateMap[lbl]={bspSum:0,areaSum:0};
+                      rateMap[lbl].bspSum+=(r.bsp||0);
+                      rateMap[lbl].areaSum+=(r.superArea||0);
+                    });
+                    const data=monthlyWithTargets.slice(-18).map(d=>({
+                      label:d.label,
+                      targetRate:d.targetRate||null,
+                      actualRate:rateMap[d.label]?.areaSum>0?Math.round(rateMap[d.label].bspSum/rateMap[d.label].areaSum):null,
+                    }));
+                    return(
+                      <ResponsiveContainer width="100%" height={200}>
+                        <BarChart data={data} margin={{top:8,right:8,bottom:18,left:0}} barGap={2}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.12)" vertical={false}/>
+                          <XAxis dataKey="label" tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} angle={-30} dy={8} interval="preserveStartEnd"/>
+                          <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={40} tickFormatter={v=>'₹'+Math.round(v/1000)+'K'}/>
+                          <Tooltip content={<CTip fmt={v=>v?'₹'+v.toLocaleString('en-IN')+'/sqft':'-'}/>}/>
+                          <Legend wrapperStyle={{fontSize:9,fontWeight:700,color:T.text}} iconSize={8}/>
+                          <Bar dataKey="targetRate" name="Target Rate" fill={T.amber} fillOpacity={0.7} radius={[2,2,0,0]} barSize={10}>
+                            <LabelList dataKey="targetRate" position="top" style={{fill:T.amber,fontSize:7,fontWeight:700}} formatter={v=>v?'₹'+Math.round(v/1000)+'K':''}/>
+                          </Bar>
+                          <Bar dataKey="actualRate" name="Actual Rate" fill={T.teal} fillOpacity={0.9} radius={[2,2,0,0]} barSize={10}>
+                            <LabelList dataKey="actualRate" position="top" style={{fill:T.tealD,fontSize:7,fontWeight:700}} formatter={v=>v?'₹'+Math.round(v/1000)+'K':''}/>
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    );
+                  })()}
+                </GC>
 
-              {/* ── SECTION: Channel Partner Analysis ── */}
-              <div style={{display:'flex',alignItems:'center',gap:12,gridColumn:'1/-1'}}>
-                <div style={{background:'linear-gradient(135deg,#5b21b6,#7c3aed)',borderRadius:10,padding:'5px 18px',display:'flex',alignItems:'center',gap:8,boxShadow:'0 2px 10px rgba(124,58,237,0.3)'}}>
-                  <span style={{fontSize:13}}>🤝</span>
-                  <span style={{fontSize:11,fontWeight:900,color:'#fff',textTransform:'uppercase',letterSpacing:1}}>Channel Partner Analysis</span>
-                </div>
-                <div style={{flex:1,height:1,background:'rgba(124,58,237,0.12)',borderRadius:1}}/>
               </div>
 
-              <GC style={{padding:0,overflow:'hidden'}}>
-                <ChartCardCP topCP={topCP} cpExpanded={cpExpanded} setCpExpanded={setCpExpanded} CC={CC} T={T} CTip={CTip} SH={SH}/>
-              </GC>
-
-              <GC style={{padding:0,overflow:'hidden'}}>
-                <ChartCardBvC bvc={bvc} bMode={bMode} setBMode={setBMode} bOff={bOff} setBOff={setBOff} toQuarterly={toQuarterly} ChartControls={ChartControls} T={T} CTip={CTip} SH={SH}/>
-              </GC>
-
-              {/* Sales Value vs Cancelled Value vs Refund */}
-              <GC style={{padding:16,gridColumn:'1/-1'}}>
+              {/* Area: Total Sold vs Available */}
+              <GC style={{padding:16}}>
+                <SH title="Area — Sold vs Available" sub="sq ft: booked area vs available area by project"/>
                 {(()=>{
-                  const WIN=6;
-                  const base=sMode==='quarterly'?toQuarterly(salesVsRefund,'month'):salesVsRefund;
-                  const slice=base.slice(Math.min(sOff,Math.max(0,base.length-WIN)),Math.min(sOff,Math.max(0,base.length-WIN))+WIN);
-                  return(<>
-                    <SH title="Sales Value vs. Cancellation Value vs. Refund" sub="Monthly ₹ Crores — Total Sales BSP · Cancelled BSP · Refund Given"/>
-                    <ChartControls mode={sMode} setMode={setSMode} offset={sOff} setOffset={setSOff} total={base.length} window={WIN}/>
-                    <ResponsiveContainer width="100%" height={210}>
-                      <BarChart data={slice} margin={{top:8,right:8,bottom:18,left:0}}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.12)" vertical={false}/>
-                        <XAxis dataKey="month" tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false} angle={-25} dy={6} interval={0}/>
-                        <YAxis tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false} width={38} tickFormatter={v=>`${v}Cr`}/>
-                        <Tooltip content={<CTip fmt={(v)=>`₹${v} Cr`}/>}/>
-                        <Legend wrapperStyle={{color:T.text,fontSize:10,fontWeight:700}} iconSize={8}/>
-                        <Bar dataKey="bspCr" name="Sales BSP" fill={T.teal} radius={[3,3,0,0]} fillOpacity={0.85}>
-                          <LabelList dataKey="bspCr" position="top" style={{fill:T.tealD,fontSize:7,fontWeight:700}} formatter={v=>v>0?`${v}Cr`:''}/>
+                  const projData=(areaSummary.byProject||[]).map(d=>({
+                    name:d.project?.split(' ').pop()||d.project,
+                    sold:Math.round((d.bookedArea||0)/1000),
+                    avail:Math.round((d.availableArea||0)/1000),
+                  }));
+                  return(
+                    <ResponsiveContainer width="100%" height={160}>
+                      <BarChart data={projData} margin={{top:8,right:8,bottom:4,left:0}}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.1)" vertical={false}/>
+                        <XAxis dataKey="name" tick={{fill:T.textM,fontSize:10,fontWeight:600}} axisLine={false} tickLine={false}/>
+                        <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={36} tickFormatter={v=>v+'K'}/>
+                        <Tooltip content={<CTip fmt={v=>v+'K sq ft'}/>}/>
+                        <Legend wrapperStyle={{fontSize:9,fontWeight:700,color:T.text}} iconSize={8}/>
+                        <Bar dataKey="sold" name="Sold (K sqft)" fill={T.teal} radius={[3,3,0,0]} fillOpacity={0.9}>
+                          <LabelList dataKey="sold" position="top" style={{fill:T.tealD,fontSize:8,fontWeight:700}} formatter={v=>v>0?v+'K':''}/>
                         </Bar>
-                        <Bar dataKey="cancelledBSPCr" name="Cancelled BSP" fill={T.amber} radius={[3,3,0,0]} fillOpacity={0.8}>
-                          <LabelList dataKey="cancelledBSPCr" position="top" style={{fill:T.amber,fontSize:7,fontWeight:700}} formatter={v=>v>0?`${v}Cr`:''}/>
-                        </Bar>
-                        <Bar dataKey="refundCr" name="Refund Given" fill={T.red} radius={[3,3,0,0]} fillOpacity={0.85}>
-                          <LabelList dataKey="refundCr" position="top" style={{fill:T.red,fontSize:7,fontWeight:700}} formatter={v=>v>0?`${v}Cr`:''}/>
+                        <Bar dataKey="avail" name="Available (K sqft)" fill={T.amber} radius={[3,3,0,0]} fillOpacity={0.7}>
+                          <LabelList dataKey="avail" position="top" style={{fill:T.amber,fontSize:8,fontWeight:700}} formatter={v=>v>0?v+'K':''}/>
                         </Bar>
                       </BarChart>
                     </ResponsiveContainer>
-                {/* Summary totals row */}
-                {(()=>{
-                  const totSales=salesVsRefund.reduce((s,r)=>s+r.bspCr,0).toFixed(1);
-                  const totCancelled=salesVsRefund.reduce((s,r)=>s+r.cancelledBSPCr,0).toFixed(1);
-                  const totRefund=salesVsRefund.reduce((s,r)=>s+r.refundCr,0).toFixed(1);
-                  const refundPct=totCancelled>0?Math.round((totRefund/totCancelled)*100):0;
-                  return(
-                    <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10,marginTop:10,paddingTop:10,borderTop:'1px solid rgba(0,100,140,0.08)'}}>
-                      {[
-                        {label:'Total Sales BSP',val:`₹${totSales} Cr`,color:T.teal,icon:'📈'},
-                        {label:'Total Cancelled BSP',val:`₹${totCancelled} Cr`,color:T.amber,icon:'❌'},
-                        {label:'Total Refund Given',val:`₹${totRefund} Cr`,color:T.red,icon:'💸'},
-                        {label:'Refund % of Cancelled',val:`${refundPct}%`,color:T.navy,icon:'📊'},
-                      ].map((d,i)=>(
-                        <div key={i} style={{background:`${d.color}0a`,borderRadius:8,padding:'8px 12px',border:`1px solid ${d.color}20`}}>
-                          <p style={{fontSize:8,color:T.textM,fontWeight:800,margin:'0 0 3px',textTransform:'uppercase'}}>{d.icon} {d.label}</p>
-                          <p style={{fontSize:16,fontWeight:900,color:d.color,margin:0}}>{d.val}</p>
-                        </div>
-                      ))}
-                    </div>
                   );
-                })()}
-                  </>);
                 })()}
               </GC>
 
