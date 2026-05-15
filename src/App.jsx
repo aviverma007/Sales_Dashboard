@@ -656,6 +656,7 @@ export default function App() {
         targetTsvCr:target.tsvCr||null,
         targetRate:target.targetRate||null,
         isFuture:!isActual,
+        actualRate:(raw?.monthlyActualRates||{})[label]||null,
       };
     });
   },[monthly,raw,pA]);
@@ -1060,18 +1061,11 @@ export default function App() {
                 <GC style={{padding:16}}>
                   <SH title="Avg Rate — Target vs Actual" sub="₹/sqft: target rate vs actual avg booking rate"/>
                   {(()=>{
-                    const rateMap={};
-                    pA.filter(r=>r.bookingMonth).forEach(r=>{
-                      const lbl=fmtML(r.bookingMonth);
-                      if(!rateMap[lbl])rateMap[lbl]={bspSum:0,areaSum:0};
-                      rateMap[lbl].bspSum+=(r.bsp||0);
-                      rateMap[lbl].areaSum+=(r.superArea||0);
-                    });
                     const data=monthlyWithTargets.map(d=>({
                       label:d.label,
                       isFuture:d.isFuture,
                       targetRate:d.targetRate||null,
-                      actualRate:rateMap[d.label]?.areaSum>0?Math.round(rateMap[d.label].bspSum/rateMap[d.label].areaSum):null,
+                      actualRate:d.actualRate||null,
                     }));
                     const curLabel=TODAY_LABEL;
                     const WIN=13;
@@ -1119,10 +1113,15 @@ export default function App() {
                     const curLabel=today.toLocaleString('en-US',{month:'short'}).slice(0,3)+"'"+String(today.getFullYear()).slice(2);
                     const unitMap={};
                     pA.filter(r=>r.bookingMonth).forEach(r=>{const l=fmtML(r.bookingMonth);unitMap[l]=(unitMap[l]||0)+1;});
+                    // Build cumulative booked to compute remaining available
+                    let cumBooked=0;
+                    const allLabels=monthlyWithTargets.map(d=>d.label);
+                    const cumMap={};
+                    allLabels.forEach(lbl=>{cumBooked+=(unitMap[lbl]||0);cumMap[lbl]=cumBooked;});
                     const data=monthlyWithTargets.map(d=>{
                       const booked=unitMap[d.label]||0;
-                      const avail=d.isFuture?(d.targetUnits?totalInv-Object.values(unitMap).reduce((s,v)=>s+v,0):null):Math.max(0,totalInv-Object.values(unitMap).filter((_,i)=>i<=Object.keys(unitMap).indexOf(d.label)).reduce((s,v)=>s+v,0));
-                      return{label:d.label,booked:d.isFuture?null:booked,available:d.isFuture?null:avail,targetUnits:d.isFuture?(d.targetUnits||null):null,isFuture:d.isFuture};
+                      const avail=d.isFuture?null:Math.max(0,totalInv-(cumMap[d.label]||0));
+                      return{label:d.label,booked:d.isFuture?null:booked,available:avail,targetUnits:d.isFuture?(d.targetUnits||null):null,isFuture:d.isFuture};
                     });
                     const WIN=13;
                     const _suInit=data.findIndex(d=>d.label===curLabel);
