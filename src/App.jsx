@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
-  AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
+  AreaChart, Area, BarChart, Bar, ComposedChart, Line, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   RadialBarChart, RadialBar, LabelList
 } from 'recharts';
@@ -1009,7 +1009,7 @@ function AppInner() {
                         <button onClick={()=>setUOff(Math.min(data.length-WIN,uOffClamped+1))} disabled={uOffClamped>=data.length-WIN} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:uOffClamped>=data.length-WIN?'default':'pointer',fontSize:13,color:uOffClamped>=data.length-WIN?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>›</button>
                       </div>
                       <ResponsiveContainer width="100%" height={210}>
-                        <BarChart data={slice} margin={{top:28,right:8,bottom:18,left:0}} barCategoryGap="35%">
+                        <ComposedChart data={slice} margin={{top:28,right:8,bottom:18,left:0}} barCategoryGap="35%">
                           <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.1)" vertical={false}/>
                           <XAxis dataKey="label" tick={({x,y,payload})=>{
                             const d=slice.find(s=>s.label===payload.value);
@@ -1051,7 +1051,8 @@ function AppInner() {
                           <Bar dataKey="targetUnits" name="Target" fill="#b0bec5" fillOpacity={0.7} radius={[3,3,0,0]} barSize={28}>
                             <LabelList dataKey="targetUnits" position="top" style={{fill:'#607d8b',fontSize:9,fontWeight:800}} formatter={v=>v>0?v:''}/>
                           </Bar>
-                        </BarChart>
+                          <Line type="monotone" dataKey="booked" stroke={T.tealD} strokeWidth={2} dot={{r:3,fill:T.tealD,stroke:'#fff',strokeWidth:1.5}} activeDot={{r:4}} legendType="none" name="_line" connectNulls={false}/>
+                        </ComposedChart>
                       </ResponsiveContainer>
                     </>);
                   })()}
@@ -1077,7 +1078,7 @@ function AppInner() {
                         <button onClick={()=>setTsvOff(Math.min(data.length-WIN,tsvOffClamped+1))} disabled={tsvOffClamped>=data.length-WIN} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:tsvOff>=data.length-WIN?'default':'pointer',fontSize:13,color:tsvOff>=data.length-WIN?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>›</button>
                       </div>
                       <ResponsiveContainer width="100%" height={190}>
-                        <BarChart data={slice} margin={{top:20,right:8,bottom:18,left:0}} barSize={20} barGap={0}>
+                        <ComposedChart data={slice} margin={{top:20,right:8,bottom:18,left:0}} barSize={20} barGap={0}>
                           <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.1)" vertical={false}/>
                           <XAxis dataKey="label" tick={({x,y,payload})=>{
                             const d=slice.find(s=>s.label===payload.value);
@@ -1093,7 +1094,8 @@ function AppInner() {
                           <Bar dataKey="targetTsvCr" name="Target TSV" fill="#b0bec5" fillOpacity={0.7} radius={[3,3,0,0]}>
                             <LabelList dataKey="targetTsvCr" position="top" style={{fill:'#607d8b',fontSize:7,fontWeight:700}} formatter={v=>v>0?v+'Cr':''}/>
                           </Bar>
-                        </BarChart>
+                          <Line type="monotone" dataKey="bspCr" stroke={T.tealD} strokeWidth={2} dot={{r:3,fill:T.tealD,stroke:'#fff',strokeWidth:1.5}} activeDot={{r:4}} legendType="none" name="_line" connectNulls={false}/>
+                        </ComposedChart>
                       </ResponsiveContainer>
                     </>);
                   })()}
@@ -1124,7 +1126,7 @@ function AppInner() {
                         <button onClick={()=>setROff(Math.min(data.length-WIN,rOffClamped+1))} disabled={rOffClamped>=data.length-WIN} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:rOff>=data.length-WIN?'default':'pointer',fontSize:13,color:rOff>=data.length-WIN?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>›</button>
                       </div>
                       <ResponsiveContainer width="100%" height={190}>
-                        <BarChart data={slice} margin={{top:20,right:8,bottom:18,left:0}} barSize={20} barGap={0}>
+                        <ComposedChart data={slice} margin={{top:20,right:8,bottom:18,left:0}} barSize={20} barGap={0}>
                           <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.1)" vertical={false}/>
                           <XAxis dataKey="label" tick={({x,y,payload})=>{
                             const d=slice.find(s=>s.label===payload.value);
@@ -1140,7 +1142,8 @@ function AppInner() {
                           <Bar dataKey="targetRate" name="Target Rate" fill="#b0bec5" fillOpacity={0.7} radius={[3,3,0,0]}>
                             <LabelList dataKey="targetRate" position="top" style={{fill:'#607d8b',fontSize:7,fontWeight:700}} formatter={v=>v?'₹'+v.toLocaleString('en-IN'):''}/>
                           </Bar>
-                        </BarChart>
+                          <Line type="monotone" dataKey="actualRate" stroke={T.tealD} strokeWidth={2} dot={{r:3,fill:T.tealD,stroke:'#fff',strokeWidth:1.5}} activeDot={{r:4}} legendType="none" name="_line" connectNulls={false}/>
+                        </ComposedChart>
                       </ResponsiveContainer>
                     </>);
                   })()}
@@ -1179,7 +1182,7 @@ function AppInner() {
                         <button onClick={()=>setSuOff(Math.min(data.length-WIN,suOffClamped+1))} disabled={suOffClamped>=data.length-WIN} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:suOff>=data.length-WIN?'default':'pointer',fontSize:13,color:suOff>=data.length-WIN?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>›</button>
                       </div>
                       <ResponsiveContainer width="100%" height={190}>
-                        <BarChart data={slice} margin={{top:20,right:8,bottom:18,left:0}} barSize={24}>
+                        <ComposedChart data={slice} margin={{top:20,right:8,bottom:18,left:0}} barSize={24}>
                           <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.1)" vertical={false}/>
                           <XAxis dataKey="label" tick={({x,y,payload})=>{
                             const d=slice.find(s=>s.label===payload.value);
@@ -1197,7 +1200,8 @@ function AppInner() {
                           <Bar dataKey="targetUnits" name="Future Target" fill="#b0bec5" fillOpacity={0.7} radius={[3,3,0,0]}>
                             <LabelList dataKey="targetUnits" position="top" style={{fill:'#607d8b',fontSize:7,fontWeight:700}} formatter={v=>v>0?v:''}/>
                           </Bar>
-                        </BarChart>
+                          <Line type="monotone" dataKey="booked" stroke={T.tealD} strokeWidth={2} dot={{r:3,fill:T.tealD,stroke:'#fff',strokeWidth:1.5}} activeDot={{r:4}} legendType="none" name="_line" connectNulls={false}/>
+                        </ComposedChart>
                       </ResponsiveContainer>
                     </>);
                   })()}
