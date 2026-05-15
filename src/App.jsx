@@ -447,12 +447,14 @@ function AppInner() {
   const [cancelTab,setCancelTab]=useState('overview');
   // Sales & Pricing Trend chart offsets (must be at component level — hooks rules)
   const TODAY_LABEL=(()=>{const d=new Date();return d.toLocaleString('en-US',{month:'short'}).slice(0,3)+"'"+String(d.getFullYear()).slice(2);})();
+  // Reset chart offsets to -1 (auto-center) whenever filters change
+  useEffect(()=>{setUOff(-1);setTsvOff(-1);setROff(-1);setSuOff(-1);},[filters.project,filters.fy,filters.quarter,filters.month]);
   // Initialize offset so current month is bar #2 (index 1 in view), show 1 past + current + 11 future
   const _initOff=(data,WIN=13)=>{const idx=data.findIndex(d=>d.label===TODAY_LABEL);return idx>=1?idx-1:Math.max(0,idx);};
-  const [uOff,setUOff]=useState(0);
-  const [tsvOff,setTsvOff]=useState(0);
-  const [rOff,setROff]=useState(0);
-  const [suOff,setSuOff]=useState(0);
+  const [uOff,setUOff]=useState(-1);
+  const [tsvOff,setTsvOff]=useState(-1);
+  const [rOff,setROff]=useState(-1);
+  const [suOff,setSuOff]=useState(-1);
   const [towerExpanded,setTowerExpanded]=useState(false);
   const [activeFilter,setActiveFilter]=useState(null);
   // Close filter dropdown on outside click
@@ -1082,10 +1084,10 @@ function AppInner() {
                         isCurrent:d.label===curLabel,
                       };
                     });
-                    const WIN=13;
+                    const WIN=8;
                     const _uInit=data.findIndex(d=>d.label===curLabel);
-                    const _uDefault=_uInit>=1?_uInit-1:Math.max(0,data.length-WIN);
-                    const uOffClamped=Math.min(Math.max(uOff===0?_uDefault:uOff,0),Math.max(0,data.length-WIN));
+                    const _uDefault=_uInit>=1?_uInit-1:(_uInit===0?0:Math.max(0,data.length-WIN));
+                    const uOffClamped=Math.min(Math.max(uOff<0?_uDefault:uOff,0),Math.max(0,data.length-WIN));
                     const slice=data.slice(uOffClamped,uOffClamped+WIN);
                     return(<>
                       <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
@@ -1151,10 +1153,10 @@ function AppInner() {
                   {(()=>{
                     const curLabel=TODAY_LABEL;
                     const data=monthlyWithTargets;
-                    const WIN=13;
+                    const WIN=8;
                     const _tsvInit=data.findIndex(d=>d.label===curLabel);
-                    const _tsvDefault=_tsvInit>=1?_tsvInit-1:Math.max(0,data.length-WIN);
-                    const tsvOffClamped=Math.min(Math.max(tsvOff===0?_tsvDefault:tsvOff,0),Math.max(0,data.length-WIN));
+                    const _tsvDefault=_tsvInit>=1?_tsvInit-1:(_tsvInit===0?0:Math.max(0,data.length-WIN));
+                    const tsvOffClamped=Math.min(Math.max(tsvOff<0?_tsvDefault:tsvOff,0),Math.max(0,data.length-WIN));
                     const slice=data.slice(tsvOffClamped,tsvOffClamped+WIN);
                     return(<>
                       <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
@@ -1199,10 +1201,10 @@ function AppInner() {
                       actualRate:d.actualRate||null,
                     }));
                     const curLabel=TODAY_LABEL;
-                    const WIN=13;
+                    const WIN=8;
                     const _rInit=data.findIndex(d=>d.label===curLabel);
-                    const _rDefault=_rInit>=1?_rInit-1:Math.max(0,data.length-WIN);
-                    const rOffClamped=Math.min(Math.max(rOff===0?_rDefault:rOff,0),Math.max(0,data.length-WIN));
+                    const _rDefault=_rInit>=1?_rInit-1:(_rInit===0?0:Math.max(0,data.length-WIN));
+                    const rOffClamped=Math.min(Math.max(rOff<0?_rDefault:rOff,0),Math.max(0,data.length-WIN));
                     const slice=data.slice(rOffClamped,rOffClamped+WIN);
                     return(<>
                       <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
@@ -1255,10 +1257,10 @@ function AppInner() {
                       const avail=d.isFuture?null:Math.max(0,totalInv-(cumMap[d.label]||0));
                       return{label:d.label,booked:d.isFuture?null:booked,available:avail,targetUnits:d.isFuture?(d.targetUnits||null):null,isFuture:d.isFuture};
                     });
-                    const WIN=13;
+                    const WIN=8;
                     const _suInit=data.findIndex(d=>d.label===curLabel);
-                    const _suDefault=_suInit>=1?_suInit-1:Math.max(0,data.length-WIN);
-                    const suOffClamped=Math.min(Math.max(suOff===0?_suDefault:suOff,0),Math.max(0,data.length-WIN));
+                    const _suDefault=_suInit>=1?_suInit-1:(_suInit===0?0:Math.max(0,data.length-WIN));
+                    const suOffClamped=Math.min(Math.max(suOff<0?_suDefault:suOff,0),Math.max(0,data.length-WIN));
                     const slice=data.slice(suOffClamped,suOffClamped+WIN);
                     return(<>
                       <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
