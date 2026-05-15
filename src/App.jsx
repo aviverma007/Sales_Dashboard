@@ -428,6 +428,12 @@ export default function App() {
   const [sMode,setSMode]=useState('monthly');
   const [sOff,setSOff]=useState(9999);
   const [cancelTab,setCancelTab]=useState('overview');
+  // Sales & Pricing Trend chart offsets (must be at component level — hooks rules)
+  const TODAY_LABEL=(()=>{const d=new Date();return d.toLocaleString('en-US',{month:'short'}).slice(0,3)+"'"+String(d.getFullYear()).slice(2);})();
+  const [uOff,setUOff]=useState(9999);
+  const [tsvOff,setTsvOff]=useState(9999);
+  const [rOff,setROff]=useState(9999);
+  const [suOff,setSuOff]=useState(9999);
   const [towerExpanded,setTowerExpanded]=useState(false);
   const [activeFilter,setActiveFilter]=useState(null);
   // Close filter dropdown on outside click
@@ -947,8 +953,7 @@ export default function App() {
                 <GC style={{padding:16}}>
                   <SH title="Units — Booked & Available" sub="Past actuals · Current month · Future targets (grey)"/>
                   {(()=>{
-                    const today=new Date();
-                    const curLabel=today.toLocaleString('en-US',{month:'short'}).slice(0,3)+"'"+String(today.getFullYear()).slice(2);
+                    const curLabel=TODAY_LABEL;
                     // Build combined timeline: past booked, current, future targets
                     const data=monthlyWithTargets.map(d=>({
                       label:d.label,
@@ -960,16 +965,15 @@ export default function App() {
                     }));
                     // Show last 6 past + current + next 6 future, with slider
                     const WIN=13;
-                    const baseOffset=Math.max(0,data.findIndex(d=>d.isCurrent)-5);
-                    const [uOff,setUOff]=React.useState(baseOffset);
-                    const slice=data.slice(uOff,uOff+WIN);
+                    const uOffClamped=Math.min(uOff,Math.max(0,data.length-WIN));
+                    const slice=data.slice(uOffClamped,uOffClamped+WIN);
                     return(<>
                       <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
-                        <button onClick={()=>setUOff(o=>Math.max(0,o-1))} disabled={uOff===0} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:uOff===0?'default':'pointer',fontSize:13,color:uOff===0?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>‹</button>
+                        <button onClick={()=>setUOff(o=>Math.max(0,o-1))} disabled={uOffClamped===0} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:uOff===0?'default':'pointer',fontSize:13,color:uOff===0?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>‹</button>
                         <div style={{flex:1,height:4,background:'rgba(0,151,167,0.1)',borderRadius:2,overflow:'hidden'}}>
                           <div style={{width:(WIN/data.length*100)+'%',marginLeft:(uOff/data.length*100)+'%',height:'100%',background:'#0097a7',borderRadius:2}}/>
                         </div>
-                        <button onClick={()=>setUOff(o=>Math.min(data.length-WIN,o+1))} disabled={uOff>=data.length-WIN} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:uOff>=data.length-WIN?'default':'pointer',fontSize:13,color:uOff>=data.length-WIN?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>›</button>
+                        <button onClick={()=>setUOff(o=>Math.min(data.length-WIN,o+1))} disabled={uOffClamped>=data.length-WIN} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:uOff>=data.length-WIN?'default':'pointer',fontSize:13,color:uOff>=data.length-WIN?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>›</button>
                       </div>
                       <ResponsiveContainer width="100%" height={190}>
                         <BarChart data={slice} margin={{top:20,right:8,bottom:18,left:0}} barSize={20} barGap={0}>
@@ -1007,20 +1011,18 @@ export default function App() {
                 <GC style={{padding:16}}>
                   <SH title="TSV — Target vs Achieved" sub="Monthly ₹ Cr: actual sales · future target (grey)"/>
                   {(()=>{
-                    const today=new Date();
-                    const curLabel=today.toLocaleString('en-US',{month:'short'}).slice(0,3)+"'"+String(today.getFullYear()).slice(2);
+                    const curLabel=TODAY_LABEL;
                     const data=monthlyWithTargets;
                     const WIN=13;
-                    const baseOffset=Math.max(0,data.findIndex(d=>d.label===curLabel)-5);
-                    const [tsvOff,setTsvOff]=React.useState(baseOffset);
-                    const slice=data.slice(tsvOff,tsvOff+WIN);
+                    const tsvOffClamped=Math.min(tsvOff,Math.max(0,data.length-WIN));
+                    const slice=data.slice(tsvOffClamped,tsvOffClamped+WIN);
                     return(<>
                       <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
-                        <button onClick={()=>setTsvOff(o=>Math.max(0,o-1))} disabled={tsvOff===0} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:tsvOff===0?'default':'pointer',fontSize:13,color:tsvOff===0?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>‹</button>
+                        <button onClick={()=>setTsvOff(o=>Math.max(0,o-1))} disabled={tsvOffClamped===0} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:tsvOff===0?'default':'pointer',fontSize:13,color:tsvOff===0?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>‹</button>
                         <div style={{flex:1,height:4,background:'rgba(0,151,167,0.1)',borderRadius:2,overflow:'hidden'}}>
                           <div style={{width:(WIN/data.length*100)+'%',marginLeft:(tsvOff/data.length*100)+'%',height:'100%',background:'#0097a7',borderRadius:2}}/>
                         </div>
-                        <button onClick={()=>setTsvOff(o=>Math.min(data.length-WIN,o+1))} disabled={tsvOff>=data.length-WIN} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:tsvOff>=data.length-WIN?'default':'pointer',fontSize:13,color:tsvOff>=data.length-WIN?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>›</button>
+                        <button onClick={()=>setTsvOff(o=>Math.min(data.length-WIN,o+1))} disabled={tsvOffClamped>=data.length-WIN} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:tsvOff>=data.length-WIN?'default':'pointer',fontSize:13,color:tsvOff>=data.length-WIN?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>›</button>
                       </div>
                       <ResponsiveContainer width="100%" height={190}>
                         <BarChart data={slice} margin={{top:20,right:8,bottom:18,left:0}} barSize={20} barGap={0}>
@@ -1062,19 +1064,17 @@ export default function App() {
                       targetRate:d.targetRate||null,
                       actualRate:rateMap[d.label]?.areaSum>0?Math.round(rateMap[d.label].bspSum/rateMap[d.label].areaSum):null,
                     }));
-                    const today=new Date();
-                    const curLabel=today.toLocaleString('en-US',{month:'short'}).slice(0,3)+"'"+String(today.getFullYear()).slice(2);
+                    const curLabel=TODAY_LABEL;
                     const WIN=13;
-                    const baseOffset=Math.max(0,data.findIndex(d=>d.label===curLabel)-5);
-                    const [rOff,setROff]=React.useState(baseOffset);
-                    const slice=data.slice(rOff,rOff+WIN);
+                    const rOffClamped=Math.min(rOff,Math.max(0,data.length-WIN));
+                    const slice=data.slice(rOffClamped,rOffClamped+WIN);
                     return(<>
                       <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
-                        <button onClick={()=>setROff(o=>Math.max(0,o-1))} disabled={rOff===0} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:rOff===0?'default':'pointer',fontSize:13,color:rOff===0?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>‹</button>
+                        <button onClick={()=>setROff(o=>Math.max(0,o-1))} disabled={rOffClamped===0} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:rOff===0?'default':'pointer',fontSize:13,color:rOff===0?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>‹</button>
                         <div style={{flex:1,height:4,background:'rgba(0,151,167,0.1)',borderRadius:2,overflow:'hidden'}}>
                           <div style={{width:(WIN/data.length*100)+'%',marginLeft:(rOff/data.length*100)+'%',height:'100%',background:'#0097a7',borderRadius:2}}/>
                         </div>
-                        <button onClick={()=>setROff(o=>Math.min(data.length-WIN,o+1))} disabled={rOff>=data.length-WIN} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:rOff>=data.length-WIN?'default':'pointer',fontSize:13,color:rOff>=data.length-WIN?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>›</button>
+                        <button onClick={()=>setROff(o=>Math.min(data.length-WIN,o+1))} disabled={rOffClamped>=data.length-WIN} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:rOff>=data.length-WIN?'default':'pointer',fontSize:13,color:rOff>=data.length-WIN?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>›</button>
                       </div>
                       <ResponsiveContainer width="100%" height={190}>
                         <BarChart data={slice} margin={{top:20,right:8,bottom:18,left:0}} barSize={20} barGap={0}>
@@ -1115,15 +1115,15 @@ export default function App() {
                     });
                     const WIN=13;
                     const baseOffset=Math.max(0,data.findIndex(d=>d.label===curLabel)-5);
-                    const [suOff,setSuOff]=React.useState(baseOffset);
-                    const slice=data.slice(suOff,suOff+WIN);
+                    const suOffClamped=Math.min(suOff,Math.max(0,data.length-WIN));
+                    const slice=data.slice(suOffClamped,suOffClamped+WIN);
                     return(<>
                       <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
-                        <button onClick={()=>setSuOff(o=>Math.max(0,o-1))} disabled={suOff===0} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:suOff===0?'default':'pointer',fontSize:13,color:suOff===0?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>‹</button>
+                        <button onClick={()=>setSuOff(o=>Math.max(0,o-1))} disabled={suOffClamped===0} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:suOffClamped===0?'default':'pointer',fontSize:13,color:suOffClamped===0?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>‹</button>
                         <div style={{flex:1,height:4,background:'rgba(0,151,167,0.1)',borderRadius:2,overflow:'hidden'}}>
-                          <div style={{width:(WIN/data.length*100)+'%',marginLeft:(suOff/data.length*100)+'%',height:'100%',background:'#0097a7',borderRadius:2}}/>
+                          <div style={{width:(WIN/data.length*100)+'%',marginLeft:(suOffClamped/data.length*100)+'%',height:'100%',background:'#0097a7',borderRadius:2}}/>
                         </div>
-                        <button onClick={()=>setSuOff(o=>Math.min(data.length-WIN,o+1))} disabled={suOff>=data.length-WIN} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:suOff>=data.length-WIN?'default':'pointer',fontSize:13,color:suOff>=data.length-WIN?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>›</button>
+                        <button onClick={()=>setSuOff(o=>Math.min(data.length-WIN,o+1))} disabled={suOffClamped>=data.length-WIN} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:suOff>=data.length-WIN?'default':'pointer',fontSize:13,color:suOff>=data.length-WIN?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>›</button>
                       </div>
                       <ResponsiveContainer width="100%" height={190}>
                         <BarChart data={slice} margin={{top:20,right:8,bottom:18,left:0}} barSize={24}>
