@@ -412,7 +412,31 @@ const ChartCardBHK = ({bhkS,CC,T,SH}) => {
   </div>);
 };
 
+class AppErrorBoundary extends React.Component {
+  constructor(props){super(props);this.state={error:null};}
+  static getDerivedStateFromError(e){return{error:e};}
+  componentDidCatch(e,info){console.error('App crashed:',e,info);}
+  render(){
+    if(this.state.error)return(
+      <div style={{padding:40,fontFamily:'monospace',background:'#fff',minHeight:'100vh'}}>
+        <h2 style={{color:'red'}}>Runtime Error — check browser console</h2>
+        <pre style={{background:'#f5f5f5',padding:16,borderRadius:8,overflow:'auto',fontSize:11,whiteSpace:'pre-wrap'}}>{String(this.state.error)}{String(this.state.error?.stack||'')}</pre>
+        <button onClick={()=>{this.setState({error:null});window.location.reload();}} style={{marginTop:16,padding:'8px 16px',background:'#0097a7',color:'#fff',border:'none',borderRadius:8,cursor:'pointer'}}>Reload</button>
+      </div>
+    );
+    return this.props.children;
+  }
+}
+
 export default function App() {
+  return <AppErrorBoundary><AppInner/></AppErrorBoundary>;
+}
+
+function AppInner() {
+  return <AppErrorBoundary><AppInner/></AppErrorBoundary>;
+}
+
+function AppInner() {
   const [authed, setAuthed] = useState(()=>sessionStorage.getItem('sd_auth')==='1');
   const [raw,setRaw]=useState(null);
   const [loading,setLoading]=useState(true);
@@ -961,11 +985,15 @@ export default function App() {
                   {(()=>{
                     const curLabel=TODAY_LABEL;
                     // Build combined timeline: past booked, current, future targets
+                    const _totalInv=iF.length||3184;
+                    let _cum=0;
+                    const _cumMap={};
+                    monthlyWithTargets.forEach(d=>{_cum+=(d.bookedUnits||0);_cumMap[d.label]=_cum;});
                     const data=monthlyWithTargets.map(d=>({
                       label:d.label,
-                      booked:   d.isFuture?null:d.bookedUnits,
-                      targetUnits: d.isFuture?(d.targetUnits||0):null,
-                      available: d.isFuture?null:(raw?.invr||[]).filter(r=>r.status==='Available').length,
+                      booked:d.isFuture?null:(d.bookedUnits||0),
+                      targetUnits:d.isFuture?(d.targetUnits||0):null,
+                      available:d.isFuture?null:Math.max(0,_totalInv-(_cumMap[d.label]||0)),
                       isFuture:d.isFuture,
                       isCurrent:d.label===curLabel,
                     }));
