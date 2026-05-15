@@ -1148,6 +1148,7 @@ function AppInner() {
                     const _suInit=data.findIndex(d=>d.label===curLabel);
                     const _suDefault=_suInit>=1?_suInit-1:Math.max(0,data.length-WIN);
                     const suOffClamped=Math.min(Math.max(suOff===0?_suDefault:suOff,0),Math.max(0,data.length-WIN));
+                    const slice=data.slice(suOffClamped,suOffClamped+WIN);
                     return(<>
                       <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
                         <button onClick={()=>setSuOff(Math.max(0,suOffClamped-1))} disabled={suOffClamped===0} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:suOffClamped===0?'default':'pointer',fontSize:13,color:suOffClamped===0?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>‹</button>
