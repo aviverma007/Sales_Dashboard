@@ -226,20 +226,23 @@ const FSel = ({label,options,value,onChange,multi=false,openId='',activeOpen=nul
           <span style={{fontSize:8,opacity:0.6}}>{open?'▲':'▼'}</span>
         </div>
         {open&&(
-          <div onClick={e=>e.stopPropagation()} style={{position:'absolute',top:'100%',left:0,zIndex:999,background:'#fff',border:`1px solid ${T.teal}30`,borderRadius:8,boxShadow:'0 8px 24px rgba(0,80,120,0.15)',minWidth:200,maxHeight:240,overflowY:'auto',padding:4,marginTop:2}}>
+          <div onClick={e=>e.stopPropagation()} style={{position:'absolute',top:'100%',left:0,zIndex:999,background:'#fff',border:`1px solid ${T.teal}30`,borderRadius:8,boxShadow:'0 8px 24px rgba(0,80,120,0.15)',minWidth:200,maxHeight:260,overflowY:'auto',padding:4,marginTop:2}}>
+            {/* Select All / Clear All row */}
+            <div style={{display:'flex',gap:4,padding:'5px 8px 6px',borderBottom:'1px solid rgba(0,151,167,0.1)',marginBottom:3}}>
+              <button onClick={()=>onChange(options.join('||'))} style={{flex:1,padding:'3px 8px',borderRadius:6,border:`1px solid ${T.teal}40`,background:`${T.teal}0d`,color:T.tealD,fontSize:9,fontWeight:800,cursor:'pointer'}}>✓ All</button>
+              <button onClick={()=>onChange('')} style={{flex:1,padding:'3px 8px',borderRadius:6,border:'1px solid rgba(200,40,40,0.3)',background:'rgba(200,40,40,0.06)',color:'#c62828',fontSize:9,fontWeight:800,cursor:'pointer'}}>✕ Clear</button>
+            </div>
             {options.map(o=>(
               <div key={o}
                 onClick={e=>{
-                  // Only toggle if the checkbox itself or its immediate container was clicked
-                  // Clicking anywhere on the row = single select (close after), checkbox = multi
                   const cbClicked=e.target.closest('[data-cb]');
                   if(cbClicked){e.stopPropagation();toggle(o);}
                   else{onChange(o===vals[0]&&vals.length===1?'':o);setActiveOpen(null);}
                 }}
-                style={{display:'flex',alignItems:'center',gap:8,padding:'6px 10px',borderRadius:5,cursor:'pointer',background:vals.includes(o)?`${T.teal}10`:'transparent',fontSize:10,fontWeight:vals.includes(o)?700:400,color:vals.includes(o)?T.tealD:T.text,transition:'background 0.1s'}}
+                style={{display:'flex',alignItems:'center',gap:10,padding:'7px 10px',borderRadius:5,cursor:'pointer',background:vals.includes(o)?`${T.teal}10`:'transparent',fontSize:10,fontWeight:vals.includes(o)?700:400,color:vals.includes(o)?T.tealD:T.text,transition:'background 0.1s'}}
               >
-                <span data-cb="1" onClick={e=>{e.stopPropagation();toggle(o);}} style={{width:14,height:14,borderRadius:3,border:`1.5px solid ${vals.includes(o)?T.teal:'rgba(0,100,140,0.3)'}`,background:vals.includes(o)?T.teal:'transparent',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,cursor:'pointer'}}>
-                  {vals.includes(o)&&<span style={{color:'#fff',fontSize:9,lineHeight:1,fontWeight:900}}>✓</span>}
+                <span data-cb="1" onClick={e=>{e.stopPropagation();toggle(o);}} style={{width:18,height:18,borderRadius:4,border:`2px solid ${vals.includes(o)?T.teal:'rgba(0,100,140,0.3)'}`,background:vals.includes(o)?T.teal:'transparent',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,cursor:'pointer',transition:'all 0.1s'}}>
+                  {vals.includes(o)&&<span style={{color:'#fff',fontSize:11,lineHeight:1,fontWeight:900}}>✓</span>}
                 </span>
                 <span style={{flex:1,userSelect:'none'}}>{o}</span>
               </div>
