@@ -502,7 +502,7 @@ function AppInner() {
 
     if((filters.month||filters.quarter)&&!matchMo(r.bookingMonth))return false;
     if(filters.broker){const brks=filters.broker.split('||').filter(Boolean);if(brks.length&&!brks.includes(r.broker))return false;}
-    if(filters.typology){const typos=filters.typology.split('||').filter(Boolean);if(typos.length&&!typos.includes(r.bhkFull))return false;}
+    if(filters.typology){const typos=filters.typology.split('||').filter(Boolean);if(typos.length){const b=r.bhkFull||r.bhk||'';if(!typos.includes(b)&&!typos.includes(r.bhk||'')&&!typos.includes(r.bhkFull||''))return false;}}
     if(filters.fy){const fys=filters.fy.split('||').filter(Boolean);if(fys.length){const fy=r.bookingYear?(r.bookingMonth&&parseInt(r.bookingMonth.split('-')[1])>=4?`FY${r.bookingYear}-${String(r.bookingYear+1).slice(2)}`:`FY${r.bookingYear-1}-${String(r.bookingYear).slice(2)}`):null;if(!fys.includes(fy))return false;}}
     return true;
   });},[raw,filters,matchMo]);
@@ -512,7 +512,7 @@ function AppInner() {
   const iF=useMemo(()=>{if(!raw?.invr)return[];return raw.invr.filter(r=>{
     if(filters.company&&r.companyNorm!==filters.company)return false;
     if(filters.project){const projs=filters.project.split('||').filter(Boolean);if(projs.length&&!projs.includes(r.project))return false;}
-    if(filters.typology){const typos=filters.typology.split('||').filter(Boolean);if(typos.length&&r.bhk&&!typos.some(t=>t.includes(r.bhk)))return false;}
+    if(filters.typology){const typos=filters.typology.split('||').filter(Boolean);if(typos.length){const b=r.bhk||'';if(!typos.includes(b))return false;}}
     return true;
   });},[raw,filters]);
   const wF=useMemo(()=>{if(!raw?.workflow)return[];return raw.workflow.filter(r=>{if(filters.company&&r.companyNorm!==filters.company)return false;if(filters.project){const projs=filters.project.split('||').filter(Boolean);if(projs.length&&!projs.includes(r.project))return false;}return true;});},[raw,filters]);
@@ -520,8 +520,18 @@ function AppInner() {
   const availBrokers=useMemo(()=>{const src=(filters.company||filters.project)?pF:(raw?.pdrn||[]);const cnt={};src.forEach(r=>{if(r.broker)cnt[r.broker]=(cnt[r.broker]||0)+1;});return Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,40).map(e=>e[0]);},[raw,pF,filters]);
   const availTypologies=useMemo(()=>{
     const projTypo=raw?.projTypologies||{};
-    if(filters.project) return projTypo[filters.project]||[];
-    // All typologies across all projects
+    const selectedProjs=filters.project?filters.project.split('||').filter(Boolean):[];
+    if(selectedProjs.length>0){
+      // Get from projTypologies for selected projects
+      const fromTypo=selectedProjs.flatMap(p=>projTypo[p]||[]).filter((v,i,a)=>a.indexOf(v)===i).sort();
+      if(fromTypo.length>0) return fromTypo;
+    }
+    // No project or no match — build live from pdrn + invr
+    const live=new Set();
+    (raw?.pdrn||[]).forEach(r=>{if(r.bhkFull)live.add(r.bhkFull);else if(r.bhk)live.add(r.bhk);});
+    (raw?.invr||[]).forEach(r=>{if(r.bhk)live.add(r.bhk);});
+    if(live.size>0) return [...live].filter(Boolean).sort();
+    // Final fallback: all from projTypo
     return Object.values(projTypo).flat().filter((v,i,a)=>a.indexOf(v)===i).sort();
   },[raw,filters.project]);
   const MONTHS_LIST=useMemo(()=>{
