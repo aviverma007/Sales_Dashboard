@@ -1315,15 +1315,15 @@ function AppInner() {
                       twData=filtered.map(r=>({tower:r.tower+(selProjs.length!==1?` (${(r.project||'').split(' ').pop()})` :''),pct:r.pctSold||Math.round(r.booked/(r.total||r.booked+r.cancelled||1)*100),booked:r.booked,total:r.total||r.booked+r.cancelled,project:r.project}));
                     }
                     twData=twData.sort((a,b)=>b.tower.localeCompare(a.tower));
-                    const rowH=28, yW=selProjs.length===1?36:100;
+                    const rowH=30, yW=selProjs.length===1?36:100;
                     const innerH=twData.length*rowH+40;
-                    const FIXED_H=280;
+                    const FIXED_H=300;
                     const needsVScroll=innerH>FIXED_H;
                     return(
                       <div style={{position:'relative'}}>
                         <div style={{overflowY:needsVScroll?'auto':'visible',overflowX:'hidden',maxHeight:FIXED_H,borderRadius:6}}>
                           <ResponsiveContainer width="100%" height={Math.max(FIXED_H,innerH)}>
-                            <BarChart data={twData} layout="vertical" margin={{top:4,right:55,bottom:16,left:8}} barSize={rowH-10}>
+                            <BarChart data={twData} layout="vertical" margin={{top:4,right:55,bottom:16,left:8}} barSize={rowH-8}>
                               <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.08)" horizontal={false}/>
                               <XAxis type="number" domain={[0,100]} tickFormatter={v=>v+'%'} tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false}/>
                               <YAxis type="category" dataKey="tower" tick={{fill:T.text,fontSize:9,fontWeight:700}} axisLine={false} tickLine={false} width={yW}/>
