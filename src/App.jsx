@@ -1038,245 +1038,180 @@ function AppInner() {
               {/* 2x2 chart grid */}
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
 
-                {/* Chart 1: Units — Booked stacked + Available on top, running total */}
+                {/* ── CHART 1: UNITS ─────────────────────────────────── */}
                 <GC style={{padding:16}}>
                   <SH title="Units — Booked vs Target" sub="Achieved (teal) · Target (grey) · Lines connect both"/>
                   {(()=>{
-                    const curLabel=TODAY_LABEL;
-                    const _totalInv=iF.length||3184;
-                    // Running cumulative booked — each month shows booked THAT month (not cumulative)
-                    // available = total inventory - cumulative booked so far
-                    let _cumSoFar=0;
-                    const data=monthlyWithTargets.map(d=>{
-                      const monthBooked=d.bookedUnits||0;
-                      if(!d.isFuture) _cumSoFar+=monthBooked;
-                      const remaining=d.isFuture?null:Math.max(0,_totalInv-_cumSoFar);
-                      return{
-                        label:d.label,
-                        booked:d.isFuture?null:monthBooked,
-                        available:remaining,
-                        targetUnits:d.targetUnitsLine||null,
-                        total:d.isFuture?null:_totalInv,
-                        isFuture:d.isFuture,
-                        isCurrent:d.label===curLabel,
-                      };
-                    });
                     const WIN=10;
-                    const _uInit=data.findIndex(d=>d.label===curLabel);
-                    const _uDefault=_uInit>=2?_uInit-2:(_uInit>=1?_uInit-1:Math.max(0,data.length-WIN));
-                    const uOffClamped=Math.min(Math.max(uOff<0?_uDefault:uOff,0),Math.max(0,data.length-WIN));
-                    const slice=data.slice(uOffClamped,uOffClamped+WIN);
+                    const data=monthlyWithTargets.map(d=>({
+                      label:d.label,isFuture:d.isFuture,isCurrent:d.label===TODAY_LABEL,
+                      achieved:d.isFuture?null:(d.bookedUnits||null),
+                      target:d.targetUnitsLine||null,
+                    }));
+                    const cur=data.findIndex(d=>d.isCurrent);
+                    const def=cur>=2?cur-2:Math.max(0,data.length-WIN);
+                    const off=Math.min(Math.max(uOff<0?def:uOff,0),Math.max(0,data.length-WIN));
+                    const sl=data.slice(off,off+WIN);
                     return(<>
                       <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
-                        <button onClick={()=>setUOff(Math.max(0,uOffClamped-1))} disabled={uOffClamped===0} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:uOffClamped===0?'default':'pointer',fontSize:13,color:uOffClamped===0?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>‹</button>
-                        <div style={{flex:1,height:4,background:'rgba(0,151,167,0.1)',borderRadius:2,overflow:'hidden'}}>
-                          <div style={{width:(WIN/data.length*100)+'%',marginLeft:(uOffClamped/data.length*100)+'%',height:'100%',background:'#0097a7',borderRadius:2}}/>
-                        </div>
-                        <button onClick={()=>setUOff(Math.min(data.length-WIN,uOffClamped+1))} disabled={uOffClamped>=data.length-WIN} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:uOffClamped>=data.length-WIN?'default':'pointer',fontSize:13,color:uOffClamped>=data.length-WIN?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>›</button>
+                        <button onClick={()=>setUOff(Math.max(0,off-1))} disabled={off===0} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:off===0?'default':'pointer',fontSize:13,color:off===0?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>‹</button>
+                        <div style={{flex:1,height:4,background:'rgba(0,151,167,0.1)',borderRadius:2,overflow:'hidden'}}><div style={{width:(WIN/Math.max(data.length,1)*100)+'%',marginLeft:(off/Math.max(data.length,1)*100)+'%',height:'100%',background:'#0097a7',borderRadius:2}}/></div>
+                        <button onClick={()=>setUOff(Math.min(data.length-WIN,off+1))} disabled={off>=data.length-WIN} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:off>=data.length-WIN?'default':'pointer',fontSize:13,color:off>=data.length-WIN?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>›</button>
                       </div>
                       <ResponsiveContainer width="100%" height={210}>
-                        <ComposedChart data={slice} margin={{top:28,right:8,bottom:18,left:0}} barCategoryGap="30%" barGap={4}>
+                        <ComposedChart data={sl} margin={{top:26,right:8,bottom:18,left:0}} barGap={4} barCategoryGap="30%">
                           <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.1)" vertical={false}/>
-                          <XAxis dataKey="label" tick={({x,y,payload})=>{
-                            const d=slice.find(s=>s.label===payload.value);
-                            return <text x={x} y={y+10} textAnchor="middle" fontSize={9} fill={d?.isCurrent?T.tealD:d?.isFuture?'#90a4ae':T.textM} fontWeight={d?.isCurrent?900:600}>{payload.value}</text>;
-                          }} axisLine={false} tickLine={false}/>
-                          <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={38}/>
-                          <Tooltip content={({active,payload,label})=>{
-                            if(!active||!payload?.length)return null;
-                            const d=slice.find(s=>s.label===label);
-                            const booked=d?.booked||0;
-                            const avail=d?.available||0;
-                            const target=d?.targetUnits||0;
-                            return(<div style={{background:'rgba(255,255,255,0.97)',border:'1px solid rgba(0,151,167,0.3)',borderRadius:10,padding:'8px 12px',fontSize:10,fontFamily:'Inter,sans-serif'}}>
-                              <p style={{color:T.tealD,fontWeight:800,margin:'0 0 6px'}}>{label}{d?.isFuture?' · Target':d?.isCurrent?' · Current Month':' · Actual'}</p>
-                              {d?.isFuture?<div style={{color:'#607d8b',fontWeight:600}}>Target: {target} units</div>:<>
-                                <div style={{color:T.tealD,fontWeight:700}}>Booked this month: {booked}</div>
-                                <div style={{color:T.amber,fontWeight:700}}>Remaining available: {avail}</div>
-                                <div style={{color:T.navy,fontWeight:700,borderTop:'1px solid rgba(0,100,140,0.1)',marginTop:4,paddingTop:4}}>Total inventory: {d?.total}</div>
-                              </>}
-                            </div>);
-                          }}/>
-                          <Legend wrapperStyle={{fontSize:9,fontWeight:700,color:T.text}} iconSize={8}/>
-                          {/* Booked bar (teal) - full height */}
-                          <Bar dataKey="booked" name="Booked" fill={T.teal} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={800} animationEasing="ease-out">
-                            {slice.map((d,i)=><Cell key={i} fill={d.isCurrent?T.tealD:T.teal} fillOpacity={d.isCurrent?1:0.85}/>)}
-                            <LabelList content={({x,y,width,height,index})=>{
-                              const d=slice[index];
-                              if(!d||d.isFuture) return null;
-                              return(
-                                <g>
-                                  <text x={x+width/2} y={y-14} textAnchor="middle" fill={T.textM} fontSize={8} fontWeight={700}>Total:{d.total}</text>
-                                  <text x={x+width/2} y={y-4} textAnchor="middle" fill={T.amber} fontSize={8} fontWeight={800}>Avl:{d.available}</text>
-                                  <text x={x+width/2} y={y+12} textAnchor="middle" fill='#fff' fontSize={9} fontWeight={900}>{d.booked}</text>
-                                </g>
-                              );
-                            }}/>
-                          </Bar>
-                          {/* Future target (grey) */}
-                          <Bar dataKey="targetUnits" name="Target" fill="#b0bec5" fillOpacity={0.75} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={1000} animationEasing="ease-out">
-                            <LabelList dataKey="targetUnits" position="top" style={{fill:'#607d8b',fontSize:8,fontWeight:800}} formatter={v=>v>0?v:''}/>
-                          </Bar>
-                          <Line type="monotone" dataKey="booked" stroke={T.tealD} strokeWidth={2.5} dot={{r:4,fill:T.tealD,stroke:'#fff',strokeWidth:2}} activeDot={{r:5}} legendType="none" name="_aline" connectNulls={true}/>
-                          <Line type="monotone" dataKey="targetUnitsLine" stroke="#607d8b" strokeWidth={2} strokeDasharray="5 3" dot={{r:3,fill:'#607d8b',stroke:'#fff',strokeWidth:1.5}} activeDot={{r:4}} legendType="none" name="_tline" connectNulls={true}/>
-                        </ComposedChart>
-                      </ResponsiveContainer>
-                    </>);
-                  })()}
-                </GC>
-
-                {/* Chart 2: TSV — Target vs Achieved with past/future */}
-                <GC style={{padding:16}}>
-                  <SH title="TSV — Target vs Achieved" sub="Monthly ₹ Cr: actual sales · future target (grey)"/>
-                  {(()=>{
-                    const curLabel=TODAY_LABEL;
-                    const data=monthlyWithTargets;
-                    const WIN=10;
-                    const _tsvInit=data.findIndex(d=>d.label===curLabel);
-                    const _tsvDefault=_tsvInit>=2?_tsvInit-2:(_tsvInit>=1?_tsvInit-1:Math.max(0,data.length-WIN));
-                    const tsvOffClamped=Math.min(Math.max(tsvOff<0?_tsvDefault:tsvOff,0),Math.max(0,data.length-WIN));
-                    const slice=data.slice(tsvOffClamped,tsvOffClamped+WIN);
-                    return(<>
-                      <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
-                        <button onClick={()=>setTsvOff(Math.max(0,tsvOffClamped-1))} disabled={tsvOffClamped===0} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:tsvOff===0?'default':'pointer',fontSize:13,color:tsvOff===0?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>‹</button>
-                        <div style={{flex:1,height:4,background:'rgba(0,151,167,0.1)',borderRadius:2,overflow:'hidden'}}>
-                          <div style={{width:(WIN/data.length*100)+'%',marginLeft:(tsvOff/data.length*100)+'%',height:'100%',background:'#0097a7',borderRadius:2}}/>
-                        </div>
-                        <button onClick={()=>setTsvOff(Math.min(data.length-WIN,tsvOffClamped+1))} disabled={tsvOffClamped>=data.length-WIN} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:tsvOff>=data.length-WIN?'default':'pointer',fontSize:13,color:tsvOff>=data.length-WIN?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>›</button>
-                      </div>
-                      <ResponsiveContainer width="100%" height={190}>
-                        <ComposedChart data={slice} margin={{top:20,right:8,bottom:18,left:0}} barGap={4} barCategoryGap="30%">
-                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.1)" vertical={false}/>
-                          <XAxis dataKey="label" tick={({x,y,payload})=>{
-                            const d=slice.find(s=>s.label===payload.value);
-                            return <text x={x} y={y+10} textAnchor="middle" fontSize={9} fill={d?.label===curLabel?T.tealD:d?.isFuture?'#aaa':T.textM} fontWeight={d?.label===curLabel?900:600}>{payload.value}</text>;
-                          }} axisLine={false} tickLine={false}/>
-                          <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={36} tickFormatter={v=>v+'Cr'}/>
-                          <Tooltip content={<CTip fmt={v=>v?'₹'+v+' Cr':'-'}/>}/>
-                          <Legend wrapperStyle={{fontSize:9,fontWeight:700,color:T.text}} iconSize={8}/>
-                          <Bar dataKey="bspCr" name="Actual BSP" fill={T.teal} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={800} animationEasing="ease-out">
-                            {slice.map((d,i)=><Cell key={i} fill={d.label===curLabel?T.tealD:T.teal} fillOpacity={d.label===curLabel?1:0.85}/>)}
-                            <LabelList dataKey="bspCr" position="top" style={{fill:T.tealD,fontSize:7,fontWeight:700}} formatter={v=>v>0?v+'Cr':''}/>
-                          </Bar>
-                          <Bar dataKey="targetTsvLine" name="Target TSV" fill="#b0bec5" fillOpacity={0.75} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={1000} animationEasing="ease-out">
-                            <LabelList dataKey="targetTsvLine" position="top" style={{fill:'#607d8b',fontSize:7,fontWeight:700}} formatter={v=>v>0?v+'Cr':''}/>
-                          </Bar>
-                          <Line type="monotone" dataKey="bspCr" stroke={T.tealD} strokeWidth={2.5} dot={{r:4,fill:T.tealD,stroke:'#fff',strokeWidth:2}} activeDot={{r:5}} legendType="none" name="_aline" connectNulls={true}/>
-                          <Line type="monotone" dataKey="targetTsvLine" stroke="#607d8b" strokeWidth={2} strokeDasharray="5 3" dot={{r:3,fill:'#607d8b',stroke:'#fff',strokeWidth:1.5}} activeDot={{r:4}} legendType="none" name="_tline" connectNulls={true}/>
-                        </ComposedChart>
-                      </ResponsiveContainer>
-                    </>);
-                  })()}
-                </GC>
-
-                {/* Chart 3: Avg Rate Target vs Actual */}
-                <GC style={{padding:16}}>
-                  <SH title="Avg Rate — Target vs Actual" sub="₹/sqft: target rate vs actual avg booking rate"/>
-                  {(()=>{
-                    const data=monthlyWithTargets.map(d=>({
-                      label:d.label,
-                      isFuture:d.isFuture,
-                      targetRate:d.targetRate||null,
-                      actualRate:d.actualRate||null,
-                    }));
-                    const curLabel=TODAY_LABEL;
-                    const WIN=10;
-                    const _rInit=data.findIndex(d=>d.label===curLabel);
-                    const _rDefault=_rInit>=2?_rInit-2:(_rInit>=1?_rInit-1:Math.max(0,data.length-WIN));
-                    const rOffClamped=Math.min(Math.max(rOff<0?_rDefault:rOff,0),Math.max(0,data.length-WIN));
-                    const slice=data.slice(rOffClamped,rOffClamped+WIN);
-                    return(<>
-                      <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
-                        <button onClick={()=>setROff(Math.max(0,rOffClamped-1))} disabled={rOffClamped===0} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:rOff===0?'default':'pointer',fontSize:13,color:rOff===0?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>‹</button>
-                        <div style={{flex:1,height:4,background:'rgba(0,151,167,0.1)',borderRadius:2,overflow:'hidden'}}>
-                          <div style={{width:(WIN/data.length*100)+'%',marginLeft:(rOff/data.length*100)+'%',height:'100%',background:'#0097a7',borderRadius:2}}/>
-                        </div>
-                        <button onClick={()=>setROff(Math.min(data.length-WIN,rOffClamped+1))} disabled={rOffClamped>=data.length-WIN} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:rOff>=data.length-WIN?'default':'pointer',fontSize:13,color:rOff>=data.length-WIN?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>›</button>
-                      </div>
-                      <ResponsiveContainer width="100%" height={190}>
-                        <ComposedChart data={slice} margin={{top:20,right:8,bottom:18,left:0}} barGap={4} barCategoryGap="30%">
-                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.1)" vertical={false}/>
-                          <XAxis dataKey="label" tick={({x,y,payload})=>{
-                            const d=slice.find(s=>s.label===payload.value);
-                            return <text x={x} y={y+10} textAnchor="middle" fontSize={9} fill={d?.label===curLabel?T.tealD:d?.isFuture?'#aaa':T.textM} fontWeight={d?.label===curLabel?900:600}>{payload.value}</text>;
-                          }} axisLine={false} tickLine={false}/>
-                          <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={40} tickFormatter={v=>'₹'+Math.round(v/1000)+'K'}/>
-                          <Tooltip content={<CTip fmt={v=>v?'₹'+v.toLocaleString('en-IN')+'/sqft':'-'}/>}/>
-                          <Legend wrapperStyle={{fontSize:9,fontWeight:700,color:T.text}} iconSize={8}/>
-                          <Bar dataKey="actualRate" name="Actual Rate" fill={T.teal} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={800} animationEasing="ease-out">
-                            {slice.map((d,i)=><Cell key={i} fill={d.label===curLabel?T.tealD:T.teal} fillOpacity={d.label===curLabel?1:0.85}/>)}
-                            <LabelList dataKey="actualRate" position="top" style={{fill:T.tealD,fontSize:7,fontWeight:700}} formatter={v=>v?'₹'+Math.round(v/1000)+'K':''}/>
-                          </Bar>
-                          <Bar dataKey="targetRateLine" name="Target Rate" fill="#b0bec5" fillOpacity={0.75} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={1000} animationEasing="ease-out">
-                            <LabelList dataKey="targetRateLine" position="top" style={{fill:'#607d8b',fontSize:7,fontWeight:700}} formatter={v=>v?'₹'+Math.round(v/1000)+'K':''}/>
-                          </Bar>
-                          <Line type="monotone" dataKey="actualRate" stroke={T.tealD} strokeWidth={2.5} dot={{r:4,fill:T.tealD,stroke:'#fff',strokeWidth:2}} activeDot={{r:5}} legendType="none" name="_aline" connectNulls={true}/>
-                          <Line type="monotone" dataKey="targetRateLine" stroke="#607d8b" strokeWidth={2} strokeDasharray="5 3" dot={{r:3,fill:'#607d8b',stroke:'#fff',strokeWidth:1.5}} activeDot={{r:4}} legendType="none" name="_tline" connectNulls={true}/>
-                        </ComposedChart>
-                      </ResponsiveContainer>
-                    </>);
-                  })()}
-                </GC>
-
-                {/* Chart 4: Units Booked vs Available stacked (total avail on top, booked below) */}
-                <GC style={{padding:16}}>
-                  <SH title="Units — Sold + Available Stack" sub="Total available on top · Booked stacked below per month"/>
-                  {(()=>{
-                    const totalInv=iF.length||3184;
-                    const today=new Date();
-                    const curLabel=today.toLocaleString('en-US',{month:'short'}).slice(0,3)+"'"+String(today.getFullYear()).slice(2);
-                    const unitMap={};
-                    pA.filter(r=>r.bookingMonth).forEach(r=>{const l=fmtML(r.bookingMonth);unitMap[l]=(unitMap[l]||0)+1;});
-                    // Build cumulative booked to compute remaining available
-                    let cumBooked=0;
-                    const allLabels=monthlyWithTargets.map(d=>d.label);
-                    const cumMap={};
-                    allLabels.forEach(lbl=>{cumBooked+=(unitMap[lbl]||0);cumMap[lbl]=cumBooked;});
-                    const data=monthlyWithTargets.map(d=>{
-                      const booked=unitMap[d.label]||0;
-                      const avail=d.isFuture?null:Math.max(0,totalInv-(cumMap[d.label]||0));
-                      return{label:d.label,booked:d.isFuture?null:booked,available:avail,targetUnits:d.isFuture?(d.targetUnits||null):null,isFuture:d.isFuture};
-                    });
-                    const WIN=10;
-                    const _suInit=data.findIndex(d=>d.label===curLabel);
-                    const _suDefault=_suInit>=2?_suInit-2:(_suInit>=1?_suInit-1:Math.max(0,data.length-WIN));
-                    const suOffClamped=Math.min(Math.max(suOff<0?_suDefault:suOff,0),Math.max(0,data.length-WIN));
-                    const slice=data.slice(suOffClamped,suOffClamped+WIN);
-                    return(<>
-                      <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
-                        <button onClick={()=>setSuOff(Math.max(0,suOffClamped-1))} disabled={suOffClamped===0} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:suOffClamped===0?'default':'pointer',fontSize:13,color:suOffClamped===0?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>‹</button>
-                        <div style={{flex:1,height:4,background:'rgba(0,151,167,0.1)',borderRadius:2,overflow:'hidden'}}>
-                          <div style={{width:(WIN/data.length*100)+'%',marginLeft:(suOffClamped/data.length*100)+'%',height:'100%',background:'#0097a7',borderRadius:2}}/>
-                        </div>
-                        <button onClick={()=>setSuOff(Math.min(data.length-WIN,suOffClamped+1))} disabled={suOffClamped>=data.length-WIN} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:suOff>=data.length-WIN?'default':'pointer',fontSize:13,color:suOff>=data.length-WIN?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>›</button>
-                      </div>
-                      <ResponsiveContainer width="100%" height={190}>
-                        <ComposedChart data={slice} margin={{top:20,right:8,bottom:18,left:0}} barSize={24}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.1)" vertical={false}/>
-                          <XAxis dataKey="label" tick={({x,y,payload})=>{
-                            const d=slice.find(s=>s.label===payload.value);
-                            return <text x={x} y={y+10} textAnchor="middle" fontSize={9} fill={d?.label===curLabel?T.tealD:d?.isFuture?'#aaa':T.textM} fontWeight={d?.label===curLabel?900:600}>{payload.value}</text>;
-                          }} axisLine={false} tickLine={false}/>
+                          <XAxis dataKey="label" tick={({x,y,payload})=>{const d=sl.find(s=>s.label===payload.value);return <text x={x} y={y+10} textAnchor="middle" fontSize={9} fill={d?.isCurrent?T.tealD:d?.isFuture?'#90a4ae':T.textM} fontWeight={d?.isCurrent?900:600}>{payload.value}</text>;}} axisLine={false} tickLine={false}/>
                           <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={32}/>
-                          <Tooltip content={<CTip/>}/>
-                          <Legend wrapperStyle={{fontSize:9,fontWeight:700,color:T.text}} iconSize={8}/>
-                          <Bar dataKey="booked" name="Booked" fill={T.teal} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={800} animationEasing="ease-out">
-                            {slice.map((d,i)=><Cell key={i} fill={d.label===curLabel?T.tealD:T.teal} fillOpacity={d.label===curLabel?1:0.85}/>)}
-                            <LabelList dataKey="booked" position="top" style={{fill:T.tealD,fontSize:8,fontWeight:800}} formatter={v=>v>0?v:''}/>
+                          <Tooltip content={({active,payload,label})=>{if(!active||!payload?.length)return null;const d=sl.find(s=>s.label===label);return(<div style={{background:'rgba(255,255,255,0.97)',border:'1px solid rgba(0,151,167,0.3)',borderRadius:10,padding:'8px 12px',fontSize:10}}><p style={{color:T.tealD,fontWeight:800,margin:'0 0 4px'}}>{label}</p>{d?.achieved!=null&&<p style={{color:T.tealD,margin:0}}>Achieved: {d.achieved} units</p>}{d?.target!=null&&<p style={{color:'#607d8b',margin:0}}>Target: {d.target} units</p>}</div>);}}/>
+                          <Legend wrapperStyle={{fontSize:9,fontWeight:700}} iconSize={8}/>
+                          <Bar dataKey="achieved" name="Achieved" fill={T.teal} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={800} animationEasing="ease-out">
+                            {sl.map((d,i)=><Cell key={i} fill={d.isCurrent?T.tealD:T.teal} fillOpacity={d.isCurrent?1:0.85}/>)}
+                            <LabelList dataKey="achieved" position="top" style={{fill:T.tealD,fontSize:8,fontWeight:800}} formatter={v=>v>0?v:''}/>
                           </Bar>
                           <Bar dataKey="target" name="Target" fill="#b0bec5" fillOpacity={0.75} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={1000} animationEasing="ease-out">
                             <LabelList dataKey="target" position="top" style={{fill:'#607d8b',fontSize:8,fontWeight:800}} formatter={v=>v>0?v:''}/>
                           </Bar>
-                          <Line type="monotone" dataKey="booked" stroke={T.tealD} strokeWidth={2.5} dot={{r:4,fill:T.tealD,stroke:'#fff',strokeWidth:2}} activeDot={{r:5}} legendType="none" name="_aline" connectNulls={true}/>
-                          <Line type="monotone" dataKey="target" stroke="#607d8b" strokeWidth={2} strokeDasharray="5 3" dot={{r:3,fill:'#607d8b',stroke:'#fff',strokeWidth:1.5}} activeDot={{r:4}} legendType="none" name="_tline" connectNulls={true}/>
+                          <Line type="monotone" dataKey="achieved" stroke={T.tealD} strokeWidth={2.5} dot={{r:4,fill:T.tealD,stroke:'#fff',strokeWidth:2}} activeDot={{r:5}} legendType="none" connectNulls={true}/>
+                          <Line type="monotone" dataKey="target" stroke="#607d8b" strokeWidth={2} strokeDasharray="5 3" dot={{r:3,fill:'#607d8b',stroke:'#fff',strokeWidth:1.5}} activeDot={{r:4}} legendType="none" connectNulls={true}/>
                         </ComposedChart>
                       </ResponsiveContainer>
                     </>);
                   })()}
                 </GC>
 
-              </div>
+                {/* ── CHART 2: TSV ─────────────────────────────────────── */}
+                <GC style={{padding:16}}>
+                  <SH title="TSV — Achieved vs Target" sub="Actual BSP (teal) · Target TSV (grey)"/>
+                  {(()=>{
+                    const WIN=10;
+                    const data=monthlyWithTargets.map(d=>({
+                      label:d.label,isFuture:d.isFuture,isCurrent:d.label===TODAY_LABEL,
+                      achieved:d.isFuture?null:(d.bspCr||null),
+                      target:d.targetTsvLine||null,
+                    }));
+                    const cur=data.findIndex(d=>d.isCurrent);
+                    const def=cur>=2?cur-2:Math.max(0,data.length-WIN);
+                    const off=Math.min(Math.max(tsvOff<0?def:tsvOff,0),Math.max(0,data.length-WIN));
+                    const sl=data.slice(off,off+WIN);
+                    return(<>
+                      <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
+                        <button onClick={()=>setTsvOff(Math.max(0,off-1))} disabled={off===0} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:off===0?'default':'pointer',fontSize:13,color:off===0?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>‹</button>
+                        <div style={{flex:1,height:4,background:'rgba(0,151,167,0.1)',borderRadius:2,overflow:'hidden'}}><div style={{width:(WIN/Math.max(data.length,1)*100)+'%',marginLeft:(off/Math.max(data.length,1)*100)+'%',height:'100%',background:'#0097a7',borderRadius:2}}/></div>
+                        <button onClick={()=>setTsvOff(Math.min(data.length-WIN,off+1))} disabled={off>=data.length-WIN} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:off>=data.length-WIN?'default':'pointer',fontSize:13,color:off>=data.length-WIN?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>›</button>
+                      </div>
+                      <ResponsiveContainer width="100%" height={210}>
+                        <ComposedChart data={sl} margin={{top:26,right:8,bottom:18,left:0}} barGap={4} barCategoryGap="30%">
+                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.1)" vertical={false}/>
+                          <XAxis dataKey="label" tick={({x,y,payload})=>{const d=sl.find(s=>s.label===payload.value);return <text x={x} y={y+10} textAnchor="middle" fontSize={9} fill={d?.isCurrent?T.tealD:d?.isFuture?'#90a4ae':T.textM} fontWeight={d?.isCurrent?900:600}>{payload.value}</text>;}} axisLine={false} tickLine={false}/>
+                          <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={40} tickFormatter={v=>v+'Cr'}/>
+                          <Tooltip content={({active,payload,label})=>{if(!active||!payload?.length)return null;const d=sl.find(s=>s.label===label);return(<div style={{background:'rgba(255,255,255,0.97)',border:'1px solid rgba(0,151,167,0.3)',borderRadius:10,padding:'8px 12px',fontSize:10}}><p style={{color:T.tealD,fontWeight:800,margin:'0 0 4px'}}>{label}</p>{d?.achieved!=null&&<p style={{color:T.tealD,margin:0}}>Achieved: ₹{d.achieved}Cr</p>}{d?.target!=null&&<p style={{color:'#607d8b',margin:0}}>Target: ₹{d.target}Cr</p>}</div>);}}/>
+                          <Legend wrapperStyle={{fontSize:9,fontWeight:700}} iconSize={8}/>
+                          <Bar dataKey="achieved" name="Actual BSP" fill={T.teal} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={800} animationEasing="ease-out">
+                            {sl.map((d,i)=><Cell key={i} fill={d.isCurrent?T.tealD:T.teal} fillOpacity={d.isCurrent?1:0.85}/>)}
+                            <LabelList dataKey="achieved" position="top" style={{fill:T.tealD,fontSize:7,fontWeight:700}} formatter={v=>v>0?v+'Cr':''}/>
+                          </Bar>
+                          <Bar dataKey="target" name="Target TSV" fill="#b0bec5" fillOpacity={0.75} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={1000} animationEasing="ease-out">
+                            <LabelList dataKey="target" position="top" style={{fill:'#607d8b',fontSize:7,fontWeight:700}} formatter={v=>v>0?v+'Cr':''}/>
+                          </Bar>
+                          <Line type="monotone" dataKey="achieved" stroke={T.tealD} strokeWidth={2.5} dot={{r:4,fill:T.tealD,stroke:'#fff',strokeWidth:2}} activeDot={{r:5}} legendType="none" connectNulls={true}/>
+                          <Line type="monotone" dataKey="target" stroke="#607d8b" strokeWidth={2} strokeDasharray="5 3" dot={{r:3,fill:'#607d8b',stroke:'#fff',strokeWidth:1.5}} activeDot={{r:4}} legendType="none" connectNulls={true}/>
+                        </ComposedChart>
+                      </ResponsiveContainer>
+                    </>);
+                  })()}
+                </GC>
 
+                {/* ── CHART 3: AVG RATE ────────────────────────────────── */}
+                <GC style={{padding:16}}>
+                  <SH title="Avg Rate — Achieved vs Target" sub="Actual ₹/sqft (teal) · Target rate (grey)"/>
+                  {(()=>{
+                    const WIN=10;
+                    const data=monthlyWithTargets.map(d=>({
+                      label:d.label,isFuture:d.isFuture,isCurrent:d.label===TODAY_LABEL,
+                      achieved:d.isFuture?null:(d.actualRate||null),
+                      target:d.targetRateLine||null,
+                    }));
+                    const cur=data.findIndex(d=>d.isCurrent);
+                    const def=cur>=2?cur-2:Math.max(0,data.length-WIN);
+                    const off=Math.min(Math.max(rOff<0?def:rOff,0),Math.max(0,data.length-WIN));
+                    const sl=data.slice(off,off+WIN);
+                    return(<>
+                      <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
+                        <button onClick={()=>setROff(Math.max(0,off-1))} disabled={off===0} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:off===0?'default':'pointer',fontSize:13,color:off===0?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>‹</button>
+                        <div style={{flex:1,height:4,background:'rgba(0,151,167,0.1)',borderRadius:2,overflow:'hidden'}}><div style={{width:(WIN/Math.max(data.length,1)*100)+'%',marginLeft:(off/Math.max(data.length,1)*100)+'%',height:'100%',background:'#0097a7',borderRadius:2}}/></div>
+                        <button onClick={()=>setROff(Math.min(data.length-WIN,off+1))} disabled={off>=data.length-WIN} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:off>=data.length-WIN?'default':'pointer',fontSize:13,color:off>=data.length-WIN?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>›</button>
+                      </div>
+                      <ResponsiveContainer width="100%" height={210}>
+                        <ComposedChart data={sl} margin={{top:26,right:8,bottom:18,left:0}} barGap={4} barCategoryGap="30%">
+                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.1)" vertical={false}/>
+                          <XAxis dataKey="label" tick={({x,y,payload})=>{const d=sl.find(s=>s.label===payload.value);return <text x={x} y={y+10} textAnchor="middle" fontSize={9} fill={d?.isCurrent?T.tealD:d?.isFuture?'#90a4ae':T.textM} fontWeight={d?.isCurrent?900:600}>{payload.value}</text>;}} axisLine={false} tickLine={false}/>
+                          <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={44} tickFormatter={v=>'₹'+Math.round(v/1000)+'K'}/>
+                          <Tooltip content={({active,payload,label})=>{if(!active||!payload?.length)return null;const d=sl.find(s=>s.label===label);return(<div style={{background:'rgba(255,255,255,0.97)',border:'1px solid rgba(0,151,167,0.3)',borderRadius:10,padding:'8px 12px',fontSize:10}}><p style={{color:T.tealD,fontWeight:800,margin:'0 0 4px'}}>{label}</p>{d?.achieved!=null&&<p style={{color:T.tealD,margin:0}}>Achieved: ₹{d.achieved?.toLocaleString('en-IN')}/sqft</p>}{d?.target!=null&&<p style={{color:'#607d8b',margin:0}}>Target: ₹{d.target?.toLocaleString('en-IN')}/sqft</p>}</div>);}}/>
+                          <Legend wrapperStyle={{fontSize:9,fontWeight:700}} iconSize={8}/>
+                          <Bar dataKey="achieved" name="Actual Rate" fill={T.teal} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={800} animationEasing="ease-out">
+                            {sl.map((d,i)=><Cell key={i} fill={d.isCurrent?T.tealD:T.teal} fillOpacity={d.isCurrent?1:0.85}/>)}
+                            <LabelList dataKey="achieved" position="top" style={{fill:T.tealD,fontSize:7,fontWeight:700}} formatter={v=>v?'₹'+Math.round(v/1000)+'K':''}/>
+                          </Bar>
+                          <Bar dataKey="target" name="Target Rate" fill="#b0bec5" fillOpacity={0.75} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={1000} animationEasing="ease-out">
+                            <LabelList dataKey="target" position="top" style={{fill:'#607d8b',fontSize:7,fontWeight:700}} formatter={v=>v?'₹'+Math.round(v/1000)+'K':''}/>
+                          </Bar>
+                          <Line type="monotone" dataKey="achieved" stroke={T.tealD} strokeWidth={2.5} dot={{r:4,fill:T.tealD,stroke:'#fff',strokeWidth:2}} activeDot={{r:5}} legendType="none" connectNulls={true}/>
+                          <Line type="monotone" dataKey="target" stroke="#607d8b" strokeWidth={2} strokeDasharray="5 3" dot={{r:3,fill:'#607d8b',stroke:'#fff',strokeWidth:1.5}} activeDot={{r:4}} legendType="none" connectNulls={true}/>
+                        </ComposedChart>
+                      </ResponsiveContainer>
+                    </>);
+                  })()}
+                </GC>
+
+                {/* ── CHART 4: UNITS STACK ─────────────────────────────── */}
+                <GC style={{padding:16}}>
+                  <SH title="Units — Booked + Available Stack" sub="Monthly booked (teal) · Available % (amber line) · Target (grey)"/>
+                  {(()=>{
+                    const WIN=10;
+                    const totalInv=iF.length||3184;
+                    let cum=0;const cumMap={};
+                    monthlyWithTargets.forEach(d=>{cum+=(d.bookedUnits||0);cumMap[d.label]=cum;});
+                    const data=monthlyWithTargets.map(d=>({
+                      label:d.label,isFuture:d.isFuture,isCurrent:d.label===TODAY_LABEL,
+                      achieved:d.isFuture?null:(d.bookedUnits||null),
+                      target:d.targetUnitsLine||null,
+                      availAbs:d.isFuture?null:Math.max(0,totalInv-(cumMap[d.label]||0)),
+                      availPct:d.isFuture?null:totalInv>0?Math.round(Math.max(0,totalInv-(cumMap[d.label]||0))/totalInv*100):null,
+                    }));
+                    const cur=data.findIndex(d=>d.isCurrent);
+                    const def=cur>=2?cur-2:Math.max(0,data.length-WIN);
+                    const off=Math.min(Math.max(suOff<0?def:suOff,0),Math.max(0,data.length-WIN));
+                    const sl=data.slice(off,off+WIN);
+                    return(<>
+                      <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
+                        <button onClick={()=>setSuOff(Math.max(0,off-1))} disabled={off===0} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:off===0?'default':'pointer',fontSize:13,color:off===0?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>‹</button>
+                        <div style={{flex:1,height:4,background:'rgba(0,151,167,0.1)',borderRadius:2,overflow:'hidden'}}><div style={{width:(WIN/Math.max(data.length,1)*100)+'%',marginLeft:(off/Math.max(data.length,1)*100)+'%',height:'100%',background:'#0097a7',borderRadius:2}}/></div>
+                        <button onClick={()=>setSuOff(Math.min(data.length-WIN,off+1))} disabled={off>=data.length-WIN} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:off>=data.length-WIN?'default':'pointer',fontSize:13,color:off>=data.length-WIN?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>›</button>
+                      </div>
+                      <ResponsiveContainer width="100%" height={210}>
+                        <ComposedChart data={sl} margin={{top:26,right:40,bottom:18,left:0}} barGap={4} barCategoryGap="30%">
+                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.1)" vertical={false}/>
+                          <XAxis dataKey="label" tick={({x,y,payload})=>{const d=sl.find(s=>s.label===payload.value);return <text x={x} y={y+10} textAnchor="middle" fontSize={9} fill={d?.isCurrent?T.tealD:d?.isFuture?'#90a4ae':T.textM} fontWeight={d?.isCurrent?900:600}>{payload.value}</text>;}} axisLine={false} tickLine={false}/>
+                          <YAxis yAxisId="l" tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={28}/>
+                          <YAxis yAxisId="r" orientation="right" tick={{fill:T.amber,fontSize:8}} axisLine={false} tickLine={false} width={36} tickFormatter={v=>v+'%'} domain={[0,100]}/>
+                          <Tooltip content={({active,payload,label})=>{if(!active||!payload?.length)return null;const d=sl.find(s=>s.label===label);return(<div style={{background:'rgba(255,255,255,0.97)',border:'1px solid rgba(0,151,167,0.3)',borderRadius:10,padding:'8px 12px',fontSize:10}}><p style={{color:T.tealD,fontWeight:800,margin:'0 0 4px'}}>{label}</p>{d?.achieved!=null&&<p style={{color:T.tealD,margin:0}}>Booked: {d.achieved} units</p>}{d?.target!=null&&<p style={{color:'#607d8b',margin:0}}>Target: {d.target} units</p>}{d?.availAbs!=null&&<p style={{color:T.amber,margin:0}}>Available: {d.availAbs} ({d.availPct}%)</p>}</div>);}}/>
+                          <Legend wrapperStyle={{fontSize:9,fontWeight:700}} iconSize={8}/>
+                          <Bar yAxisId="l" dataKey="achieved" name="Booked" fill={T.teal} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={800} animationEasing="ease-out">
+                            {sl.map((d,i)=><Cell key={i} fill={d.isCurrent?T.tealD:T.teal} fillOpacity={d.isCurrent?1:0.85}/>)}
+                            <LabelList dataKey="achieved" position="top" style={{fill:T.tealD,fontSize:8,fontWeight:800}} formatter={v=>v>0?v:''}/>
+                          </Bar>
+                          <Bar yAxisId="l" dataKey="target" name="Target" fill="#b0bec5" fillOpacity={0.75} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={1000} animationEasing="ease-out">
+                            <LabelList dataKey="target" position="top" style={{fill:'#607d8b',fontSize:8,fontWeight:800}} formatter={v=>v>0?v:''}/>
+                          </Bar>
+                          <Line yAxisId="l" type="monotone" dataKey="achieved" stroke={T.tealD} strokeWidth={2.5} dot={{r:4,fill:T.tealD,stroke:'#fff',strokeWidth:2}} activeDot={{r:5}} legendType="none" connectNulls={true}/>
+                          <Line yAxisId="l" type="monotone" dataKey="target" stroke="#607d8b" strokeWidth={2} strokeDasharray="5 3" dot={{r:3,fill:'#607d8b',stroke:'#fff',strokeWidth:1.5}} activeDot={{r:4}} legendType="none" connectNulls={true}/>
+                          <Line yAxisId="r" type="monotone" dataKey="availPct" name="Avail %" stroke={T.amber} strokeWidth={1.5} dot={{r:3,fill:T.amber,stroke:'#fff',strokeWidth:1}} activeDot={{r:4}} legendType="circle" connectNulls={false}/>
+                        </ComposedChart>
+                      </ResponsiveContainer>
+                    </>);
+                  })()}
+                </GC>
 
               {/* Area: Total Sold vs Available */}
               <GC style={{padding:16}}>
