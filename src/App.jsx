@@ -898,7 +898,7 @@ function AppInner() {
               <div style={{flex:1,height:1,background:'rgba(0,151,167,0.15)',borderRadius:1}}/>
             </div>
             {/* ROW 1: KPI CARDS — Merged pairs with pie charts */}
-            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:10}}>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr auto',gap:10,alignItems:'stretch'}}>
 
               {/* CARD A: Units — pie chart with booked+available */}
               <GC style={{padding:12}} cls="kc">
@@ -1063,7 +1063,7 @@ function AppInner() {
                 display:showTowerType?'none':'grid',
                 gridTemplateColumns:'1fr 1fr',gap:12,
                 transformOrigin:'center center',
-                animation:!showTowerType?'flipIn 0.45s ease forwards':'none',
+                animation:!showTowerType?'flipIn 0.8s cubic-bezier(0.4,0,0.2,1) forwards':'none',
               }}>
 
                 {/* ── CHART 1: UNITS ─────────────────────────────────── */}
@@ -1265,7 +1265,7 @@ function AppInner() {
               <div style={{
                 display:showTowerType?'flex':'none',
                 alignItems:'center',gap:10,margin:'16px 0 10px',
-                animation:showTowerType?'flipIn 0.4s ease forwards':'none',
+                animation:showTowerType?'flipIn 0.7s cubic-bezier(0.4,0,0.2,1) forwards':'none',
               }}>
                 <div style={{background:'linear-gradient(135deg,#0097a7,#00bcd4)',borderRadius:10,padding:'5px 18px',display:'flex',alignItems:'center',gap:8,boxShadow:'0 2px 10px rgba(0,151,167,0.3)'}}>
                   <span style={{fontSize:13}}>🏗️</span>
@@ -1273,7 +1273,7 @@ function AppInner() {
                 </div>
                 <div style={{flex:1,height:1,background:'rgba(0,151,167,0.15)',borderRadius:1}}/>
               </div>
-              <div style={{display:showTowerType?'grid':'none',gridTemplateColumns:'1fr 1fr',gap:12,transformOrigin:'center center',animation:showTowerType?'flipIn 0.45s ease forwards':'none'}}>
+              <div style={{display:showTowerType?'grid':'none',gridTemplateColumns:'1fr 1fr',gap:12,transformOrigin:'center center',animation:showTowerType?'flipIn 0.8s cubic-bezier(0.4,0,0.2,1) forwards':'none'}}>
 
                 {/* ── CHART: Type Wise % Sale ─────────────────────── */}
                 <GC style={{padding:16}}>
@@ -1382,14 +1382,14 @@ function AppInner() {
               </div>{/* end tower & type chart grid */}
 
               {/* ── SECTION: CP Wise Sales ── */}
-              <div style={{display:showTowerType?'flex':'none',alignItems:'center',gap:10,margin:'16px 0 10px',animation:showTowerType?'flipIn 0.4s ease forwards':'none'}}>
+              <div style={{display:showTowerType?'flex':'none',alignItems:'center',gap:10,margin:'16px 0 10px',animation:showTowerType?'flipIn 0.7s cubic-bezier(0.4,0,0.2,1) forwards':'none'}}>
                 <div style={{background:'linear-gradient(135deg,#1a3a5c,#2a5a8c)',borderRadius:10,padding:'5px 18px',display:'flex',alignItems:'center',gap:8,boxShadow:'0 2px 10px rgba(26,58,92,0.3)'}}>
                   <span style={{fontSize:13}}>🤝</span>
                   <span style={{fontSize:11,fontWeight:900,color:'#fff',textTransform:'uppercase',letterSpacing:1}}>CP Wise Sales</span>
                 </div>
                 <div style={{flex:1,height:1,background:'rgba(26,58,92,0.15)',borderRadius:1}}/>
               </div>
-              <div style={{display:showTowerType?'grid':'none',gridTemplateColumns:'1fr 1fr',gap:12,transformOrigin:'center center',animation:showTowerType?'flipIn 0.5s ease forwards':'none'}}>
+              <div style={{display:showTowerType?'grid':'none',gridTemplateColumns:'1fr 1fr',gap:12,transformOrigin:'center center',animation:showTowerType?'flipIn 0.9s cubic-bezier(0.4,0,0.2,1) forwards':'none'}}>
 
                 {/* ── CP: Top 10 Units Booked (bar) ─────────────── */}
                 <GC style={{padding:16}}>
