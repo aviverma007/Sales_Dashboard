@@ -464,6 +464,8 @@ function AppInner() {
     return()=>document.removeEventListener('click',h);
   },[]);
   const [cpExpanded,setCpExpanded]=useState(false);
+  const [cpScroll,setCpScroll]=useState(0);
+  const [cpScroll2,setCpScroll2]=useState(0);
 
   useEffect(()=>{fetch('/data/dashboard_data.json').then(r=>r.json()).then(d=>{setRaw(d);setLoading(false);}).catch(()=>setLoading(false));}, []);
 
@@ -1361,7 +1363,6 @@ function AppInner() {
                   {(()=>{
                     const top=topCP.slice(0,10);
                     const all=topCP;
-                    const [cpScroll,setCpScroll]=React.useState(0);
                     const WIN=10;
                     const slice=all.slice(cpScroll,cpScroll+WIN);
                     const maxU=Math.max(...slice.map(d=>d.units),1);
@@ -1401,7 +1402,6 @@ function AppInner() {
                   <SH title="Top CP — Sales Value (₹Cr)" sub="BSP value by channel partner · top 10 · scroll for more"/>
                   {(()=>{
                     const all=topCP;
-                    const [cpScroll2,setCpScroll2]=React.useState(0);
                     const WIN=10;
                     const slice=all.slice(cpScroll2,cpScroll2+WIN);
                     const totalBSP=all.reduce((s,r)=>s+r.bspCr,0)||1;
