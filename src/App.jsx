@@ -1028,6 +1028,41 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                 <div style={{position:'absolute',bottom:0,left:0,right:0,height:3,background:`linear-gradient(90deg,${T.teal},#7c3aed)`,borderRadius:'0 0 14px 14px'}}/>
               </GC>
 
+              {/* CARD D: Avg Rate / sq ft — project wise */}
+              <GC style={{padding:12,minWidth:190,maxWidth:230}} cls="kc">
+                <SH title="Avg Rate / sq ft" compact/>
+                <div style={{display:'flex',flexDirection:'column',gap:6,marginTop:4}}>
+                  {(()=>{
+                    const projRates=(areaSummary.byProject||[]).filter(d=>d.avgPricePerSqft>0);
+                    const overallRate=kpiEx.avgRatePerSqft||0;
+                    const maxRate=Math.max(...projRates.map(d=>d.avgPricePerSqft),1);
+                    const SHORT={'SMARTWORLD THE EDITION':'Edition','Smartworld Sky Arc':'Sky Arc','Trump Residences Gurgaon':'Trump','Smartworld Le Courtyard':'Le Courtyard','Smartworld Suites':'Suites'};
+                    return(<>
+                      <div style={{background:`${T.navy}0d`,borderRadius:7,padding:'5px 8px',marginBottom:2}}>
+                        <p style={{fontSize:7,color:T.textM,fontWeight:700,margin:'0 0 1px',textTransform:'uppercase'}}>Overall Avg</p>
+                        <p style={{fontSize:16,fontWeight:900,color:T.navy,margin:0,letterSpacing:-0.5}}>₹{overallRate.toLocaleString('en-IN')}<span style={{fontSize:8,fontWeight:600,color:T.textM}}> /sqft</span></p>
+                      </div>
+                      {projRates.map((d,i)=>{
+                        const pct=Math.round((d.avgPricePerSqft/maxRate)*100);
+                        const col=d.avgPricePerSqft>25000?T.amber:d.avgPricePerSqft>20000?T.tealD:T.teal;
+                        return(
+                          <div key={i}>
+                            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:2}}>
+                              <span style={{fontSize:8,fontWeight:700,color:T.textM}}>{SHORT[d.project]||d.project}</span>
+                              <span style={{fontSize:9,fontWeight:900,color:col}}>₹{d.avgPricePerSqft.toLocaleString('en-IN')}</span>
+                            </div>
+                            <div style={{height:4,background:'rgba(0,100,140,0.1)',borderRadius:2,overflow:'hidden'}}>
+                              <div style={{width:pct+'%',height:'100%',background:col,borderRadius:2,transition:'width 0.6s ease'}}/>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </>);
+                  })()}
+                </div>
+                <div style={{position:'absolute',bottom:0,left:0,right:0,height:3,background:`linear-gradient(90deg,${T.teal},${T.amber})`,borderRadius:'0 0 14px 14px'}}/>
+              </GC>
+
             </div>
 
             {/* ROW 2: SALES & PRICING TREND — Target vs Achieved */}
