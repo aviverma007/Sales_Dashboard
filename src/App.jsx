@@ -1213,6 +1213,8 @@ function AppInner() {
                   })()}
                 </GC>
 
+              </div>{/* end 2x2 chart grid */}
+
               {/* Area: Total Sold vs Available */}
               <GC style={{padding:16}}>
                 <SH title="Area — Sold vs Available" sub="sq ft: booked area vs available area by project"/>
