@@ -1420,12 +1420,11 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
 
                 {/* ── CHART: Tower Wise Rate Movement ─────────────────────── */}
                 <GC style={{padding:16}}>
-                  <SH title="Tower Wise Rate Movement" sub="Avg ₹/sqft per tower by financial year · overall rate line"/>
+                  <SH title="Tower Wise Rate Movement" sub="Avg ₹/sqft per tower by FY · scroll to see all towers · filtered by project"/>
                   {(()=>{
                     const FYS=['FY2023-24','FY2024-25','FY2025-26'];
                     const FY_COLORS={[FYS[0]]:'#0077b6',[FYS[1]]:'#0097a7',[FYS[2]]:'#1a3a5c'};
                     const FY_LABELS={[FYS[0]]:'FY 2024',[FYS[1]]:'FY 2025',[FYS[2]]:'FY 2026'};
-                    // Build tower×FY map from pA
                     const map={};
                     pA.forEach(r=>{
                       const t=r.tower||'';const fy=r.bookingFY||'';
@@ -1448,77 +1447,105 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                       return row;
                     });
                     if(!data.length)return<p style={{color:T.textL,fontSize:11,textAlign:'center',padding:20}}>Select a project to view tower data</p>;
+                    const barW=80, minW=Math.max(data.length*barW*3+80, 300);
+                    const needsScroll=data.length>5;
                     return(
-                      <ResponsiveContainer width="100%" height={240}>
-                        <ComposedChart data={data} margin={{top:24,right:12,bottom:24,left:0}} barGap={2}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.08)" vertical={false}/>
-                          <XAxis dataKey="tower" tick={{fill:T.textM,fontSize:10,fontWeight:700}} axisLine={false} tickLine={false}/>
-                          <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={40} tickFormatter={v=>v?v.toLocaleString('en-IN'):''} domain={['auto','auto']}/>
-                          <Tooltip content={<CTip fmt={v=>v?'₹'+v.toLocaleString('en-IN')+'/sqft':'N/A'}/>}/>
-                          <Legend wrapperStyle={{fontSize:9,fontWeight:700}} iconSize={8} formatter={v=>FY_LABELS[v]||v}/>
-                          {FYS.map(fy=>(
-                            <Bar key={fy} dataKey={fy} name={fy} fill={FY_COLORS[fy]} radius={[3,3,0,0]} barSize={18}>
-                              <LabelList dataKey={fy} position="top" style={{fill:FY_COLORS[fy],fontSize:7,fontWeight:700}} formatter={v=>v?v.toLocaleString('en-IN'):''}/>
-                            </Bar>
-                          ))}
-                          <Line type="monotone" dataKey="overall" name="Overall" stroke="#22c55e" strokeWidth={2} dot={{r:4,fill:'#22c55e',stroke:'#fff',strokeWidth:1.5}} activeDot={{r:6}}>
-                            <LabelList dataKey="overall" position="top" style={{fill:'#16a34a',fontSize:8,fontWeight:800}} formatter={v=>v?v.toLocaleString('en-IN'):''}/>
-                          </Line>
-                        </ComposedChart>
-                      </ResponsiveContainer>
+                      <>
+                        <div style={{overflowX:needsScroll?'auto':'visible',overflowY:'hidden',paddingBottom:4}}>
+                          <div style={{width:needsScroll?minW+'px':'100%',minWidth:'100%'}}>
+                            <ResponsiveContainer width="100%" height={260}>
+                              <ComposedChart data={data} margin={{top:28,right:16,bottom:16,left:0}} barGap={2} barCategoryGap="30%">
+                                <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.08)" vertical={false}/>
+                                <XAxis dataKey="tower" tick={{fill:T.textM,fontSize:10,fontWeight:700}} axisLine={false} tickLine={false}/>
+                                <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={44} tickFormatter={v=>v?(v/1000).toFixed(0)+'K':''} domain={['auto','auto']}/>
+                                <Tooltip content={<CTip fmt={v=>v?'₹'+v.toLocaleString('en-IN')+'/sqft':'N/A'}/>}/>
+                                <Legend wrapperStyle={{fontSize:9,fontWeight:700}} iconSize={8} formatter={v=>FY_LABELS[v]||v}/>
+                                {FYS.map(fy=>(
+                                  <Bar key={fy} dataKey={fy} name={fy} fill={FY_COLORS[fy]} radius={[3,3,0,0]} barSize={20}>
+                                    <LabelList dataKey={fy} position="top" style={{fill:FY_COLORS[fy],fontSize:8,fontWeight:700}} formatter={v=>v?v.toLocaleString('en-IN'):''}/>
+                                  </Bar>
+                                ))}
+                                <Line type="monotone" dataKey="overall" name="Overall" stroke="#22c55e" strokeWidth={2.5} dot={{r:5,fill:'#22c55e',stroke:'#fff',strokeWidth:2}} activeDot={{r:7}}>
+                                  <LabelList dataKey="overall" position="top" offset={8} style={{fill:'#16a34a',fontSize:9,fontWeight:800}} formatter={v=>v?v.toLocaleString('en-IN'):''}/>
+                                </Line>
+                              </ComposedChart>
+                            </ResponsiveContainer>
+                          </div>
+                        </div>
+                        {needsScroll&&<div style={{textAlign:'center',fontSize:9,color:T.textL,marginTop:2}}>← scroll to see all towers →</div>}
+                      </>
                     );
                   })()}
                 </GC>
 
                 {/* ── CHART: Rate Trend Over Time (scatter) ───────────── */}
                 <GC style={{padding:16}}>
-                  <SH title="Rate Trend Over Time" sub="₹/sqft per booking date · size = unit area · trendline"/>
+                  <SH title="Rate Trend Over Time" sub="₹/sqft per booking · coloured by tower · scroll for full timeline · filtered by project"/>
                   {(()=>{
                     const pts=pA.filter(r=>r.bookingDate&&r.bsp&&r.superArea>0).map(r=>({
                       date:r.bookingDate,
                       ts:new Date(r.bookingDate).getTime(),
                       rate:Math.round(r.bsp/r.superArea),
                       area:r.superArea,
-                      tower:r.tower||'',
+                      tower:r.tower||'?',
                       name:r.customer||r.unit||'',
                     })).sort((a,b)=>a.ts-b.ts);
-                    if(!pts.length)return<p style={{color:T.textL,fontSize:11,textAlign:'center',padding:20}}>Select Edition project to view rate trend</p>;
-                    // Linear regression for trendline
+                    if(!pts.length)return<p style={{color:T.textL,fontSize:11,textAlign:'center',padding:20}}>Select a project with booking dates to view rate trend</p>;
                     const n=pts.length;
-                    const xArr=pts.map((_,i)=>i);
+                    const xMean=(n-1)/2;
                     const yArr=pts.map(p=>p.rate);
-                    const xMean=xArr.reduce((s,v)=>s+v,0)/n;
                     const yMean=yArr.reduce((s,v)=>s+v,0)/n;
-                    const num=xArr.reduce((s,x,i)=>s+(x-xMean)*(yArr[i]-yMean),0);
-                    const den=xArr.reduce((s,x)=>s+(x-xMean)**2,0);
+                    const num=pts.reduce((s,_,i)=>s+(i-xMean)*(yArr[i]-yMean),0);
+                    const den=pts.reduce((s,_,i)=>s+(i-xMean)**2,0);
                     const slope=den?num/den:0;
                     const intercept=yMean-slope*xMean;
-                    const trendData=[{ts:pts[0].ts,trend:Math.round(intercept)},{ts:pts[pts.length-1].ts,trend:Math.round(intercept+slope*(n-1))}];
-                    const TOWER_COLOR={'T-1':'#0077b6','T-2':'#0097a7','T-3':'#1a3a5c','T-4':'#4a9eb5','T-5':'#7c3aed','T-6':'#f59e0b'};
+                    const trendData=[{ts:pts[0].ts,trend:Math.round(intercept)},{ts:pts[n-1].ts,trend:Math.round(intercept+slope*(n-1))}];
+                    // Get unique towers for legend + colour map
+                    const towerKeys=[...new Set(pts.map(p=>p.tower))].sort();
+                    const PALETTE=['#0077b6','#0097a7','#1a3a5c','#4a9eb5','#7c3aed','#f59e0b','#e11d48','#16a34a'];
+                    const TOWER_COLOR=Object.fromEntries(towerKeys.map((t,i)=>[t,PALETTE[i%PALETTE.length]]));
                     const fmt=ts=>{const d=new Date(ts);return d.toLocaleDateString('en-IN',{month:'short',year:'2-digit'});};
+                    // Window: show 90-day chunks with left/right scroll
+                    const minTs=pts[0].ts, maxTs=pts[n-1].ts;
+                    const totalDays=Math.ceil((maxTs-minTs)/86400000)||1;
+                    const WIN_DAYS=180;
+                    const needsScroll=totalDays>WIN_DAYS;
+                    const visiblePts=pts; // Show all, let overflow scroll handle it
+                    const innerW=Math.max(n*6+120, 500);
                     return(
-                      <ResponsiveContainer width="100%" height={240}>
-                        <ComposedChart margin={{top:8,right:12,bottom:32,left:0}}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.06)"/>
-                          <XAxis dataKey="ts" type="number" domain={['dataMin','dataMax']} scale="time" tickFormatter={fmt} tick={{fill:T.textM,fontSize:8}} axisLine={false} tickLine={false} angle={-30} textAnchor="end" height={40}/>
-                          <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={44} tickFormatter={v=>v.toLocaleString('en-IN')} domain={['auto','auto']}/>
-                          <Tooltip content={({active,payload})=>{
-                            if(!active||!payload?.length)return null;
-                            const d=payload[0]?.payload;
-                            if(!d||!d.rate)return null;
-                            return(<div style={{background:'#fff',border:'1px solid #e5e7eb',borderRadius:8,padding:'8px 12px',fontSize:10}}>
-                              <p style={{margin:0,fontWeight:700,color:T.navy}}>{d.name}</p>
-                              <p style={{margin:'2px 0',color:T.tealD}}>₹{d.rate.toLocaleString('en-IN')}/sqft</p>
-                              <p style={{margin:0,color:T.textM}}>{d.date} · {d.tower} · {d.area}sqft</p>
-                            </div>);
-                          }}/>
-                          <Scatter data={pts} dataKey="rate">
-                            {pts.map((p,i)=><Cell key={i} fill={TOWER_COLOR[p.tower]||T.teal} fillOpacity={0.7}/>)}
-                          </Scatter>
-                          <Line data={trendData} type="linear" dataKey="trend" stroke="#22c55e" strokeWidth={2} dot={false} strokeDasharray="6 3" name="Trend"/>
-                          <Legend wrapperStyle={{fontSize:9,fontWeight:700}} iconSize={8} payload={Object.entries(TOWER_COLOR).map(([t,c])=>({value:t,type:'circle',color:c}))}/>
-                        </ComposedChart>
-                      </ResponsiveContainer>
+                      <>
+                        <div style={{overflowX:'auto',overflowY:'hidden',paddingBottom:4}}>
+                          <div style={{width:needsScroll?innerW+'px':'100%',minWidth:'100%'}}>
+                            <ResponsiveContainer width="100%" height={260}>
+                              <ComposedChart margin={{top:8,right:16,bottom:40,left:0}}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.06)"/>
+                                <XAxis dataKey="ts" type="number" domain={[pts[0].ts,pts[n-1].ts]} scale="time"
+                                  tickFormatter={fmt} tick={{fill:T.textM,fontSize:8}} axisLine={false} tickLine={false}
+                                  angle={-35} textAnchor="end" height={44} tickCount={Math.min(10,n)}/>
+                                <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={44}
+                                  tickFormatter={v=>v.toLocaleString('en-IN')} domain={['auto','auto']}/>
+                                <Tooltip content={({active,payload})=>{
+                                  if(!active||!payload?.length)return null;
+                                  const d=payload[0]?.payload;
+                                  if(!d?.rate)return null;
+                                  return(<div style={{background:'#fff',border:'1px solid #e5e7eb',borderRadius:8,padding:'8px 12px',fontSize:10,boxShadow:'0 2px 8px rgba(0,0,0,0.1)'}}>
+                                    <p style={{margin:0,fontWeight:700,color:T.navy,fontSize:11}}>{d.name}</p>
+                                    <p style={{margin:'3px 0',color:T.tealD,fontWeight:800}}>₹{d.rate.toLocaleString('en-IN')}/sqft</p>
+                                    <p style={{margin:0,color:T.textM}}>{d.date} · {d.tower}</p>
+                                  </div>);
+                                }}/>
+                                <Scatter data={pts} dataKey="rate" name="rate">
+                                  {pts.map((p,i)=><Cell key={i} fill={TOWER_COLOR[p.tower]||T.teal} fillOpacity={0.75} r={5}/>)}
+                                </Scatter>
+                                <Line data={trendData} type="linear" dataKey="trend" stroke="#22c55e" strokeWidth={2.5} dot={false} strokeDasharray="6 3" name="Trend"/>
+                                <Legend wrapperStyle={{fontSize:9,fontWeight:700}} iconSize={8}
+                                  payload={[...towerKeys.map(t=>({value:t,type:'circle',color:TOWER_COLOR[t]})),{value:'Trend',type:'line',color:'#22c55e'}]}/>
+                              </ComposedChart>
+                            </ResponsiveContainer>
+                          </div>
+                        </div>
+                        {needsScroll&&<div style={{textAlign:'center',fontSize:9,color:T.textL,marginTop:2}}>← scroll to see full timeline →</div>}
+                      </>
                     );
                   })()}
                 </GC>
