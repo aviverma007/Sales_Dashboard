@@ -1040,7 +1040,7 @@ function AppInner() {
 
                 {/* Chart 1: Units — Booked stacked + Available on top, running total */}
                 <GC style={{padding:16}}>
-                  <SH title="Units — Booked & Available" sub="Booked (teal) · Remaining available (amber) · Future target (grey)"/>
+                  <SH title="Units — Booked vs Target" sub="Achieved (teal) · Target (grey) · Lines connect both"/>
                   {(()=>{
                     const curLabel=TODAY_LABEL;
                     const _totalInv=iF.length||3184;
@@ -1055,7 +1055,7 @@ function AppInner() {
                         label:d.label,
                         booked:d.isFuture?null:monthBooked,
                         available:remaining,
-                        targetUnits:d.isFuture?(d.targetUnits||null):null,
+                        targetUnits:d.targetUnitsLine||null,
                         total:d.isFuture?null:_totalInv,
                         isFuture:d.isFuture,
                         isCurrent:d.label===curLabel,
@@ -1075,7 +1075,7 @@ function AppInner() {
                         <button onClick={()=>setUOff(Math.min(data.length-WIN,uOffClamped+1))} disabled={uOffClamped>=data.length-WIN} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:uOffClamped>=data.length-WIN?'default':'pointer',fontSize:13,color:uOffClamped>=data.length-WIN?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>›</button>
                       </div>
                       <ResponsiveContainer width="100%" height={210}>
-                        <ComposedChart data={slice} margin={{top:28,right:8,bottom:18,left:0}} barCategoryGap="35%">
+                        <ComposedChart data={slice} margin={{top:28,right:8,bottom:18,left:0}} barCategoryGap="30%" barGap={4}>
                           <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.1)" vertical={false}/>
                           <XAxis dataKey="label" tick={({x,y,payload})=>{
                             const d=slice.find(s=>s.label===payload.value);
@@ -1099,7 +1099,7 @@ function AppInner() {
                           }}/>
                           <Legend wrapperStyle={{fontSize:9,fontWeight:700,color:T.text}} iconSize={8}/>
                           {/* Booked bar (teal) - full height */}
-                          <Bar dataKey="booked" name="Booked" fill={T.teal} radius={[3,3,0,0]} barSize={28}>
+                          <Bar dataKey="booked" name="Booked" fill={T.teal} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={800} animationEasing="ease-out">
                             {slice.map((d,i)=><Cell key={i} fill={d.isCurrent?T.tealD:T.teal} fillOpacity={d.isCurrent?1:0.85}/>)}
                             <LabelList content={({x,y,width,height,index})=>{
                               const d=slice[index];
@@ -1114,8 +1114,8 @@ function AppInner() {
                             }}/>
                           </Bar>
                           {/* Future target (grey) */}
-                          <Bar dataKey="targetUnits" name="Target" fill="#b0bec5" fillOpacity={0.7} radius={[3,3,0,0]} barSize={28}>
-                            <LabelList dataKey="targetUnits" position="top" style={{fill:'#607d8b',fontSize:9,fontWeight:800}} formatter={v=>v>0?v:''}/>
+                          <Bar dataKey="targetUnits" name="Target" fill="#b0bec5" fillOpacity={0.75} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={1000} animationEasing="ease-out">
+                            <LabelList dataKey="targetUnits" position="top" style={{fill:'#607d8b',fontSize:8,fontWeight:800}} formatter={v=>v>0?v:''}/>
                           </Bar>
                           <Line type="monotone" dataKey="booked" stroke={T.tealD} strokeWidth={2} dot={{r:3,fill:T.tealD,stroke:'#fff',strokeWidth:1.5}} activeDot={{r:4}} legendType="none" name="_line" connectNulls={false}/>
                           <Line type="monotone" dataKey="targetUnitsLine" stroke="#90a4ae" strokeWidth={2} strokeDasharray="5 3" dot={{r:3,fill:'#90a4ae',stroke:'#fff',strokeWidth:1.5}} activeDot={{r:4}} legendType="none" name="_tline" connectNulls={true}/>
@@ -1145,7 +1145,7 @@ function AppInner() {
                         <button onClick={()=>setTsvOff(Math.min(data.length-WIN,tsvOffClamped+1))} disabled={tsvOffClamped>=data.length-WIN} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:tsvOff>=data.length-WIN?'default':'pointer',fontSize:13,color:tsvOff>=data.length-WIN?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>›</button>
                       </div>
                       <ResponsiveContainer width="100%" height={190}>
-                        <ComposedChart data={slice} margin={{top:20,right:8,bottom:18,left:0}} barSize={20} barGap={0}>
+                        <ComposedChart data={slice} margin={{top:20,right:8,bottom:18,left:0}} barGap={4} barCategoryGap="30%">
                           <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.1)" vertical={false}/>
                           <XAxis dataKey="label" tick={({x,y,payload})=>{
                             const d=slice.find(s=>s.label===payload.value);
@@ -1158,8 +1158,8 @@ function AppInner() {
                             {slice.map((d,i)=><Cell key={i} fill={d.label===curLabel?T.tealD:T.teal} fillOpacity={d.label===curLabel?1:0.8}/>)}
                             <LabelList dataKey="bspCr" position="top" style={{fill:T.tealD,fontSize:7,fontWeight:700}} formatter={v=>v>0?v+'Cr':''}/>
                           </Bar>
-                          <Bar dataKey="targetTsvCr" name="Target TSV" fill="#b0bec5" fillOpacity={0.7} radius={[3,3,0,0]}>
-                            <LabelList dataKey="targetTsvCr" position="top" style={{fill:'#607d8b',fontSize:7,fontWeight:700}} formatter={v=>v>0?v+'Cr':''}/>
+                          <Bar dataKey="targetTsvLine" name="Target TSV" fill="#b0bec5" fillOpacity={0.75} radius={[3,3,0,0]} isAnimationActive={true} animationDuration={1000} animationEasing="ease-out">
+                            <LabelList dataKey="targetTsvLine" position="top" style={{fill:'#607d8b',fontSize:7,fontWeight:700}} formatter={v=>v>0?v+'Cr':''}/>
                           </Bar>
                           <Line type="monotone" dataKey="bspCr" stroke={T.tealD} strokeWidth={2} dot={{r:3,fill:T.tealD,stroke:'#fff',strokeWidth:1.5}} activeDot={{r:4}} legendType="none" name="_line" connectNulls={false}/>
                           <Line type="monotone" dataKey="targetTsvLine" stroke="#90a4ae" strokeWidth={2} strokeDasharray="5 3" dot={{r:3,fill:'#90a4ae',stroke:'#fff',strokeWidth:1.5}} activeDot={{r:4}} legendType="none" name="_tline" connectNulls={true}/>
@@ -1194,7 +1194,7 @@ function AppInner() {
                         <button onClick={()=>setROff(Math.min(data.length-WIN,rOffClamped+1))} disabled={rOffClamped>=data.length-WIN} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:rOff>=data.length-WIN?'default':'pointer',fontSize:13,color:rOff>=data.length-WIN?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>›</button>
                       </div>
                       <ResponsiveContainer width="100%" height={190}>
-                        <ComposedChart data={slice} margin={{top:20,right:8,bottom:18,left:0}} barSize={20} barGap={0}>
+                        <ComposedChart data={slice} margin={{top:20,right:8,bottom:18,left:0}} barGap={4} barCategoryGap="30%">
                           <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.1)" vertical={false}/>
                           <XAxis dataKey="label" tick={({x,y,payload})=>{
                             const d=slice.find(s=>s.label===payload.value);
@@ -1203,12 +1203,12 @@ function AppInner() {
                           <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={40} tickFormatter={v=>'₹'+Math.round(v/1000)+'K'}/>
                           <Tooltip content={<CTip fmt={v=>v?'₹'+v.toLocaleString('en-IN')+'/sqft':'-'}/>}/>
                           <Legend wrapperStyle={{fontSize:9,fontWeight:700,color:T.text}} iconSize={8}/>
-                          <Bar dataKey="actualRate" name="Actual Rate" fill={T.teal} radius={[3,3,0,0]}>
+                          <Bar dataKey="actualRate" name="Actual Rate" fill={T.teal} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={800} animationEasing="ease-out">
                             {slice.map((d,i)=><Cell key={i} fill={d.label===curLabel?T.tealD:T.teal} fillOpacity={d.label===curLabel?1:0.8}/>)}
                             <LabelList dataKey="actualRate" position="top" style={{fill:T.tealD,fontSize:7,fontWeight:700}} formatter={v=>v?'₹'+v.toLocaleString('en-IN'):''}/>
                           </Bar>
-                          <Bar dataKey="targetRate" name="Target Rate" fill="#b0bec5" fillOpacity={0.7} radius={[3,3,0,0]}>
-                            <LabelList dataKey="targetRate" position="top" style={{fill:'#607d8b',fontSize:7,fontWeight:700}} formatter={v=>v?'₹'+v.toLocaleString('en-IN'):''}/>
+                          <Bar dataKey="targetRateLine" name="Target Rate" fill="#b0bec5" fillOpacity={0.75} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={1000} animationEasing="ease-out">
+                            <LabelList dataKey="targetRateLine" position="top" style={{fill:'#607d8b',fontSize:7,fontWeight:700}} formatter={v=>v?'₹'+v.toLocaleString('en-IN'):''}/>
                           </Bar>
                           <Line type="monotone" dataKey="actualRate" stroke={T.tealD} strokeWidth={2} dot={{r:3,fill:T.tealD,stroke:'#fff',strokeWidth:1.5}} activeDot={{r:4}} legendType="none" name="_line" connectNulls={false}/>
                           <Line type="monotone" dataKey="targetRateLine" stroke="#90a4ae" strokeWidth={2} strokeDasharray="5 3" dot={{r:3,fill:'#90a4ae',stroke:'#fff',strokeWidth:1.5}} activeDot={{r:4}} legendType="none" name="_tline" connectNulls={true}/>
@@ -1260,14 +1260,12 @@ function AppInner() {
                           <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={32}/>
                           <Tooltip content={<CTip/>}/>
                           <Legend wrapperStyle={{fontSize:9,fontWeight:700,color:T.text}} iconSize={8}/>
-                          <Bar dataKey="booked" name="Booked" stackId="s" fill={T.teal} radius={[0,0,0,0]}>
+                          <Bar dataKey="booked" name="Booked" fill={T.teal} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={800} animationEasing="ease-out">
                             {slice.map((d,i)=><Cell key={i} fill={d.label===curLabel?T.tealD:T.teal} fillOpacity={d.label===curLabel?1:0.85}/>)}
+                            <LabelList dataKey="booked" position="top" style={{fill:T.tealD,fontSize:8,fontWeight:800}} formatter={v=>v>0?v:''}/>
                           </Bar>
-                          <Bar dataKey="available" name="Available" stackId="s" fill={T.amber} fillOpacity={0.5} radius={[3,3,0,0]}>
-                            <LabelList dataKey="available" position="top" style={{fill:T.amber,fontSize:7,fontWeight:700}} formatter={v=>v>0?v:''}/>
-                          </Bar>
-                          <Bar dataKey="targetUnits" name="Future Target" fill="#b0bec5" fillOpacity={0.7} radius={[3,3,0,0]}>
-                            <LabelList dataKey="targetUnits" position="top" style={{fill:'#607d8b',fontSize:7,fontWeight:700}} formatter={v=>v>0?v:''}/>
+                          <Bar dataKey="target" name="Target" fill="#b0bec5" fillOpacity={0.75} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={1000} animationEasing="ease-out">
+                            <LabelList dataKey="target" position="top" style={{fill:'#607d8b',fontSize:8,fontWeight:800}} formatter={v=>v>0?v:''}/>
                           </Bar>
                           <Line type="monotone" dataKey="booked" stroke={T.tealD} strokeWidth={2} dot={{r:3,fill:T.tealD,stroke:'#fff',strokeWidth:1.5}} activeDot={{r:4}} legendType="none" name="_line" connectNulls={false}/>
                           <Line type="monotone" dataKey="targetUnitsLine" stroke="#90a4ae" strokeWidth={2} strokeDasharray="5 3" dot={{r:3,fill:'#90a4ae',stroke:'#fff',strokeWidth:1.5}} activeDot={{r:4}} legendType="none" name="_tline" connectNulls={true}/>
