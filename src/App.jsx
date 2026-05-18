@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   AreaChart, Area, BarChart, Bar, ComposedChart, Line, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-  RadialBarChart, RadialBar, LabelList
+  RadialBarChart, RadialBar, LabelList, ScatterChart, Scatter
 } from 'recharts';
 
 // ─── THEME ────────────────────────────────────────────────────────────────────
