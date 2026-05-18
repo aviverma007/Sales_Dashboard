@@ -648,51 +648,67 @@ function AppInner() {
   // Tower & area data from enriched JSON
   // Merge actual monthly data with future targets (up to Mar 2027)
   const monthlyWithTargets=useMemo(()=>{
-    const targets=raw?.monthlyTargets||[];
-    const actualMap={};
-    monthly.forEach(m=>{actualMap[m.label]=m;});
-    // Build bookedUnits per month from FILTERED pA (respects all filters)
-    const unitMap={};
-    const areaMap={};
-    const bspMap={};
-    pA.filter(r=>r.bookingMonth).forEach(r=>{
+    const allTargets=raw?.monthlyTargets||[];
+    const selectedProjects=filters.project?filters.project.split('||').filter(Boolean):[];
+    const selectedFYs=filters.fy?filters.fy.split('||').filter(Boolean):[];
+
+    // FY month range: FY2025-26 = 2025-04 to 2026-03
+    const fyRange=(fy)=>{const m=fy.match(/FY(\d{4})-(\d{2})/);if(!m)return null;return{start:`${m[1]}-04`,end:`${2000+parseInt(m[2])}-03`};};
+    const inFY=(mo)=>{if(!selectedFYs.length)return true;return selectedFYs.some(fy=>{const r=fyRange(fy);return r&&mo>=r.start&&mo<=r.end;});};
+
+    // Filter targets by project + FY + quarter/month
+    const targets=allTargets.filter(t=>{
+      if(t.projectFilter){
+        if(selectedProjects.length===0)return false;
+        if(!selectedProjects.some(p=>p.toUpperCase()===t.projectFilter.toUpperCase()))return false;
+      }
+      if(selectedFYs.length&&!inFY(t.month))return false;
+      if(filters.quarter||filters.month){if(!matchMo(t.month))return false;}
+      return true;
+    });
+
+    // Build actual data maps from filtered pA
+    const unitMap={},areaMap={},bspMap={};
+    pA.filter(r=>r.bookingMonth&&(!selectedFYs.length||inFY(r.bookingMonth))&&(!filters.quarter&&!filters.month||matchMo(r.bookingMonth))).forEach(r=>{
       const lbl=fmtML(r.bookingMonth);
       unitMap[lbl]=(unitMap[lbl]||0)+1;
       areaMap[lbl]=(areaMap[lbl]||0)+(r.superArea||0);
       bspMap[lbl]=(bspMap[lbl]||0)+(r.bsp||0);
     });
-    // Build unified timeline: actual months + future target months
+
     const targetMap={};
     targets.forEach(t=>{targetMap[t.label]=t;});
-    // All labels from actual pA months + target months
-    const actualLabels=Object.keys(unitMap);
-    const allLabels=[...new Set([...actualLabels,...targets.map(t=>t.label)])];
-    const parseLabel=l=>{const m=l.match(/([A-Za-z]{3})'(\d{2})/);if(!m)return 0;const mon={Jan:1,Feb:2,Mar:3,Apr:4,May:5,Jun:6,Jul:7,Aug:8,Sep:9,Oct:10,Nov:11,Dec:12};return (2000+parseInt(m[2]))*100+(mon[m[1]]||0);};
+
+    const parseLabel=l=>{const m=l.match(/([A-Za-z]{3})'(\d{2})/);if(!m)return 0;const mon={Jan:1,Feb:2,Mar:3,Apr:4,May:5,Jun:6,Jul:7,Aug:8,Sep:9,Oct:10,Nov:11,Dec:12};const yr=parseInt(m[2]);return(yr>=90?1900+yr:2000+yr)*100+(mon[m[1]]||0);};
+
+    const allLabels=[...new Set([...Object.keys(unitMap),...targets.map(t=>t.label)])];
     allLabels.sort((a,b)=>parseLabel(a)-parseLabel(b));
+
+    const today=parseLabel(TODAY_LABEL);
+
     return allLabels.map(label=>{
-      const actual=actualMap[label]||{};
       const target=targetMap[label]||{};
       const isActual=!!unitMap[label];
+      const labelNum=parseLabel(label);
       return{
         label,
-        bspCr:isActual?(+(bspMap[label]/1e7).toFixed(1)):null,
-        demCr:actual.demCr||null,
-        recCr:actual.recCr||null,
+        bspCr:isActual?(+(( bspMap[label]||0)/1e7).toFixed(1)):null,
         bookedUnits:unitMap[label]||null,
         bookedAreaSqft:areaMap[label]||null,
         targetUnits:target.units||null,
-        targetAreaSqft:target.areaSqft||null,
         targetTsvCr:target.tsvCr||null,
         targetRate:target.targetRate||null,
-        isFuture:!isActual,
+        targetAreaSqft:target.areaSqft||null,
+        isFuture:labelNum>today,
+        isCurrent:label===TODAY_LABEL,
         actualRate:(raw?.monthlyActualRates||{})[label]||null,
-        // For lines: show target on ALL months so line is continuous
+        // Continuous lines — show on ALL months that have target data
         targetUnitsLine:target.units||null,
         targetTsvLine:target.tsvCr||null,
         targetRateLine:target.targetRate||null,
       };
     });
-  },[monthly,raw,pA]);
+  },[monthly,raw,pA,filters,matchMo,TODAY_LABEL]);
 
   const towerData=useMemo(()=>{
     if(!raw?.towerData) return [];
