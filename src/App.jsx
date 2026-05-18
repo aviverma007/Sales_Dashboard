@@ -1234,8 +1234,10 @@ function AppInner() {
               </div>{/* end 2x2 chart grid */}
 
               {/* ── SECTION: Tower & Type wise Sales ── */}
-              <div style={{background:'rgba(0,151,167,0.08)',borderRadius:10,padding:'8px 14px',marginBottom:8,marginTop:4,display:'flex',alignItems:'center',gap:8}}>
-                <span style={{fontSize:11,fontWeight:900,color:'#0097a7',textTransform:'uppercase',letterSpacing:1}}>Tower &amp; Type Wise Sales</span>
+              <div style={{display:'flex',alignItems:'center',gap:10,margin:'16px 0 10px'}}>
+                <div style={{width:4,height:18,background:T.teal,borderRadius:2}}/>
+                <span style={{fontSize:12,fontWeight:800,color:T.navy,letterSpacing:0.5,textTransform:'uppercase'}}>Tower &amp; Type Wise Sales</span>
+                <div style={{flex:1,height:1,background:'rgba(0,100,140,0.1)'}}/>
               </div>
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
 
@@ -1344,6 +1346,100 @@ function AppInner() {
                 </GC>
 
               </div>{/* end tower & type chart grid */}
+
+              {/* ── SECTION: CP Wise Sales ── */}
+              <div style={{display:'flex',alignItems:'center',gap:10,margin:'16px 0 10px'}}>
+                <div style={{width:4,height:18,background:T.teal,borderRadius:2}}/>
+                <span style={{fontSize:12,fontWeight:800,color:T.navy,letterSpacing:0.5,textTransform:'uppercase'}}>CP Wise Sales</span>
+                <div style={{flex:1,height:1,background:'rgba(0,100,140,0.1)'}}/>
+              </div>
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+
+                {/* ── CP: Top 10 Units Booked (bar) ─────────────── */}
+                <GC style={{padding:16}}>
+                  <SH title="Top CP — Units Booked" sub="Top 10 channel partners by units · scroll for more · ₹Cr above bars"/>
+                  {(()=>{
+                    const top=topCP.slice(0,10);
+                    const all=topCP;
+                    const [cpScroll,setCpScroll]=React.useState(0);
+                    const WIN=10;
+                    const slice=all.slice(cpScroll,cpScroll+WIN);
+                    const maxU=Math.max(...slice.map(d=>d.units),1);
+                    return(
+                      <>
+                        <div style={{overflowX:'auto',overflowY:'hidden'}}>
+                          <div style={{minWidth:slice.length*52+60+'px'}}>
+                            <ResponsiveContainer width="100%" height={220}>
+                              <ComposedChart data={slice} margin={{top:28,right:8,bottom:52,left:0}} barSize={28}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.08)" vertical={false}/>
+                                <XAxis dataKey="name" tick={{fill:T.textM,fontSize:8,fontWeight:600}} axisLine={false} tickLine={false} angle={-35} textAnchor="end" interval={0} height={56} tickFormatter={v=>v?.length>14?v.slice(0,14)+'…':v}/>
+                                <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={24} domain={[0,maxU+2]}/>
+                                <Tooltip content={<CTip fmt={(v,n)=>n==='Units'?v+' units':v+' Cr'}/>}/>
+                                <Bar dataKey="units" name="Units" radius={[4,4,0,0]}>
+                                  {slice.map((d,i)=><Cell key={i} fill={i===0?T.tealD:i<3?T.teal:'#4a9eb5'}/>)}
+                                  <LabelList dataKey="units" position="top" style={{fill:T.navy,fontSize:9,fontWeight:800}}/>
+                                  <LabelList dataKey="bspCr" position="insideTop" offset={-16} style={{fill:'#fff',fontSize:8,fontWeight:700}} formatter={v=>'₹'+v+'Cr'}/>
+                                </Bar>
+                              </ComposedChart>
+                            </ResponsiveContainer>
+                          </div>
+                        </div>
+                        {all.length>WIN&&(
+                          <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:8,marginTop:4}}>
+                            <button onClick={()=>setCpScroll(s=>Math.max(0,s-WIN))} disabled={cpScroll===0} style={{padding:'2px 10px',borderRadius:12,border:'1px solid rgba(0,151,167,0.3)',background:'rgba(0,151,167,0.06)',cursor:cpScroll===0?'default':'pointer',fontSize:10,color:cpScroll===0?T.textL:T.tealD,fontWeight:700}}>‹ Prev</button>
+                            <span style={{fontSize:9,color:T.textL}}>{cpScroll+1}–{Math.min(cpScroll+WIN,all.length)} of {all.length}</span>
+                            <button onClick={()=>setCpScroll(s=>Math.min(all.length-WIN,s+WIN))} disabled={cpScroll+WIN>=all.length} style={{padding:'2px 10px',borderRadius:12,border:'1px solid rgba(0,151,167,0.3)',background:'rgba(0,151,167,0.06)',cursor:cpScroll+WIN>=all.length?'default':'pointer',fontSize:10,color:cpScroll+WIN>=all.length?T.textL:T.tealD,fontWeight:700}}>Next ›</button>
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
+                </GC>
+
+                {/* ── CP: Sales Value ₹Cr (bar) + % line ───────── */}
+                <GC style={{padding:16}}>
+                  <SH title="Top CP — Sales Value (₹Cr)" sub="BSP value by channel partner · top 10 · scroll for more"/>
+                  {(()=>{
+                    const all=topCP;
+                    const [cpScroll2,setCpScroll2]=React.useState(0);
+                    const WIN=10;
+                    const slice=all.slice(cpScroll2,cpScroll2+WIN);
+                    const totalBSP=all.reduce((s,r)=>s+r.bspCr,0)||1;
+                    const dataWithPct=slice.map(r=>({...r,pct:+((r.bspCr/totalBSP)*100).toFixed(1)}));
+                    return(
+                      <>
+                        <div style={{overflowX:'auto',overflowY:'hidden'}}>
+                          <div style={{minWidth:slice.length*52+60+'px'}}>
+                            <ResponsiveContainer width="100%" height={220}>
+                              <ComposedChart data={dataWithPct} margin={{top:24,right:36,bottom:52,left:0}} barSize={28}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.08)" vertical={false}/>
+                                <XAxis dataKey="name" tick={{fill:T.textM,fontSize:8,fontWeight:600}} axisLine={false} tickLine={false} angle={-35} textAnchor="end" interval={0} height={56} tickFormatter={v=>v?.length>14?v.slice(0,14)+'…':v}/>
+                                <YAxis yAxisId="l" tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={28} tickFormatter={v=>v+'Cr'}/>
+                                <YAxis yAxisId="r" orientation="right" tickFormatter={v=>v+'%'} domain={[0,Math.max(...dataWithPct.map(d=>d.pct),10)+5]} tick={{fill:T.amber,fontSize:9}} axisLine={false} tickLine={false} width={28}/>
+                                <Tooltip content={<CTip fmt={(v,n)=>n==='₹Cr'?'₹'+v+' Cr':v+'%'}/>}/>
+                                <Legend wrapperStyle={{fontSize:9,fontWeight:700}} iconSize={8}/>
+                                <Bar yAxisId="l" dataKey="bspCr" name="₹Cr" radius={[4,4,0,0]}>
+                                  {dataWithPct.map((d,i)=><Cell key={i} fill={i===0?T.navy:i<3?'#1a4a6b':'#2a6a8b'}/>)}
+                                  <LabelList dataKey="bspCr" position="top" style={{fill:T.navy,fontSize:8,fontWeight:800}} formatter={v=>'₹'+v}/>
+                                </Bar>
+                                <Line yAxisId="r" type="monotone" dataKey="pct" name="% of Total" stroke={T.amber} strokeWidth={2} dot={{r:3,fill:T.amber}} activeDot={{r:5}}/>
+                              </ComposedChart>
+                            </ResponsiveContainer>
+                          </div>
+                        </div>
+                        {all.length>WIN&&(
+                          <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:8,marginTop:4}}>
+                            <button onClick={()=>setCpScroll2(s=>Math.max(0,s-WIN))} disabled={cpScroll2===0} style={{padding:'2px 10px',borderRadius:12,border:'1px solid rgba(0,151,167,0.3)',background:'rgba(0,151,167,0.06)',cursor:cpScroll2===0?'default':'pointer',fontSize:10,color:cpScroll2===0?T.textL:T.tealD,fontWeight:700}}>‹ Prev</button>
+                            <span style={{fontSize:9,color:T.textL}}>{cpScroll2+1}–{Math.min(cpScroll2+WIN,all.length)} of {all.length}</span>
+                            <button onClick={()=>setCpScroll2(s=>Math.min(all.length-WIN,s+WIN))} disabled={cpScroll2+WIN>=all.length} style={{padding:'2px 10px',borderRadius:12,border:'1px solid rgba(0,151,167,0.3)',background:'rgba(0,151,167,0.06)',cursor:cpScroll2+WIN>=all.length?'default':'pointer',fontSize:10,color:cpScroll2+WIN>=all.length?T.textL:T.tealD,fontWeight:700}}>Next ›</button>
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
+                </GC>
+
+              </div>{/* end CP wise grid */}
 
               {/* Area: Total Sold vs Available */}
               <GC style={{padding:16}}>
