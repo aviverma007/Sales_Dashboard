@@ -1266,23 +1266,29 @@ function AppInner() {
                       total:r.total,
                       pct:r.total>0?Math.round(r.booked/r.total*100):0,
                     }));
-                    const chartH=data.length>6?240:220;
+                    const minBarW=32, innerW=Math.max(data.length*minBarW+80, 300);
+                    const needsScroll=data.length>8;
                     return(
-                      <ResponsiveContainer width="100%" height={chartH}>
-                        <ComposedChart data={data} margin={{top:18,right:40,bottom:52,left:0}} barSize={Math.max(14,Math.min(26,Math.floor(260/Math.max(data.length,1))))} >
-                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.08)" vertical={false}/>
-                          <XAxis dataKey="label" tick={{fill:T.textM,fontSize:8,fontWeight:600}} axisLine={false} tickLine={false} angle={-35} textAnchor="end" interval={0} height={56}/>
-                          <YAxis yAxisId="left" tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={30}/>
-                          <YAxis yAxisId="right" orientation="right" tickFormatter={v=>v+'%'} domain={[0,120]} tick={{fill:T.tealD,fontSize:9}} axisLine={false} tickLine={false} width={32}/>
-                          <Tooltip content={<CTip fmt={(v,n)=>n==='% Sold'?v+'%':v+' units'}/>}/>
-                          <Legend wrapperStyle={{fontSize:9,fontWeight:700,paddingTop:4}} iconSize={8}/>
-                          <Bar yAxisId="left" dataKey="sold" name="Units Sold" stackId="s" fill={T.navy} fillOpacity={0.85} radius={[0,0,3,3]}>
-                            <LabelList dataKey="pct" position="top" formatter={v=>v+'%'} style={{fill:T.navy,fontSize:8,fontWeight:800}}/>
-                          </Bar>
-                          <Bar yAxisId="left" dataKey="unsold" name="Unsold Units" stackId="s" fill={T.navy} fillOpacity={0.2} radius={[3,3,0,0]}/>
-                          <Line yAxisId="right" type="monotone" dataKey="pct" name="% Sold" stroke={T.tealD} strokeWidth={2} dot={{r:3,fill:T.tealD}} activeDot={{r:5}}/>
-                        </ComposedChart>
-                      </ResponsiveContainer>
+                      <div style={{overflowX:needsScroll?'auto':'visible',overflowY:'hidden',paddingBottom:4}}>
+                        <div style={{width:needsScroll?innerW+'px':'100%',minWidth:'100%'}}>
+                          <ResponsiveContainer width="100%" height={240}>
+                            <ComposedChart data={data} margin={{top:18,right:40,bottom:52,left:0}} barSize={Math.max(18,Math.min(28,Math.floor(innerW/Math.max(data.length,1)-8)))}>
+                              <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.08)" vertical={false}/>
+                              <XAxis dataKey="label" tick={{fill:T.textM,fontSize:8,fontWeight:600}} axisLine={false} tickLine={false} angle={-35} textAnchor="end" interval={0} height={56}/>
+                              <YAxis yAxisId="left" tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={30}/>
+                              <YAxis yAxisId="right" orientation="right" tickFormatter={v=>v+'%'} domain={[0,120]} tick={{fill:T.tealD,fontSize:9}} axisLine={false} tickLine={false} width={32}/>
+                              <Tooltip content={<CTip fmt={(v,n)=>n==='% Sold'?v+'%':v+' units'}/>}/>
+                              <Legend wrapperStyle={{fontSize:9,fontWeight:700,paddingTop:4}} iconSize={8}/>
+                              <Bar yAxisId="left" dataKey="sold" name="Units Sold" stackId="s" fill={T.navy} fillOpacity={0.85} radius={[0,0,3,3]}>
+                                <LabelList dataKey="pct" position="top" formatter={v=>v+'%'} style={{fill:T.navy,fontSize:8,fontWeight:800}}/>
+                              </Bar>
+                              <Bar yAxisId="left" dataKey="unsold" name="Unsold Units" stackId="s" fill={T.navy} fillOpacity={0.2} radius={[3,3,0,0]}/>
+                              <Line yAxisId="right" type="monotone" dataKey="pct" name="% Sold" stroke={T.tealD} strokeWidth={2} dot={{r:3,fill:T.tealD}} activeDot={{r:5}}/>
+                            </ComposedChart>
+                          </ResponsiveContainer>
+                        </div>
+                        {needsScroll&&<div style={{textAlign:'center',fontSize:9,color:T.textL,marginTop:2,letterSpacing:0.3}}>← scroll to see more →</div>}
+                      </div>
                     );
                   })()}
                 </GC>
@@ -1309,22 +1315,30 @@ function AppInner() {
                       twData=filtered.map(r=>({tower:r.tower+(selProjs.length!==1?` (${(r.project||'').split(' ').pop()})` :''),pct:r.pctSold||Math.round(r.booked/(r.total||r.booked+r.cancelled||1)*100),booked:r.booked,total:r.total||r.booked+r.cancelled,project:r.project}));
                     }
                     twData=twData.sort((a,b)=>b.tower.localeCompare(a.tower));
-                    const chartH=Math.max(180,twData.length*32+40);
+                    const rowH=28, yW=selProjs.length===1?36:100;
+                    const innerH=twData.length*rowH+40;
+                    const FIXED_H=280;
+                    const needsVScroll=innerH>FIXED_H;
                     return(
-                      <ResponsiveContainer width="100%" height={chartH}>
-                        <BarChart data={twData} layout="vertical" margin={{top:4,right:55,bottom:4,left:8}} barSize={18}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.08)" horizontal={false}/>
-                          <XAxis type="number" domain={[0,100]} tickFormatter={v=>v+'%'} tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false}/>
-                          <YAxis type="category" dataKey="tower" tick={{fill:T.text,fontSize:9,fontWeight:700}} axisLine={false} tickLine={false} width={selProjs.length===1?36:100}/>
-                          <Tooltip content={<CTip fmt={(v,n)=>n==='% Sold'?v+'%':v+' units'}/>}/>
-                          <Legend wrapperStyle={{fontSize:9,fontWeight:700}} iconSize={8}/>
-                          <Bar dataKey="pct" name="% Sold" radius={[0,4,4,0]}>
-                            {twData.map((d,i)=><Cell key={i} fill={d.pct>=70?T.tealD:d.pct>=50?T.teal:'#4a9eb5'}/>)}
-                            <LabelList dataKey="pct" position="insideLeft" formatter={v=>v+'%'} style={{fill:'#fff',fontSize:10,fontWeight:800}}/>
-                            <LabelList dataKey="pct" position="right" formatter={v=>v+'%'} style={{fill:T.textM,fontSize:10,fontWeight:800}}/>
-                          </Bar>
-                        </BarChart>
-                      </ResponsiveContainer>
+                      <div style={{position:'relative'}}>
+                        <div style={{overflowY:needsVScroll?'auto':'visible',overflowX:'hidden',maxHeight:FIXED_H,borderRadius:6}}>
+                          <ResponsiveContainer width="100%" height={Math.max(FIXED_H,innerH)}>
+                            <BarChart data={twData} layout="vertical" margin={{top:4,right:55,bottom:16,left:8}} barSize={rowH-10}>
+                              <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.08)" horizontal={false}/>
+                              <XAxis type="number" domain={[0,100]} tickFormatter={v=>v+'%'} tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false}/>
+                              <YAxis type="category" dataKey="tower" tick={{fill:T.text,fontSize:9,fontWeight:700}} axisLine={false} tickLine={false} width={yW}/>
+                              <Tooltip content={<CTip fmt={(v,n)=>n==='% Sold'?v+'%':v+' units'}/>}/>
+                              <Legend wrapperStyle={{fontSize:9,fontWeight:700}} iconSize={8}/>
+                              <Bar dataKey="pct" name="% Sold" radius={[0,4,4,0]}>
+                                {twData.map((d,i)=><Cell key={i} fill={d.pct>=70?T.tealD:d.pct>=50?T.teal:'#4a9eb5'}/>)}
+                                <LabelList dataKey="pct" position="insideLeft" formatter={v=>v+'%'} style={{fill:'#fff',fontSize:10,fontWeight:800}}/>
+                                <LabelList dataKey="pct" position="right" formatter={v=>v+'%'} style={{fill:T.textM,fontSize:10,fontWeight:800}}/>
+                              </Bar>
+                            </BarChart>
+                          </ResponsiveContainer>
+                        </div>
+                        {needsVScroll&&<div style={{textAlign:'center',fontSize:9,color:T.textL,marginTop:4,letterSpacing:0.3}}>↑↓ scroll to see all {twData.length} towers</div>}
+                      </div>
                     );
                   })()}
                 </GC>
