@@ -1117,8 +1117,8 @@ function AppInner() {
                           <Bar dataKey="targetUnits" name="Target" fill="#b0bec5" fillOpacity={0.75} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={1000} animationEasing="ease-out">
                             <LabelList dataKey="targetUnits" position="top" style={{fill:'#607d8b',fontSize:8,fontWeight:800}} formatter={v=>v>0?v:''}/>
                           </Bar>
-                          <Line type="monotone" dataKey="booked" stroke={T.tealD} strokeWidth={2} dot={{r:3,fill:T.tealD,stroke:'#fff',strokeWidth:1.5}} activeDot={{r:4}} legendType="none" name="_line" connectNulls={false}/>
-                          <Line type="monotone" dataKey="targetUnitsLine" stroke="#90a4ae" strokeWidth={2} strokeDasharray="5 3" dot={{r:3,fill:'#90a4ae',stroke:'#fff',strokeWidth:1.5}} activeDot={{r:4}} legendType="none" name="_tline" connectNulls={true}/>
+                          <Line type="monotone" dataKey="booked" stroke={T.tealD} strokeWidth={2.5} dot={{r:4,fill:T.tealD,stroke:'#fff',strokeWidth:2}} activeDot={{r:5}} legendType="none" name="_aline" connectNulls={true}/>
+                          <Line type="monotone" dataKey="targetUnitsLine" stroke="#607d8b" strokeWidth={2} strokeDasharray="5 3" dot={{r:3,fill:'#607d8b',stroke:'#fff',strokeWidth:1.5}} activeDot={{r:4}} legendType="none" name="_tline" connectNulls={true}/>
                         </ComposedChart>
                       </ResponsiveContainer>
                     </>);
@@ -1154,15 +1154,15 @@ function AppInner() {
                           <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={36} tickFormatter={v=>v+'Cr'}/>
                           <Tooltip content={<CTip fmt={v=>v?'₹'+v+' Cr':'-'}/>}/>
                           <Legend wrapperStyle={{fontSize:9,fontWeight:700,color:T.text}} iconSize={8}/>
-                          <Bar dataKey="bspCr" name="Actual BSP" fill={T.teal} fillOpacity={0.9} radius={[3,3,0,0]}>
-                            {slice.map((d,i)=><Cell key={i} fill={d.label===curLabel?T.tealD:T.teal} fillOpacity={d.label===curLabel?1:0.8}/>)}
+                          <Bar dataKey="bspCr" name="Actual BSP" fill={T.teal} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={800} animationEasing="ease-out">
+                            {slice.map((d,i)=><Cell key={i} fill={d.label===curLabel?T.tealD:T.teal} fillOpacity={d.label===curLabel?1:0.85}/>)}
                             <LabelList dataKey="bspCr" position="top" style={{fill:T.tealD,fontSize:7,fontWeight:700}} formatter={v=>v>0?v+'Cr':''}/>
                           </Bar>
-                          <Bar dataKey="targetTsvLine" name="Target TSV" fill="#b0bec5" fillOpacity={0.75} radius={[3,3,0,0]} isAnimationActive={true} animationDuration={1000} animationEasing="ease-out">
+                          <Bar dataKey="targetTsvLine" name="Target TSV" fill="#b0bec5" fillOpacity={0.75} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={1000} animationEasing="ease-out">
                             <LabelList dataKey="targetTsvLine" position="top" style={{fill:'#607d8b',fontSize:7,fontWeight:700}} formatter={v=>v>0?v+'Cr':''}/>
                           </Bar>
-                          <Line type="monotone" dataKey="bspCr" stroke={T.tealD} strokeWidth={2} dot={{r:3,fill:T.tealD,stroke:'#fff',strokeWidth:1.5}} activeDot={{r:4}} legendType="none" name="_line" connectNulls={false}/>
-                          <Line type="monotone" dataKey="targetTsvLine" stroke="#90a4ae" strokeWidth={2} strokeDasharray="5 3" dot={{r:3,fill:'#90a4ae',stroke:'#fff',strokeWidth:1.5}} activeDot={{r:4}} legendType="none" name="_tline" connectNulls={true}/>
+                          <Line type="monotone" dataKey="bspCr" stroke={T.tealD} strokeWidth={2.5} dot={{r:4,fill:T.tealD,stroke:'#fff',strokeWidth:2}} activeDot={{r:5}} legendType="none" name="_aline" connectNulls={true}/>
+                          <Line type="monotone" dataKey="targetTsvLine" stroke="#607d8b" strokeWidth={2} strokeDasharray="5 3" dot={{r:3,fill:'#607d8b',stroke:'#fff',strokeWidth:1.5}} activeDot={{r:4}} legendType="none" name="_tline" connectNulls={true}/>
                         </ComposedChart>
                       </ResponsiveContainer>
                     </>);
@@ -1204,14 +1204,14 @@ function AppInner() {
                           <Tooltip content={<CTip fmt={v=>v?'₹'+v.toLocaleString('en-IN')+'/sqft':'-'}/>}/>
                           <Legend wrapperStyle={{fontSize:9,fontWeight:700,color:T.text}} iconSize={8}/>
                           <Bar dataKey="actualRate" name="Actual Rate" fill={T.teal} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={800} animationEasing="ease-out">
-                            {slice.map((d,i)=><Cell key={i} fill={d.label===curLabel?T.tealD:T.teal} fillOpacity={d.label===curLabel?1:0.8}/>)}
-                            <LabelList dataKey="actualRate" position="top" style={{fill:T.tealD,fontSize:7,fontWeight:700}} formatter={v=>v?'₹'+v.toLocaleString('en-IN'):''}/>
+                            {slice.map((d,i)=><Cell key={i} fill={d.label===curLabel?T.tealD:T.teal} fillOpacity={d.label===curLabel?1:0.85}/>)}
+                            <LabelList dataKey="actualRate" position="top" style={{fill:T.tealD,fontSize:7,fontWeight:700}} formatter={v=>v?'₹'+Math.round(v/1000)+'K':''}/>
                           </Bar>
                           <Bar dataKey="targetRateLine" name="Target Rate" fill="#b0bec5" fillOpacity={0.75} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={1000} animationEasing="ease-out">
-                            <LabelList dataKey="targetRateLine" position="top" style={{fill:'#607d8b',fontSize:7,fontWeight:700}} formatter={v=>v?'₹'+v.toLocaleString('en-IN'):''}/>
+                            <LabelList dataKey="targetRateLine" position="top" style={{fill:'#607d8b',fontSize:7,fontWeight:700}} formatter={v=>v?'₹'+Math.round(v/1000)+'K':''}/>
                           </Bar>
-                          <Line type="monotone" dataKey="actualRate" stroke={T.tealD} strokeWidth={2} dot={{r:3,fill:T.tealD,stroke:'#fff',strokeWidth:1.5}} activeDot={{r:4}} legendType="none" name="_line" connectNulls={false}/>
-                          <Line type="monotone" dataKey="targetRateLine" stroke="#90a4ae" strokeWidth={2} strokeDasharray="5 3" dot={{r:3,fill:'#90a4ae',stroke:'#fff',strokeWidth:1.5}} activeDot={{r:4}} legendType="none" name="_tline" connectNulls={true}/>
+                          <Line type="monotone" dataKey="actualRate" stroke={T.tealD} strokeWidth={2.5} dot={{r:4,fill:T.tealD,stroke:'#fff',strokeWidth:2}} activeDot={{r:5}} legendType="none" name="_aline" connectNulls={true}/>
+                          <Line type="monotone" dataKey="targetRateLine" stroke="#607d8b" strokeWidth={2} strokeDasharray="5 3" dot={{r:3,fill:'#607d8b',stroke:'#fff',strokeWidth:1.5}} activeDot={{r:4}} legendType="none" name="_tline" connectNulls={true}/>
                         </ComposedChart>
                       </ResponsiveContainer>
                     </>);
@@ -1267,8 +1267,8 @@ function AppInner() {
                           <Bar dataKey="target" name="Target" fill="#b0bec5" fillOpacity={0.75} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={1000} animationEasing="ease-out">
                             <LabelList dataKey="target" position="top" style={{fill:'#607d8b',fontSize:8,fontWeight:800}} formatter={v=>v>0?v:''}/>
                           </Bar>
-                          <Line type="monotone" dataKey="booked" stroke={T.tealD} strokeWidth={2} dot={{r:3,fill:T.tealD,stroke:'#fff',strokeWidth:1.5}} activeDot={{r:4}} legendType="none" name="_line" connectNulls={false}/>
-                          <Line type="monotone" dataKey="targetUnitsLine" stroke="#90a4ae" strokeWidth={2} strokeDasharray="5 3" dot={{r:3,fill:'#90a4ae',stroke:'#fff',strokeWidth:1.5}} activeDot={{r:4}} legendType="none" name="_tline" connectNulls={true}/>
+                          <Line type="monotone" dataKey="booked" stroke={T.tealD} strokeWidth={2.5} dot={{r:4,fill:T.tealD,stroke:'#fff',strokeWidth:2}} activeDot={{r:5}} legendType="none" name="_aline" connectNulls={true}/>
+                          <Line type="monotone" dataKey="target" stroke="#607d8b" strokeWidth={2} strokeDasharray="5 3" dot={{r:3,fill:'#607d8b',stroke:'#fff',strokeWidth:1.5}} activeDot={{r:4}} legendType="none" name="_tline" connectNulls={true}/>
                         </ComposedChart>
                       </ResponsiveContainer>
                     </>);
