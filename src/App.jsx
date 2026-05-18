@@ -1233,6 +1233,95 @@ function AppInner() {
 
               </div>{/* end 2x2 chart grid */}
 
+              {/* ── SECTION: Tower & Type wise Sales ── */}
+              <div style={{background:'rgba(0,151,167,0.08)',borderRadius:10,padding:'8px 14px',marginBottom:8,marginTop:4,display:'flex',alignItems:'center',gap:8}}>
+                <span style={{fontSize:11,fontWeight:900,color:'#0097a7',textTransform:'uppercase',letterSpacing:1}}>Tower &amp; Type Wise Sales</span>
+              </div>
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+
+                {/* ── CHART: Type Wise % Sale ─────────────────────── */}
+                <GC style={{padding:16}}>
+                  <SH title="Type Wise % Sale" sub="Units sold vs unsold per unit type · % sold line"/>
+                  {(()=>{
+                    const SHORT={'TYPE A- 3BHK + STUDY + UTILITY':'TYPE A- 3BHK','TYPE A1- 3BHK + STUDY + UTILITY':'TYPE A1- 3BHK','TYPE B- 4BHK + STUDY + UTILITY':'TYPE B- 4BHK','TYPE B1- 4BHK + STUDY + UTILITY':'TYPE B1- 4BHK','TYPE C- 2BHK + STUDY + UTILITY':'TYPE C- 2BHK','TYPE D- 3BHK + STUDY + UTILITY':'TYPE D- 3BHK','TYPE E- 4BHK + STUDY + 2 UTILITY':'TYPE E- 4BHK','TYPE F- 4BHK + STUDY + 2 UTILITY':'TYPE F- 4BHK','TYPE G- 4BHK + STUDY + 2 UTILITY':'TYPE G- 4BHK'};
+                    const ORDER=['TYPE A- 3BHK + STUDY + UTILITY','TYPE A1- 3BHK + STUDY + UTILITY','TYPE B- 4BHK + STUDY + UTILITY','TYPE B1- 4BHK + STUDY + UTILITY','TYPE D- 3BHK + STUDY + UTILITY','TYPE E- 4BHK + STUDY + 2 UTILITY','TYPE F- 4BHK + STUDY + 2 UTILITY','TYPE G- 4BHK + STUDY + 2 UTILITY','TYPE C- 2BHK + STUDY + UTILITY'];
+                    const map={};
+                    bhkS.forEach(r=>{map[r.bhk]={booked:r.booked,avail:r.available,total:r.total};});
+                    const data=ORDER.filter(k=>map[k]).map(k=>({
+                      label:SHORT[k]||k,
+                      sold:map[k].booked,
+                      unsold:map[k].avail,
+                      total:map[k].total,
+                      pct:map[k].total>0?Math.round(map[k].booked/map[k].total*100):0,
+                    }));
+                    return(
+                      <ResponsiveContainer width="100%" height={220}>
+                        <ComposedChart data={data} margin={{top:18,right:40,bottom:48,left:0}} barSize={22}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.08)" vertical={false}/>
+                          <XAxis dataKey="label" tick={{fill:T.textM,fontSize:8,fontWeight:600}} axisLine={false} tickLine={false} angle={-35} textAnchor="end" interval={0} height={52}/>
+                          <YAxis yAxisId="left" tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={28}/>
+                          <YAxis yAxisId="right" orientation="right" tickFormatter={v=>v+'%'} domain={[0,120]} tick={{fill:T.tealD,fontSize:9}} axisLine={false} tickLine={false} width={32}/>
+                          <Tooltip content={<CTip fmt={(v,n)=>n==='% Sold'?v+'%':v}/>}/>
+                          <Legend wrapperStyle={{fontSize:9,fontWeight:700,paddingTop:4}} iconSize={8}/>
+                          <Bar yAxisId="left" dataKey="sold" name="Units Sold" stackId="s" fill={T.navy} fillOpacity={0.85} radius={[0,0,3,3]}>
+                            <LabelList dataKey="pct" position="top" formatter={v=>v+'%'} style={{fill:T.navy,fontSize:8,fontWeight:800}}/>
+                          </Bar>
+                          <Bar yAxisId="left" dataKey="unsold" name="Unsold Units" stackId="s" fill={T.navy} fillOpacity={0.2} radius={[3,3,0,0]}/>
+                          <Line yAxisId="right" type="monotone" dataKey="pct" name="% Sold" stroke={T.tealD} strokeWidth={2} dot={{r:3,fill:T.tealD}} activeDot={{r:5}}/>
+                        </ComposedChart>
+                      </ResponsiveContainer>
+                    );
+                  })()}
+                </GC>
+
+                {/* ── CHART: Tower Wise % Sold ─────────────────────── */}
+                <GC style={{padding:16}}>
+                  <SH title="Tower Wise Sold %" sub="% of units sold per tower"/>
+                  {(()=>{
+                    const tData=towerData
+                      .filter(d=>d.project===filters.project||!filters.project||(filters.project&&filters.project.includes(d.project)))
+                      .map(d=>({
+                        tower:d.tower,
+                        pct:d.booked+d.cancelled>0?Math.round((d.booked/(d.booked+(raw?.invr||[]).filter(r=>r.project===d.project&&r.tower===d.tower&&r.status==='Available').length+d.booked))*100):0,
+                        booked:d.booked,
+                        total:d.booked+d.cancelled,
+                      }))
+                      .sort((a,b)=>b.tower.localeCompare(a.tower));
+
+                    // Compute pct from invr for accuracy
+                    const invByTower={};
+                    (raw?.invr||[]).filter(r=>!filters.project||r.project===filters.project||(filters.project&&filters.project.includes(r.project))).forEach(r=>{
+                      const t=r.tower||'';
+                      if(!invByTower[t])invByTower[t]={booked:0,total:0};
+                      invByTower[t].total++;
+                      if(r.status==='Booked')invByTower[t].booked++;
+                    });
+                    const twData=Object.entries(invByTower)
+                      .filter(([t])=>t)
+                      .map(([t,v])=>({tower:t,pct:v.total>0?Math.round(v.booked/v.total*100):0,booked:v.booked,total:v.total}))
+                      .sort((a,b)=>b.tower.localeCompare(a.tower));
+
+                    return(
+                      <ResponsiveContainer width="100%" height={220}>
+                        <BarChart data={twData} layout="vertical" margin={{top:4,right:60,bottom:4,left:8}} barSize={18}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.08)" horizontal={false}/>
+                          <XAxis type="number" domain={[0,100]} tickFormatter={v=>v+'%'} tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false}/>
+                          <YAxis type="category" dataKey="tower" tick={{fill:T.text,fontSize:10,fontWeight:700}} axisLine={false} tickLine={false} width={36}/>
+                          <Tooltip content={<CTip fmt={(v,n)=>n==='% Sold'?v+'%':v+' units'}/>}/>
+                          <Legend wrapperStyle={{fontSize:9,fontWeight:700}} iconSize={8}/>
+                          <Bar dataKey="pct" name="% Sold" radius={[0,4,4,0]}>
+                            {twData.map((d,i)=><Cell key={i} fill={d.pct>=70?T.tealD:d.pct>=50?T.teal:'#4a9eb5'}/>)}
+                            <LabelList dataKey="pct" position="right" formatter={v=>v+'%'} style={{fill:T.textM,fontSize:10,fontWeight:800}}/>
+                            <LabelList dataKey="pct" position="insideLeft" formatter={v=>v+'%'} style={{fill:'#fff',fontSize:10,fontWeight:800}}/>
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    );
+                  })()}
+                </GC>
+
+              </div>{/* end tower & type chart grid */}
+
               {/* Area: Total Sold vs Available */}
               <GC style={{padding:16}}>
                 <SH title="Area — Sold vs Available" sub="sq ft: booked area vs available area by project"/>
