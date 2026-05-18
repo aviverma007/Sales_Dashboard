@@ -501,7 +501,7 @@ function AppInner() {
     if(filters.project){const projs=filters.project.split('||').filter(Boolean);if(projs.length&&!projs.includes(r.project))return false;}
 
     if((filters.month||filters.quarter)&&!matchMo(r.bookingMonth))return false;
-    if(filters.broker){const brks=filters.broker.split('||').filter(Boolean);if(brks.length&&!brks.includes(r.broker))return false;}
+    if(filters.broker){const brks=filters.broker.split('||').filter(Boolean);if(brks.length&&!brks.includes(r.brokerName))return false;}
     if(filters.typology){const typos=filters.typology.split('||').filter(Boolean);if(typos.length){const b=r.bhkFull||r.bhk||'';if(!typos.includes(b)&&!typos.includes(r.bhk||'')&&!typos.includes(r.bhkFull||''))return false;}}
     if(filters.fy){const fys=filters.fy.split('||').filter(Boolean);if(fys.length){const fy=r.bookingYear?(r.bookingMonth&&parseInt(r.bookingMonth.split('-')[1])>=4?`FY${r.bookingYear}-${String(r.bookingYear+1).slice(2)}`:`FY${r.bookingYear-1}-${String(r.bookingYear).slice(2)}`):null;if(!fys.includes(fy))return false;}}
     return true;
@@ -517,7 +517,7 @@ function AppInner() {
   });},[raw,filters]);
   const wF=useMemo(()=>{if(!raw?.workflow)return[];return raw.workflow.filter(r=>{if(filters.company&&r.companyNorm!==filters.company)return false;if(filters.project){const projs=filters.project.split('||').filter(Boolean);if(projs.length&&!projs.includes(r.project))return false;}return true;});},[raw,filters]);
 
-  const availBrokers=useMemo(()=>{const src=(filters.company||filters.project)?pF:(raw?.pdrn||[]);const cnt={};src.forEach(r=>{if(r.broker)cnt[r.broker]=(cnt[r.broker]||0)+1;});return Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,40).map(e=>e[0]);},[raw,pF,filters]);
+  const availBrokers=useMemo(()=>{const src=(filters.company||filters.project)?pF:(raw?.pdrn||[]);const cnt={};src.forEach(r=>{if(r.brokerName)cnt[r.brokerName]=(cnt[r.brokerName]||0)+1;});return Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,40).map(e=>e[0]);},[raw,pF,filters]);
   const availTypologies=useMemo(()=>{
     const projTypo=raw?.projTypologies||{};
     const selectedProjs=filters.project?filters.project.split('||').filter(Boolean):[];
@@ -621,7 +621,7 @@ function AppInner() {
     return{summary:{totalCancelled:total,rebooked:rebooked.length,stillVacant:vacant.length,rebookedPct:total>0?Math.round(rebooked.length/total*100):0},buckets:(base.buckets||[]).map(b=>({...b,count:bucketMap[b.label]||0})),byProject,vacantUnits:vacant,rebookedUnits:rebooked};
   },[raw,filters.project]);
   const byProj=useMemo(()=>{const map={};pA.forEach(r=>{const p=r.project;if(!p)return;if(!map[p])map[p]={name:p,units:0,bspCr:0};map[p].units++;map[p].bspCr+=(r.bsp||0)/1e7;});return Object.values(map).sort((a,b)=>b.units-a.units).map(r=>({...r,bspCr:+r.bspCr.toFixed(1)}));},[pA]);
-  const topCP=useMemo(()=>{const map={};pA.forEach(r=>{const b=r.broker;if(!b)return;if(!map[b])map[b]={name:b,units:0,bspCr:0};map[b].units++;map[b].bspCr+=(r.bsp||0)/1e7;});return Object.values(map).sort((a,b)=>b.units-a.units).map(r=>({...r,bspCr:+r.bspCr.toFixed(1)}));},[pA]);
+  const topCP=useMemo(()=>{const map={};pA.forEach(r=>{const b=r.brokerName;if(!b)return;if(!map[b])map[b]={name:b,units:0,bspCr:0};map[b].units++;map[b].bspCr+=(r.bsp||0)/1e7;});return Object.values(map).sort((a,b)=>b.units-a.units).map(r=>({...r,bspCr:+r.bspCr.toFixed(1)}));},[pA]);
   const bhkS=useMemo(()=>{
     const map={};
     // Booked from pdrn (filtered)
@@ -1854,7 +1854,7 @@ function AppInner() {
                       <td style={{padding:'8px 10px'}}><span style={{background:'rgba(255,255,255,0.08)',borderRadius:4,padding:'1px 6px',color:'rgba(255,255,255,0.5)',fontSize:9}}>{d.bhk}</span></td>
                       <td style={{padding:'8px 10px',color:T.amberL,fontWeight:700,whiteSpace:'nowrap'}}>{fmtCr(d.tcv)}</td>
                       <td style={{padding:'8px 10px',color:'#00e5ff',whiteSpace:'nowrap'}}>{fmtCr(d.received)}</td>
-                      <td style={{padding:'8px 10px',color:'rgba(255,255,255,0.4)',fontSize:10,maxWidth:150}}>{d.broker||'—'}</td>
+                      <td style={{padding:'8px 10px',color:'rgba(255,255,255,0.4)',fontSize:10,maxWidth:150}}>{d.brokerName||'—'}</td>
                       <td style={{padding:'8px 10px',color:'rgba(255,255,255,0.3)',fontSize:10,whiteSpace:'nowrap'}}>{d.bookingDate}</td>
                     </tr>
                   ))}</tbody>
@@ -1893,7 +1893,7 @@ function AppInner() {
                           </div>
                         </td>
                         <td style={{padding:'7px 10px'}}><Badge label={b.loanStatus==='BANK FUNDED'?'🏦 Bank':'💼 Self'} color={b.loanStatus==='BANK FUNDED'?T.teal:T.navyM}/></td>
-                        <td style={{padding:'7px 10px',color:T.textM,fontSize:10,fontWeight:600,maxWidth:120}}>{b.broker||'—'}</td>
+                        <td style={{padding:'7px 10px',color:T.textM,fontSize:10,fontWeight:600,maxWidth:120}}>{b.brokerName||'—'}</td>
                         <td style={{padding:'7px 10px',color:T.textM,fontSize:10,fontWeight:600,whiteSpace:'nowrap'}}>{b.bookingDate}</td>
                       </tr>
                     );
