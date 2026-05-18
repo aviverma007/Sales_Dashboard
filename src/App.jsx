@@ -517,7 +517,7 @@ function AppInner() {
   });},[raw,filters]);
   const wF=useMemo(()=>{if(!raw?.workflow)return[];return raw.workflow.filter(r=>{if(filters.company&&r.companyNorm!==filters.company)return false;if(filters.project){const projs=filters.project.split('||').filter(Boolean);if(projs.length&&!projs.includes(r.project))return false;}return true;});},[raw,filters]);
 
-  const availBrokers=useMemo(()=>{const src=(filters.company||filters.project)?pF:(raw?.pdrn||[]);const cnt={};src.forEach(r=>{if(r.brokerName)cnt[r.brokerName]=(cnt[r.brokerName]||0)+1;});return Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,40).map(e=>e[0]);},[raw,pF,filters]);
+  const availBrokers=useMemo(()=>{const pb=raw?.projBrokers||{};const selProjs=filters.project?filters.project.split('||').filter(Boolean):[];if(selProjs.length>0){const merged=[];const seen=new Set();selProjs.forEach(p=>{(pb[p]||[]).forEach(b=>{if(!seen.has(b)){seen.add(b);merged.push(b);}});});return merged;}const src=raw?.pdrn||[];const cnt={};src.forEach(r=>{if(filters.company&&r.companyNorm!==filters.company)return;if(r.brokerName)cnt[r.brokerName]=(cnt[r.brokerName]||0)+1;});return Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,50).map(e=>e[0]);},[raw,filters.project,filters.company]);
   const availTypologies=useMemo(()=>{
     const projTypo=raw?.projTypologies||{};
     const selectedProjs=filters.project?filters.project.split('||').filter(Boolean):[];
