@@ -445,6 +445,7 @@ function AppInner() {
   const [sMode,setSMode]=useState('monthly');
   const [sOff,setSOff]=useState(9999);
   const [cancelTab,setCancelTab]=useState('overview');
+  const [showTowerType,setShowTowerType]=useState(false);
   // Sales & Pricing Trend chart offsets (must be at component level — hooks rules)
   const TODAY_LABEL=(()=>{const d=new Date();return d.toLocaleString('en-US',{month:'short'}).slice(0,3)+"'"+String(d.getFullYear()).slice(2);})();
   // Reset chart offsets to -1 (auto-center) whenever filters change
@@ -1035,10 +1036,32 @@ function AppInner() {
                   <span style={{fontSize:11,fontWeight:900,color:'#fff',textTransform:'uppercase',letterSpacing:1}}>Sales & Pricing Trend</span>
                 </div>
                 <div style={{flex:1,height:1,background:'rgba(245,158,11,0.15)',borderRadius:1}}/>
+                <button
+                  onClick={()=>setShowTowerType(v=>!v)}
+                  style={{
+                    display:'flex',alignItems:'center',gap:7,
+                    padding:'6px 14px',borderRadius:20,border:'none',cursor:'pointer',
+                    background:showTowerType?'linear-gradient(135deg,#0097a7,#00bcd4)':'rgba(0,151,167,0.1)',
+                    color:showTowerType?'#fff':'#0097a7',
+                    fontSize:10,fontWeight:800,letterSpacing:0.3,
+                    transition:'all 0.25s ease',
+                    boxShadow:showTowerType?'0 2px 10px rgba(0,151,167,0.35)':'none',
+                    whiteSpace:'nowrap',
+                  }}
+                >
+                  <span style={{fontSize:12,transition:'transform 0.3s',transform:showTowerType?'rotate(90deg)':'rotate(0deg)'}}>⇄</span>
+                  {showTowerType?'Show Sales Trend':'Show Tower & Type'}
+                </button>
               </div>
 
               {/* 2x2 chart grid */}
-              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+              <div style={{
+                display:showTowerType?'none':'grid',
+                gridTemplateColumns:'1fr 1fr',gap:12,
+                opacity:showTowerType?0:1,
+                transition:'opacity 0.35s ease',
+                animation:!showTowerType?'fadeIn 0.35s ease':'none',
+              }}>
 
                 {/* ── CHART 1: UNITS ─────────────────────────────────── */}
                 <GC style={{padding:16}}>
@@ -1236,12 +1259,18 @@ function AppInner() {
               </div>{/* end 2x2 chart grid */}
 
               {/* ── SECTION: Tower & Type wise Sales ── */}
-              <div style={{display:'flex',alignItems:'center',gap:10,margin:'16px 0 10px'}}>
+              <div style={{
+                display:showTowerType?'flex':'none',
+                alignItems:'center',gap:10,margin:'16px 0 10px',
+                opacity:showTowerType?1:0,
+                transition:'opacity 0.35s ease',
+                animation:showTowerType?'fadeIn 0.35s ease':'none',
+              }}>
                 <div style={{width:4,height:18,background:T.teal,borderRadius:2}}/>
                 <span style={{fontSize:12,fontWeight:800,color:T.navy,letterSpacing:0.5,textTransform:'uppercase'}}>Tower &amp; Type Wise Sales</span>
                 <div style={{flex:1,height:1,background:'rgba(0,100,140,0.1)'}}/>
               </div>
-              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+              <div style={{display:showTowerType?'grid':'none',gridTemplateColumns:'1fr 1fr',gap:12,opacity:showTowerType?1:0,transition:'opacity 0.35s ease',animation:showTowerType?'fadeIn 0.35s ease':'none'}}>
 
                 {/* ── CHART: Type Wise % Sale ─────────────────────── */}
                 <GC style={{padding:16}}>
@@ -1350,12 +1379,12 @@ function AppInner() {
               </div>{/* end tower & type chart grid */}
 
               {/* ── SECTION: CP Wise Sales ── */}
-              <div style={{display:'flex',alignItems:'center',gap:10,margin:'16px 0 10px'}}>
+              <div style={{display:showTowerType?'flex':'none',alignItems:'center',gap:10,margin:'16px 0 10px',opacity:showTowerType?1:0,transition:'opacity 0.35s ease',animation:showTowerType?'fadeIn 0.35s ease':'none'}}>
                 <div style={{width:4,height:18,background:T.teal,borderRadius:2}}/>
                 <span style={{fontSize:12,fontWeight:800,color:T.navy,letterSpacing:0.5,textTransform:'uppercase'}}>CP Wise Sales</span>
                 <div style={{flex:1,height:1,background:'rgba(0,100,140,0.1)'}}/>
               </div>
-              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+              <div style={{display:showTowerType?'grid':'none',gridTemplateColumns:'1fr 1fr',gap:12,opacity:showTowerType?1:0,transition:'opacity 0.35s ease',animation:showTowerType?'fadeIn 0.35s ease':'none'}}>
 
                 {/* ── CP: Top 10 Units Booked (bar) ─────────────── */}
                 <GC style={{padding:16}}>
