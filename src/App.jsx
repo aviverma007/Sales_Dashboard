@@ -449,7 +449,7 @@ function AppInner() {
   // Sales & Pricing Trend chart offsets (must be at component level — hooks rules)
   const TODAY_LABEL=(()=>{const d=new Date();return d.toLocaleString('en-US',{month:'short'}).slice(0,3)+"'"+String(d.getFullYear()).slice(2);})();
   // Reset chart offsets to -1 (auto-center) whenever filters change
-  useEffect(()=>{setUOff(-1);setTsvOff(-1);setROff(-1);setSuOff(-1);},[filters.project,filters.fy,filters.quarter,filters.month]);
+  useEffect(()=>{setUOff(-1);setTsvOff(-1);setROff(-1);setSuOff(-1);setCpScroll(0);setCpScroll2(0);},[filters.project,filters.fy,filters.quarter,filters.month,filters.broker]);
   // Initialize offset so current month is bar #2 (index 1 in view), show 1 past + current + 11 future
   const _initOff=(data,WIN=13)=>{const idx=data.findIndex(d=>d.label===TODAY_LABEL);return idx>=1?idx-1:Math.max(0,idx);};
   const [uOff,setUOff]=useState(-1);
@@ -520,7 +520,8 @@ function AppInner() {
   });},[raw,filters]);
   const wF=useMemo(()=>{if(!raw?.workflow)return[];return raw.workflow.filter(r=>{if(filters.company&&r.companyNorm!==filters.company)return false;if(filters.project){const projs=filters.project.split('||').filter(Boolean);if(projs.length&&!projs.includes(r.project))return false;}return true;});},[raw,filters]);
 
-  const availBrokers=useMemo(()=>{const pb=raw?.projBrokers||{};const selProjs=filters.project?filters.project.split('||').filter(Boolean):[];if(selProjs.length>0){const merged=[];const seen=new Set();selProjs.forEach(p=>{(pb[p]||[]).forEach(b=>{if(!seen.has(b)){seen.add(b);merged.push(b);}});});return merged;}const src=raw?.pdrn||[];const cnt={};src.forEach(r=>{if(filters.company&&r.companyNorm!==filters.company)return;if(r.brokerName)cnt[r.brokerName]=(cnt[r.brokerName]||0)+1;});return Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,50).map(e=>e[0]);},[raw,filters.project,filters.company]);
+  const availBrokers=useMemo(()=>{const selProjs=filters.project?filters.project.split('||').filter(Boolean):[];if(selProjs.length>0){// Only show brokers with ACTIVE bookings in selected project(s)
+const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return;if(r.status!=='ACTIVE')return;if(r.brokerName)cnt[r.brokerName]=(cnt[r.brokerName]||0)+1;});return Object.entries(cnt).sort((a,b)=>b[1]-a[1]).map(e=>e[0]);}const src=raw?.pdrn||[];const cnt={};src.forEach(r=>{if(r.status!=='ACTIVE')return;if(filters.company&&r.companyNorm!==filters.company)return;if(r.brokerName)cnt[r.brokerName]=(cnt[r.brokerName]||0)+1;});return Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,50).map(e=>e[0]);},[raw,filters.project,filters.company]);
   const availTypologies=useMemo(()=>{
     const projTypo=raw?.projTypologies||{};
     const selectedProjs=filters.project?filters.project.split('||').filter(Boolean):[];
