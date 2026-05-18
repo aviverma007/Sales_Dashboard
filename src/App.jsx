@@ -1317,7 +1317,7 @@ function AppInner() {
                     twData=twData.sort((a,b)=>b.tower.localeCompare(a.tower));
                     const rowH=30, yW=selProjs.length===1?36:100;
                     const innerH=twData.length*rowH+40;
-                    const FIXED_H=300;
+                    const FIXED_H=220;
                     const needsVScroll=innerH>FIXED_H;
                     return(
                       <div style={{position:'relative'}}>
