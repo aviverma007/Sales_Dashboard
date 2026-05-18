@@ -56,7 +56,7 @@ export function parsePDRN(rows) {
       month,
       year,
       customerName: r['Latest Customer Name'] || '',
-      brokerName: r['Broker Name (SFDC)'] || '',
+      broker: r['Broker Name (SFDC)'] || '',
     };
   });
 }
