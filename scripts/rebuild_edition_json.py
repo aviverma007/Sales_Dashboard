@@ -112,6 +112,8 @@ def parse_pdrn(rows):
             'loanStatus': safe_str(r.get('Loan Status')),
             'tower': safe_str(r.get('Tower')),
             'floor': safe_str(r.get('Floor')),
+            'cancelDate': to_date(r.get('Cancellation Date')),
+            'cancelReason': safe_str(r.get('Cancellation Reason')) or 'Not specified',
         })
     return records
 
@@ -319,50 +321,83 @@ def build_kpi_extra(pdrn_records):
 
 def build_cancelled_status(pdrn_records, invr_records):
     from datetime import datetime
-    cancelled = [r for r in pdrn_records if r['status'] == 'CANCELLED']
-    booked_units = {r['unit'] for r in pdrn_records if r['status'] == 'ACTIVE'}
-    
+    PROJ_LABEL = 'Edition'
     today = datetime.today()
-    buckets = {'0-30': 0, '31-90': 0, '91-180': 0, '180+': 0}
-    rebooked = 0
-    vacant = 0
-    
+
+    # Units currently booked in invr = rebooked after cancellation
+    invr_booked = {r['unit'] for r in invr_records if r['status'] == 'Booked'}
+
+    cancelled = [r for r in pdrn_records if r['status'] == 'CANCELLED']
+    vacant_units = []
+    rebooked_units = []
+
     for r in cancelled:
         unit = r['unit']
-        if unit in booked_units:
-            rebooked += 1
-        else:
-            vacant += 1
-        bd = r.get('bookingDate') or r.get('bookingMonth')
-        if bd:
+        cancel_date = r.get('cancelDate') or ''
+        bsp_cr = round((r['bsp'] or 0) / 1e7, 2)
+        days_vacant = 0
+        if cancel_date:
             try:
-                d = datetime.strptime(str(bd)[:10], '%Y-%m-%d')
-                days = (today - d).days
-                if days <= 30:
-                    buckets['0-30'] += 1
-                elif days <= 90:
-                    buckets['31-90'] += 1
-                elif days <= 180:
-                    buckets['91-180'] += 1
-                else:
-                    buckets['180+'] += 1
+                d = datetime.strptime(str(cancel_date)[:10], '%Y-%m-%d')
+                days_vacant = (today - d).days
             except Exception:
-                buckets['180+'] += 1
+                pass
 
+        unit_obj = {
+            'unit': unit,
+            'project': EDITION,
+            'projectLabel': PROJ_LABEL,
+            'tower': r['tower'],
+            'bhk': r['bhkFull'] or r['bhk'],
+            'daysVacant': days_vacant,
+            'cancelDate': str(cancel_date)[:10] if cancel_date else '',
+            'bspCr': bsp_cr,
+            'cancelReason': r.get('cancelReason') or 'Not specified',
+        }
+
+        if unit in invr_booked:
+            rebooked_units.append(unit_obj)
+        else:
+            vacant_units.append(unit_obj)
+
+    # Sort vacant by daysVacant desc (most urgent first)
+    vacant_units.sort(key=lambda x: -x['daysVacant'])
     total = len(cancelled)
+    rebooked_count = len(rebooked_units)
+    vacant_count = len(vacant_units)
+
+    # Bucket by daysVacant for vacant units
+    bucket_counts = {'0–30 days': 0, '31–90 days': 0, '91–180 days': 0, '180+ days': 0}
+    for u in vacant_units:
+        d = u['daysVacant']
+        if d <= 30:   bucket_counts['0–30 days'] += 1
+        elif d <= 90:  bucket_counts['31–90 days'] += 1
+        elif d <= 180: bucket_counts['91–180 days'] += 1
+        else:          bucket_counts['180+ days'] += 1
+
+    by_project = [{
+        'project': PROJ_LABEL,
+        'rebooked': rebooked_count,
+        'vacant': vacant_count,
+        'avgVacantDays': round(sum(u['daysVacant'] for u in vacant_units) / vacant_count) if vacant_count else 0,
+    }]
+
     return {
         'summary': {
             'totalCancelled': total,
-            'rebooked': rebooked,
-            'stillVacant': vacant,
-            'rebookedPct': round(rebooked / total * 100) if total > 0 else 0,
+            'rebooked': rebooked_count,
+            'stillVacant': vacant_count,
+            'rebookedPct': round(rebooked_count / total * 100) if total > 0 else 0,
         },
         'buckets': [
-            {'label': '0–30 days', 'count': buckets['0-30'], 'color': '#00bcd4'},
-            {'label': '31–90 days', 'count': buckets['31-90'], 'color': '#f59e0b'},
-            {'label': '91–180 days', 'count': buckets['91-180'], 'color': '#ef4444'},
-            {'label': '180+ days', 'count': buckets['180+'], 'color': '#7c3aed'},
+            {'label': '0–30 days', 'count': bucket_counts['0–30 days'], 'color': '#00bcd4'},
+            {'label': '31–90 days', 'count': bucket_counts['31–90 days'], 'color': '#f59e0b'},
+            {'label': '91–180 days', 'count': bucket_counts['91–180 days'], 'color': '#ef4444'},
+            {'label': '180+ days', 'count': bucket_counts['180+ days'], 'color': '#7c3aed'},
         ],
+        'byProject': by_project,
+        'vacantUnits': vacant_units,
+        'rebookedUnits': rebooked_units,
     }
 
 
