@@ -195,8 +195,14 @@ def build_proj_typologies(pdrn_records):
     return seen
 
 
-def build_tower_data(pdrn_records):
-    towers = defaultdict(lambda: {'booked': 0, 'cancelled': 0, 'bookedArea': 0.0,
+def build_tower_data(pdrn_records, invr_records=[]):
+    # Count available from invr
+    inv_avail = defaultdict(int)
+    for r in invr_records:
+        if r['status'] == 'Available' and r.get('tower'):
+            inv_avail[r['tower']] += 1
+
+    towers = defaultdict(lambda: {'booked': 0, 'cancelled': 0, 'avail': 0, 'bookedArea': 0.0,
                                    'cancelledArea': 0.0, 'carpetArea': 0.0, 'bspTotal': 0.0})
     for r in pdrn_records:
         t = r['tower'] or 'Unknown'
@@ -211,9 +217,12 @@ def build_tower_data(pdrn_records):
         elif r['status'] == 'CANCELLED':
             towers[t]['cancelled'] += 1
             towers[t]['cancelledArea'] += area
+    for t, cnt in inv_avail.items():
+        towers[t]['avail'] = cnt
     result = []
     for t, v in sorted(towers.items()):
         price = round(v['bspTotal'] / v['bookedArea']) if v['bookedArea'] > 0 else 0
+        total = v['booked'] + v['cancelled'] + v.get('avail', 0)
         result.append({
             'tower': t,
             'project': EDITION,
@@ -224,6 +233,9 @@ def build_tower_data(pdrn_records):
             'carpetArea': round(v['carpetArea']),
             'pricePerSqft': price,
             'totalBSPCr': round(v['bspTotal'] / 1e7, 1),
+            'total': total,
+            'available': v.get('avail', 0),
+            'pctSold': round(v['booked'] / total * 100) if total > 0 else 0,
         })
     return result
 
@@ -451,7 +463,7 @@ def main():
 
     # 6. towerData - replace Edition towers
     other_towers = [r for r in d['towerData'] if r.get('project') != EDITION]
-    edition_towers = build_tower_data(edition_pdrn)
+    edition_towers = build_tower_data(edition_pdrn, edition_invr)
     d['towerData'] = other_towers + edition_towers
     print(f"  towerData: {len(edition_towers)} Edition towers rebuilt")
 
