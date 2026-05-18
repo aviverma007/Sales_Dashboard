@@ -1038,10 +1038,12 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const maxRate=Math.max(...projRates.map(d=>d.avgPricePerSqft),1);
                     const SHORT={'SMARTWORLD THE EDITION':'Edition','Smartworld Sky Arc':'Sky Arc','Trump Residences Gurgaon':'Trump','Smartworld Le Courtyard':'Le Courtyard','Smartworld Suites':'Suites'};
                     return(<>
+                      {filters.project&&(
                       <div style={{background:`${T.navy}0d`,borderRadius:7,padding:'5px 8px',marginBottom:2}}>
                         <p style={{fontSize:7,color:T.textM,fontWeight:700,margin:'0 0 1px',textTransform:'uppercase'}}>Overall Avg</p>
                         <p style={{fontSize:16,fontWeight:900,color:T.navy,margin:0,letterSpacing:-0.5}}>₹{overallRate.toLocaleString('en-IN')}<span style={{fontSize:8,fontWeight:600,color:T.textM}}> /sqft</span></p>
                       </div>
+                      )}
                       {projRates.map((d,i)=>{
                         const pct=Math.round((d.avgPricePerSqft/maxRate)*100);
                         const col=d.avgPricePerSqft>25000?T.amber:d.avgPricePerSqft>20000?T.tealD:T.teal;
