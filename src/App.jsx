@@ -1371,17 +1371,17 @@ function AppInner() {
                         <div style={{overflowX:'auto',overflowY:'hidden'}}>
                           <div style={{minWidth:slice.length*52+60+'px'}}>
                             <ResponsiveContainer width="100%" height={220}>
-                              <ComposedChart data={slice} margin={{top:28,right:8,bottom:52,left:0}} barSize={28}>
+                              <BarChart data={slice} margin={{top:28,right:8,bottom:56,left:0}} barSize={28}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.08)" vertical={false}/>
-                                <XAxis dataKey="name" tick={{fill:T.textM,fontSize:8,fontWeight:600}} axisLine={false} tickLine={false} angle={-35} textAnchor="end" interval={0} height={56} tickFormatter={v=>v?.length>14?v.slice(0,14)+'…':v}/>
-                                <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={24} domain={[0,maxU+2]}/>
-                                <Tooltip content={<CTip fmt={(v,n)=>n==='Units'?v+' units':v+' Cr'}/>}/>
+                                <XAxis dataKey="name" tick={{fill:T.textM,fontSize:8,fontWeight:600}} axisLine={false} tickLine={false} angle={-35} textAnchor="end" interval={0} height={60} tickFormatter={v=>v?.length>14?v.slice(0,14)+'…':v}/>
+                                <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={24} domain={[0,maxU+8]}/>
+                                <Tooltip content={<CTip fmt={(v,n)=>n==='Units'?v+' units':'₹'+v+' Cr'}/>}/>
                                 <Bar dataKey="units" name="Units" radius={[4,4,0,0]}>
                                   {slice.map((d,i)=><Cell key={i} fill={i===0?T.tealD:i<3?T.teal:'#4a9eb5'}/>)}
                                   <LabelList dataKey="units" position="top" style={{fill:T.navy,fontSize:9,fontWeight:800}}/>
-                                  <LabelList dataKey="bspCr" position="insideTop" offset={-16} style={{fill:'#fff',fontSize:8,fontWeight:700}} formatter={v=>'₹'+v+'Cr'}/>
+                                  <LabelList dataKey="bspCr" position="insideTop" style={{fill:'#fff',fontSize:8,fontWeight:700}} formatter={v=>'₹'+v+'Cr'}/>
                                 </Bar>
-                              </ComposedChart>
+                              </BarChart>
                             </ResponsiveContainer>
                           </div>
                         </div>
@@ -1411,10 +1411,10 @@ function AppInner() {
                         <div style={{overflowX:'auto',overflowY:'hidden'}}>
                           <div style={{minWidth:slice.length*52+60+'px'}}>
                             <ResponsiveContainer width="100%" height={220}>
-                              <ComposedChart data={dataWithPct} margin={{top:24,right:36,bottom:52,left:0}} barSize={28}>
+                              <ComposedChart data={dataWithPct} margin={{top:28,right:36,bottom:56,left:0}} barSize={28}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.08)" vertical={false}/>
-                                <XAxis dataKey="name" tick={{fill:T.textM,fontSize:8,fontWeight:600}} axisLine={false} tickLine={false} angle={-35} textAnchor="end" interval={0} height={56} tickFormatter={v=>v?.length>14?v.slice(0,14)+'…':v}/>
-                                <YAxis yAxisId="l" tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={28} tickFormatter={v=>v+'Cr'}/>
+                                <XAxis dataKey="name" tick={{fill:T.textM,fontSize:8,fontWeight:600}} axisLine={false} tickLine={false} angle={-35} textAnchor="end" interval={0} height={60} tickFormatter={v=>v?.length>14?v.slice(0,14)+'…':v}/>
+                                <YAxis yAxisId="l" tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={32} tickFormatter={v=>v+'Cr'}/>
                                 <YAxis yAxisId="r" orientation="right" tickFormatter={v=>v+'%'} domain={[0,Math.max(...dataWithPct.map(d=>d.pct),10)+5]} tick={{fill:T.amber,fontSize:9}} axisLine={false} tickLine={false} width={28}/>
                                 <Tooltip content={<CTip fmt={(v,n)=>n==='₹Cr'?'₹'+v+' Cr':v+'%'}/>}/>
                                 <Legend wrapperStyle={{fontSize:9,fontWeight:700}} iconSize={8}/>
@@ -1441,34 +1441,7 @@ function AppInner() {
 
               </div>{/* end CP wise grid */}
 
-              {/* Area: Total Sold vs Available */}
-              <GC style={{padding:16}}>
-                <SH title="Area — Sold vs Available" sub="sq ft: booked area vs available area by project"/>
-                {(()=>{
-                  const projData=(areaSummary.byProject||[]).map(d=>({
-                    name:d.project?.split(' ').pop()||d.project,
-                    sold:Math.round((d.bookedArea||0)/1000),
-                    avail:Math.round((d.availableArea||0)/1000),
-                  }));
-                  return(
-                    <ResponsiveContainer width="100%" height={160}>
-                      <BarChart data={projData} margin={{top:8,right:8,bottom:4,left:0}}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.1)" vertical={false}/>
-                        <XAxis dataKey="name" tick={{fill:T.textM,fontSize:10,fontWeight:600}} axisLine={false} tickLine={false}/>
-                        <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={36} tickFormatter={v=>v+'K'}/>
-                        <Tooltip content={<CTip fmt={v=>v+'K sq ft'}/>}/>
-                        <Legend wrapperStyle={{fontSize:9,fontWeight:700,color:T.text}} iconSize={8}/>
-                        <Bar dataKey="sold" name="Sold (K sqft)" fill={T.teal} radius={[3,3,0,0]} fillOpacity={0.9}>
-                          <LabelList dataKey="sold" position="top" style={{fill:T.tealD,fontSize:8,fontWeight:700}} formatter={v=>v>0?v+'K':''}/>
-                        </Bar>
-                        <Bar dataKey="avail" name="Available (K sqft)" fill={T.amber} radius={[3,3,0,0]} fillOpacity={0.7}>
-                          <LabelList dataKey="avail" position="top" style={{fill:T.amber,fontSize:8,fontWeight:700}} formatter={v=>v>0?v+'K':''}/>
-                        </Bar>
-                      </BarChart>
-                    </ResponsiveContainer>
-                  );
-                })()}
-              </GC>
+
 
             </div>
 
