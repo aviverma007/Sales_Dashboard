@@ -1392,11 +1392,10 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
               </div>
               <div style={{display:showTowerType?'grid':'none',gridTemplateColumns:'1fr 1fr',gap:12,transformOrigin:'center center',animation:showTowerType?'flipIn 0.9s cubic-bezier(0.4,0,0.2,1) forwards':'none'}}>
 
-                {/* ── CP: Top 10 Units Booked (bar) ─────────────── */}
+                {/* ── CP: Top 10 Units Booked (line) ─────────────── */}
                 <GC style={{padding:16}}>
-                  <SH title="Top CP — Units Booked" sub="Top 10 channel partners by units · scroll for more · ₹Cr above bars"/>
+                  <SH title="Top CP — Units Booked" sub="Top 10 channel partners by units · scroll for more · ₹Cr on line"/>
                   {(()=>{
-                    const top=topCP.slice(0,10);
                     const all=topCP;
                     const WIN=10;
                     const slice=all.slice(cpScroll,cpScroll+WIN);
@@ -1406,17 +1405,27 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                         <div style={{overflowX:'auto',overflowY:'hidden'}}>
                           <div style={{minWidth:slice.length*52+60+'px'}}>
                             <ResponsiveContainer width="100%" height={220}>
-                              <BarChart data={slice} margin={{top:28,right:8,bottom:56,left:0}} barSize={28}>
+                              <ComposedChart data={slice} margin={{top:28,right:12,bottom:56,left:0}}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.08)" vertical={false}/>
                                 <XAxis dataKey="name" tick={{fill:T.textM,fontSize:8,fontWeight:600}} axisLine={false} tickLine={false} angle={-35} textAnchor="end" interval={0} height={60} tickFormatter={v=>v?.length>14?v.slice(0,14)+'…':v}/>
-                                <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={24} domain={[0,maxU+8]}/>
+                                <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={24} domain={[0,maxU+10]}/>
                                 <Tooltip content={<CTip fmt={(v,n)=>n==='Units'?v+' units':'₹'+v+' Cr'}/>}/>
-                                <Bar dataKey="units" name="Units" radius={[4,4,0,0]}>
-                                  {slice.map((d,i)=><Cell key={i} fill={i===0?T.tealD:i<3?T.teal:'#4a9eb5'}/>)}
+                                <defs>
+                                  <linearGradient id="cpLineGrad" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor={T.teal} stopOpacity={0.15}/>
+                                    <stop offset="95%" stopColor={T.teal} stopOpacity={0}/>
+                                  </linearGradient>
+                                </defs>
+                                <Area type="monotone" dataKey="units" fill="url(#cpLineGrad)" stroke="none"/>
+                                <Line type="monotone" dataKey="units" name="Units" stroke={T.tealD} strokeWidth={2.5} dot={({cx,cy,index})=>(
+                                  <circle key={index} cx={cx} cy={cy} r={index===0?6:4} fill={index===0?T.tealD:T.teal} stroke="#fff" strokeWidth={1.5}/>
+                                )} activeDot={{r:7,fill:T.tealD,stroke:'#fff',strokeWidth:2}}>
                                   <LabelList dataKey="units" position="top" style={{fill:T.navy,fontSize:9,fontWeight:800}}/>
-                                  <LabelList dataKey="bspCr" position="insideTop" style={{fill:'#fff',fontSize:8,fontWeight:700}} formatter={v=>'₹'+v+'Cr'}/>
-                                </Bar>
-                              </BarChart>
+                                </Line>
+                                <Line type="monotone" dataKey="bspCr" name="₹Cr" stroke={T.amber} strokeWidth={1.5} strokeDasharray="4 3" dot={{r:3,fill:T.amber,stroke:'#fff',strokeWidth:1}} activeDot={{r:5}}>
+                                  <LabelList dataKey="bspCr" position="insideTopRight" style={{fill:T.amber,fontSize:7,fontWeight:700}} formatter={v=>'₹'+v}/>
+                                </Line>
+                              </ComposedChart>
                             </ResponsiveContainer>
                           </div>
                         </div>
