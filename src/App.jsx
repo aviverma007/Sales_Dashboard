@@ -1040,17 +1040,18 @@ function AppInner() {
                   onClick={()=>setShowTowerType(v=>!v)}
                   style={{
                     display:'flex',alignItems:'center',gap:7,
-                    padding:'6px 14px',borderRadius:20,border:'none',cursor:'pointer',
-                    background:showTowerType?'linear-gradient(135deg,#0097a7,#00bcd4)':'rgba(0,151,167,0.1)',
+                    padding:'7px 16px',borderRadius:20,cursor:'pointer',
+                    background:showTowerType?'linear-gradient(135deg,#0097a7,#00bcd4)':'#fff',
                     color:showTowerType?'#fff':'#0097a7',
-                    fontSize:10,fontWeight:800,letterSpacing:0.3,
+                    fontSize:11,fontWeight:800,letterSpacing:0.4,
                     transition:'all 0.25s ease',
-                    boxShadow:showTowerType?'0 2px 10px rgba(0,151,167,0.35)':'none',
+                    border:'2px solid #0097a7',
+                    boxShadow:showTowerType?'0 3px 12px rgba(0,151,167,0.45)':'0 1px 4px rgba(0,0,0,0.12)',
                     whiteSpace:'nowrap',
                   }}
                 >
-                  <span style={{fontSize:12,transition:'transform 0.3s',transform:showTowerType?'rotate(90deg)':'rotate(0deg)'}}>⇄</span>
-                  {showTowerType?'Show Sales Trend':'Show Tower & Type'}
+                  <span style={{fontSize:13,transition:'transform 0.3s',display:'inline-block',transform:showTowerType?'rotate(180deg)':'rotate(0deg)'}}>⇄</span>
+                  {showTowerType?'Sales & Pricing Trend':'Tower Wise & CP Wise Sales'}
                 </button>
               </div>
 
@@ -1266,9 +1267,11 @@ function AppInner() {
                 transition:'opacity 0.35s ease',
                 animation:showTowerType?'fadeIn 0.35s ease':'none',
               }}>
-                <div style={{width:4,height:18,background:T.teal,borderRadius:2}}/>
-                <span style={{fontSize:12,fontWeight:800,color:T.navy,letterSpacing:0.5,textTransform:'uppercase'}}>Tower &amp; Type Wise Sales</span>
-                <div style={{flex:1,height:1,background:'rgba(0,100,140,0.1)'}}/>
+                <div style={{background:'linear-gradient(135deg,#0097a7,#00bcd4)',borderRadius:10,padding:'5px 18px',display:'flex',alignItems:'center',gap:8,boxShadow:'0 2px 10px rgba(0,151,167,0.3)'}}>
+                  <span style={{fontSize:13}}>🏗️</span>
+                  <span style={{fontSize:11,fontWeight:900,color:'#fff',textTransform:'uppercase',letterSpacing:1}}>Tower &amp; Type Wise Sales</span>
+                </div>
+                <div style={{flex:1,height:1,background:'rgba(0,151,167,0.15)',borderRadius:1}}/>
               </div>
               <div style={{display:showTowerType?'grid':'none',gridTemplateColumns:'1fr 1fr',gap:12,opacity:showTowerType?1:0,transition:'opacity 0.35s ease',animation:showTowerType?'fadeIn 0.35s ease':'none'}}>
 
@@ -1380,9 +1383,11 @@ function AppInner() {
 
               {/* ── SECTION: CP Wise Sales ── */}
               <div style={{display:showTowerType?'flex':'none',alignItems:'center',gap:10,margin:'16px 0 10px',opacity:showTowerType?1:0,transition:'opacity 0.35s ease',animation:showTowerType?'fadeIn 0.35s ease':'none'}}>
-                <div style={{width:4,height:18,background:T.teal,borderRadius:2}}/>
-                <span style={{fontSize:12,fontWeight:800,color:T.navy,letterSpacing:0.5,textTransform:'uppercase'}}>CP Wise Sales</span>
-                <div style={{flex:1,height:1,background:'rgba(0,100,140,0.1)'}}/>
+                <div style={{background:'linear-gradient(135deg,#1a3a5c,#2a5a8c)',borderRadius:10,padding:'5px 18px',display:'flex',alignItems:'center',gap:8,boxShadow:'0 2px 10px rgba(26,58,92,0.3)'}}>
+                  <span style={{fontSize:13}}>🤝</span>
+                  <span style={{fontSize:11,fontWeight:900,color:'#fff',textTransform:'uppercase',letterSpacing:1}}>CP Wise Sales</span>
+                </div>
+                <div style={{flex:1,height:1,background:'rgba(26,58,92,0.15)',borderRadius:1}}/>
               </div>
               <div style={{display:showTowerType?'grid':'none',gridTemplateColumns:'1fr 1fr',gap:12,opacity:showTowerType?1:0,transition:'opacity 0.35s ease',animation:showTowerType?'fadeIn 0.35s ease':'none'}}>
 
