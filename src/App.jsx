@@ -1040,25 +1040,61 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                 <div style={{position:'absolute',bottom:0,left:0,right:0,height:3,background:`linear-gradient(90deg,${T.teal},#7c3aed)`,borderRadius:'0 0 14px 14px'}}/>
               </GC>
 
-              {/* CARD D: Avg Rate / sq ft — project wise */}
-              <GC style={{padding:12,minWidth:190,maxWidth:230}} cls="kc">
+              {/* CARD D: Avg Rate / sq ft — unit-level min/avg/max range bar */}
+              <GC style={{padding:12,minWidth:190,maxWidth:240}} cls="kc">
                 <SH title="Avg Rate / sq ft" compact/>
-                <div style={{display:'flex',flexDirection:'column',gap:6,marginTop:4}}>
+                <div style={{display:'flex',flexDirection:'column',gap:5,marginTop:4}}>
                   {(()=>{
-                    const projRates=(areaSummary.byProject||[]).filter(d=>d.avgPricePerSqft>0);
-                    const overallRate=kpiEx.avgRatePerSqft||0;
-                    const maxRate=Math.max(...projRates.map(d=>d.avgPricePerSqft),1);
                     const SHORT={'SMARTWORLD THE EDITION':'Edition','Smartworld Sky Arc':'Sky Arc','Trump Residences Gurgaon':'Trump','Smartworld Le Courtyard':'Le Courtyard','Smartworld Suites':'Suites'};
+                    // Unit-level rates from active bookings (pA)
+                    const unitRates=pA.filter(r=>r.bsp>0&&r.superArea>0).map(r=>Math.round(r.bsp/r.superArea));
+                    const minR=unitRates.length?Math.min(...unitRates):0;
+                    const maxR=unitRates.length?Math.max(...unitRates):0;
+                    const avgR=kpiEx.avgRatePerSqft||0;
+                    // Range bar: avgR position as % between minR and maxR
+                    const range=maxR-minR||1;
+                    const avgPct=Math.round(((avgR-minR)/range)*100);
+                    // Per-project rates for breakdown
+                    const projRates=(areaSummary.byProject||[]).filter(d=>d.avgPricePerSqft>0);
+                    const maxProjRate=Math.max(...projRates.map(d=>d.avgPricePerSqft),1);
                     return(<>
-                      {filters.project&&(
+                      {/* Overall avg — always show */}
                       <div style={{background:`${T.navy}0d`,borderRadius:7,padding:'5px 8px',marginBottom:2}}>
                         <p style={{fontSize:7,color:T.textM,fontWeight:700,margin:'0 0 1px',textTransform:'uppercase'}}>Overall Avg</p>
-                        <p style={{fontSize:16,fontWeight:900,color:T.navy,margin:0,letterSpacing:-0.5}}>₹{overallRate.toLocaleString('en-IN')}<span style={{fontSize:8,fontWeight:600,color:T.textM}}> /sqft</span></p>
+                        <p style={{fontSize:15,fontWeight:900,color:T.navy,margin:0,letterSpacing:-0.5}}>₹{avgR.toLocaleString('en-IN')}<span style={{fontSize:8,fontWeight:600,color:T.textM}}> /sqft</span></p>
                       </div>
+                      {/* Range bar */}
+                      {unitRates.length>0&&minR!==maxR&&(
+                        <div style={{marginBottom:4}}>
+                          {/* Avg label above marker */}
+                          <div style={{position:'relative',height:16,marginBottom:2}}>
+                            <div style={{position:'absolute',left:`${avgPct}%`,transform:'translateX(-50%)',whiteSpace:'nowrap'}}>
+                              <span style={{fontSize:8,fontWeight:800,color:T.navy}}>₹{avgR.toLocaleString('en-IN')}</span>
+                            </div>
+                          </div>
+                          {/* The bar */}
+                          <div style={{position:'relative',height:8,background:'rgba(0,100,140,0.1)',borderRadius:4}}>
+                            {/* Filled portion from min to avg */}
+                            <div style={{position:'absolute',left:0,width:avgPct+'%',height:'100%',background:`linear-gradient(90deg,${T.teal},${T.tealD})`,borderRadius:4,transition:'width 0.6s ease'}}/>
+                            {/* Avg marker */}
+                            <div style={{position:'absolute',left:avgPct+'%',top:'50%',transform:'translate(-50%,-50%)',width:12,height:12,borderRadius:'50%',background:T.navy,border:'2px solid #fff',boxShadow:'0 1px 4px rgba(0,0,0,0.2)',zIndex:1}}/>
+                          </div>
+                          {/* Min / Max labels */}
+                          <div style={{display:'flex',justifyContent:'space-between',marginTop:4}}>
+                            <div style={{textAlign:'left'}}>
+                              <p style={{fontSize:7,color:T.textM,margin:0,fontWeight:700}}>MIN</p>
+                              <p style={{fontSize:9,fontWeight:900,color:T.teal,margin:0}}>₹{minR.toLocaleString('en-IN')}</p>
+                            </div>
+                            <div style={{textAlign:'right'}}>
+                              <p style={{fontSize:7,color:T.textM,margin:0,fontWeight:700}}>MAX</p>
+                              <p style={{fontSize:9,fontWeight:900,color:T.amber,margin:0}}>₹{maxR.toLocaleString('en-IN')}</p>
+                            </div>
+                          </div>
+                        </div>
                       )}
-                      {(()=>{const rates=projRates.map(d=>d.avgPricePerSqft);const minR=Math.min(...rates);const maxR=Math.max(...rates);const S2={'SMARTWORLD THE EDITION':'Edition','Smartworld Sky Arc':'Sky Arc','Trump Residences Gurgaon':'Trump','Smartworld Le Courtyard':'Le Courtyard','Smartworld Suites':'Suites'};const minP=projRates.find(d=>d.avgPricePerSqft===minR);const maxP=projRates.find(d=>d.avgPricePerSqft===maxR);return(<div style={{display:'flex',gap:6,marginBottom:6}}><div style={{flex:1,background:'rgba(0,151,167,0.07)',borderRadius:6,padding:'4px 8px',textAlign:'center'}}><p style={{fontSize:7,color:T.textM,margin:0,fontWeight:700}}>MIN</p><p style={{fontSize:10,fontWeight:900,color:T.teal,margin:0}}>₹{minR.toLocaleString('en-IN')}</p><p style={{fontSize:7,color:T.textL,margin:0}}>{S2[minP?.project]}</p></div><div style={{flex:1,background:'rgba(245,158,11,0.07)',borderRadius:6,padding:'4px 8px',textAlign:'center'}}><p style={{fontSize:7,color:T.textM,margin:0,fontWeight:700}}>MAX</p><p style={{fontSize:10,fontWeight:900,color:T.amber,margin:0}}>₹{maxR.toLocaleString('en-IN')}</p><p style={{fontSize:7,color:T.textL,margin:0}}>{S2[maxP?.project]}</p></div></div>);})()}
+                      {/* Per-project breakdown */}
                       {projRates.map((d,i)=>{
-                        const pct=Math.round((d.avgPricePerSqft/maxRate)*100);
+                        const pct=Math.round((d.avgPricePerSqft/maxProjRate)*100);
                         const col=d.avgPricePerSqft>25000?T.amber:d.avgPricePerSqft>20000?T.tealD:T.teal;
                         return(
                           <div key={i}>
