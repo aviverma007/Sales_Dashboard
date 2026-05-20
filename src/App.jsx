@@ -471,6 +471,7 @@ function AppInner() {
   const [cpExpanded,setCpExpanded]=useState(false);
   const [cpScroll,setCpScroll]=useState(0);
   const [cpScroll2,setCpScroll2]=useState(0);
+  const [showAllT,setShowAllT]=useState(false);
 
   useEffect(()=>{fetch('/data/dashboard_data.json').then(r=>r.json()).then(d=>{setRaw(d);setLoading(false);}).catch(()=>setLoading(false));}, []);
 
@@ -1559,7 +1560,6 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
               <GC style={{padding:16,marginTop:4,display:showTowerType?'block':'none',animation:showTowerType?'flipIn 0.8s cubic-bezier(0.4,0,0.2,1) forwards':'none'}}>
                 <SH title="Tower-wise Booking Status" sub="Booked · Cancelled · Booked Area (sq ft) · Avg Price/sq ft"/>
                 {(()=>{
-                  const [showAllT,setShowAllT]=React.useState(false);
                   const INIT=10;
                   const SHORT={'SMARTWORLD THE EDITION':'THE EDITION','Smartworld Sky Arc':'Sky Arc','Trump Residences Gurgaon':'Residences Gurgaon','Smartworld Le Courtyard':'Le Courtyard','Smartworld Suites':'Suites'};
                   const tMap={};
