@@ -1233,71 +1233,69 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                   })()}
                 </GC>
 
-                {/* ── CHART 4: UNITS STACKED BAR (Booked bottom + Available top) ── */}
+                {/* ── CHART 4: AREA Booked vs Available (sq ft) ── */}
                 <GC style={{padding:16}}>
-                  <SH title="Units — Booked + Available Stack" sub="Stacked: Booked (teal, bottom) · Available (amber, top) · Total per month"/>
+                  <SH title="Area — Booked vs Available" sub="Sq ft booked (teal) vs available (amber) · stacked by project"/>
                   {(()=>{
-                    const WIN=10;
-                    const totalInv=iF.length||3184;
-                    let cum=0;const cumMap={};
-                    monthlyWithTargets.forEach(d=>{cum+=(d.bookedUnits||0);cumMap[d.label]=cum;});
-                    const data=monthlyWithTargets.map(d=>{
-                      const booked=d.isFuture?null:(d.bookedUnits||0);
-                      const cumBooked=d.isFuture?null:(cumMap[d.label]||0);
-                      const avail=d.isFuture?null:Math.max(0,totalInv-(cumBooked||0));
-                      return{
-                        label:d.label,
-                        isFuture:d.isFuture,
-                        isCurrent:d.label===TODAY_LABEL,
-                        booked,
-                        avail,
-                        total:d.isFuture?null:totalInv,
-                        cumBooked,
-                      };
+                    // Compute from iF (filtered invr) for accuracy
+                    const projArea={};
+                    iF.forEach(r=>{
+                      const p=r.project||'Other';
+                      if(!projArea[p])projArea[p]={booked:0,avail:0};
+                      const area=r.superArea||r.carpetArea||0;
+                      if(r.status==='Booked')projArea[p].booked+=area;
+                      else if(r.status==='Available')projArea[p].avail+=area;
                     });
-                    const cur=data.findIndex(d=>d.isCurrent);
-                    const def=cur>=2?cur-2:Math.max(0,data.length-WIN);
-                    const off=Math.min(Math.max(suOff<0?def:suOff,0),Math.max(0,data.length-WIN));
-                    const sl=data.slice(off,off+WIN);
-                    return(<>
-                      <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
-                        <div style={{display:'flex',gap:3,background:'rgba(0,100,140,0.07)',borderRadius:20,padding:2}}>{[['monthly','Monthly'],['quarterly','Quarterly']].map(([k,l])=>(<button key={k} onClick={()=>{setSuMode(k);setSuOff(0);}} style={{padding:'3px 10px',borderRadius:18,border:'none',cursor:'pointer',fontSize:10,fontWeight:700,background:suMode===k?'#0097a7':'transparent',color:suMode===k?'#fff':'#546e7a',transition:'all 0.15s'}}>{l}</button>))}</div>
-                        <button onClick={()=>setSuOff(Math.max(0,off-1))} disabled={off===0} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:off===0?'default':'pointer',fontSize:13,color:off===0?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>‹</button>
-                        <div style={{flex:1,height:4,background:'rgba(0,151,167,0.1)',borderRadius:2,overflow:'hidden'}}><div style={{width:(WIN/Math.max(data.length,1)*100)+'%',marginLeft:(off/Math.max(data.length,1)*100)+'%',height:'100%',background:'#0097a7',borderRadius:2}}/></div>
-                        <button onClick={()=>setSuOff(Math.min(data.length-WIN,off+1))} disabled={off>=data.length-WIN} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:off>=data.length-WIN?'default':'pointer',fontSize:13,color:off>=data.length-WIN?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>›</button>
-                      </div>
-                      <ResponsiveContainer width="100%" height={210}>
-                        <BarChart data={sl} margin={{top:26,right:16,bottom:18,left:0}} barCategoryGap="30%">
-                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.1)" vertical={false}/>
-                          <XAxis dataKey="label" tick={({x,y,payload})=>{const d=sl.find(s=>s.label===payload.value);return <text x={x} y={y+10} textAnchor="middle" fontSize={9} fill={d?.isCurrent?T.tealD:d?.isFuture?'#90a4ae':T.textM} fontWeight={d?.isCurrent?900:600}>{payload.value}</text>;}} axisLine={false} tickLine={false}/>
-                          <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={34} tickFormatter={v=>v>=1000?(v/1000).toFixed(1)+'k':v}/>
-                          <Tooltip content={({active,payload,label})=>{
-                            if(!active||!payload?.length)return null;
-                            const d=sl.find(s=>s.label===label);
-                            const bookedVal=d?.booked??0;
-                            const availVal=d?.avail??0;
-                            const totalVal=bookedVal+availVal;
-                            const pct=totalVal>0?Math.round(bookedVal/totalVal*100):0;
-                            return(
-                              <div style={{background:'rgba(255,255,255,0.97)',border:'1px solid rgba(0,151,167,0.3)',borderRadius:10,padding:'8px 12px',fontSize:10}}>
-                                <p style={{color:T.tealD,fontWeight:800,margin:'0 0 6px'}}>{label}</p>
-                                <p style={{color:T.teal,margin:'0 0 2px',fontWeight:700}}>● Booked: {bookedVal} units ({pct}%)</p>
-                                <p style={{color:T.amber,margin:'0 0 2px',fontWeight:700}}>● Available: {availVal} units</p>
-                                <p style={{color:'#607d8b',margin:0,borderTop:'1px solid #eee',paddingTop:4}}>Total: {totalVal} units</p>
-                              </div>
-                            );
-                          }}/>
-                          <Legend wrapperStyle={{fontSize:9,fontWeight:700}} iconSize={8}/>
-                          <Bar dataKey="booked" name="Booked" stackId="stack" fill={T.teal} fillOpacity={0.9} radius={[0,0,3,3]} barSize={22} isAnimationActive={true} animationDuration={800} animationEasing="ease-out">
-                            {sl.map((d,i)=><Cell key={i} fill={d.isCurrent?T.tealD:T.teal} fillOpacity={d.isCurrent?1:0.88}/>)}
-                            <LabelList dataKey="booked" position="insideBottom" offset={8} style={{fill:'#fff',fontSize:8,fontWeight:800}} formatter={v=>v>0?v:''}/>
-                          </Bar>
-                          <Bar dataKey="avail" name="Available" stackId="stack" fill={T.amber} fillOpacity={0.55} radius={[3,3,0,0]} barSize={22} isAnimationActive={true} animationDuration={1000} animationEasing="ease-out">
-                            <LabelList dataKey="avail" position="top" style={{fill:T.amber,fontSize:8,fontWeight:800}} formatter={v=>v>0?v:''}/>
-                          </Bar>
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </>);
+                    const SHORT={'SMARTWORLD THE EDITION':'Edition','Smartworld Sky Arc':'Sky Arc','Trump Residences Gurgaon':'Trump','Smartworld Le Courtyard':'Le Courtyard','Smartworld Suites':'Suites'};
+                    const data=Object.entries(projArea).map(([p,v])=>({
+                      name:SHORT[p]||p,
+                      bookedK:Math.round(v.booked/1000),
+                      availK:Math.round(v.avail/1000),
+                      totalK:Math.round((v.booked+v.avail)/1000),
+                      pct:v.booked+v.avail>0?Math.round(v.booked/(v.booked+v.avail)*100):0,
+                    })).filter(d=>d.totalK>0).sort((a,b)=>b.bookedK-a.bookedK);
+                    const totBooked=data.reduce((s,d)=>s+d.bookedK,0);
+                    const totAvail=data.reduce((s,d)=>s+d.availK,0);
+                    return(
+                      <>
+                        <div style={{display:'flex',gap:16,marginBottom:8}}>
+                          <div style={{background:'rgba(0,151,167,0.08)',borderRadius:7,padding:'4px 10px'}}>
+                            <span style={{fontSize:8,color:T.textM,fontWeight:700}}>BOOKED </span>
+                            <span style={{fontSize:13,fontWeight:900,color:T.tealD}}>{totBooked.toLocaleString('en-IN')}K</span>
+                            <span style={{fontSize:8,color:T.textM}}> sq ft</span>
+                          </div>
+                          <div style={{background:'rgba(245,158,11,0.08)',borderRadius:7,padding:'4px 10px'}}>
+                            <span style={{fontSize:8,color:T.textM,fontWeight:700}}>AVAILABLE </span>
+                            <span style={{fontSize:13,fontWeight:900,color:T.amber}}>{totAvail.toLocaleString('en-IN')}K</span>
+                            <span style={{fontSize:8,color:T.textM}}> sq ft</span>
+                          </div>
+                        </div>
+                        <ResponsiveContainer width="100%" height={190}>
+                          <BarChart data={data} margin={{top:20,right:16,bottom:8,left:0}} barCategoryGap="30%">
+                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.08)" vertical={false}/>
+                            <XAxis dataKey="name" tick={{fill:T.textM,fontSize:10,fontWeight:700}} axisLine={false} tickLine={false}/>
+                            <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={38} tickFormatter={v=>v+'K'}/>
+                            <Tooltip content={({active,payload,label})=>{
+                              if(!active||!payload?.length)return null;
+                              const d=data.find(r=>r.name===label);
+                              return(<div style={{background:'rgba(255,255,255,0.97)',border:'1px solid rgba(0,151,167,0.3)',borderRadius:10,padding:'8px 12px',fontSize:10}}>
+                                <p style={{color:T.navy,fontWeight:800,margin:'0 0 5px',fontSize:11}}>{label}</p>
+                                <p style={{color:T.teal,margin:'0 0 2px',fontWeight:700}}>Booked: {d?.bookedK?.toLocaleString('en-IN')}K sq ft ({d?.pct}%)</p>
+                                <p style={{color:T.amber,margin:'0 0 2px',fontWeight:700}}>Available: {d?.availK?.toLocaleString('en-IN')}K sq ft</p>
+                                <p style={{color:'#607d8b',margin:0,borderTop:'1px solid #eee',paddingTop:3}}>Total: {d?.totalK?.toLocaleString('en-IN')}K sq ft</p>
+                              </div>);
+                            }}/>
+                            <Legend wrapperStyle={{fontSize:9,fontWeight:700}} iconSize={8}/>
+                            <Bar dataKey="bookedK" name="Booked (K sq ft)" stackId="a" fill={T.teal} fillOpacity={0.9} radius={[0,0,3,3]} barSize={28}>
+                              <LabelList dataKey="pct" position="insideBottom" offset={8} style={{fill:'#fff',fontSize:9,fontWeight:800}} formatter={v=>v+'%'}/>
+                            </Bar>
+                            <Bar dataKey="availK" name="Available (K sq ft)" stackId="a" fill={T.amber} fillOpacity={0.6} radius={[3,3,0,0]} barSize={28}>
+                              <LabelList dataKey="bookedK" position="top" style={{fill:T.tealD,fontSize:8,fontWeight:700}} formatter={v=>v+'K'}/>
+                            </Bar>
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </>
+                    );
                   })()}
                 </GC>
 
