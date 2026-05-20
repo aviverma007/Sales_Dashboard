@@ -1657,7 +1657,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.06)"/>
                                 <XAxis dataKey="ts" type="number" domain={[pts[0].ts,pts[n-1].ts]} scale="time"
                                   tickFormatter={fmt} tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false}
-                                  angle={-35} textAnchor="end" height={44} ticks={Array.from({length:Math.ceil((pts[n-1].ts-pts[0].ts)/(91*86400000))+1},(_,i)=>pts[0].ts+i*91*86400000).filter(t=>t<=pts[n-1].ts)}/>
+                                  angle={-35} textAnchor="end" height={44} ticks={Array.from({length:Math.ceil((pts[n-1].ts-pts[0].ts)/(45*86400000))+1},(_,i)=>pts[0].ts+i*45*86400000).filter(t=>t<=pts[n-1].ts)}/>
                                 <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={48}
                                   tickFormatter={v=>v.toLocaleString('en-IN')} domain={['auto','auto']}/>
                                 <Tooltip content={({active,payload})=>{
