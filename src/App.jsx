@@ -1010,17 +1010,17 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                 {(()=>{
                   const soldBSP=kpiEx.totalBSPCr||0;
                   const soldTCV=kpiEx.totalTCVCr||0;
-                  const totalReceived=+(pA.reduce((s,r)=>s+(r.received||0),0)/1e7).toFixed(1);
-                  const totalDemand=+(pA.reduce((s,r)=>s+(r.demand||0),0)/1e7).toFixed(1);
-                  const outstanding=+(Math.max(0,soldTCV-totalReceived)).toFixed(1);
+                  const totalReceived=+(pA.reduce((s,r)=>s+(r.received||0),0)/1e7).toFixed(2);
+                  const totalDemand=+(pA.reduce((s,r)=>s+(r.demand||0),0)/1e7).toFixed(2);
+                  const outstanding=+(Math.max(0,soldTCV-totalReceived)).toFixed(2);
                   const collectedPct=soldTCV>0?Math.round(totalReceived/soldTCV*100):0;
                   // Unsold potential
                   const pAWithArea=pA.filter(r=>r.bsp>0&&r.superArea>0);
                   const avgRate=pAWithArea.length>0?pAWithArea.reduce((s,r)=>s+(r.bsp/r.superArea),0)/pAWithArea.length:0;
                   const availArea=iF.filter(r=>r.status==='Available').reduce((s,r)=>s+(r.superArea||0),0);
                   const availUnits=iF.filter(r=>r.status==='Available').length;
-                  const unsoldBSP=+((availArea>0?availArea*avgRate:availUnits*avgRate*3000)/1e7).toFixed(1);
-                  const totalPotential=+(soldBSP+unsoldBSP).toFixed(1);
+                  const unsoldBSP=+((availArea>0?availArea*avgRate:availUnits*avgRate*3000)/1e7).toFixed(2);
+                  const totalPotential=+(soldBSP+unsoldBSP).toFixed(2);
                   const soldPct=totalPotential>0?Math.round(soldBSP/totalPotential*100):0;
                   return(
                     <div style={{display:'flex',flexDirection:'column',gap:6}}>
@@ -1033,7 +1033,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                                 cx="50%" cy="50%" innerRadius={20} outerRadius={34} paddingAngle={3} dataKey="value" strokeWidth={1.5} stroke="rgba(255,255,255,0.9)" labelLine={false}>
                                 <Cell fill={T.teal}/><Cell fill={T.amber}/>
                               </Pie>
-                              <Tooltip content={<CTip fmt={v=>'₹'+v.toFixed(1)+' Cr'}/>}/>
+                              <Tooltip content={<CTip fmt={v=>'₹'+v.toFixed(2)+' Cr'}/>}/>
                             </PieChart>
                           </ResponsiveContainer>
                           <div style={{position:'absolute',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',pointerEvents:'none'}}>
@@ -1044,17 +1044,17 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                         <div style={{flex:1,display:'flex',flexDirection:'column',gap:3}}>
                           <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline'}}>
                             <span style={{fontSize:7,color:T.textM,fontWeight:700}}>TOTAL PROJECT VALUE</span>
-                            <span style={{fontSize:11,fontWeight:900,color:T.navy}}>₹{(totalPotential/1000).toFixed(1)}K Cr</span>
+                            <span style={{fontSize:11,fontWeight:900,color:T.navy}}>₹{(totalPotential/1000).toFixed(2)}K Cr</span>
                           </div>
                           <div style={{display:'flex',gap:4}}>
                             <div style={{flex:1,background:`${T.teal}0d`,borderRadius:4,padding:'3px 5px'}}>
                               <p style={{fontSize:6,color:T.textM,fontWeight:700,margin:0}}>SOLD</p>
-                              <p style={{fontSize:10,fontWeight:900,color:T.tealD,margin:0}}>₹{(soldBSP/1000).toFixed(1)}K</p>
-                              <p style={{fontSize:6,color:T.textM,margin:0}}>TCV ₹{(soldTCV/1000).toFixed(1)}K Cr</p>
+                              <p style={{fontSize:10,fontWeight:900,color:T.tealD,margin:0}}>₹{(soldBSP/1000).toFixed(2)}K</p>
+                              <p style={{fontSize:6,color:T.textM,margin:0}}>TCV ₹{(soldTCV/1000).toFixed(2)}K Cr</p>
                             </div>
                             <div style={{flex:1,background:'rgba(245,158,11,0.07)',borderRadius:4,padding:'3px 5px'}}>
                               <p style={{fontSize:6,color:T.textM,fontWeight:700,margin:0}}>UNSOLD</p>
-                              <p style={{fontSize:10,fontWeight:900,color:T.amber,margin:0}}>₹{(unsoldBSP/1000).toFixed(1)}K</p>
+                              <p style={{fontSize:10,fontWeight:900,color:T.amber,margin:0}}>₹{(unsoldBSP/1000).toFixed(2)}K</p>
                               <p style={{fontSize:6,color:T.textM,margin:0}}>{availUnits} units</p>
                             </div>
                           </div>
@@ -1072,11 +1072,11 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                         <div style={{display:'flex',justifyContent:'space-between'}}>
                           <div>
                             <p style={{fontSize:6,color:T.textM,fontWeight:700,margin:0}}>RECEIVED</p>
-                            <p style={{fontSize:11,fontWeight:900,color:T.tealD,margin:0}}>₹{(totalReceived/1000).toFixed(1)}K Cr</p>
+                            <p style={{fontSize:11,fontWeight:900,color:T.tealD,margin:0}}>₹{(totalReceived/1000).toFixed(2)}K Cr</p>
                           </div>
                           <div style={{textAlign:'right'}}>
                             <p style={{fontSize:6,color:T.textM,fontWeight:700,margin:0}}>OUTSTANDING</p>
-                            <p style={{fontSize:11,fontWeight:900,color:'#ef4444',margin:0}}>₹{(outstanding/1000).toFixed(1)}K Cr</p>
+                            <p style={{fontSize:11,fontWeight:900,color:'#ef4444',margin:0}}>₹{(outstanding/1000).toFixed(2)}K Cr</p>
                           </div>
                         </div>
                       </div>
