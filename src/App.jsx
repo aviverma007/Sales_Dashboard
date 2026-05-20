@@ -1121,7 +1121,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const off=Math.min(Math.max(uOff<0?def:uOff,0),Math.max(0,data.length-WIN));
                     const sl=data.slice(off,off+WIN);
                     return(<>
-         display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
+                      <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
                         <div style={{display:'flex',gap:3,background:'rgba(0,100,140,0.07)',borderRadius:20,padding:2}}>
                           {[['monthly','Monthly'],['quarterly','Quarterly']].map(([k,l])=>(
                             <button key={k} onClick={()=>{setUMode(k);setUOff(0);}} style={{padding:'3px 10px',borderRadius:18,border:'none',cursor:'pointer',fontSize:10,fontWeight:700,background:uMode===k?'#0097a7':'transparent',color:uMode===k?'#fff':'#546e7a',transition:'all 0.15s'}}>{l}</button>
