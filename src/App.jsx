@@ -1495,10 +1495,10 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                               <YAxis yAxisId="right" orientation="right" tickFormatter={v=>v+'%'} domain={[0,120]} tick={{fill:T.tealD,fontSize:9}} axisLine={false} tickLine={false} width={32}/>
                               <Tooltip content={<CTip fmt={(v,n)=>n==='% Sold'?v+'%':v+' units'}/>}/>
                               <Legend wrapperStyle={{fontSize:9,fontWeight:700,paddingTop:4}} iconSize={8}/>
-                              <Bar yAxisId="left" dataKey="sold" name="Units Sold" stackId="s" fill={T.navy} fillOpacity={0.85} radius={[0,0,3,3]}>
+                              <Bar yAxisId="left" dataKey="sold" name="Units Sold" stackId="s" fill={T.tealD} fillOpacity={0.9} radius={[0,0,3,3]}>
                                 <LabelList dataKey="pct" position="top" formatter={v=>v+'%'} style={{fill:T.navy,fontSize:8,fontWeight:800}}/>
                               </Bar>
-                              <Bar yAxisId="left" dataKey="unsold" name="Unsold Units" stackId="s" fill={T.navy} fillOpacity={0.2} radius={[3,3,0,0]}/>
+                              <Bar yAxisId="left" dataKey="unsold" name="Unsold Units" stackId="s" fill={T.teal} fillOpacity={0.18} radius={[3,3,0,0]}/>
                               <Line yAxisId="right" type="monotone" dataKey="pct" name="% Sold" stroke={T.tealD} strokeWidth={2} dot={{r:3,fill:T.tealD}} activeDot={{r:5}}/>
                             </ComposedChart>
                           </ResponsiveContainer>
