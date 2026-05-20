@@ -1126,23 +1126,43 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                   <span style={{fontSize:11,fontWeight:900,color:'#fff',textTransform:'uppercase',letterSpacing:1}}>Sales & Pricing Trend</span>
                 </div>
                 <div style={{flex:1,height:1,background:'rgba(245,158,11,0.15)',borderRadius:1}}/>
-                <button
-                  onClick={()=>setShowTowerType(v=>!v)}
-                  style={{
-                    display:'flex',alignItems:'center',gap:7,
-                    padding:'7px 16px',borderRadius:20,cursor:'pointer',
-                    background:showTowerType?'linear-gradient(135deg,#0097a7,#00bcd4)':'#fff',
-                    color:showTowerType?'#fff':'#0097a7',
-                    fontSize:11,fontWeight:800,letterSpacing:0.4,
-                    transition:'all 0.25s ease',
-                    border:'2px solid #0097a7',
-                    boxShadow:showTowerType?'0 3px 12px rgba(0,151,167,0.45)':'0 1px 4px rgba(0,0,0,0.12)',
-                    whiteSpace:'nowrap',
-                  }}
-                >
-                  <span style={{fontSize:13,transition:'transform 0.3s',display:'inline-block',transform:showTowerType?'rotate(180deg)':'rotate(0deg)'}}>⇄</span>
-                  {showTowerType?'Sales & Pricing Trend':'Tower Wise Sales'}
-                </button>
+                <div style={{position:'relative',display:'inline-flex',flexDirection:'column',alignItems:'center'}}>
+                  {/* Pulsing "click here" callout — shown only when Sales Trend is active */}
+                  {!showTowerType&&(
+                    <div style={{
+                      position:'absolute',bottom:'calc(100% + 8px)',left:'50%',transform:'translateX(-50%)',
+                      background:'linear-gradient(135deg,#0097a7,#00bcd4)',
+                      color:'#fff',fontSize:9,fontWeight:800,letterSpacing:0.5,
+                      padding:'4px 10px',borderRadius:12,whiteSpace:'nowrap',
+                      boxShadow:'0 4px 14px rgba(0,151,167,0.4)',
+                      animation:'pulse 1.8s ease-in-out infinite',
+                      pointerEvents:'none',
+                    }}>
+                      ✨ Click to explore Tower Wise
+                      {/* Tooltip arrow */}
+                      <div style={{position:'absolute',top:'100%',left:'50%',transform:'translateX(-50%)',
+                        width:0,height:0,borderLeft:'5px solid transparent',borderRight:'5px solid transparent',
+                        borderTop:'5px solid #00bcd4'}}/>
+                    </div>
+                  )}
+                  <button
+                    onClick={()=>setShowTowerType(v=>!v)}
+                    style={{
+                      display:'flex',alignItems:'center',gap:7,
+                      padding:'7px 16px',borderRadius:20,cursor:'pointer',
+                      background:showTowerType?'linear-gradient(135deg,#0097a7,#00bcd4)':'#fff',
+                      color:showTowerType?'#fff':'#0097a7',
+                      fontSize:11,fontWeight:800,letterSpacing:0.4,
+                      transition:'all 0.25s ease',
+                      border:'2px solid #0097a7',
+                      boxShadow:showTowerType?'0 3px 12px rgba(0,151,167,0.45)':'0 1px 4px rgba(0,0,0,0.12)',
+                      whiteSpace:'nowrap',
+                    }}
+                  >
+                    <span style={{fontSize:13,transition:'transform 0.3s',display:'inline-block',transform:showTowerType?'rotate(180deg)':'rotate(0deg)'}}>⇄</span>
+                    {showTowerType?'Sales & Pricing Trend':'Tower Wise Sales'}
+                  </button>
+                </div>
               </div>
 
               {/* 2x2 chart grid */}
@@ -1291,16 +1311,23 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                       areaByMonth[m].bookedSqft+=(r.superArea||0);
                       areaByMonth[m].units++;
                     });
-                    const rawData=Object.values(areaByMonth).sort((a,b)=>a.month.localeCompare(b.month)).map(d=>({
-                      label:d.label,
-                      month:d.month,
-                      isCurrent:fmtML(d.month)===TODAY_LABEL,
-                      isFuture:false,
-                      bookedK:+(d.bookedSqft/1000).toFixed(1),
-                      units:d.units,
-                    }));
+                    // Cumulative booked area per month → available = totalArea - cumBooked
+                    const totalInvArea=iF.reduce((s,r)=>s+(r.superArea||0),0);
+                    let cumArea=0;
+                    const sortedMonths=Object.values(areaByMonth).sort((a,b)=>a.month.localeCompare(b.month));
+                    const rawData=sortedMonths.map(d=>{
+                      cumArea+=d.bookedSqft;
+                      const availSqft=Math.max(0,totalInvArea-cumArea);
+                      return{
+                        label:d.label,month:d.month,
+                        isCurrent:fmtML(d.month)===TODAY_LABEL,isFuture:false,
+                        bookedK:+(d.bookedSqft/1000).toFixed(1),
+                        cumBookedK:+(cumArea/1000).toFixed(1),
+                        availK:+(availSqft/1000).toFixed(1),
+                        units:d.units,
+                      };
+                    });
                     const data=suMode==='quarterly'?toQuarterly(rawData,'label').map(q=>({...q,isFuture:false,isCurrent:false})):rawData;
-                    // Total booked + available from iF
                     const totBooked=Math.round(iF.filter(r=>r.status==='Booked').reduce((s,r)=>s+(r.superArea||0),0)/1000);
                     const totAvail=Math.round(iF.filter(r=>r.status==='Available').reduce((s,r)=>s+(r.superArea||0),0)/1000);
                     const cur=data.findIndex(d=>d.isCurrent);
@@ -1331,24 +1358,29 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                         </div>
                       </div>
                       <ResponsiveContainer width="100%" height={180}>
-                        <ComposedChart data={sl} margin={{top:24,right:8,bottom:18,left:0}} barCategoryGap="30%">
+                        <ComposedChart data={sl} margin={{top:24,right:36,bottom:18,left:0}} barCategoryGap="30%">
                           <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.1)" vertical={false}/>
                           <XAxis dataKey="label" tick={({x,y,payload})=>{const d=sl.find(s=>s.label===payload.value);return<text x={x} y={y+10} textAnchor="middle" fontSize={9} fill={d?.isCurrent?T.tealD:T.textM} fontWeight={d?.isCurrent?900:600}>{payload.value}</text>;}} axisLine={false} tickLine={false}/>
-                          <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={34} tickFormatter={v=>v+'K'}/>
+                          <YAxis yAxisId="l" tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={34} tickFormatter={v=>v+'K'}/>
+                          <YAxis yAxisId="r" orientation="right" tick={{fill:T.amber,fontSize:9}} axisLine={false} tickLine={false} width={34} tickFormatter={v=>v+'K'}/>
                           <Tooltip content={({active,payload,label})=>{
                             if(!active||!payload?.length)return null;
                             const d=sl.find(s=>s.label===label);
                             return(<div style={{background:'rgba(255,255,255,0.97)',border:'1px solid rgba(0,151,167,0.3)',borderRadius:10,padding:'8px 12px',fontSize:10}}>
                               <p style={{color:T.tealD,fontWeight:800,margin:'0 0 4px'}}>{label}</p>
-                              <p style={{color:T.teal,margin:'0 0 2px',fontWeight:700}}>Area: {d?.bookedK}K sq ft</p>
-                              <p style={{color:T.textM,margin:0}}>Units: {d?.units}</p>
+                              <p style={{color:T.teal,margin:'0 0 2px',fontWeight:700}}>Booked: {d?.bookedK}K sq ft ({d?.units} units)</p>
+                              <p style={{color:T.amber,margin:0,fontWeight:700}}>Remaining Avail: {d?.availK}K sq ft</p>
                             </div>);
                           }}/>
                           <Legend wrapperStyle={{fontSize:9,fontWeight:700}} iconSize={8}/>
-                          <Bar dataKey="bookedK" name="Booked Area (K sqft)" fill={T.teal} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={800}>
+                          <Bar yAxisId="l" dataKey="bookedK" name="Booked (K sqft)" stackId="s" fill={T.teal} radius={[0,0,3,3]} barSize={18} isAnimationActive={true} animationDuration={800}>
                             {sl.map((d,i)=><Cell key={i} fill={d.isCurrent?T.tealD:T.teal} fillOpacity={d.isCurrent?1:0.85}/>)}
-                            <LabelList dataKey="bookedK" position="top" style={{fill:T.tealD,fontSize:8,fontWeight:800}} formatter={v=>v>0?v+'K':''}/>
+                            <LabelList dataKey="bookedK" position="insideTop" style={{fill:'#fff',fontSize:7,fontWeight:700}} formatter={v=>v>0?v+'K':''}/>
                           </Bar>
+                          <Bar yAxisId="l" dataKey="availK" name="Available (K sqft)" stackId="s" fill={T.amber} fillOpacity={0.45} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={1000}>
+                            <LabelList dataKey="availK" position="top" style={{fill:T.amber,fontSize:7,fontWeight:700}} formatter={v=>v>0?v+'K':''}/>
+                          </Bar>
+                          <Line yAxisId="r" type="monotone" dataKey="availK" name="" stroke={T.amber} strokeWidth={1.5} strokeDasharray="4 3" dot={{r:2,fill:T.amber}} activeDot={{r:4}} legendType="none"/>
                         </ComposedChart>
                       </ResponsiveContainer>
                     </>);
