@@ -1004,44 +1004,53 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                 <div style={{position:'absolute',bottom:0,left:0,right:0,height:3,background:`linear-gradient(90deg,${T.teal},${T.amber})`,borderRadius:'0 0 14px 14px'}}/>
               </GC>
 
-              {/* CARD C: TSV — BSP + TCV pie */}
+              {/* CARD C: Total Potential Sales Value — Sold + Unsold */}
               <GC style={{padding:12}} cls="kc">
                 <SH title="Total Sales Value" compact/>
                 {(()=>{
-                  const bsp=kpiEx.totalBSPCr||0;
-                  const tax=(kpiEx.totalTCVCr||0)-bsp;
+                  const soldBSP=kpiEx.totalBSPCr||0;
+                  // Estimate unsold potential: avg rate × available area from invr
+                  const pAWithArea=pA.filter(r=>r.bsp>0&&r.superArea>0);
+                  const avgRate=pAWithArea.length>0?pAWithArea.reduce((s,r)=>s+(r.bsp/r.superArea),0)/pAWithArea.length:0;
+                  const availArea=iF.filter(r=>r.status==='Available').reduce((s,r)=>s+(r.superArea||0),0);
+                  const availUnits=iF.filter(r=>r.status==='Available').length;
+                  // Use area if available, else estimate 3000 sqft per unit
+                  const unsoldBSP=+((availArea>0?availArea*avgRate:availUnits*avgRate*3000)/1e7).toFixed(1);
+                  const totalPotential=+(soldBSP+unsoldBSP).toFixed(1);
+                  const soldPct=totalPotential>0?Math.round(soldBSP/totalPotential*100):0;
                   return(
                     <div style={{display:'flex',alignItems:'center',gap:8}}>
                       <div style={{width:80,height:80,flexShrink:0,position:'relative'}}>
                         <ResponsiveContainer width="100%" height="100%">
                           <PieChart>
-                            <Pie data={[{name:'BSP',value:bsp||0.01},{name:'Tax/Charges',value:tax||0.01}]}
+                            <Pie data={[{name:'Sold',value:soldBSP||0.01},{name:'Unsold Potential',value:unsoldBSP||0.01}]}
                               cx="50%" cy="50%" innerRadius={24} outerRadius={38} paddingAngle={3} dataKey="value" strokeWidth={1.5} stroke="rgba(255,255,255,0.9)" labelLine={false}>
-                              <Cell fill={T.teal}/><Cell fill={'#7c3aed'}/>
+                              <Cell fill={T.teal}/><Cell fill={T.amber}/>
                             </Pie>
                             <Tooltip content={<CTip fmt={v=>'₹'+v.toFixed(1)+' Cr'}/>}/>
                           </PieChart>
                         </ResponsiveContainer>
                         <div style={{position:'absolute',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',pointerEvents:'none'}}>
-                          <span style={{fontSize:9,fontWeight:900,color:T.tealD,lineHeight:1}}>₹{((kpiEx.totalTCVCr||0)/1000).toFixed(1)}K</span>
-                          <span style={{fontSize:6,fontWeight:700,color:T.textM}}>TCV Cr</span>
+                          <span style={{fontSize:9,fontWeight:900,color:T.tealD,lineHeight:1}}>{soldPct}%</span>
+                          <span style={{fontSize:6,fontWeight:700,color:T.textM}}>Sold</span>
                         </div>
                       </div>
                       <div style={{flex:1,display:'flex',flexDirection:'column',gap:4}}>
                         <div style={{background:`${T.teal}0d`,borderRadius:5,padding:'4px 6px'}}>
-                          <p style={{fontSize:7,color:T.textM,fontWeight:700,margin:'0 0 1px'}}>BSP (Net)</p>
-                          <p style={{fontSize:13,fontWeight:900,color:T.tealD,margin:0}}>₹{((kpiEx.totalBSPCr||0)/1000).toFixed(1)}K Cr</p>
-                          <p style={{fontSize:7,color:T.red,margin:0}}>-₹{(kpiEx.cancelledBSPCr||0).toFixed(0)}Cr cancelled</p>
+                          <p style={{fontSize:7,color:T.textM,fontWeight:700,margin:'0 0 1px'}}>SOLD (BSP)</p>
+                          <p style={{fontSize:13,fontWeight:900,color:T.tealD,margin:0}}>₹{(soldBSP/1000).toFixed(1)}K Cr</p>
+                          <p style={{fontSize:7,color:T.textM,margin:0}}>TCV: ₹{((kpiEx.totalTCVCr||0)/1000).toFixed(1)}K Cr</p>
                         </div>
-                        <div style={{background:'rgba(124,58,237,0.06)',borderRadius:5,padding:'3px 6px'}}>
-                          <p style={{fontSize:7,color:T.textM,fontWeight:700,margin:'0 0 1px'}}>TCV incl. tax</p>
-                          <p style={{fontSize:11,fontWeight:900,color:'#7c3aed',margin:0}}>₹{((kpiEx.totalTCVCr||0)/1000).toFixed(1)}K Cr</p>
+                        <div style={{background:'rgba(245,158,11,0.07)',borderRadius:5,padding:'3px 6px'}}>
+                          <p style={{fontSize:7,color:T.textM,fontWeight:700,margin:'0 0 1px'}}>UNSOLD POTENTIAL</p>
+                          <p style={{fontSize:11,fontWeight:900,color:T.amber,margin:0}}>₹{(unsoldBSP/1000).toFixed(1)}K Cr</p>
+                          <p style={{fontSize:7,color:T.textM,margin:0}}>@ avg ₹{Math.round(avgRate).toLocaleString('en-IN')}/sqft</p>
                         </div>
                       </div>
                     </div>
                   );
                 })()}
-                <div style={{position:'absolute',bottom:0,left:0,right:0,height:3,background:`linear-gradient(90deg,${T.teal},#7c3aed)`,borderRadius:'0 0 14px 14px'}}/>
+                <div style={{position:'absolute',bottom:0,left:0,right:0,height:3,background:`linear-gradient(90deg,${T.teal},${T.amber})`,borderRadius:'0 0 14px 14px'}}/>
               </GC>
 
               {/* CARD D: Avg Rate / sq ft — unit-level min/avg/max range bar */}
