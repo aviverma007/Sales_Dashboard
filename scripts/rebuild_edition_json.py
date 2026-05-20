@@ -136,7 +136,7 @@ def parse_invr(rows):
             'status': safe_str(r.get('Status')),
             'tower': safe_str(r.get('Tower')),
             'floor': safe_str(r.get('Floor')),
-            'superArea': safe_num(r.get('Super Builtup Area')),
+            'superArea': safe_num(r.get('Total Super Area')) or safe_num(r.get('Super Builtup Area')),
             'carpetArea': safe_num(r.get('Carpet Area')),
             'bsp': safe_num(r.get('Basic Price')),
         })

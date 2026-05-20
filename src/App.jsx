@@ -583,9 +583,13 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
   },[pA,pC,raw,iF]);
   const kpiEx=useMemo(()=>{
     // Compute from filtered data so it responds to all filters
-    const bookedAreaSqft = pA.reduce((s,r)=>s+(r.superArea||0),0);
-    const carpetAreaSqft = pA.reduce((s,r)=>s+(r.carpet||0),0);
-    const availAreaSqft  = iF.filter(r=>r.status==='Available').reduce((s,r)=>s+(r.superArea||r.superBuiltupArea||0),0);
+    // Use iF (invr) as primary source for area — has Total Super Area for Edition, covers all projects
+    const bookedAreaSqft = iF.filter(r=>r.status==='Booked').reduce((s,r)=>s+(r.superArea||0),0)
+                        || pA.reduce((s,r)=>s+(r.superArea||0),0); // fallback to pdrn
+    const carpetAreaSqft = iF.filter(r=>r.status==='Booked').reduce((s,r)=>s+(r.carpetArea||0),0)
+                        || pA.reduce((s,r)=>s+(r.carpet||0),0);
+    const availAreaSqft  = iF.filter(r=>r.status==='Available').reduce((s,r)=>s+(r.superArea||0),0);
+    const totalSuperArea = iF.reduce((s,r)=>s+(r.superArea||0),0); // total project area from invr
     const totalBSPCr     = +(pA.reduce((s,r)=>s+(r.bsp||0),0)/1e7).toFixed(1);
     const totalTCVCr     = +(pA.reduce((s,r)=>s+(r.tcv||0),0)/1e7).toFixed(1);
     const cancelledBSPCr = +(pC.reduce((s,r)=>s+(r.bsp||0),0)/1e7).toFixed(1);
@@ -595,6 +599,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
     const base = raw?.kpiExtra||{};
     return {
       bookedAreaSqft:  bookedAreaSqft>0?bookedAreaSqft:base.bookedAreaSqft||0,
+      totalSuperArea:  totalSuperArea>0?totalSuperArea:(base.bookedAreaSqft||0)+(base.availAreaSqft||0),
       carpetAreaSqft:  carpetAreaSqft>0?carpetAreaSqft:base.carpetAreaSqft||0,
       availAreaSqft:   availAreaSqft>0?availAreaSqft:base.availAreaSqft||0,
       totalBSPCr:      totalBSPCr>0?totalBSPCr:base.totalBSPCr||0,
@@ -950,7 +955,9 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                 {(()=>{
                   const sold=kpiEx.bookedAreaSqft||0;
                   const avail=kpiEx.availAreaSqft||0;
-                  const tot=sold+avail;
+                  // Use total super area from invr (Total Super Area column) as the denominator
+                  const totalSA=kpiEx.totalSuperArea||0;
+                  const tot=totalSA>0?totalSA:(sold+avail);
                   const pct=tot>0?Math.round((sold/tot)*100):0;
                   return(
                     <div style={{display:'flex',alignItems:'center',gap:8}}>
@@ -973,7 +980,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                         <div>
                           <p style={{fontSize:7,color:T.textM,fontWeight:700,margin:'0 0 1px',textTransform:'uppercase'}}>Total</p>
                           <p style={{fontSize:14,fontWeight:900,color:T.navy,margin:0}}>{(tot/1000).toFixed(0)}K</p>
-                          <p style={{fontSize:7,color:T.textM,margin:0}}>Carpet: {(kpiEx.carpetAreaSqft/1000).toFixed(0)}K</p>
+                          <p style={{fontSize:7,color:T.textM,margin:0}}>Total Super Area · Carpet: {(kpiEx.carpetAreaSqft/1000).toFixed(0)}K</p>
                         </div>
                         <div style={{display:'flex',gap:6}}>
                           <div style={{flex:1,background:`${T.teal}0d`,borderRadius:5,padding:'3px 5px'}}>
