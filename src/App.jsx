@@ -1312,7 +1312,13 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                       areaByMonth[m].units++;
                     });
                     // Cumulative booked area per month → available = totalArea - cumBooked
-                    const totalInvArea=iF.reduce((s,r)=>s+(r.superArea||0),0);
+                    // Use pA superArea (now populated for all projects from Excel)
+                    // totalInvArea from iF for edition, or from pdrn+invr ratio for others
+                    const invArea=iF.reduce((s,r)=>s+(r.superArea||0),0);
+                    const pdrnTotalArea=pA.reduce((s,r)=>s+(r.superArea||0),0);
+                    // Estimate total inventory area: pA is booked; scale up by booked% from invr
+                    const bookedPct=iF.length>0?(iF.filter(r=>r.status==='Booked').length/iF.length):0.65;
+                    const totalInvArea=invArea>0?invArea:(bookedPct>0?pdrnTotalArea/bookedPct:pdrnTotalArea*1.5);
                     let cumArea=0;
                     const sortedMonths=Object.values(areaByMonth).sort((a,b)=>a.month.localeCompare(b.month));
                     const rawData=sortedMonths.map(d=>{
