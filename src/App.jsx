@@ -595,7 +595,11 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
     const totalTCVCr     = +(pA.reduce((s,r)=>s+(r.tcv||0),0)/1e7).toFixed(1);
     const cancelledBSPCr = +(pC.reduce((s,r)=>s+(r.bsp||0),0)/1e7).toFixed(1);
     const cancelledAreaSqft = pC.reduce((s,r)=>s+(r.superArea||0),0);
-    const avgRatePerSqft = bookedAreaSqft>0?Math.round(pA.reduce((s,r)=>s+(r.bsp||0),0)/bookedAreaSqft):0;
+    // Compute avg rate from unit-level rates (same source as min/max in KPI card)
+    const pAWithArea=pA.filter(r=>r.bsp>0&&r.superArea>0);
+    const avgRatePerSqft = pAWithArea.length>0
+      ? Math.round(pAWithArea.reduce((s,r)=>s+(r.bsp/r.superArea),0)/pAWithArea.length)
+      : (bookedAreaSqft>0?Math.round(pA.reduce((s,r)=>s+(r.bsp||0),0)/bookedAreaSqft):0);
     // Fall back to static JSON values for area if pdrn has no superArea
     const base = raw?.kpiExtra||{};
     return {
