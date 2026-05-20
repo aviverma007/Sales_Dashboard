@@ -444,6 +444,10 @@ function AppInner() {
   const [bOff,setBOff]=useState(9999);
   const [sMode,setSMode]=useState('monthly');
   const [sOff,setSOff]=useState(9999);
+  const [uMode,setUMode]=useState('monthly');
+  const [tsvMode,setTsvMode]=useState('monthly');
+  const [rMode,setRMode]=useState('monthly');
+  const [suMode,setSuMode]=useState('monthly');
   const [cancelTab,setCancelTab]=useState('overview');
   const [showTowerType,setShowTowerType]=useState(false);
   // Sales & Pricing Trend chart offsets (must be at component level — hooks rules)
@@ -1044,6 +1048,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                         <p style={{fontSize:16,fontWeight:900,color:T.navy,margin:0,letterSpacing:-0.5}}>₹{overallRate.toLocaleString('en-IN')}<span style={{fontSize:8,fontWeight:600,color:T.textM}}> /sqft</span></p>
                       </div>
                       )}
+                      {(()=>{const rates=projRates.map(d=>d.avgPricePerSqft);const minR=Math.min(...rates);const maxR=Math.max(...rates);const S2={'SMARTWORLD THE EDITION':'Edition','Smartworld Sky Arc':'Sky Arc','Trump Residences Gurgaon':'Trump','Smartworld Le Courtyard':'Le Courtyard','Smartworld Suites':'Suites'};const minP=projRates.find(d=>d.avgPricePerSqft===minR);const maxP=projRates.find(d=>d.avgPricePerSqft===maxR);return(<div style={{display:'flex',gap:6,marginBottom:6}}><div style={{flex:1,background:'rgba(0,151,167,0.07)',borderRadius:6,padding:'4px 8px',textAlign:'center'}}><p style={{fontSize:7,color:T.textM,margin:0,fontWeight:700}}>MIN</p><p style={{fontSize:10,fontWeight:900,color:T.teal,margin:0}}>₹{minR.toLocaleString('en-IN')}</p><p style={{fontSize:7,color:T.textL,margin:0}}>{S2[minP?.project]}</p></div><div style={{flex:1,background:'rgba(245,158,11,0.07)',borderRadius:6,padding:'4px 8px',textAlign:'center'}}><p style={{fontSize:7,color:T.textM,margin:0,fontWeight:700}}>MAX</p><p style={{fontSize:10,fontWeight:900,color:T.amber,margin:0}}>₹{maxR.toLocaleString('en-IN')}</p><p style={{fontSize:7,color:T.textL,margin:0}}>{S2[maxP?.project]}</p></div></div>);})()}
                       {projRates.map((d,i)=>{
                         const pct=Math.round((d.avgPricePerSqft/maxRate)*100);
                         const col=d.avgPricePerSqft>25000?T.amber:d.avgPricePerSqft>20000?T.tealD:T.teal;
@@ -1109,19 +1114,23 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                   <SH title="Units — Booked vs Target" sub="Achieved (teal) · Target (grey) · Lines connect both"/>
                   {(()=>{
                     const WIN=10;
-                    const data=monthlyWithTargets.map(d=>({
-                      label:d.label,isFuture:d.isFuture,isCurrent:d.label===TODAY_LABEL,
-                      achieved:d.isFuture?null:(d.bookedUnits||null),
-                      target:d.targetUnitsLine||null,
-                    }));
+                    const rawData=monthlyWithTargets.map(d=>({label:d.label,isFuture:d.isFuture,isCurrent:d.label===TODAY_LABEL,achieved:d.isFuture?null:(d.bookedUnits||null),target:d.targetUnitsLine||null,}));
+                    const data=uMode==='quarterly'?toQuarterly(rawData,'label').map(q=>({...q,isFuture:false,isCurrent:false})):rawData;
                     const cur=data.findIndex(d=>d.isCurrent);
                     const def=cur>=2?cur-2:Math.max(0,data.length-WIN);
                     const off=Math.min(Math.max(uOff<0?def:uOff,0),Math.max(0,data.length-WIN));
                     const sl=data.slice(off,off+WIN);
                     return(<>
-                      <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
-                        <button onClick={()=>setUOff(Math.max(0,off-1))} disabled={off===0} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:off===0?'default':'pointer',fontSize:13,color:off===0?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>‹</button>
+         display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
+                        <div style={{display:'flex',gap:3,background:'rgba(0,100,140,0.07)',borderRadius:20,padding:2}}>
+                          {[['monthly','Monthly'],['quarterly','Quarterly']].map(([k,l])=>(
+                            <button key={k} onClick={()=>{setUMode(k);setUOff(0);}} style={{padding:'3px 10px',borderRadius:18,border:'none',cursor:'pointer',fontSize:10,fontWeight:700,background:uMode===k?'#0097a7':'transparent',color:uMode===k?'#fff':'#546e7a',transition:'all 0.15s'}}>{l}</button>
+                          ))}
+                        </div>
+                        <button onClick={()=>setUOff(Math.max(0,off-1))} disabled={off===0} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:off===0?'default':'pointer',fontSize:13,color:off===0?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>&#8249;</button>
                         <div style={{flex:1,height:4,background:'rgba(0,151,167,0.1)',borderRadius:2,overflow:'hidden'}}><div style={{width:(WIN/Math.max(data.length,1)*100)+'%',marginLeft:(off/Math.max(data.length,1)*100)+'%',height:'100%',background:'#0097a7',borderRadius:2}}/></div>
+                        <button onClick={()=>setUOff(Math.min(data.length-WIN,off+1))} disabled={off>=data.length-WIN} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:off>=data.length-WIN?'default':'pointer',fontSize:13,color:off>=data.length-WIN?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>&#8250;</button>
+                      </div>
                         <button onClick={()=>setUOff(Math.min(data.length-WIN,off+1))} disabled={off>=data.length-WIN} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:off>=data.length-WIN?'default':'pointer',fontSize:13,color:off>=data.length-WIN?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>›</button>
                       </div>
                       <ResponsiveContainer width="100%" height={210}>
@@ -1151,17 +1160,15 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                   <SH title="TSV — Achieved vs Target" sub="Actual BSP (teal) · Target TSV (grey)"/>
                   {(()=>{
                     const WIN=10;
-                    const data=monthlyWithTargets.map(d=>({
-                      label:d.label,isFuture:d.isFuture,isCurrent:d.label===TODAY_LABEL,
-                      achieved:d.isFuture?null:(d.bspCr||null),
-                      target:d.targetTsvLine||null,
-                    }));
+                    const rawDataTsv=monthlyWithTargets.map(d=>({label:d.label,isFuture:d.isFuture,isCurrent:d.label===TODAY_LABEL,achieved:d.isFuture?null:(d.bspCr||null),target:d.targetTsvLine||null,}));
+                    const data=tsvMode==='quarterly'?toQuarterly(rawDataTsv,'label').map(q=>({...q,isFuture:false,isCurrent:false})):rawDataTsv;
                     const cur=data.findIndex(d=>d.isCurrent);
                     const def=cur>=2?cur-2:Math.max(0,data.length-WIN);
                     const off=Math.min(Math.max(tsvOff<0?def:tsvOff,0),Math.max(0,data.length-WIN));
                     const sl=data.slice(off,off+WIN);
                     return(<>
                       <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
+                        <div style={{display:'flex',gap:3,background:'rgba(0,100,140,0.07)',borderRadius:20,padding:2}}>{[['monthly','Monthly'],['quarterly','Quarterly']].map(([k,l])=>(<button key={k} onClick={()=>{setTsvMode(k);setTsvOff(0);}} style={{padding:'3px 10px',borderRadius:18,border:'none',cursor:'pointer',fontSize:10,fontWeight:700,background:tsvMode===k?'#0097a7':'transparent',color:tsvMode===k?'#fff':'#546e7a',transition:'all 0.15s'}}>{l}</button>))}</div>
                         <button onClick={()=>setTsvOff(Math.max(0,off-1))} disabled={off===0} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:off===0?'default':'pointer',fontSize:13,color:off===0?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>‹</button>
                         <div style={{flex:1,height:4,background:'rgba(0,151,167,0.1)',borderRadius:2,overflow:'hidden'}}><div style={{width:(WIN/Math.max(data.length,1)*100)+'%',marginLeft:(off/Math.max(data.length,1)*100)+'%',height:'100%',background:'#0097a7',borderRadius:2}}/></div>
                         <button onClick={()=>setTsvOff(Math.min(data.length-WIN,off+1))} disabled={off>=data.length-WIN} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:off>=data.length-WIN?'default':'pointer',fontSize:13,color:off>=data.length-WIN?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>›</button>
@@ -1193,17 +1200,15 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                   <SH title="Avg Rate — Achieved vs Target" sub="Actual ₹/sqft (teal) · Target rate (grey)"/>
                   {(()=>{
                     const WIN=10;
-                    const data=monthlyWithTargets.map(d=>({
-                      label:d.label,isFuture:d.isFuture,isCurrent:d.label===TODAY_LABEL,
-                      achieved:d.isFuture?null:(d.actualRate||null),
-                      target:d.targetRateLine||null,
-                    }));
+                    const rawDataR=monthlyWithTargets.map(d=>({label:d.label,isFuture:d.isFuture,isCurrent:d.label===TODAY_LABEL,achieved:d.isFuture?null:(d.actualRate||null),target:d.targetRateLine||null,}));
+                    const data=rMode==='quarterly'?toQuarterly(rawDataR,'label').map(q=>({...q,isFuture:false,isCurrent:false})):rawDataR;
                     const cur=data.findIndex(d=>d.isCurrent);
                     const def=cur>=2?cur-2:Math.max(0,data.length-WIN);
                     const off=Math.min(Math.max(rOff<0?def:rOff,0),Math.max(0,data.length-WIN));
                     const sl=data.slice(off,off+WIN);
                     return(<>
                       <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
+                        <div style={{display:'flex',gap:3,background:'rgba(0,100,140,0.07)',borderRadius:20,padding:2}}>{[['monthly','Monthly'],['quarterly','Quarterly']].map(([k,l])=>(<button key={k} onClick={()=>{setRMode(k);setROff(0);}} style={{padding:'3px 10px',borderRadius:18,border:'none',cursor:'pointer',fontSize:10,fontWeight:700,background:rMode===k?'#0097a7':'transparent',color:rMode===k?'#fff':'#546e7a',transition:'all 0.15s'}}>{l}</button>))}</div>
                         <button onClick={()=>setROff(Math.max(0,off-1))} disabled={off===0} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:off===0?'default':'pointer',fontSize:13,color:off===0?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>‹</button>
                         <div style={{flex:1,height:4,background:'rgba(0,151,167,0.1)',borderRadius:2,overflow:'hidden'}}><div style={{width:(WIN/Math.max(data.length,1)*100)+'%',marginLeft:(off/Math.max(data.length,1)*100)+'%',height:'100%',background:'#0097a7',borderRadius:2}}/></div>
                         <button onClick={()=>setROff(Math.min(data.length-WIN,off+1))} disabled={off>=data.length-WIN} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:off>=data.length-WIN?'default':'pointer',fontSize:13,color:off>=data.length-WIN?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>›</button>
@@ -1258,6 +1263,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const sl=data.slice(off,off+WIN);
                     return(<>
                       <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
+                        <div style={{display:'flex',gap:3,background:'rgba(0,100,140,0.07)',borderRadius:20,padding:2}}>{[['monthly','Monthly'],['quarterly','Quarterly']].map(([k,l])=>(<button key={k} onClick={()=>{setSuMode(k);setSuOff(0);}} style={{padding:'3px 10px',borderRadius:18,border:'none',cursor:'pointer',fontSize:10,fontWeight:700,background:suMode===k?'#0097a7':'transparent',color:suMode===k?'#fff':'#546e7a',transition:'all 0.15s'}}>{l}</button>))}</div>
                         <button onClick={()=>setSuOff(Math.max(0,off-1))} disabled={off===0} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:off===0?'default':'pointer',fontSize:13,color:off===0?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>‹</button>
                         <div style={{flex:1,height:4,background:'rgba(0,151,167,0.1)',borderRadius:2,overflow:'hidden'}}><div style={{width:(WIN/Math.max(data.length,1)*100)+'%',marginLeft:(off/Math.max(data.length,1)*100)+'%',height:'100%',background:'#0097a7',borderRadius:2}}/></div>
                         <button onClick={()=>setSuOff(Math.min(data.length-WIN,off+1))} disabled={off>=data.length-WIN} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:off>=data.length-WIN?'default':'pointer',fontSize:13,color:off>=data.length-WIN?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>›</button>
@@ -1493,7 +1499,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const trendData=[{ts:pts[0].ts,trend:Math.round(intercept)},{ts:pts[n-1].ts,trend:Math.round(intercept+slope*(n-1))}];
                     // Get unique towers for legend + colour map
                     const towerKeys=[...new Set(pts.map(p=>p.tower))].sort();
-                    const PALETTE=['#0077b6','#0097a7','#1a3a5c','#4a9eb5','#7c3aed','#f59e0b','#e11d48','#16a34a'];
+                    const PALETTE=['#0077b6','#00bcd4','#4dd0e1','#26c6da','#0288d1','#0097a7','#006064','#00838f'];
                     const TOWER_COLOR=Object.fromEntries(towerKeys.map((t,i)=>[t,PALETTE[i%PALETTE.length]]));
                     const fmt=ts=>{const d=new Date(ts);return d.toLocaleDateString('en-IN',{month:'short',year:'2-digit'});};
                     // Window: show 90-day chunks with left/right scroll
@@ -1515,7 +1521,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.06)"/>
                                 <XAxis dataKey="ts" type="number" domain={[pts[0].ts,pts[n-1].ts]} scale="time"
                                   tickFormatter={fmt} tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false}
-                                  angle={-40} textAnchor="end" height={52} tickCount={TICK_COUNT} interval="preserveStartEnd"/>
+                                  angle={-35} textAnchor="end" height={44} ticks={Array.from({length:8},(_,i)=>Math.round(pts[0].ts+i*(pts[n-1].ts-pts[0].ts)/7))}/>
                                 <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={48}
                                   tickFormatter={v=>v.toLocaleString('en-IN')} domain={['auto','auto']}/>
                                 <Tooltip content={({active,payload})=>{
@@ -1523,7 +1529,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                                   const d=payload[0]?.payload;
                                   if(!d?.rate)return null;
                                   return(<div style={{background:'#fff',border:'1px solid #e5e7eb',borderRadius:8,padding:'8px 12px',fontSize:10,boxShadow:'0 2px 8px rgba(0,0,0,0.1)'}}>
-                                    <p style={{margin:0,fontWeight:700,color:T.navy,fontSize:11}}>{d.name}</p>
+                                    
                                     <p style={{margin:'3px 0',color:T.tealD,fontWeight:800}}>₹{d.rate.toLocaleString('en-IN')}/sqft</p>
                                     <p style={{margin:0,color:T.textM}}>{d.date} · {d.tower}</p>
                                   </div>);
@@ -1545,6 +1551,62 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                 </GC>
 
               </div>{/* end tower & type chart grid */}
+
+              {/* Tower-wise Booking Status table */}
+              <GC style={{padding:16,marginTop:4,display:showTowerType?'block':'none',animation:showTowerType?'flipIn 0.8s cubic-bezier(0.4,0,0.2,1) forwards':'none'}}>
+                <SH title="Tower-wise Booking Status" sub="Booked · Cancelled · Booked Area (sq ft) · Avg Price/sq ft"/>
+                {(()=>{
+                  const [showAllT,setShowAllT]=React.useState(false);
+                  const INIT=10;
+                  const SHORT={'SMARTWORLD THE EDITION':'THE EDITION','Smartworld Sky Arc':'Sky Arc','Trump Residences Gurgaon':'Residences Gurgaon','Smartworld Le Courtyard':'Le Courtyard','Smartworld Suites':'Suites'};
+                  const tMap={};
+                  (raw?.pdrn||[]).forEach(r=>{
+                    const key=r.project+'||'+r.tower;
+                    if(!r.tower)return;
+                    if(!tMap[key])tMap[key]={project:r.project,tower:r.tower,booked:0,cancelled:0,bookedBsp:0,bookedArea:0,cancelledArea:0};
+                    if(r.status==='ACTIVE'){tMap[key].booked++;tMap[key].bookedBsp+=(r.bsp||0);tMap[key].bookedArea+=(r.superArea||0);}
+                    else if(r.status==='CANCELLED'){tMap[key].cancelled++;tMap[key].cancelledArea+=(r.superArea||0);}
+                  });
+                  const sp=filters.project?filters.project.split('||').filter(Boolean):[];
+                  const rows=Object.values(tMap).filter(r=>sp.length===0||sp.includes(r.project)).map(r=>({...r,successPct:r.booked+r.cancelled>0?Math.round(r.booked/(r.booked+r.cancelled)*100):0,avgRate:r.bookedArea>0?Math.round(r.bookedBsp/r.bookedArea):0,totalSalesCr:+(r.bookedBsp/1e7).toFixed(1)})).sort((a,b)=>b.booked-a.booked);
+                  const visible=showAllT?rows:rows.slice(0,INIT);
+                  const TH={padding:'8px 10px',fontSize:9,fontWeight:800,color:T.textM,textTransform:'uppercase',letterSpacing:0.5,borderBottom:'1px solid rgba(0,100,140,0.12)',background:'rgba(0,100,140,0.03)',whiteSpace:'nowrap'};
+                  const TD={padding:'7px 10px',fontSize:11,borderBottom:'1px solid rgba(0,100,140,0.06)',verticalAlign:'middle'};
+                  return(<>
+                    <div style={{overflowX:'auto'}}>
+                      <table style={{width:'100%',borderCollapse:'collapse'}}>
+                        <thead><tr>
+                          <th style={{...TH,textAlign:'left'}}>Project</th>
+                          <th style={{...TH,textAlign:'left'}}>Tower</th>
+                          <th style={{...TH,textAlign:'right'}}>Booked</th>
+                          <th style={{...TH,textAlign:'right'}}>Cancelled</th>
+                          <th style={{...TH,textAlign:'center',minWidth:110}}>Success %</th>
+                          <th style={{...TH,textAlign:'right'}}>Booked Area</th>
+                          <th style={{...TH,textAlign:'right'}}>Cancelled Area</th>
+                          <th style={{...TH,textAlign:'right'}}>Total Sales</th>
+                          <th style={{...TH,textAlign:'right'}}>Avg ₹/sq ft</th>
+                        </tr></thead>
+                        <tbody>
+                          {visible.map((r,i)=>(
+                            <tr key={i} style={{background:i%2===0?'transparent':'rgba(0,100,140,0.02)'}}>
+                              <td style={{...TD,color:T.textM,fontWeight:600}}>{SHORT[r.project]||r.project}</td>
+                              <td style={{...TD,fontWeight:800,color:T.navy}}>{r.tower}</td>
+                              <td style={{...TD,textAlign:'right'}}><span style={{display:'inline-flex',alignItems:'center',gap:4,justifyContent:'flex-end'}}><span style={{width:8,height:8,borderRadius:'50%',background:T.teal,flexShrink:0}}/>{r.booked}</span></td>
+                              <td style={{...TD,textAlign:'right'}}><span style={{display:'inline-flex',alignItems:'center',gap:4,justifyContent:'flex-end'}}><span style={{width:8,height:8,borderRadius:'50%',background:'#ef4444',flexShrink:0}}/><span style={{color:'#ef4444',fontWeight:700}}>{r.cancelled}</span></span></td>
+                              <td style={{...TD}}><div style={{display:'flex',alignItems:'center',gap:6}}><div style={{flex:1,height:6,background:'rgba(0,100,140,0.1)',borderRadius:3,overflow:'hidden'}}><div style={{width:r.successPct+'%',height:'100%',background:r.successPct>=90?'#22c55e':r.successPct>=80?T.teal:'#f59e0b',borderRadius:3}}/></div><span style={{fontSize:10,fontWeight:800,color:r.successPct>=90?'#16a34a':r.successPct>=80?T.tealD:'#b45309',minWidth:28}}>{r.successPct}%</span></div></td>
+                              <td style={{...TD,textAlign:'right',color:T.textM}}>{r.bookedArea.toLocaleString('en-IN')} sq ft</td>
+                              <td style={{...TD,textAlign:'right',color:T.textM}}>{r.cancelledArea.toLocaleString('en-IN')} sq ft</td>
+                              <td style={{...TD,textAlign:'right',fontWeight:800,color:T.tealD}}>₹{r.totalSalesCr} Cr</td>
+                              <td style={{...TD,textAlign:'right'}}><span style={{background:'rgba(0,151,167,0.08)',borderRadius:6,padding:'2px 8px',fontWeight:800,color:T.navy,fontSize:10}}>₹{r.avgRate.toLocaleString('en-IN')}/sq ft</span></td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    {rows.length>INIT&&<div style={{textAlign:'center',marginTop:12}}><button onClick={()=>setShowAllT(v=>!v)} style={{padding:'6px 20px',borderRadius:20,border:'1px solid '+T.teal,background:'rgba(0,151,167,0.06)',color:T.tealD,fontSize:10,fontWeight:700,cursor:'pointer'}}>{showAllT?'▲ Show less':'▼ Show '+String(rows.length-INIT)+' more towers'}</button></div>}
+                  </>);
+                })()}
+              </GC>
 
               {/* ── SECTION: CP Wise Sales — always visible ── */}
               <div style={{display:'flex',alignItems:'center',gap:10,margin:'16px 0 10px',animation:'flipIn 0.7s cubic-bezier(0.4,0,0.2,1) forwards'}}>
