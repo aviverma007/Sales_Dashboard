@@ -1546,7 +1546,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                               <Tooltip content={<CTip fmt={(v,n)=>n==='% Sold'?v+'%':v+' units'}/>}/>
                               <Legend wrapperStyle={{fontSize:9,fontWeight:700}} iconSize={8}/>
                               <Bar dataKey="pct" name="% Sold" radius={[0,4,4,0]}>
-                                {twData.map((d,i)=><Cell key={i} fill={d.pct>=70?T.tealD:d.pct>=50?T.teal:'#4a9eb5'}/>)}
+                                {twData.map((d,i)=><Cell key={i} fill={T.tealD}/>)}
                                 <LabelList dataKey="pct" position="insideLeft" formatter={v=>v+'%'} style={{fill:'#fff',fontSize:10,fontWeight:800}}/>
                                 <LabelList dataKey="pct" position="right" formatter={v=>v+'%'} style={{fill:T.textM,fontSize:10,fontWeight:800}}/>
                               </Bar>
