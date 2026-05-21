@@ -2072,6 +2072,8 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
               )}
             </GC>
 
+{/* AREA & PRICING OVERVIEW — hidden, uncomment to restore */}
+{false&&(
             {/* ══ AREA SUMMARY CARDS ══ */}
             <div>
               <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:10}}>
@@ -2144,7 +2146,8 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                   );
                 })}
               </div>
-            </div>
+
+)}            </div>
 
           </div>
         )}
