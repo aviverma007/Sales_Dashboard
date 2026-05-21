@@ -837,8 +837,8 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
         <div onClick={e=>e.stopPropagation()} style={{maxWidth:1440,margin:'0 auto',padding:'4px 24px 8px',display:'flex',alignItems:'flex-end',gap:10,flexWrap:'wrap'}}>
           <FSel label="Project"    options={availProj}                           value={filters.project}  onChange={v=>sf('project',v)}   multi={true} openId="project"    activeOpen={activeFilter} setActiveOpen={setActiveFilter}/>
           <FSel label="Fin. Year"  options={fo.financialYears||[]}               value={filters.fy}       onChange={v=>sf('fy',v)}         multi={true} openId="fy"         activeOpen={activeFilter} setActiveOpen={setActiveFilter}/>
-          <FSel label="Month"        options={MONTHS_LIST}                              value={filters.month}    onChange={v=>sf('month',v)}      multi={true} openId="month"      activeOpen={activeFilter} setActiveOpen={setActiveFilter}/>
           <FSel label="Quarter"       options={FY_QUARTERS}                              value={filters.quarter}  onChange={v=>sf('quarter',v)}    multi={true} openId="quarter"    activeOpen={activeFilter} setActiveOpen={setActiveFilter}/>
+          <FSel label="Month"        options={MONTHS_LIST}                              value={filters.month}    onChange={v=>sf('month',v)}      multi={true} openId="month"      activeOpen={activeFilter} setActiveOpen={setActiveFilter}/>
           <FSel label="CP"         options={availBrokers}                         value={filters.broker}   onChange={v=>sf('broker',v)}     multi={true} openId="cp"         activeOpen={activeFilter} setActiveOpen={setActiveFilter}/>
           <FSel label="Typology"   options={availTypologies}                      value={filters.typology} onChange={v=>sf('typology',v)}   multi={true} openId="typology"   activeOpen={activeFilter} setActiveOpen={setActiveFilter}/>
           {Object.values(filters).some(Boolean)&&(
