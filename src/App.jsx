@@ -2074,7 +2074,6 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
 
 {/* AREA & PRICING OVERVIEW — hidden, uncomment to restore */}
 {false&&(
-            {/* ══ AREA SUMMARY CARDS ══ */}
             <div>
               <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:10}}>
                 <div style={{background:'linear-gradient(135deg,#006978,#00bcd4)',borderRadius:10,padding:'5px 18px',display:'flex',alignItems:'center',gap:8,boxShadow:'0 2px 10px rgba(0,151,167,0.25)'}}>
