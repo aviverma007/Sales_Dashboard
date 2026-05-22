@@ -449,6 +449,15 @@ function AppInner() {
   const [suMode,setSuMode]=useState('monthly');
   const [cancelTab,setCancelTab]=useState('overview');
   const [showTowerType,setShowTowerType]=useState(false);
+  // Chart month range slider (independent of top filters, only affects the 4 Sales & Pricing Trend charts)
+  const ALL_CHART_MONTHS=useMemo(()=>{
+    if(!raw?.pdrn) return [];
+    const ms=new Set(raw.pdrn.map(r=>r.bookingMonth).filter(Boolean));
+    return Array.from(ms).sort();
+  },[raw]);
+  const [chartRangeIdx,setChartRangeIdx]=useState([0,29]);
+  const chartMonthFrom=ALL_CHART_MONTHS[chartRangeIdx[0]]||'';
+  const chartMonthTo=ALL_CHART_MONTHS[chartRangeIdx[1]]||'';
   // Sales & Pricing Trend chart offsets (must be at component level — hooks rules)
   const TODAY_LABEL=(()=>{const d=new Date();return d.toLocaleString('en-US',{month:'short'}).slice(0,3)+"'"+String(d.getFullYear()).slice(2);})();
   // Reset chart offsets to -1 (auto-center) whenever filters change
@@ -687,7 +696,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
 
     // Build actual data maps from filtered pA
     const unitMap={},areaMap={},bspMap={};
-    pA.filter(r=>r.bookingMonth&&(!selectedFYs.length||inFY(r.bookingMonth))&&(!filters.quarter&&!filters.month||matchMo(r.bookingMonth))).forEach(r=>{
+    pA.filter(r=>r.bookingMonth&&(!selectedFYs.length||inFY(r.bookingMonth))&&(!filters.quarter&&!filters.month||matchMo(r.bookingMonth))&&(!chartMonthFrom||r.bookingMonth>=chartMonthFrom)&&(!chartMonthTo||r.bookingMonth<=chartMonthTo)).forEach(r=>{
       const lbl=fmtML(r.bookingMonth);
       unitMap[lbl]=(unitMap[lbl]||0)+1;
       areaMap[lbl]=(areaMap[lbl]||0)+(r.superArea||0);
@@ -779,6 +788,9 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
         @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
         @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
         @keyframes flipOut{0%{opacity:1;transform:rotateY(0deg) scale(1)}40%{opacity:0;transform:rotateY(90deg) scale(0.95)}100%{opacity:0;transform:rotateY(90deg) scale(0.95)}}
+        input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:#0097a7;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,151,167,0.4);cursor:pointer;margin-top:-5px;}
+        input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:#0097a7;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,151,167,0.4);cursor:pointer;}
+        input[type=range]::-webkit-slider-runnable-track{height:4px;background:transparent;}
         @keyframes flipIn{0%{opacity:0;transform:rotateY(-90deg) scale(0.95)}60%{opacity:1;transform:rotateY(0deg) scale(1)}100%{opacity:1;transform:rotateY(0deg) scale(1)}}
         .flip-container{perspective:1200px;transform-style:preserve-3d;}
         .kc{transition:transform 0.2s ease,box-shadow 0.2s ease}.kc:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(0,80,120,0.18)!important}
@@ -1172,6 +1184,35 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                   <span style={{fontSize:11,fontWeight:900,color:'#fff',textTransform:'uppercase',letterSpacing:1}}>Sales & Pricing Trend</span>
                 </div>
                 <div style={{flex:1,height:1,background:'rgba(245,158,11,0.15)',borderRadius:1}}/>
+                {/* Month Range Slider */}
+                {ALL_CHART_MONTHS.length>1&&(
+                  <div style={{display:'flex',alignItems:'center',gap:8,background:'rgba(255,255,255,0.9)',borderRadius:12,padding:'5px 12px',boxShadow:'0 1px 4px rgba(0,0,0,0.1)',minWidth:280}}>
+                    <span style={{fontSize:9,fontWeight:700,color:T.textM,whiteSpace:'nowrap'}}>
+                      {fmtML(chartMonthFrom)} – {fmtML(chartMonthTo)}
+                    </span>
+                    <div style={{flex:1,position:'relative',height:20,display:'flex',alignItems:'center'}}>
+                      {/* Track */}
+                      <div style={{position:'absolute',left:0,right:0,height:4,background:'rgba(0,100,140,0.12)',borderRadius:2}}/>
+                      {/* Filled range */}
+                      <div style={{
+                        position:'absolute',
+                        left:(chartRangeIdx[0]/(ALL_CHART_MONTHS.length-1)*100)+'%',
+                        right:(100-chartRangeIdx[1]/(ALL_CHART_MONTHS.length-1)*100)+'%',
+                        height:4,background:T.teal,borderRadius:2,pointerEvents:'none'
+                      }}/>
+                      {/* Left handle */}
+                      <input type="range" min={0} max={ALL_CHART_MONTHS.length-1} value={chartRangeIdx[0]}
+                        onChange={e=>{const v=Math.min(Number(e.target.value),chartRangeIdx[1]-1);setChartRangeIdx([v,chartRangeIdx[1]]);setUOff(-1);setTsvOff(-1);setROff(-1);setSuOff(-1);}}
+                        style={{position:'absolute',left:0,right:0,width:'100%',appearance:'none',background:'transparent',height:4,pointerEvents:'all',cursor:'pointer',zIndex:2}}
+                      />
+                      {/* Right handle */}
+                      <input type="range" min={0} max={ALL_CHART_MONTHS.length-1} value={chartRangeIdx[1]}
+                        onChange={e=>{const v=Math.max(Number(e.target.value),chartRangeIdx[0]+1);setChartRangeIdx([chartRangeIdx[0],v]);setUOff(-1);setTsvOff(-1);setROff(-1);setSuOff(-1);}}
+                        style={{position:'absolute',left:0,right:0,width:'100%',appearance:'none',background:'transparent',height:4,pointerEvents:'all',cursor:'pointer',zIndex:3}}
+                      />
+                    </div>
+                  </div>
+                )}
                 <div style={{position:'relative',display:'inline-flex',flexDirection:'column',alignItems:'center'}}>
                   {/* Pulsing "click here" callout — shown only when Sales Trend is active */}
                   {!showTowerType&&(
@@ -1310,7 +1351,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const WIN=10;
                     // Monthly booked area from pA (same as other charts, responds to all filters)
                     const areaByMonth={};
-                    pA.forEach(r=>{
+                    pA.filter(r=>(!chartMonthFrom||r.bookingMonth>=chartMonthFrom)&&(!chartMonthTo||r.bookingMonth<=chartMonthTo)).forEach(r=>{
                       const m=r.bookingMonth;
                       if(!m)return;
                       if(!areaByMonth[m])areaByMonth[m]={month:m,label:fmtML(m),bookedSqft:0,units:0};
