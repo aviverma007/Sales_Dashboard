@@ -245,7 +245,7 @@ const MonthRangeSlider = ({months, rangeIdx, setRangeIdx, onReset}) => {
           const showLbl = i === 0 || i === N-1 || (N <= 12 ? true : N <= 24 ? i%2===0 : i%4===0);
           return (
             <div key={m} style={{position:'absolute',left:pct+'%',top:'50%',transform:'translate(-50%,-50%)',pointerEvents:'none',display:'flex',flexDirection:'column',alignItems:'center'}}>
-              <div style={{width:inRange?5:3,height:inRange?5:3,borderRadius:'50%',background:inRange?T.teal:'rgba(0,100,140,0.18)'}}/>
+              <div style={{width:inRange?6:4,height:inRange?6:4,borderRadius:'50%',background:inRange?'#fff':'rgba(255,255,255,0.45)',boxShadow:inRange?'0 0 3px rgba(255,255,255,0.8)':'none'}}/>
               {showLbl && <span style={{fontSize:7,color:T.textL,fontWeight:500,whiteSpace:'nowrap',position:'absolute',top:14}}>{fmtML(m)}</span>}
             </div>
           );
