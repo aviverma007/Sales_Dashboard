@@ -202,9 +202,8 @@ const GC = ({children,style={},cls='',dark=false}) => {
 
 // ─── SECTION HEADER ──────────────────────────────────────────────────────────
 const SH = ({title,sub,light=false,compact=false}) => (
-  <div style={{marginBottom:compact?8:12}}>
+  <div style={{marginBottom:compact?6:10}}>
     <p style={{fontSize:compact?10:12,fontWeight:800,color:light?T.textW:T.tealD,letterSpacing:0.4,margin:0,textTransform:'uppercase',textShadow:'0 1px 2px rgba(255,255,255,0.6)'}}>{title}</p>
-    {sub&&<p style={{fontSize:10,color:light?'rgba(255,255,255,0.8)':T.textM,margin:'2px 0 0',fontWeight:600}}>{sub}</p>}
   </div>
 );
 
@@ -1477,31 +1476,38 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                       // Group by tower+project label
                       twData=filtered.map(r=>({tower:r.tower+(selProjs.length!==1?` (${(r.project||'').split(' ').pop()})` :''),pct:r.pctSold||Math.round(r.booked/(r.total||r.booked+r.cancelled||1)*100),booked:r.booked,total:r.total||r.booked+r.cancelled,project:r.project}));
                     }
-                    twData=twData.sort((a,b)=>b.tower.localeCompare(a.tower));
-                    const rowH=30, yW=selProjs.length===1?36:100;
-                    const innerH=twData.length*rowH+40;
-                    const FIXED_H=220;
-                    const needsVScroll=innerH>FIXED_H;
+                    twData=twData.map(d=>({...d,remaining:100-d.pct})).sort((a,b)=>b.tower.localeCompare(a.tower));
+                    const barW=36, minW=Math.max(twData.length*(barW+20)+80,300);
+                    const needsHScroll=twData.length>8;
                     return(
-                      <div style={{position:'relative'}}>
-                        <div style={{overflowY:needsVScroll?'auto':'visible',overflowX:'hidden',maxHeight:FIXED_H,borderRadius:6}}>
-                          <ResponsiveContainer width="100%" height={Math.max(FIXED_H,innerH)}>
-                            <BarChart data={twData} layout="vertical" margin={{top:4,right:55,bottom:16,left:8}} barSize={rowH-8}>
-                              <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.08)" horizontal={false}/>
-                              <XAxis type="number" domain={[0,100]} tickFormatter={v=>v+'%'} tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false}/>
-                              <YAxis type="category" dataKey="tower" tick={{fill:T.text,fontSize:9,fontWeight:700}} axisLine={false} tickLine={false} width={yW}/>
-                              <Tooltip content={<CTip fmt={(v,n)=>n==='% Sold'?v+'%':v+' units'}/>}/>
-                              <Legend wrapperStyle={{fontSize:9,fontWeight:700}} iconSize={8}/>
-                              <Bar dataKey="pct" name="% Sold" radius={[0,4,4,0]}>
-                                {twData.map((d,i)=><Cell key={i} fill={T.tealD}/>)}
-                                <LabelList dataKey="pct" position="insideLeft" formatter={v=>v+'%'} style={{fill:'#fff',fontSize:10,fontWeight:800}}/>
-                                <LabelList dataKey="pct" position="right" formatter={v=>v+'%'} style={{fill:T.textM,fontSize:10,fontWeight:800}}/>
-                              </Bar>
-                            </BarChart>
-                          </ResponsiveContainer>
+                      <>
+                        <div style={{overflowX:needsHScroll?'auto':'visible',overflowY:'hidden'}}>
+                          <div style={{width:needsHScroll?minW+'px':'100%',minWidth:'100%'}}>
+                            <ResponsiveContainer width="100%" height={240}>
+                              <BarChart data={twData} margin={{top:24,right:8,bottom:24,left:0}} barSize={barW} barCategoryGap="25%">
+                                <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.08)" vertical={false}/>
+                                <XAxis dataKey="tower" tick={{fill:T.text,fontSize:9,fontWeight:700}} axisLine={false} tickLine={false} angle={-30} textAnchor="end" height={36}/>
+                                <YAxis domain={[0,100]} tickFormatter={v=>v+'%'} tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={32}/>
+                                <Tooltip content={({active,payload,label})=>{
+                                  if(!active||!payload?.length)return null;
+                                  const d=twData.find(r=>r.tower===label);
+                                  return(<div style={{background:'#fff',border:'1px solid #e5e7eb',borderRadius:8,padding:'8px 12px',fontSize:10,boxShadow:'0 2px 8px rgba(0,0,0,0.1)'}}>
+                                    <p style={{margin:'0 0 3px',fontWeight:800,color:T.navy}}>{label}</p>
+                                    <p style={{margin:'0 0 2px',color:T.tealD,fontWeight:700}}>Sold: {d?.booked} / {d?.total} units ({d?.pct}%)</p>
+                                    <p style={{margin:0,color:'#9ca3af'}}>Unsold: {100-d?.pct}%</p>
+                                  </div>);
+                                }}/>
+                                <Legend wrapperStyle={{fontSize:9,fontWeight:700}} iconSize={8}/>
+                                <Bar dataKey="pct" name="% Sold" stackId="s" fill={T.tealD} radius={[0,0,0,0]}>
+                                  <LabelList dataKey="pct" position="insideTop" formatter={v=>v+'%'} style={{fill:'#fff',fontSize:9,fontWeight:800}}/>
+                                </Bar>
+                                <Bar dataKey="remaining" name="Unsold %" stackId="s" fill="#e2e8f0" fillOpacity={0.8} radius={[3,3,0,0]}/>
+                              </BarChart>
+                            </ResponsiveContainer>
+                          </div>
                         </div>
-                        {needsVScroll&&<div style={{textAlign:'center',fontSize:9,color:T.textL,marginTop:4,letterSpacing:0.3}}>↑↓ scroll to see all {twData.length} towers</div>}
-                      </div>
+                        {needsHScroll&&<div style={{textAlign:'center',fontSize:9,color:T.textL,marginTop:2}}>← scroll to see all towers →</div>}
+                      </>
                     );
                   })()}
                 </GC>
