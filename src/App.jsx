@@ -231,7 +231,6 @@ const MonthRangeSlider = ({months, rangeIdx, setRangeIdx, onReset}) => {
         <div style={{display:'flex',alignItems:'center',gap:8}}>
           <span style={{fontSize:9,fontWeight:700,color:T.textM,textTransform:'uppercase',letterSpacing:0.5}}>Chart Range</span>
           <span style={{background:T.tealD,color:'#fff',fontSize:10,fontWeight:800,borderRadius:10,padding:'2px 10px'}}>📅 {fromLabel} → {toLabel}</span>
-          <span style={{fontSize:9,color:T.textL,fontWeight:600}}>({rangeIdx[1]-rangeIdx[0]+1} of {N} months)</span>
         </div>
         <button onClick={onReset} style={{fontSize:9,color:T.tealD,fontWeight:700,background:'rgba(0,151,167,0.08)',border:'1px solid rgba(0,151,167,0.2)',borderRadius:8,cursor:'pointer',padding:'3px 10px'}}>↺ Reset</button>
       </div>
@@ -1382,7 +1381,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                       const catchUp=Math.round(curQGap*weights[i]);
                       projMap[lbl]=base+catchUp;
                     });
-                    const rawData=monthlyWithTargets.map(d=>({label:d.label,isFuture:d.isFuture,isCurrent:d.label===TODAY_LABEL,achieved:d.isFuture?null:(d.bookedUnits||null),target:d.targetUnitsLine||null,projection:nextQMonths.includes(d.label)?projMap[d.label]:null,}));
+                    const rawData=monthlyWithTargets.map(d=>({label:d.label,isFuture:d.isFuture,isCurrent:d.label===TODAY_LABEL,achieved:d.isFuture?null:(d.bookedUnits||0),target:d.targetUnitsLine||null,projection:nextQMonths.includes(d.label)?projMap[d.label]:null,}));
                     const data=uMode==='quarterly'?toQuarterly(rawData,'label').map(q=>({...q,isFuture:false,isCurrent:false})):rawData;
                     const cur=data.findIndex(d=>d.isCurrent);
                     const def=cur>=2?cur-2:Math.max(0,data.length-WIN);
@@ -1439,7 +1438,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const tsvGap=Math.max(0,cqTsvTgt-cqTsvAch);
                     const tsvW=[0.3,0.4,0.3];
                     const tsvProjMap={};nqm.forEach((lbl,i)=>{const base=monthlyWithTargets.find(d=>d.label===lbl)?.targetTsvLine||0;tsvProjMap[lbl]=+(base+tsvGap*tsvW[i]).toFixed(1);});
-                    const rawDataTsv=monthlyWithTargets.map(d=>({label:d.label,isFuture:d.isFuture,isCurrent:d.label===TODAY_LABEL,achieved:d.isFuture?null:(d.bspCr||null),target:d.targetTsvLine||null,projection:nqm.includes(d.label)?tsvProjMap[d.label]:null,}));
+                    const rawDataTsv=monthlyWithTargets.map(d=>({label:d.label,isFuture:d.isFuture,isCurrent:d.label===TODAY_LABEL,achieved:d.isFuture?null:(d.bspCr||0),target:d.targetTsvLine||null,projection:nqm.includes(d.label)?tsvProjMap[d.label]:null,}));
                     const data=tsvMode==='quarterly'?toQuarterly(rawDataTsv,'label').map(q=>({...q,isFuture:false,isCurrent:false})):rawDataTsv;
                     const cur=data.findIndex(d=>d.isCurrent);
                     const def=cur>=2?cur-2:Math.max(0,data.length-WIN);
