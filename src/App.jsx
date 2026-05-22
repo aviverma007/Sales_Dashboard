@@ -1617,7 +1617,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                       const base=monthlyWithTargets.find(d=>d.label===lbl)?.targetRateLine||avgRecentRate;
                       rateProjMap[lbl]=Math.round(Math.max(base,avgRecentRate*(1+0.005*(i+1))));
                     });
-                    const rawDataR=monthlyWithTargets.map(d=>({label:d.label,isFuture:d.isFuture,isCurrent:d.label===TODAY_LABEL,achieved:d.isFuture?null:(d.actualRate||null),target:d.targetRateLine||null,projection:nqmR.includes(d.label)?rateProjMap[d.label]:null,}));
+                    const rawDataR=monthlyWithTargets.map(d=>({label:d.label,isFuture:d.isFuture,isCurrent:d.label===TODAY_LABEL,achieved:d.isFuture?null:(d.actualRate||0),target:d.targetRateLine||null,projection:nqmR.includes(d.label)?rateProjMap[d.label]:null,}));
                     const data=rMode==='quarterly'?toQuarterly(rawDataR,'label').map(q=>({...q,isFuture:false,isCurrent:false})):rawDataR;
                     const cur=data.findIndex(d=>d.isCurrent);
                     const def=cur>=2?cur-2:Math.max(0,data.length-WIN);
@@ -1638,16 +1638,16 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                           <Tooltip content={({active,payload,label})=>{if(!active||!payload?.length)return null;const d=sl.find(s=>s.label===label);return(<div style={{background:'rgba(255,255,255,0.97)',border:'1px solid rgba(0,151,167,0.3)',borderRadius:10,padding:'8px 12px',fontSize:10}}><p style={{color:T.tealD,fontWeight:800,margin:'0 0 4px'}}>{label}</p>{d?.achieved!=null&&<p style={{color:T.tealD,margin:0}}>Achieved: ₹{d.achieved?.toLocaleString('en-IN')}/sqft</p>}{d?.target!=null&&<p style={{color:'#607d8b',margin:0}}>Target: ₹{d.target?.toLocaleString('en-IN')}/sqft</p>}</div>);}}/>
                           <Legend wrapperStyle={{fontSize:9,fontWeight:700}} iconSize={8}/>
                           <Bar dataKey="target" name="Target Rate" fill="#b0bec5" fillOpacity={0.75} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={1000} animationEasing="ease-out">
-                            <LabelList dataKey="target" position="top" style={{fill:'#607d8b',fontSize:7,fontWeight:700}} formatter={v=>v?'₹'+Math.round(v/1000)+'K':''}/>
+                            <LabelList dataKey="target" position="insideTop" style={{fill:'#607d8b',fontSize:7,fontWeight:700}} formatter={v=>v?'₹'+Math.round(v/1000)+'K':''}/>
                           </Bar>
                           <Bar dataKey="achieved" name="Actual Rate" fill={T.teal} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={800} animationEasing="ease-out">
                             {sl.map((d,i)=><Cell key={i} fill={d.isCurrent?T.tealD:T.teal} fillOpacity={d.isCurrent?1:0.85}/>)}
-                            <LabelList dataKey="achieved" position="top" style={{fill:T.tealD,fontSize:7,fontWeight:700}} formatter={v=>v?'₹'+Math.round(v/1000)+'K':''}/>
+                            <LabelList dataKey="achieved" position="top" offset={4} style={{fill:T.tealD,fontSize:7,fontWeight:700}} formatter={v=>v?'₹'+Math.round(v/1000)+'K':''}/>
                           </Bar>
                           <Line type="monotone" dataKey="achieved" stroke={T.tealD} strokeWidth={2.5} dot={{r:4,fill:T.tealD,stroke:'#fff',strokeWidth:2}} activeDot={{r:5}} legendType="none" connectNulls={true}/>
                           <Line type="monotone" dataKey="target" stroke="#607d8b" strokeWidth={2} strokeDasharray="5 3" dot={{r:3,fill:'#607d8b',stroke:'#fff',strokeWidth:1.5}} activeDot={{r:4}} legendType="none" connectNulls={true}/>
                           <Line type="monotone" dataKey="projection" name="Projection" stroke="#22c55e" strokeWidth={2.5} strokeDasharray="6 2" dot={({cx,cy,payload})=>payload.projection!=null?<circle cx={cx} cy={cy} r={5} fill="#22c55e" stroke="#fff" strokeWidth={2}/>:<g/>} activeDot={{r:6,fill:'#22c55e'}} connectNulls={false}>
-                            <LabelList dataKey="projection" position="top" style={{fill:'#16a34a',fontSize:8,fontWeight:900}} formatter={v=>v!=null?'▲₹'+Math.round(v/1000)+'K':''}/>
+                            <LabelList dataKey="projection" position="insideTopRight" offset={10} style={{fill:'#16a34a',fontSize:8,fontWeight:900,background:'white'}} formatter={v=>v!=null?'▲'+Math.round(v/1000)+'K':''}/>
                           </Line>
                         </ComposedChart>
                       </ResponsiveContainer>
