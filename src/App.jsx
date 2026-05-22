@@ -1675,7 +1675,17 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                           <ResponsiveContainer width="100%" height={240}>
                             <ComposedChart data={data} margin={{top:18,right:40,bottom:52,left:0}} barSize={Math.max(18,Math.min(28,Math.floor(innerW/Math.max(data.length,1)-8)))}>
                               <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.08)" vertical={false}/>
-                              <XAxis dataKey="label" tick={{fill:T.textM,fontSize:8,fontWeight:600}} axisLine={false} tickLine={false} angle={-35} textAnchor="end" interval={0} height={56}/>
+                              <XAxis dataKey="label" axisLine={false} tickLine={false} interval={0} height={68}
+                                tick={({x,y,payload})=>{
+                                  const d=data.find(r=>r.label===payload.value);
+                                  return(
+                                    <g transform={`translate(${x},${y})`}>
+                                      <text transform="rotate(-35)" textAnchor="end" fontSize={8} fontWeight={600} fill={T.textM} dy={0}>{payload.value}</text>
+                                      {d?.avgAreaSqft>0&&<text transform="rotate(-35)" textAnchor="end" fontSize={7} fontWeight={500} fill={T.teal} dy={10}>{Math.round(d.avgAreaSqft).toLocaleString('en-IN')} sqft</text>}
+                                    </g>
+                                  );
+                                }}
+                              />
                               <YAxis yAxisId="left" tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={30}/>
                               <YAxis yAxisId="right" orientation="right" tickFormatter={v=>v+'%'} domain={[0,120]} tick={{fill:T.tealD,fontSize:9}} axisLine={false} tickLine={false} width={32}/>
                               <Tooltip content={({active,payload,label})=>{
