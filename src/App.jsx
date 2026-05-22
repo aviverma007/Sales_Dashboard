@@ -451,13 +451,19 @@ function AppInner() {
   const [showTowerType,setShowTowerType]=useState(false);
   // Chart month range slider (independent of top filters, only affects the 4 Sales & Pricing Trend charts)
   const ALL_CHART_MONTHS=useMemo(()=>{
-    if(!raw?.pdrn) return [];
-    const ms=new Set(raw.pdrn.map(r=>r.bookingMonth).filter(Boolean));
+    // Respond to project/FY/broker filters — only show months that have data
+    const src=pA.length>0?pA:(raw?.pdrn||[]);
+    const ms=new Set(src.map(r=>r.bookingMonth).filter(Boolean));
     return Array.from(ms).sort();
-  },[raw]);
+  },[pA,raw]);
+  // Auto-reset range when month list changes
   const [chartRangeIdx,setChartRangeIdx]=useState([0,29]);
-  const chartMonthFrom=ALL_CHART_MONTHS[chartRangeIdx[0]]||'';
-  const chartMonthTo=ALL_CHART_MONTHS[chartRangeIdx[1]]||'';
+  const clampedRange=useMemo(()=>{
+    const maxIdx=Math.max(0,ALL_CHART_MONTHS.length-1);
+    return [Math.min(chartRangeIdx[0],maxIdx), Math.min(chartRangeIdx[1],maxIdx)];
+  },[chartRangeIdx,ALL_CHART_MONTHS]);
+  const chartMonthFrom=ALL_CHART_MONTHS[clampedRange[0]]||'';
+  const chartMonthTo=ALL_CHART_MONTHS[clampedRange[1]]||'';
   // Sales & Pricing Trend chart offsets (must be at component level — hooks rules)
   const TODAY_LABEL=(()=>{const d=new Date();return d.toLocaleString('en-US',{month:'short'}).slice(0,3)+"'"+String(d.getFullYear()).slice(2);})();
   // Reset chart offsets to -1 (auto-center) whenever filters change
@@ -1186,30 +1192,47 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                 <div style={{flex:1,height:1,background:'rgba(245,158,11,0.15)',borderRadius:1}}/>
                 {/* Month Range Slider */}
                 {ALL_CHART_MONTHS.length>1&&(
-                  <div style={{display:'flex',alignItems:'center',gap:8,background:'rgba(255,255,255,0.9)',borderRadius:12,padding:'5px 12px',boxShadow:'0 1px 4px rgba(0,0,0,0.1)',minWidth:280}}>
-                    <span style={{fontSize:9,fontWeight:700,color:T.textM,whiteSpace:'nowrap'}}>
-                      {fmtML(chartMonthFrom)} – {fmtML(chartMonthTo)}
-                    </span>
-                    <div style={{flex:1,position:'relative',height:20,display:'flex',alignItems:'center'}}>
+                  <div style={{background:'rgba(255,255,255,0.95)',borderRadius:14,padding:'6px 14px 8px',boxShadow:'0 2px 8px rgba(0,0,0,0.10)',minWidth:380,flex:1,maxWidth:520}}>
+                    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
+                      <span style={{fontSize:8,fontWeight:700,color:T.textM,textTransform:'uppercase',letterSpacing:0.5}}>Chart Range</span>
+                      <span style={{fontSize:10,fontWeight:800,color:T.tealD}}>{fmtML(chartMonthFrom)} – {fmtML(chartMonthTo)}<span style={{fontSize:8,fontWeight:500,color:T.textM,marginLeft:4}}>({clampedRange[1]-clampedRange[0]+1} months)</span></span>
+                    </div>
+                    <div style={{position:'relative',height:28,display:'flex',alignItems:'center',paddingTop:6}}>
+                      {/* Month dots */}
+                      {ALL_CHART_MONTHS.map((m,i)=>{
+                        const pct=ALL_CHART_MONTHS.length>1?i/(ALL_CHART_MONTHS.length-1)*100:0;
+                        const inRange=i>=clampedRange[0]&&i<=clampedRange[1];
+                        const isEnd=i===clampedRange[0]||i===clampedRange[1];
+                        return(
+                          <div key={m} style={{position:'absolute',left:pct+'%',transform:'translateX(-50%)',display:'flex',flexDirection:'column',alignItems:'center',pointerEvents:'none',zIndex:1}}>
+                            <div style={{width:isEnd?10:inRange?6:4,height:isEnd?10:inRange?6:4,borderRadius:'50%',background:isEnd?T.tealD:inRange?T.teal:'rgba(0,100,140,0.18)',border:isEnd?'2px solid #fff':'none',boxShadow:isEnd?'0 1px 4px rgba(0,151,167,0.4)':'none',transition:'all 0.15s'}}/>
+                          </div>
+                        );
+                      })}
                       {/* Track */}
-                      <div style={{position:'absolute',left:0,right:0,height:4,background:'rgba(0,100,140,0.12)',borderRadius:2}}/>
+                      <div style={{position:'absolute',left:0,right:0,height:3,background:'rgba(0,100,140,0.1)',borderRadius:2}}/>
                       {/* Filled range */}
                       <div style={{
                         position:'absolute',
-                        left:(chartRangeIdx[0]/(ALL_CHART_MONTHS.length-1)*100)+'%',
-                        right:(100-chartRangeIdx[1]/(ALL_CHART_MONTHS.length-1)*100)+'%',
-                        height:4,background:T.teal,borderRadius:2,pointerEvents:'none'
+                        left:(clampedRange[0]/(ALL_CHART_MONTHS.length-1)*100)+'%',
+                        right:(100-clampedRange[1]/(ALL_CHART_MONTHS.length-1)*100)+'%',
+                        height:3,background:`linear-gradient(90deg,${T.teal},${T.tealD})`,borderRadius:2,pointerEvents:'none',zIndex:1
                       }}/>
-                      {/* Left handle */}
-                      <input type="range" min={0} max={ALL_CHART_MONTHS.length-1} value={chartRangeIdx[0]}
-                        onChange={e=>{const v=Math.min(Number(e.target.value),chartRangeIdx[1]-1);setChartRangeIdx([v,chartRangeIdx[1]]);setUOff(-1);setTsvOff(-1);setROff(-1);setSuOff(-1);}}
-                        style={{position:'absolute',left:0,right:0,width:'100%',appearance:'none',background:'transparent',height:4,pointerEvents:'all',cursor:'pointer',zIndex:2}}
+                      {/* Left handle input */}
+                      <input type="range" min={0} max={ALL_CHART_MONTHS.length-1} value={clampedRange[0]}
+                        onChange={e=>{const v=Math.min(Number(e.target.value),clampedRange[1]-1);setChartRangeIdx([v,clampedRange[1]]);setUOff(-1);setTsvOff(-1);setROff(-1);setSuOff(-1);}}
+                        style={{position:'absolute',left:0,right:0,width:'100%',appearance:'none',background:'transparent',height:'100%',pointerEvents:'all',cursor:'pointer',zIndex:4,opacity:0}}
                       />
-                      {/* Right handle */}
-                      <input type="range" min={0} max={ALL_CHART_MONTHS.length-1} value={chartRangeIdx[1]}
-                        onChange={e=>{const v=Math.max(Number(e.target.value),chartRangeIdx[0]+1);setChartRangeIdx([chartRangeIdx[0],v]);setUOff(-1);setTsvOff(-1);setROff(-1);setSuOff(-1);}}
-                        style={{position:'absolute',left:0,right:0,width:'100%',appearance:'none',background:'transparent',height:4,pointerEvents:'all',cursor:'pointer',zIndex:3}}
+                      {/* Right handle input */}
+                      <input type="range" min={0} max={ALL_CHART_MONTHS.length-1} value={clampedRange[1]}
+                        onChange={e=>{const v=Math.max(Number(e.target.value),clampedRange[0]+1);setChartRangeIdx([clampedRange[0],v]);setUOff(-1);setTsvOff(-1);setROff(-1);setSuOff(-1);}}
+                        style={{position:'absolute',left:0,right:0,width:'100%',appearance:'none',background:'transparent',height:'100%',pointerEvents:'all',cursor:'pointer',zIndex:5,opacity:0}}
                       />
+                    </div>
+                    {/* Month labels at ends */}
+                    <div style={{display:'flex',justifyContent:'space-between',marginTop:3}}>
+                      <span style={{fontSize:7,color:T.textL,fontWeight:600}}>{fmtML(ALL_CHART_MONTHS[0])}</span>
+                      <span style={{fontSize:7,color:T.textL,fontWeight:600}}>{fmtML(ALL_CHART_MONTHS[ALL_CHART_MONTHS.length-1])}</span>
                     </div>
                   </div>
                 )}
