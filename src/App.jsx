@@ -1323,6 +1323,17 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                 </div>
               </div>
 
+              {/* Full-width Month Range Slider */}
+              <MonthRangeSlider
+                months={ALL_CHART_MONTHS}
+                rangeIdx={chartRangeIdx}
+                setRangeIdx={(updater)=>{
+                  setChartRangeIdx(updater);
+                  setUOff(-1);setTsvOff(-1);setROff(-1);setSuOff(-1);
+                }}
+                onReset={()=>{setChartRangeIdx([0,ALL_CHART_MONTHS.length-1]);setUOff(-1);setTsvOff(-1);setROff(-1);setSuOff(-1);}}
+              />
+
               {/* 2x2 chart grid */}
               <div style={{
                 display:showTowerType?'none':'grid',
@@ -2675,14 +2686,4 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
       </div>
     </div>
   );
-}              {/* Full-width Month Range Slider */}
-              <MonthRangeSlider
-                months={ALL_CHART_MONTHS}
-                rangeIdx={chartRangeIdx}
-                setRangeIdx={(updater)=>{
-                  setChartRangeIdx(updater);
-                  setUOff(-1);setTsvOff(-1);setROff(-1);setSuOff(-1);
-                }}
-                onReset={()=>{setChartRangeIdx([0,ALL_CHART_MONTHS.length-1]);setUOff(-1);setTsvOff(-1);setROff(-1);setSuOff(-1);}}
-              />
-              
+}
