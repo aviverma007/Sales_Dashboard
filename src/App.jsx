@@ -1476,7 +1476,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                       // Group by tower+project label
                       twData=filtered.map(r=>({tower:r.tower+(selProjs.length!==1?` (${(r.project||'').split(' ').pop()})` :''),pct:r.pctSold||Math.round(r.booked/(r.total||r.booked+r.cancelled||1)*100),booked:r.booked,total:r.total||r.booked+r.cancelled,project:r.project}));
                     }
-                    twData=twData.map(d=>({...d,remaining:100-d.pct})).sort((a,b)=>b.tower.localeCompare(a.tower));
+                    twData=twData.map(d=>({...d,remaining:100-d.pct})).sort((a,b)=>a.tower.localeCompare(b.tower));
                     const barW=36, minW=Math.max(twData.length*(barW+20)+80,300);
                     const needsHScroll=twData.length>8;
                     return(
@@ -1598,7 +1598,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const needsScroll=totalDays>WIN_DAYS;
                     const visiblePts=pts; // Show all, let overflow scroll handle it
                     // Spread wide: 6px per point minimum, ensures dots don't overlap
-                    const PX_PER_PT=8;
+                    const PX_PER_PT=4;
                     const innerW=Math.max(n*PX_PER_PT+100, 600);
                     const TICK_COUNT=8; // max readable X ticks
                     return(
