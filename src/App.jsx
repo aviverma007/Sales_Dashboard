@@ -642,11 +642,12 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
   const topCP=useMemo(()=>{const map={};pA.forEach(r=>{const b=r.brokerName;if(!b)return;if(!map[b])map[b]={name:b,units:0,bspCr:0};map[b].units++;map[b].bspCr+=(r.bsp||0)/1e7;});return Object.values(map).sort((a,b)=>b.units-a.units).map(r=>({...r,bspCr:+r.bspCr.toFixed(1)}));},[pA]);
   const bhkS=useMemo(()=>{
     const map={};
-    // Booked from pdrn (filtered)
-    pA.forEach(r=>{const b=r.bhk||'Other';if(!map[b])map[b]={bhk:b,booked:0,total:0};map[b].booked++;});
+    // Booked from pdrn (filtered) — track area sum
+    const areaMap={};
+    pA.forEach(r=>{const b=r.bhk||'Other';if(!map[b])map[b]={bhk:b,booked:0,total:0};map[b].booked++;if(!areaMap[b])areaMap[b]={sum:0,count:0};if(r.superArea>0){areaMap[b].sum+=r.superArea;areaMap[b].count++;};});
     // Total from inventory (filtered)
     iF.forEach(r=>{const b=r.bhk||'Other';if(!map[b])map[b]={bhk:b,booked:0,total:0};map[b].total++;});
-    return Object.values(map).sort((a,b)=>b.booked-a.booked).map(r=>({...r,available:Math.max(0,r.total-r.booked)}));
+    return Object.values(map).sort((a,b)=>b.booked-a.booked).map(r=>({...r,available:Math.max(0,r.total-r.booked),avgArea:areaMap[r.bhk]?.count>0?Math.round(areaMap[r.bhk].sum/areaMap[r.bhk].count):0}));
   },[pA,iF]);
   const cpVsDirect=useMemo(()=>{
     if(!raw?.cpVsDirect) return [];
@@ -1303,46 +1304,6 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                   })()}
                 </GC>
 
-                {/* ── CHART 3: AVG RATE ────────────────────────────────── */}
-                <GC style={{padding:16}}>
-                  <SH title="Avg Rate — Achieved vs Target" sub="Actual ₹/sqft (teal) · Target rate (grey)"/>
-                  {(()=>{
-                    const WIN=10;
-                    const rawDataR=monthlyWithTargets.map(d=>({label:d.label,isFuture:d.isFuture,isCurrent:d.label===TODAY_LABEL,achieved:d.isFuture?null:(d.actualRate||null),target:d.targetRateLine||null,}));
-                    const data=rMode==='quarterly'?toQuarterly(rawDataR,'label').map(q=>({...q,isFuture:false,isCurrent:false})):rawDataR;
-                    const cur=data.findIndex(d=>d.isCurrent);
-                    const def=cur>=2?cur-2:Math.max(0,data.length-WIN);
-                    const off=Math.min(Math.max(rOff<0?def:rOff,0),Math.max(0,data.length-WIN));
-                    const sl=data.slice(off,off+WIN);
-                    return(<>
-                      <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
-                        <div style={{display:'flex',gap:3,background:'rgba(0,100,140,0.07)',borderRadius:20,padding:2}}>{[['monthly','Monthly'],['quarterly','Quarterly']].map(([k,l])=>(<button key={k} onClick={()=>{setRMode(k);setROff(0);}} style={{padding:'3px 10px',borderRadius:18,border:'none',cursor:'pointer',fontSize:10,fontWeight:700,background:rMode===k?'#0097a7':'transparent',color:rMode===k?'#fff':'#546e7a',transition:'all 0.15s'}}>{l}</button>))}</div>
-                        <button onClick={()=>setROff(Math.max(0,off-1))} disabled={off===0} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:off===0?'default':'pointer',fontSize:13,color:off===0?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>‹</button>
-                        <div style={{flex:1,height:4,background:'rgba(0,151,167,0.1)',borderRadius:2,overflow:'hidden'}}><div style={{width:(WIN/Math.max(data.length,1)*100)+'%',marginLeft:(off/Math.max(data.length,1)*100)+'%',height:'100%',background:'#0097a7',borderRadius:2}}/></div>
-                        <button onClick={()=>setROff(Math.min(data.length-WIN,off+1))} disabled={off>=data.length-WIN} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:off>=data.length-WIN?'default':'pointer',fontSize:13,color:off>=data.length-WIN?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>›</button>
-                      </div>
-                      <ResponsiveContainer width="100%" height={210}>
-                        <ComposedChart data={sl} margin={{top:26,right:8,bottom:18,left:0}} barGap={4} barCategoryGap="30%">
-                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.1)" vertical={false}/>
-                          <XAxis dataKey="label" tick={({x,y,payload})=>{const d=sl.find(s=>s.label===payload.value);return <text x={x} y={y+10} textAnchor="middle" fontSize={9} fill={d?.isCurrent?T.tealD:d?.isFuture?'#90a4ae':T.textM} fontWeight={d?.isCurrent?900:600}>{payload.value}</text>;}} axisLine={false} tickLine={false}/>
-                          <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={44} tickFormatter={v=>'₹'+Math.round(v/1000)+'K'}/>
-                          <Tooltip content={({active,payload,label})=>{if(!active||!payload?.length)return null;const d=sl.find(s=>s.label===label);return(<div style={{background:'rgba(255,255,255,0.97)',border:'1px solid rgba(0,151,167,0.3)',borderRadius:10,padding:'8px 12px',fontSize:10}}><p style={{color:T.tealD,fontWeight:800,margin:'0 0 4px'}}>{label}</p>{d?.achieved!=null&&<p style={{color:T.tealD,margin:0}}>Achieved: ₹{d.achieved?.toLocaleString('en-IN')}/sqft</p>}{d?.target!=null&&<p style={{color:'#607d8b',margin:0}}>Target: ₹{d.target?.toLocaleString('en-IN')}/sqft</p>}</div>);}}/>
-                          <Legend wrapperStyle={{fontSize:9,fontWeight:700}} iconSize={8}/>
-                          <Bar dataKey="target" name="Target Rate" fill="#b0bec5" fillOpacity={0.75} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={1000} animationEasing="ease-out">
-                            <LabelList dataKey="target" position="top" style={{fill:'#607d8b',fontSize:7,fontWeight:700}} formatter={v=>v?'₹'+Math.round(v/1000)+'K':''}/>
-                          </Bar>
-                          <Bar dataKey="achieved" name="Actual Rate" fill={T.teal} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={800} animationEasing="ease-out">
-                            {sl.map((d,i)=><Cell key={i} fill={d.isCurrent?T.tealD:T.teal} fillOpacity={d.isCurrent?1:0.85}/>)}
-                            <LabelList dataKey="achieved" position="top" style={{fill:T.tealD,fontSize:7,fontWeight:700}} formatter={v=>v?'₹'+Math.round(v/1000)+'K':''}/>
-                          </Bar>
-                          <Line type="monotone" dataKey="achieved" stroke={T.tealD} strokeWidth={2.5} dot={{r:4,fill:T.tealD,stroke:'#fff',strokeWidth:2}} activeDot={{r:5}} legendType="none" connectNulls={true}/>
-                          <Line type="monotone" dataKey="target" stroke="#607d8b" strokeWidth={2} strokeDasharray="5 3" dot={{r:3,fill:'#607d8b',stroke:'#fff',strokeWidth:1.5}} activeDot={{r:4}} legendType="none" connectNulls={true}/>
-                        </ComposedChart>
-                      </ResponsiveContainer>
-                    </>);
-                  })()}
-                </GC>
-
                 {/* ── CHART 4: AREA Booked per Month (sq ft) ── */}
                 <GC style={{padding:16}}>
                   <SH title="Area — Booked vs Available" sub="Monthly booked area (teal bars) · K sq ft · same window as other charts"/>
@@ -1439,6 +1400,46 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                   })()}
                 </GC>
 
+                {/* ── CHART 3: AVG RATE ────────────────────────────────── */}
+                <GC style={{padding:16}}>
+                  <SH title="Avg Rate — Achieved vs Target" sub="Actual ₹/sqft (teal) · Target rate (grey)"/>
+                  {(()=>{
+                    const WIN=10;
+                    const rawDataR=monthlyWithTargets.map(d=>({label:d.label,isFuture:d.isFuture,isCurrent:d.label===TODAY_LABEL,achieved:d.isFuture?null:(d.actualRate||null),target:d.targetRateLine||null,}));
+                    const data=rMode==='quarterly'?toQuarterly(rawDataR,'label').map(q=>({...q,isFuture:false,isCurrent:false})):rawDataR;
+                    const cur=data.findIndex(d=>d.isCurrent);
+                    const def=cur>=2?cur-2:Math.max(0,data.length-WIN);
+                    const off=Math.min(Math.max(rOff<0?def:rOff,0),Math.max(0,data.length-WIN));
+                    const sl=data.slice(off,off+WIN);
+                    return(<>
+                      <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
+                        <div style={{display:'flex',gap:3,background:'rgba(0,100,140,0.07)',borderRadius:20,padding:2}}>{[['monthly','Monthly'],['quarterly','Quarterly']].map(([k,l])=>(<button key={k} onClick={()=>{setRMode(k);setROff(0);}} style={{padding:'3px 10px',borderRadius:18,border:'none',cursor:'pointer',fontSize:10,fontWeight:700,background:rMode===k?'#0097a7':'transparent',color:rMode===k?'#fff':'#546e7a',transition:'all 0.15s'}}>{l}</button>))}</div>
+                        <button onClick={()=>setROff(Math.max(0,off-1))} disabled={off===0} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:off===0?'default':'pointer',fontSize:13,color:off===0?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>‹</button>
+                        <div style={{flex:1,height:4,background:'rgba(0,151,167,0.1)',borderRadius:2,overflow:'hidden'}}><div style={{width:(WIN/Math.max(data.length,1)*100)+'%',marginLeft:(off/Math.max(data.length,1)*100)+'%',height:'100%',background:'#0097a7',borderRadius:2}}/></div>
+                        <button onClick={()=>setROff(Math.min(data.length-WIN,off+1))} disabled={off>=data.length-WIN} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:off>=data.length-WIN?'default':'pointer',fontSize:13,color:off>=data.length-WIN?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>›</button>
+                      </div>
+                      <ResponsiveContainer width="100%" height={210}>
+                        <ComposedChart data={sl} margin={{top:26,right:8,bottom:18,left:0}} barGap={4} barCategoryGap="30%">
+                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.1)" vertical={false}/>
+                          <XAxis dataKey="label" tick={({x,y,payload})=>{const d=sl.find(s=>s.label===payload.value);return <text x={x} y={y+10} textAnchor="middle" fontSize={9} fill={d?.isCurrent?T.tealD:d?.isFuture?'#90a4ae':T.textM} fontWeight={d?.isCurrent?900:600}>{payload.value}</text>;}} axisLine={false} tickLine={false}/>
+                          <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={44} tickFormatter={v=>'₹'+Math.round(v/1000)+'K'}/>
+                          <Tooltip content={({active,payload,label})=>{if(!active||!payload?.length)return null;const d=sl.find(s=>s.label===label);return(<div style={{background:'rgba(255,255,255,0.97)',border:'1px solid rgba(0,151,167,0.3)',borderRadius:10,padding:'8px 12px',fontSize:10}}><p style={{color:T.tealD,fontWeight:800,margin:'0 0 4px'}}>{label}</p>{d?.achieved!=null&&<p style={{color:T.tealD,margin:0}}>Achieved: ₹{d.achieved?.toLocaleString('en-IN')}/sqft</p>}{d?.target!=null&&<p style={{color:'#607d8b',margin:0}}>Target: ₹{d.target?.toLocaleString('en-IN')}/sqft</p>}</div>);}}/>
+                          <Legend wrapperStyle={{fontSize:9,fontWeight:700}} iconSize={8}/>
+                          <Bar dataKey="target" name="Target Rate" fill="#b0bec5" fillOpacity={0.75} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={1000} animationEasing="ease-out">
+                            <LabelList dataKey="target" position="top" style={{fill:'#607d8b',fontSize:7,fontWeight:700}} formatter={v=>v?'₹'+Math.round(v/1000)+'K':''}/>
+                          </Bar>
+                          <Bar dataKey="achieved" name="Actual Rate" fill={T.teal} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={800} animationEasing="ease-out">
+                            {sl.map((d,i)=><Cell key={i} fill={d.isCurrent?T.tealD:T.teal} fillOpacity={d.isCurrent?1:0.85}/>)}
+                            <LabelList dataKey="achieved" position="top" style={{fill:T.tealD,fontSize:7,fontWeight:700}} formatter={v=>v?'₹'+Math.round(v/1000)+'K':''}/>
+                          </Bar>
+                          <Line type="monotone" dataKey="achieved" stroke={T.tealD} strokeWidth={2.5} dot={{r:4,fill:T.tealD,stroke:'#fff',strokeWidth:2}} activeDot={{r:5}} legendType="none" connectNulls={true}/>
+                          <Line type="monotone" dataKey="target" stroke="#607d8b" strokeWidth={2} strokeDasharray="5 3" dot={{r:3,fill:'#607d8b',stroke:'#fff',strokeWidth:1.5}} activeDot={{r:4}} legendType="none" connectNulls={true}/>
+                        </ComposedChart>
+                      </ResponsiveContainer>
+                    </>);
+                  })()}
+                </GC>
+
               </div>{/* end 2x2 chart grid */}
 
               {/* ── SECTION: Tower & Type wise Sales ── */}
@@ -1454,60 +1455,6 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                 <div style={{flex:1,height:1,background:'rgba(0,151,167,0.15)',borderRadius:1}}/>
               </div>
               <div style={{display:showTowerType?'grid':'none',gridTemplateColumns:'1fr 1fr',gap:12,transformOrigin:'center center',animation:showTowerType?'flipIn 0.8s cubic-bezier(0.4,0,0.2,1) forwards':'none'}}>
-
-                {/* ── CHART: Type Wise % Sale ─────────────────────── */}
-                <GC style={{padding:16}}>
-                  <SH title="Type Wise % Sale" sub="Units sold vs unsold per unit type · % sold line · all projects unless filtered"/>
-                  {(()=>{
-                    // bhkS is already filtered by iF (invr filtered) + pA (pdrn filtered) — works for all projects
-                    const SHORTEN=v=>{
-                      if(!v)return'';
-                      if(v.startsWith('TYPE '))return v.replace('- 3BHK + STUDY + UTILITY','- 3BHK').replace('- 4BHK + STUDY + 2 UTILITY','- 4BHK').replace('- 4BHK + STUDY + UTILITY','- 4BHK').replace('- 2BHK + STUDY + UTILITY','- 2BHK');
-                      return v.length>14?v.slice(0,14)+'…':v;
-                    };
-                    const EDITION_ORDER=['TYPE A- 3BHK + STUDY + UTILITY','TYPE A1- 3BHK + STUDY + UTILITY','TYPE B- 4BHK + STUDY + UTILITY','TYPE B1- 4BHK + STUDY + UTILITY','TYPE D- 3BHK + STUDY + UTILITY','TYPE E- 4BHK + STUDY + 2 UTILITY','TYPE F- 4BHK + STUDY + 2 UTILITY','TYPE G- 4BHK + STUDY + 2 UTILITY','TYPE C- 2BHK + STUDY + UTILITY'];
-                    const selProjs=filters.project?filters.project.split('||').filter(Boolean):[];
-                    const editionOnly=selProjs.length===1&&selProjs[0]==='SMARTWORLD THE EDITION';
-                    let sorted=[...bhkS];
-                    if(editionOnly){
-                      const orderMap={};EDITION_ORDER.forEach((k,i)=>orderMap[k]=i);
-                      sorted=sorted.sort((a,b)=>(orderMap[a.bhk]??99)-(orderMap[b.bhk]??99));
-                    } else {
-                      sorted=sorted.sort((a,b)=>b.booked-a.booked);
-                    }
-                    const data=sorted.filter(r=>r.total>0).map(r=>({
-                      label:SHORTEN(r.bhk),
-                      sold:r.booked,
-                      unsold:r.available,
-                      total:r.total,
-                      pct:r.total>0?Math.round(r.booked/r.total*100):0,
-                    }));
-                    const minBarW=32, innerW=Math.max(data.length*minBarW+80, 300);
-                    const needsScroll=data.length>8;
-                    return(
-                      <div style={{overflowX:needsScroll?'auto':'visible',overflowY:'hidden',paddingBottom:4}}>
-                        <div style={{width:needsScroll?innerW+'px':'100%',minWidth:'100%'}}>
-                          <ResponsiveContainer width="100%" height={240}>
-                            <ComposedChart data={data} margin={{top:18,right:40,bottom:52,left:0}} barSize={Math.max(18,Math.min(28,Math.floor(innerW/Math.max(data.length,1)-8)))}>
-                              <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.08)" vertical={false}/>
-                              <XAxis dataKey="label" tick={{fill:T.textM,fontSize:8,fontWeight:600}} axisLine={false} tickLine={false} angle={-35} textAnchor="end" interval={0} height={56}/>
-                              <YAxis yAxisId="left" tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={30}/>
-                              <YAxis yAxisId="right" orientation="right" tickFormatter={v=>v+'%'} domain={[0,120]} tick={{fill:T.tealD,fontSize:9}} axisLine={false} tickLine={false} width={32}/>
-                              <Tooltip content={<CTip fmt={(v,n)=>n==='% Sold'?v+'%':v+' units'}/>}/>
-                              <Legend wrapperStyle={{fontSize:9,fontWeight:700,paddingTop:4}} iconSize={8}/>
-                              <Bar yAxisId="left" dataKey="sold" name="Units Sold" stackId="s" fill={T.tealD} fillOpacity={0.9} radius={[0,0,3,3]}>
-                                <LabelList dataKey="pct" position="top" formatter={v=>v+'%'} style={{fill:T.navy,fontSize:8,fontWeight:800}}/>
-                              </Bar>
-                              <Bar yAxisId="left" dataKey="unsold" name="Unsold Units" stackId="s" fill={T.teal} fillOpacity={0.18} radius={[3,3,0,0]}/>
-                              <Line yAxisId="right" type="monotone" dataKey="pct" name="% Sold" stroke={T.tealD} strokeWidth={2} dot={{r:3,fill:T.tealD}} activeDot={{r:5}}/>
-                            </ComposedChart>
-                          </ResponsiveContainer>
-                        </div>
-                        {needsScroll&&<div style={{textAlign:'center',fontSize:9,color:T.textL,marginTop:2,letterSpacing:0.3}}>← scroll to see more →</div>}
-                      </div>
-                    );
-                  })()}
-                </GC>
 
                 {/* ── CHART: Tower Wise % Sold ─────────────────────── */}
                 <GC style={{padding:16}}>
@@ -1585,7 +1532,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                         row[fy]=v.area>0?Math.round(v.bsp/v.area):null;
                         totalBsp+=v.bsp;totalArea+=v.area;
                       });
-                      row.overall=totalArea>0?Math.round(totalBsp/totalArea):null;
+                      row.avg=totalArea>0?Math.round(totalBsp/totalArea):null;
                       return row;
                     });
                     if(!data.length)return<p style={{color:T.textL,fontSize:11,textAlign:'center',padding:20}}>Select a project to view tower data</p>;
@@ -1602,7 +1549,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                               <LabelList dataKey={fy} position="top" style={{fill:FY_COLORS[fy],fontSize:7,fontWeight:700}} formatter={v=>v?v.toLocaleString('en-IN'):''}/>
                             </Bar>
                           ))}
-                          <Line type="monotone" dataKey="overall" name="Overall" stroke="#22c55e" strokeWidth={2} dot={{r:4,fill:'#22c55e',stroke:'#fff',strokeWidth:1.5}} activeDot={{r:6}}>
+                          <Line type="monotone" dataKey="avg" name="Average" stroke="#22c55e" strokeWidth={2} dot={{r:4,fill:'#22c55e',stroke:'#fff',strokeWidth:1.5}} activeDot={{r:6}}>
                             <LabelList dataKey="overall" position="top" style={{fill:'#16a34a',fontSize:8,fontWeight:800}} formatter={v=>v?v.toLocaleString('en-IN'):''}/>
                           </Line>
                         </ComposedChart>
@@ -1682,6 +1629,70 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                         </div>
                         <div style={{textAlign:'center',fontSize:9,color:T.textL,marginTop:2}}>← scroll to see full timeline →</div>
                       </>
+                    );
+                  })()}
+                </GC>
+
+                {/* ── CHART: Type Wise % Sale ─────────────────────── */}
+                <GC style={{padding:16}}>
+                  <SH title="Type Wise % Sale" sub="Units sold vs unsold per unit type · % sold line · all projects unless filtered"/>
+                  {(()=>{
+                    // bhkS is already filtered by iF (invr filtered) + pA (pdrn filtered) — works for all projects
+                    const SHORTEN=v=>{
+                      if(!v)return'';
+                      if(v.startsWith('TYPE '))return v.replace('- 3BHK + STUDY + UTILITY','- 3BHK').replace('- 4BHK + STUDY + 2 UTILITY','- 4BHK').replace('- 4BHK + STUDY + UTILITY','- 4BHK').replace('- 2BHK + STUDY + UTILITY','- 2BHK');
+                      return v.length>14?v.slice(0,14)+'…':v;
+                    };
+                    const EDITION_ORDER=['TYPE A- 3BHK + STUDY + UTILITY','TYPE A1- 3BHK + STUDY + UTILITY','TYPE B- 4BHK + STUDY + UTILITY','TYPE B1- 4BHK + STUDY + UTILITY','TYPE D- 3BHK + STUDY + UTILITY','TYPE E- 4BHK + STUDY + 2 UTILITY','TYPE F- 4BHK + STUDY + 2 UTILITY','TYPE G- 4BHK + STUDY + 2 UTILITY','TYPE C- 2BHK + STUDY + UTILITY'];
+                    const selProjs=filters.project?filters.project.split('||').filter(Boolean):[];
+                    const editionOnly=selProjs.length===1&&selProjs[0]==='SMARTWORLD THE EDITION';
+                    let sorted=[...bhkS];
+                    if(editionOnly){
+                      const orderMap={};EDITION_ORDER.forEach((k,i)=>orderMap[k]=i);
+                      sorted=sorted.sort((a,b)=>(orderMap[a.bhk]??99)-(orderMap[b.bhk]??99));
+                    } else {
+                      sorted=sorted.sort((a,b)=>b.booked-a.booked);
+                    }
+                    const data=sorted.filter(r=>r.total>0).map(r=>({
+                      label:SHORTEN(r.bhk),
+                      sold:r.booked,
+                      unsold:r.available,
+                      total:r.total,
+                      pct:r.total>0?Math.round(r.booked/r.total*100):0,
+                      avgAreaSqft:r.avgArea||0,
+                    }));
+                    const minBarW=32, innerW=Math.max(data.length*minBarW+80, 300);
+                    const needsScroll=data.length>8;
+                    return(
+                      <div style={{overflowX:needsScroll?'auto':'visible',overflowY:'hidden',paddingBottom:4}}>
+                        <div style={{width:needsScroll?innerW+'px':'100%',minWidth:'100%'}}>
+                          <ResponsiveContainer width="100%" height={240}>
+                            <ComposedChart data={data} margin={{top:18,right:40,bottom:52,left:0}} barSize={Math.max(18,Math.min(28,Math.floor(innerW/Math.max(data.length,1)-8)))}>
+                              <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.08)" vertical={false}/>
+                              <XAxis dataKey="label" tick={{fill:T.textM,fontSize:8,fontWeight:600}} axisLine={false} tickLine={false} angle={-35} textAnchor="end" interval={0} height={56}/>
+                              <YAxis yAxisId="left" tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={30}/>
+                              <YAxis yAxisId="right" orientation="right" tickFormatter={v=>v+'%'} domain={[0,120]} tick={{fill:T.tealD,fontSize:9}} axisLine={false} tickLine={false} width={32}/>
+                              <Tooltip content={({active,payload,label})=>{
+                                if(!active||!payload?.length)return null;
+                                const d=data.find(r=>r.label===label);
+                                return(<div style={{background:'rgba(255,255,255,0.97)',border:'1px solid rgba(0,151,167,0.3)',borderRadius:10,padding:'8px 12px',fontSize:10}}>
+                                  <p style={{margin:'0 0 4px',fontWeight:800,color:T.navy,fontSize:11}}>{label}</p>
+                                  <p style={{margin:'0 0 2px',color:T.tealD,fontWeight:700}}>Sold: {d?.sold} / {d?.total} units ({d?.pct}%)</p>
+                                  <p style={{margin:'0 0 2px',color:T.textM}}>Unsold: {d?.unsold} units</p>
+                                  {d?.avgAreaSqft>0&&<p style={{margin:0,color:T.textM}}>Avg Area: {Math.round(d.avgAreaSqft).toLocaleString('en-IN')} sq ft</p>}
+                                </div>);
+                              }}/>
+                              <Legend wrapperStyle={{fontSize:9,fontWeight:700,paddingTop:4}} iconSize={8}/>
+                              <Bar yAxisId="left" dataKey="sold" name="Units Sold" stackId="s" fill={T.tealD} fillOpacity={0.9} radius={[0,0,3,3]}>
+                                <LabelList dataKey="pct" position="insideTop" offset={6} formatter={v=>v+'%'} style={{fill:'#fff',fontSize:8,fontWeight:800}}/>
+                              </Bar>
+                              <Bar yAxisId="left" dataKey="unsold" name="Unsold Units" stackId="s" fill={T.teal} fillOpacity={0.18} radius={[3,3,0,0]}/>
+                              <Line yAxisId="right" type="monotone" dataKey="pct" name="% Sold" stroke={T.tealD} strokeWidth={2} dot={{r:3,fill:T.tealD}} activeDot={{r:5}}/>
+                            </ComposedChart>
+                          </ResponsiveContainer>
+                        </div>
+                        {needsScroll&&<div style={{textAlign:'center',fontSize:9,color:T.textL,marginTop:2,letterSpacing:0.3}}>← scroll to see more →</div>}
+                      </div>
                     );
                   })()}
                 </GC>
