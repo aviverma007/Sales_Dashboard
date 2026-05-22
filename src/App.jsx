@@ -1184,35 +1184,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                   <span style={{fontSize:11,fontWeight:900,color:'#fff',textTransform:'uppercase',letterSpacing:1}}>Sales & Pricing Trend</span>
                 </div>
                 <div style={{flex:1,height:1,background:'rgba(245,158,11,0.15)',borderRadius:1}}/>
-                {/* Month Range Slider */}
-                {ALL_CHART_MONTHS.length>1&&(
-                  <div style={{display:'flex',alignItems:'center',gap:8,background:'rgba(255,255,255,0.9)',borderRadius:12,padding:'5px 12px',boxShadow:'0 1px 4px rgba(0,0,0,0.1)',minWidth:280}}>
-                    <span style={{fontSize:9,fontWeight:700,color:T.textM,whiteSpace:'nowrap'}}>
-                      {fmtML(chartMonthFrom)} – {fmtML(chartMonthTo)}
-                    </span>
-                    <div style={{flex:1,position:'relative',height:20,display:'flex',alignItems:'center'}}>
-                      {/* Track */}
-                      <div style={{position:'absolute',left:0,right:0,height:4,background:'rgba(0,100,140,0.12)',borderRadius:2}}/>
-                      {/* Filled range */}
-                      <div style={{
-                        position:'absolute',
-                        left:(chartRangeIdx[0]/(ALL_CHART_MONTHS.length-1)*100)+'%',
-                        right:(100-chartRangeIdx[1]/(ALL_CHART_MONTHS.length-1)*100)+'%',
-                        height:4,background:T.teal,borderRadius:2,pointerEvents:'none'
-                      }}/>
-                      {/* Left handle */}
-                      <input type="range" min={0} max={ALL_CHART_MONTHS.length-1} value={chartRangeIdx[0]}
-                        onChange={e=>{const v=Math.min(Number(e.target.value),chartRangeIdx[1]-1);setChartRangeIdx([v,chartRangeIdx[1]]);setUOff(-1);setTsvOff(-1);setROff(-1);setSuOff(-1);}}
-                        style={{position:'absolute',left:0,right:0,width:'100%',appearance:'none',background:'transparent',height:4,pointerEvents:'all',cursor:'pointer',zIndex:2}}
-                      />
-                      {/* Right handle */}
-                      <input type="range" min={0} max={ALL_CHART_MONTHS.length-1} value={chartRangeIdx[1]}
-                        onChange={e=>{const v=Math.max(Number(e.target.value),chartRangeIdx[0]+1);setChartRangeIdx([chartRangeIdx[0],v]);setUOff(-1);setTsvOff(-1);setROff(-1);setSuOff(-1);}}
-                        style={{position:'absolute',left:0,right:0,width:'100%',appearance:'none',background:'transparent',height:4,pointerEvents:'all',cursor:'pointer',zIndex:3}}
-                      />
-                    </div>
-                  </div>
-                )}
+
                 <div style={{position:'relative',display:'inline-flex',flexDirection:'column',alignItems:'center'}}>
                   {/* Pulsing "click here" callout — shown only when Sales Trend is active */}
                   {!showTowerType&&(
@@ -1251,6 +1223,55 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                   </button>
                 </div>
               </div>
+
+              {/* Full-width Month Range Slider */}
+              {ALL_CHART_MONTHS.length>1&&(
+                <div style={{background:'rgba(255,255,255,0.92)',borderRadius:12,padding:'10px 20px 12px',marginBottom:8,boxShadow:'0 2px 8px rgba(0,0,0,0.08)'}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+                    <div style={{display:'flex',alignItems:'center',gap:6}}>
+                      <span style={{fontSize:9,fontWeight:700,color:T.textM,textTransform:'uppercase',letterSpacing:0.5}}>Chart Range</span>
+                      <span style={{background:T.teal,color:'#fff',fontSize:9,fontWeight:800,borderRadius:10,padding:'1px 8px'}}>{fmtML(chartMonthFrom)} – {fmtML(chartMonthTo)}</span>
+                      <span style={{fontSize:9,color:T.textL}}>({chartRangeIdx[1]-chartRangeIdx[0]+1} months)</span>
+                    </div>
+                    <button onClick={()=>{setChartRangeIdx([0,ALL_CHART_MONTHS.length-1]);setUOff(-1);setTsvOff(-1);setROff(-1);setSuOff(-1);}} style={{fontSize:9,color:T.tealD,fontWeight:700,background:'none',border:'none',cursor:'pointer',padding:'2px 8px'}}>Reset</button>
+                  </div>
+                  <div style={{position:'relative',height:32,display:'flex',alignItems:'center'}}>
+                    {/* Track background */}
+                    <div style={{position:'absolute',left:0,right:0,height:5,background:'rgba(0,100,140,0.1)',borderRadius:3}}/>
+                    {/* Filled range */}
+                    <div style={{
+                      position:'absolute',
+                      left:(chartRangeIdx[0]/Math.max(1,ALL_CHART_MONTHS.length-1)*100)+'%',
+                      right:(100-chartRangeIdx[1]/Math.max(1,ALL_CHART_MONTHS.length-1)*100)+'%',
+                      height:5,background:`linear-gradient(90deg,${T.teal},${T.tealD})`,borderRadius:3,pointerEvents:'none',zIndex:1
+                    }}/>
+                    {/* Month dots */}
+                    {ALL_CHART_MONTHS.map((m,i)=>{
+                      const pct=i/Math.max(1,ALL_CHART_MONTHS.length-1)*100;
+                      const inRange=i>=chartRangeIdx[0]&&i<=chartRangeIdx[1];
+                      const isEnd=i===chartRangeIdx[0]||i===chartRangeIdx[1];
+                      return(
+                        <div key={m} title={fmtML(m)} style={{position:'absolute',left:pct+'%',transform:'translateX(-50%)',zIndex:2,pointerEvents:'none',display:'flex',flexDirection:'column',alignItems:'center',gap:2}}>
+                          <div style={{width:isEnd?12:inRange?6:4,height:isEnd?12:inRange?6:4,borderRadius:'50%',background:isEnd?T.tealD:inRange?T.teal:'rgba(0,100,140,0.2)',border:isEnd?'2px solid #fff':'none',boxShadow:isEnd?'0 2px 6px rgba(0,151,167,0.5)':'none',transition:'all 0.15s'}}/>
+                          {(i===0||i===ALL_CHART_MONTHS.length-1||(i%3===0&&ALL_CHART_MONTHS.length<=24)||(i%6===0&&ALL_CHART_MONTHS.length>24))&&(
+                            <span style={{fontSize:7,color:isEnd?T.tealD:T.textL,fontWeight:isEnd?800:500,whiteSpace:'nowrap',marginTop:2}}>{fmtML(m)}</span>
+                          )}
+                        </div>
+                      );
+                    })}
+                    {/* Left range input */}
+                    <input type="range" min={0} max={ALL_CHART_MONTHS.length-1} value={chartRangeIdx[0]}
+                      onChange={e=>{const v=Math.min(Number(e.target.value),chartRangeIdx[1]-1);setChartRangeIdx([v,chartRangeIdx[1]]);setUOff(-1);setTsvOff(-1);setROff(-1);setSuOff(-1);}}
+                      style={{position:'absolute',left:0,right:0,width:'100%',appearance:'none',background:'transparent',height:'100%',cursor:'pointer',zIndex:4,opacity:0}}
+                    />
+                    {/* Right range input */}
+                    <input type="range" min={0} max={ALL_CHART_MONTHS.length-1} value={chartRangeIdx[1]}
+                      onChange={e=>{const v=Math.max(Number(e.target.value),chartRangeIdx[0]+1);setChartRangeIdx([chartRangeIdx[0],v]);setUOff(-1);setTsvOff(-1);setROff(-1);setSuOff(-1);}}
+                      style={{position:'absolute',left:0,right:0,width:'100%',appearance:'none',background:'transparent',height:'100%',cursor:'pointer',zIndex:5,opacity:0}}
+                    />
+                  </div>
+                </div>
+              )}
 
               {/* 2x2 chart grid */}
               <div style={{
