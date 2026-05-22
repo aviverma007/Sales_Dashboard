@@ -456,6 +456,8 @@ function AppInner() {
     return Array.from(ms).sort();
   },[raw]);
   const [chartRangeIdx,setChartRangeIdx]=useState([0,29]);
+  const sliderTrackRef=React.useRef(null);
+  const sliderDragging=React.useRef(null);
   const chartMonthFrom=ALL_CHART_MONTHS[chartRangeIdx[0]]||'';
   const chartMonthTo=ALL_CHART_MONTHS[chartRangeIdx[1]]||'';
   // Sales & Pricing Trend chart offsets (must be at component level — hooks rules)
@@ -1224,52 +1226,87 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                 </div>
               </div>
 
-              {/* Full-width Month Range Slider */}
+              {/* Full-width Month Range Slider — drag-based, no overlapping inputs */}
               {ALL_CHART_MONTHS.length>1&&(
-                <div style={{background:'rgba(255,255,255,0.92)',borderRadius:12,padding:'10px 20px 12px',marginBottom:8,boxShadow:'0 2px 8px rgba(0,0,0,0.08)'}}>
-                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
-                    <div style={{display:'flex',alignItems:'center',gap:6}}>
+                <div style={{background:'rgba(255,255,255,0.92)',borderRadius:12,padding:'10px 20px 16px',marginBottom:8,boxShadow:'0 2px 8px rgba(0,0,0,0.08)'}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
+                    <div style={{display:'flex',alignItems:'center',gap:8}}>
                       <span style={{fontSize:9,fontWeight:700,color:T.textM,textTransform:'uppercase',letterSpacing:0.5}}>Chart Range</span>
-                      <span style={{background:T.teal,color:'#fff',fontSize:9,fontWeight:800,borderRadius:10,padding:'1px 8px'}}>{fmtML(chartMonthFrom)} – {fmtML(chartMonthTo)}</span>
-                      <span style={{fontSize:9,color:T.textL}}>({chartRangeIdx[1]-chartRangeIdx[0]+1} months)</span>
+                      <span style={{background:T.tealD,color:'#fff',fontSize:10,fontWeight:800,borderRadius:10,padding:'2px 10px'}}>📅 {fmtML(chartMonthFrom)} → {fmtML(chartMonthTo)}</span>
+                      <span style={{fontSize:9,color:T.textL,fontWeight:600}}>({chartRangeIdx[1]-chartRangeIdx[0]+1} of {ALL_CHART_MONTHS.length} months)</span>
                     </div>
-                    <button onClick={()=>{setChartRangeIdx([0,ALL_CHART_MONTHS.length-1]);setUOff(-1);setTsvOff(-1);setROff(-1);setSuOff(-1);}} style={{fontSize:9,color:T.tealD,fontWeight:700,background:'none',border:'none',cursor:'pointer',padding:'2px 8px'}}>Reset</button>
+                    <button onClick={()=>{setChartRangeIdx([0,ALL_CHART_MONTHS.length-1]);setUOff(-1);setTsvOff(-1);setROff(-1);setSuOff(-1);}} style={{fontSize:9,color:T.tealD,fontWeight:700,background:'rgba(0,151,167,0.08)',border:'1px solid rgba(0,151,167,0.2)',borderRadius:8,cursor:'pointer',padding:'3px 10px'}}>↺ Reset</button>
                   </div>
-                  <div style={{position:'relative',height:32,display:'flex',alignItems:'center'}}>
-                    {/* Track background */}
-                    <div style={{position:'absolute',left:0,right:0,height:5,background:'rgba(0,100,140,0.1)',borderRadius:3}}/>
-                    {/* Filled range */}
-                    <div style={{
-                      position:'absolute',
-                      left:(chartRangeIdx[0]/Math.max(1,ALL_CHART_MONTHS.length-1)*100)+'%',
-                      right:(100-chartRangeIdx[1]/Math.max(1,ALL_CHART_MONTHS.length-1)*100)+'%',
-                      height:5,background:`linear-gradient(90deg,${T.teal},${T.tealD})`,borderRadius:3,pointerEvents:'none',zIndex:1
-                    }}/>
-                    {/* Month dots */}
-                    {ALL_CHART_MONTHS.map((m,i)=>{
-                      const pct=i/Math.max(1,ALL_CHART_MONTHS.length-1)*100;
-                      const inRange=i>=chartRangeIdx[0]&&i<=chartRangeIdx[1];
-                      const isEnd=i===chartRangeIdx[0]||i===chartRangeIdx[1];
-                      return(
-                        <div key={m} title={fmtML(m)} style={{position:'absolute',left:pct+'%',transform:'translateX(-50%)',zIndex:2,pointerEvents:'none',display:'flex',flexDirection:'column',alignItems:'center',gap:2}}>
-                          <div style={{width:isEnd?12:inRange?6:4,height:isEnd?12:inRange?6:4,borderRadius:'50%',background:isEnd?T.tealD:inRange?T.teal:'rgba(0,100,140,0.2)',border:isEnd?'2px solid #fff':'none',boxShadow:isEnd?'0 2px 6px rgba(0,151,167,0.5)':'none',transition:'all 0.15s'}}/>
-                          {(i===0||i===ALL_CHART_MONTHS.length-1||(i%3===0&&ALL_CHART_MONTHS.length<=24)||(i%6===0&&ALL_CHART_MONTHS.length>24))&&(
-                            <span style={{fontSize:7,color:isEnd?T.tealD:T.textL,fontWeight:isEnd?800:500,whiteSpace:'nowrap',marginTop:2}}>{fmtML(m)}</span>
-                          )}
+                  {(()=>{
+                    const N=ALL_CHART_MONTHS.length;
+                    const getIdxFromX=(clientX)=>{
+                      if(!sliderTrackRef.current)return 0;
+                      const rect=trackRef.current.getBoundingClientRect();
+                      const pct=Math.max(0,Math.min(1,(clientX-rect.left)/rect.width));
+                      return Math.round(pct*(N-1));
+                    };
+                    const onMouseDown=(handle,e)=>{
+                      e.preventDefault();
+                      sliderDragging.current=handle;
+                      const onMove=(ev)=>{
+                        const clientX=ev.touches?ev.touches[0].clientX:ev.clientX;
+                        const idx=getIdxFromX(clientX);
+                        if(sliderDragging.current==='left'){
+                          setChartRangeIdx(prev=>[Math.min(idx,prev[1]-1),prev[1]]);
+                        } else {
+                          setChartRangeIdx(prev=>[prev[0],Math.max(idx,prev[0]+1)]);
+                        }
+                        setUOff(-1);setTsvOff(-1);setROff(-1);setSuOff(-1);
+                      };
+                      const onUp=()=>{dragging.current=null;window.removeEventListener('mousemove',onMove);window.removeEventListener('mouseup',onUp);window.removeEventListener('touchmove',onMove);window.removeEventListener('touchend',onUp);};
+                      window.addEventListener('mousemove',onMove);
+                      window.addEventListener('mouseup',onUp);
+                      window.addEventListener('touchmove',onMove,{passive:false});
+                      window.addEventListener('touchend',onUp);
+                    };
+                    const leftPct=chartRangeIdx[0]/(N-1)*100;
+                    const rightPct=chartRangeIdx[1]/(N-1)*100;
+                    // Calendar icon SVG
+                    const CalIcon=()=>(<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>);
+                    return(
+                      <div ref={sliderTrackRef} style={{position:'relative',height:44,userSelect:'none',cursor:'default'}}>
+                        {/* Track */}
+                        <div style={{position:'absolute',top:'50%',transform:'translateY(-50%)',left:0,right:0,height:5,background:'rgba(0,100,140,0.1)',borderRadius:3}}/>
+                        {/* Filled range */}
+                        <div style={{position:'absolute',top:'50%',transform:'translateY(-50%)',left:leftPct+'%',right:(100-rightPct)+'%',height:5,background:`linear-gradient(90deg,${T.teal},${T.tealD})`,borderRadius:3,pointerEvents:'none'}}/>
+                        {/* Month tick dots */}
+                        {ALL_CHART_MONTHS.map((m,i)=>{
+                          const pct=i/(N-1)*100;
+                          const inRange=i>chartRangeIdx[0]&&i<chartRangeIdx[1];
+                          const showLabel=N<=12||(N<=24&&i%2===0)||(i%4===0)||i===0||i===N-1;
+                          return(
+                            <div key={m} style={{position:'absolute',left:pct+'%',top:'50%',transform:'translate(-50%,-50%)',pointerEvents:'none',display:'flex',flexDirection:'column',alignItems:'center'}}>
+                              <div style={{width:inRange?5:3,height:inRange?5:3,borderRadius:'50%',background:inRange?T.teal:'rgba(0,100,140,0.2)',marginBottom:showLabel?2:0}}/>
+                              {showLabel&&<span style={{fontSize:7,color:T.textL,fontWeight:500,whiteSpace:'nowrap',marginTop:14,position:'absolute',top:0}}>{fmtML(m)}</span>}
+                            </div>
+                          );
+                        })}
+                        {/* Left handle — calendar icon */}
+                        <div onMouseDown={(e)=>onMouseDown('left',e)} onTouchStart={(e)=>onMouseDown('left',e)}
+                          style={{position:'absolute',left:leftPct+'%',top:'50%',transform:'translate(-50%,-50%)',width:28,height:28,borderRadius:8,background:T.tealD,color:'#fff',display:'flex',alignItems:'center',justifyContent:'center',cursor:'grab',zIndex:10,boxShadow:'0 2px 8px rgba(0,151,167,0.5)',border:'2px solid #fff',userSelect:'none'}}>
+                          <CalIcon/>
                         </div>
-                      );
-                    })}
-                    {/* Left range input */}
-                    <input type="range" min={0} max={ALL_CHART_MONTHS.length-1} value={chartRangeIdx[0]}
-                      onChange={e=>{const v=Math.min(Number(e.target.value),chartRangeIdx[1]-1);setChartRangeIdx([v,chartRangeIdx[1]]);setUOff(-1);setTsvOff(-1);setROff(-1);setSuOff(-1);}}
-                      style={{position:'absolute',left:0,right:0,width:'100%',appearance:'none',background:'transparent',height:'100%',cursor:'pointer',zIndex:4,opacity:0}}
-                    />
-                    {/* Right range input */}
-                    <input type="range" min={0} max={ALL_CHART_MONTHS.length-1} value={chartRangeIdx[1]}
-                      onChange={e=>{const v=Math.max(Number(e.target.value),chartRangeIdx[0]+1);setChartRangeIdx([chartRangeIdx[0],v]);setUOff(-1);setTsvOff(-1);setROff(-1);setSuOff(-1);}}
-                      style={{position:'absolute',left:0,right:0,width:'100%',appearance:'none',background:'transparent',height:'100%',cursor:'pointer',zIndex:5,opacity:0}}
-                    />
-                  </div>
+                        {/* Left label */}
+                        <div style={{position:'absolute',left:leftPct+'%',top:'calc(50% - 32px)',transform:'translateX(-50%)',background:T.tealD,color:'#fff',fontSize:8,fontWeight:800,borderRadius:6,padding:'2px 6px',whiteSpace:'nowrap',pointerEvents:'none',boxShadow:'0 1px 4px rgba(0,151,167,0.3)'}}>
+                          {fmtML(chartMonthFrom)}
+                        </div>
+                        {/* Right handle — calendar icon */}
+                        <div onMouseDown={(e)=>onMouseDown('right',e)} onTouchStart={(e)=>onMouseDown('right',e)}
+                          style={{position:'absolute',left:rightPct+'%',top:'50%',transform:'translate(-50%,-50%)',width:28,height:28,borderRadius:8,background:T.tealD,color:'#fff',display:'flex',alignItems:'center',justifyContent:'center',cursor:'grab',zIndex:10,boxShadow:'0 2px 8px rgba(0,151,167,0.5)',border:'2px solid #fff',userSelect:'none'}}>
+                          <CalIcon/>
+                        </div>
+                        {/* Right label */}
+                        <div style={{position:'absolute',left:rightPct+'%',top:'calc(50% - 32px)',transform:'translateX(-50%)',background:T.tealD,color:'#fff',fontSize:8,fontWeight:800,borderRadius:6,padding:'2px 6px',whiteSpace:'nowrap',pointerEvents:'none',boxShadow:'0 1px 4px rgba(0,151,167,0.3)'}}>
+                          {fmtML(chartMonthTo)}
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
               )}
 
