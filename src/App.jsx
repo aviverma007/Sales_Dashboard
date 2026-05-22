@@ -211,10 +211,12 @@ const MonthRangeSlider = ({months, rangeIdx, setRangeIdx, onReset}) => {
     window.addEventListener('touchend', up);
   };
 
-  const leftPct = rangeIdx[0] / (N - 1) * 100;
-  const rightPct = rangeIdx[1] / (N - 1) * 100;
-  const fromLabel = fmtML(months[rangeIdx[0]]);
-  const toLabel = fmtML(months[rangeIdx[1]]);
+  const safeL = Math.min(rangeIdx[0], N-1);
+  const safeR = Math.min(rangeIdx[1], N-1);
+  const leftPct = safeL / (N - 1) * 100;
+  const rightPct = safeR / (N - 1) * 100;
+  const fromLabel = fmtML(months[safeL]);
+  const toLabel = fmtML(months[safeR]);
 
   const CalIcon = () => (
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -241,7 +243,7 @@ const MonthRangeSlider = ({months, rangeIdx, setRangeIdx, onReset}) => {
         {/* Tick dots + labels */}
         {months.map((m, i) => {
           const pct = i / (N - 1) * 100;
-          const inRange = i > rangeIdx[0] && i < rangeIdx[1];
+          const inRange = i > safeL && i < safeR;
           const showLbl = i === 0 || i === N-1 || (N <= 12 ? true : N <= 24 ? i%2===0 : i%4===0);
           return (
             <div key={m} style={{position:'absolute',left:pct+'%',top:'50%',transform:'translate(-50%,-50%)',pointerEvents:'none',display:'flex',flexDirection:'column',alignItems:'center'}}>
@@ -550,13 +552,16 @@ function AppInner() {
   const [showTowerType,setShowTowerType]=useState(false);
   // Chart month range slider (independent of top filters, only affects the 4 Sales & Pricing Trend charts)
   const ALL_CHART_MONTHS=useMemo(()=>{
-    if(!raw?.pdrn) return [];
-    const ms=new Set(raw.pdrn.map(r=>r.bookingMonth).filter(Boolean));
+    if(!raw) return [];
+    const ms=new Set([
+      ...(raw.pdrn||[]).map(r=>r.bookingMonth).filter(Boolean),
+      ...(raw.monthlyTargets||[]).map(t=>t.month).filter(Boolean),
+    ]);
     return Array.from(ms).sort();
   },[raw]);
-  const [chartRangeIdx,setChartRangeIdx]=useState([0,29]);
-  const chartMonthFrom=ALL_CHART_MONTHS[chartRangeIdx[0]]||'';
-  const chartMonthTo=ALL_CHART_MONTHS[chartRangeIdx[1]]||'';
+  const [chartRangeIdx,setChartRangeIdx]=useState([0,999]);
+  const chartMonthFrom=ALL_CHART_MONTHS[Math.min(chartRangeIdx[0],ALL_CHART_MONTHS.length-1)]||'';
+  const chartMonthTo=ALL_CHART_MONTHS[Math.min(chartRangeIdx[1],ALL_CHART_MONTHS.length-1)]||'';
   // Sales & Pricing Trend chart offsets (must be at component level — hooks rules)
   const TODAY_LABEL=(()=>{const d=new Date();return d.toLocaleString('en-US',{month:'short'}).slice(0,3)+"'"+String(d.getFullYear()).slice(2);})();
   // Reset chart offsets to -1 (auto-center) whenever filters change
@@ -1334,7 +1339,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                   setChartRangeIdx(updater);
                   setUOff(-1);setTsvOff(-1);setROff(-1);setSuOff(-1);
                 }}
-                onReset={()=>{setChartRangeIdx([0,ALL_CHART_MONTHS.length-1]);setUOff(-1);setTsvOff(-1);setROff(-1);setSuOff(-1);}}
+                onReset={()=>{setChartRangeIdx([0,999]);setUOff(-1);setTsvOff(-1);setROff(-1);setSuOff(-1);}}
               />
 
               {/* 2x2 chart grid */}
