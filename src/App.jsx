@@ -737,7 +737,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
         targetRateLine:target.targetRate||null,
       };
     });
-  },[monthly,raw,pA,filters,matchMo,TODAY_LABEL]);
+  },[monthly,raw,pA,filters,matchMo,TODAY_LABEL,chartMonthFrom,chartMonthTo]);
 
   const towerData=useMemo(()=>{
     if(!raw?.towerData) return [];
