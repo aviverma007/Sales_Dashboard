@@ -1429,7 +1429,17 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                   <SH title="TSV — Achieved vs Target" sub="Actual BSP (teal) · Target TSV (grey)"/>
                   {(()=>{
                     const WIN=10;
-                    const rawDataTsv=monthlyWithTargets.map(d=>({label:d.label,isFuture:d.isFuture,isCurrent:d.label===TODAY_LABEL,achieved:d.isFuture?null:(d.bspCr||null),target:d.targetTsvLine||null,}));
+                    // TSV projection — same quarter logic
+                    const todayT=new Date();const tQS=Math.floor((todayT.getMonth())/3)*3;
+                    const ml2=(y,m)=>{const n={1:'Jan',2:'Feb',3:'Mar',4:'Apr',5:'May',6:'Jun',7:'Jul',8:'Aug',9:'Sep',10:'Oct',11:'Nov',12:'Dec'};return n[m]+"'"+String(y).slice(2);};
+                    const cqm=[0,1,2].map(i=>{let m=tQS+1+i,y=todayT.getFullYear();if(m>12){m-=12;y++;}return ml2(y,m);});
+                    const nqm=[0,1,2].map(i=>{let m=tQS+4+i,y=todayT.getFullYear();if(m>12){m-=12;y++;}return ml2(y,m);});
+                    const cqTsvTgt=monthlyWithTargets.filter(d=>cqm.includes(d.label)).reduce((s,d)=>s+(d.targetTsvLine||0),0);
+                    const cqTsvAch=monthlyWithTargets.filter(d=>cqm.includes(d.label)).reduce((s,d)=>s+(d.bspCr||0),0);
+                    const tsvGap=Math.max(0,cqTsvTgt-cqTsvAch);
+                    const tsvW=[0.3,0.4,0.3];
+                    const tsvProjMap={};nqm.forEach((lbl,i)=>{const base=monthlyWithTargets.find(d=>d.label===lbl)?.targetTsvLine||0;tsvProjMap[lbl]=+(base+tsvGap*tsvW[i]).toFixed(1);});
+                    const rawDataTsv=monthlyWithTargets.map(d=>({label:d.label,isFuture:d.isFuture,isCurrent:d.label===TODAY_LABEL,achieved:d.isFuture?null:(d.bspCr||null),target:d.targetTsvLine||null,projection:nqm.includes(d.label)?tsvProjMap[d.label]:null,}));
                     const data=tsvMode==='quarterly'?toQuarterly(rawDataTsv,'label').map(q=>({...q,isFuture:false,isCurrent:false})):rawDataTsv;
                     const cur=data.findIndex(d=>d.isCurrent);
                     const def=cur>=2?cur-2:Math.max(0,data.length-WIN);
@@ -1458,6 +1468,9 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                           </Bar>
                           <Line type="monotone" dataKey="achieved" stroke={T.tealD} strokeWidth={2.5} dot={{r:4,fill:T.tealD,stroke:'#fff',strokeWidth:2}} activeDot={{r:5}} legendType="none" connectNulls={true}/>
                           <Line type="monotone" dataKey="target" stroke="#607d8b" strokeWidth={2} strokeDasharray="5 3" dot={{r:3,fill:'#607d8b',stroke:'#fff',strokeWidth:1.5}} activeDot={{r:4}} legendType="none" connectNulls={true}/>
+                          <Line type="monotone" dataKey="projection" name="Projection" stroke="#22c55e" strokeWidth={2.5} strokeDasharray="6 2" dot={({cx,cy,payload})=>payload.projection!=null?<circle cx={cx} cy={cy} r={5} fill="#22c55e" stroke="#fff" strokeWidth={2}/>:<g/>} activeDot={{r:6,fill:'#22c55e'}} connectNulls={false}>
+                            <LabelList dataKey="projection" position="top" style={{fill:'#16a34a',fontSize:8,fontWeight:900}} formatter={v=>v!=null?'▲'+v+'Cr':''}/>
+                          </Line>
                         </ComposedChart>
                       </ResponsiveContainer>
                     </>);
@@ -1593,7 +1606,19 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                   <SH title="Avg Rate — Achieved vs Target" sub="Actual ₹/sqft (teal) · Target rate (grey)"/>
                   {(()=>{
                     const WIN=10;
-                    const rawDataR=monthlyWithTargets.map(d=>({label:d.label,isFuture:d.isFuture,isCurrent:d.label===TODAY_LABEL,achieved:d.isFuture?null:(d.actualRate||null),target:d.targetRateLine||null,}));
+                    // Rate projection — project avg rate for next quarter
+                    const todayR=new Date();const rQS=Math.floor((todayR.getMonth())/3)*3;
+                    const ml3=(y,m)=>{const n={1:'Jan',2:'Feb',3:'Mar',4:'Apr',5:'May',6:'Jun',7:'Jul',8:'Aug',9:'Sep',10:'Oct',11:'Nov',12:'Dec'};return n[m]+"'"+String(y).slice(2);};
+                    const cqmR=[0,1,2].map(i=>{let m=rQS+1+i,y=todayR.getFullYear();if(m>12){m-=12;y++;}return ml3(y,m);});
+                    const nqmR=[0,1,2].map(i=>{let m=rQS+4+i,y=todayR.getFullYear();if(m>12){m-=12;y++;}return ml3(y,m);});
+                    // Rate projection: recent trend (last 3 months avg rate) × 1.02 escalation per month
+                    const recentRates=monthlyWithTargets.filter(d=>!d.isFuture&&d.actualRate).slice(-3);
+                    const avgRecentRate=recentRates.length>0?recentRates.reduce((s,d)=>s+(d.actualRate||0),0)/recentRates.length:0;
+                    const rateProjMap={};nqmR.forEach((lbl,i)=>{
+                      const base=monthlyWithTargets.find(d=>d.label===lbl)?.targetRateLine||avgRecentRate;
+                      rateProjMap[lbl]=Math.round(Math.max(base,avgRecentRate*(1+0.005*(i+1))));
+                    });
+                    const rawDataR=monthlyWithTargets.map(d=>({label:d.label,isFuture:d.isFuture,isCurrent:d.label===TODAY_LABEL,achieved:d.isFuture?null:(d.actualRate||null),target:d.targetRateLine||null,projection:nqmR.includes(d.label)?rateProjMap[d.label]:null,}));
                     const data=rMode==='quarterly'?toQuarterly(rawDataR,'label').map(q=>({...q,isFuture:false,isCurrent:false})):rawDataR;
                     const cur=data.findIndex(d=>d.isCurrent);
                     const def=cur>=2?cur-2:Math.max(0,data.length-WIN);
@@ -1622,6 +1647,9 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                           </Bar>
                           <Line type="monotone" dataKey="achieved" stroke={T.tealD} strokeWidth={2.5} dot={{r:4,fill:T.tealD,stroke:'#fff',strokeWidth:2}} activeDot={{r:5}} legendType="none" connectNulls={true}/>
                           <Line type="monotone" dataKey="target" stroke="#607d8b" strokeWidth={2} strokeDasharray="5 3" dot={{r:3,fill:'#607d8b',stroke:'#fff',strokeWidth:1.5}} activeDot={{r:4}} legendType="none" connectNulls={true}/>
+                          <Line type="monotone" dataKey="projection" name="Projection" stroke="#22c55e" strokeWidth={2.5} strokeDasharray="6 2" dot={({cx,cy,payload})=>payload.projection!=null?<circle cx={cx} cy={cy} r={5} fill="#22c55e" stroke="#fff" strokeWidth={2}/>:<g/>} activeDot={{r:6,fill:'#22c55e'}} connectNulls={false}>
+                            <LabelList dataKey="projection" position="top" style={{fill:'#16a34a',fontSize:8,fontWeight:900}} formatter={v=>v!=null?'▲₹'+Math.round(v/1000)+'K':''}/>
+                          </Line>
                         </ComposedChart>
                       </ResponsiveContainer>
                     </>);
