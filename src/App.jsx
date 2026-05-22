@@ -450,12 +450,6 @@ function AppInner() {
   const [cancelTab,setCancelTab]=useState('overview');
   const [showTowerType,setShowTowerType]=useState(false);
   // Chart month range slider (independent of top filters, only affects the 4 Sales & Pricing Trend charts)
-  const ALL_CHART_MONTHS=useMemo(()=>{
-    // Respond to project/FY/broker filters — only show months that have data
-    const src=pA.length>0?pA:(raw?.pdrn||[]);
-    const ms=new Set(src.map(r=>r.bookingMonth).filter(Boolean));
-    return Array.from(ms).sort();
-  },[pA,raw]);
   // Auto-reset range when month list changes
   const [chartRangeIdx,setChartRangeIdx]=useState([0,29]);
   const clampedRange=useMemo(()=>{
@@ -529,6 +523,11 @@ function AppInner() {
     return true;
   });},[raw,filters,matchMo]);
   const pA=useMemo(()=>pF.filter(r=>r.status==='ACTIVE'),[pF]);
+  const ALL_CHART_MONTHS=useMemo(()=>{
+    const src=pA.length>0?pA:(raw?.pdrn||[]);
+    const ms=new Set(src.map(r=>r.bookingMonth).filter(Boolean));
+    return Array.from(ms).sort();
+  },[pA,raw]);
   const pC=useMemo(()=>pF.filter(r=>r.status==='CANCELLED'),[pF]);
   const dF=useMemo(()=>{if(!raw?.dapp)return[];return raw.dapp.filter(r=>{if(filters.company&&r.companyNorm!==filters.company)return false;if(filters.project){const projs=filters.project.split('||').filter(Boolean);if(projs.length&&!projs.includes(r.project))return false;}if((filters.month||filters.quarter)&&!matchMo(r.billMonth))return false;return true;});},[raw,filters,matchMo]);
   const iF=useMemo(()=>{if(!raw?.invr)return[];return raw.invr.filter(r=>{
