@@ -1355,7 +1355,34 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                   <SH title="Units — Booked vs Target" sub="Achieved (teal) · Target (grey) · Lines connect both"/>
                   {(()=>{
                     const WIN=10;
-                    const rawData=monthlyWithTargets.map(d=>({label:d.label,isFuture:d.isFuture,isCurrent:d.label===TODAY_LABEL,achieved:d.isFuture?null:(d.bookedUnits||null),target:d.targetUnitsLine||null,}));
+                    // Projection: current quarter gap → distribute over next quarter
+                    const parseYM=l=>{const mo={Jan:1,Feb:2,Mar:3,Apr:4,May:5,Jun:6,Jul:7,Aug:8,Sep:9,Oct:10,Nov:11,Dec:12};const m=l.match(/([A-Za-z]{3})'(\d{2})/);if(!m)return null;const yr=m[2].length===2?(parseInt(m[2])<50?2000+parseInt(m[2]):1900+parseInt(m[2])):parseInt(m[2]);return{yr,mo:mo[m[1]]||0};};
+                    const todayD=new Date();const todayYM={yr:todayD.getFullYear(),mo:todayD.getMonth()+1};
+                    const getCurQStart=(yr,mo)=>{const qStart=Math.floor((mo-1)/3)*3+1;return{yr,mo:qStart};};
+                    const curQStart=getCurQStart(todayYM.yr,todayYM.mo);
+                    // Current quarter months (3 months from qStart)
+                    const curQMonths=[0,1,2].map(i=>{let m=curQStart.mo+i,y=curQStart.yr;if(m>12){m-=12;y++;}const mm={1:'Jan',2:'Feb',3:'Mar',4:'Apr',5:'May',6:'Jun',7:'Jul',8:'Aug',9:'Sep',10:'Oct',11:'Nov',12:'Dec'};return mm[m]+"'"+String(y).slice(2);});
+                    // Next quarter months
+                    const nqStartMo=curQStart.mo+3,nqStartYr=nqStartMo>12?curQStart.yr+1:curQStart.yr;
+                    const nqM=nqStartMo>12?nqStartMo-12:nqStartMo;
+                    const nextQMonths=[0,1,2].map(i=>{let m=nqM+i,y=nqStartYr;if(m>12){m-=12;y++;}const mm={1:'Jan',2:'Feb',3:'Mar',4:'Apr',5:'May',6:'Jun',7:'Jul',8:'Aug',9:'Sep',10:'Oct',11:'Nov',12:'Dec'};return mm[m]+"'"+String(y).slice(2);});
+                    // Calculate current quarter gap
+                    const curQData=monthlyWithTargets.filter(d=>curQMonths.includes(d.label));
+                    const curQAchieved=curQData.reduce((s,d)=>s+(d.bookedUnits||0),0);
+                    const curQTarget=curQData.reduce((s,d)=>s+(d.targetUnitsLine||0),0);
+                    const curQGap=Math.max(0,curQTarget-curQAchieved);
+                    // Velocity: last 3 months avg
+                    const recentMonths=monthlyWithTargets.filter(d=>!d.isFuture&&d.bookedUnits).slice(-3);
+                    const velocity=recentMonths.length>0?recentMonths.reduce((s,d)=>s+(d.bookedUnits||0),0)/recentMonths.length:0;
+                    // Per-month projection for next quarter: target + gap/3 distributed, weighted toward middle
+                    const weights=[0.3,0.4,0.3]; // bell curve distribution
+                    const projMap={};
+                    nextQMonths.forEach((lbl,i)=>{
+                      const base=monthlyWithTargets.find(d=>d.label===lbl)?.targetUnitsLine||0;
+                      const catchUp=Math.round(curQGap*weights[i]);
+                      projMap[lbl]=base+catchUp;
+                    });
+                    const rawData=monthlyWithTargets.map(d=>({label:d.label,isFuture:d.isFuture,isCurrent:d.label===TODAY_LABEL,achieved:d.isFuture?null:(d.bookedUnits||null),target:d.targetUnitsLine||null,projection:nextQMonths.includes(d.label)?projMap[d.label]:null,}));
                     const data=uMode==='quarterly'?toQuarterly(rawData,'label').map(q=>({...q,isFuture:false,isCurrent:false})):rawData;
                     const cur=data.findIndex(d=>d.isCurrent);
                     const def=cur>=2?cur-2:Math.max(0,data.length-WIN);
@@ -1377,8 +1404,8 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                           <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.1)" vertical={false}/>
                           <XAxis dataKey="label" tick={({x,y,payload})=>{const d=sl.find(s=>s.label===payload.value);return <text x={x} y={y+10} textAnchor="middle" fontSize={9} fill={d?.isCurrent?T.tealD:d?.isFuture?'#90a4ae':T.textM} fontWeight={d?.isCurrent?900:600}>{payload.value}</text>;}} axisLine={false} tickLine={false}/>
                           <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={32}/>
-                          <Tooltip content={({active,payload,label})=>{if(!active||!payload?.length)return null;const d=sl.find(s=>s.label===label);return(<div style={{background:'rgba(255,255,255,0.97)',border:'1px solid rgba(0,151,167,0.3)',borderRadius:10,padding:'8px 12px',fontSize:10}}><p style={{color:T.tealD,fontWeight:800,margin:'0 0 4px'}}>{label}</p>{d?.achieved!=null&&<p style={{color:T.tealD,margin:0}}>Achieved: {d.achieved} units</p>}{d?.target!=null&&<p style={{color:'#607d8b',margin:0}}>Target: {d.target} units</p>}</div>);}}/>
-                          <Legend wrapperStyle={{fontSize:9,fontWeight:700}} iconSize={8}/>
+                          <Tooltip content={({active,payload,label})=>{if(!active||!payload?.length)return null;const d=sl.find(s=>s.label===label);return(<div style={{background:'rgba(255,255,255,0.97)',border:'1px solid rgba(0,151,167,0.3)',borderRadius:10,padding:'8px 12px',fontSize:10}}><p style={{color:T.tealD,fontWeight:800,margin:'0 0 4px'}}>{label}</p>{d?.achieved!=null&&<p style={{color:T.tealD,margin:0,fontWeight:700}}>Achieved: {d.achieved} units</p>}{d?.target!=null&&<p style={{color:'#607d8b',margin:0}}>Target: {d.target} units</p>}{d?.projection!=null&&<p style={{color:'#22c55e',margin:0,fontWeight:700}}>▲ Projection: {d.projection} units<br/><span style={{fontSize:9,color:'#86efac'}}>incl. {curQGap} unit catch-up</span></p>}</div>);}}/>
+                          <Legend wrapperStyle={{fontSize:9,fontWeight:700}} iconSize={8} payload={[{value:"Target",type:"rect",color:"#b0bec5"},{value:"Achieved",type:"rect",color:T.teal},{value:"Projection (next Q)",type:"line",color:"#22c55e"}]}/>
                           <Bar dataKey="target" name="Target" fill="#b0bec5" fillOpacity={0.75} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={1000} animationEasing="ease-out">
                             <LabelList dataKey="target" position="top" style={{fill:'#607d8b',fontSize:8,fontWeight:800}} formatter={v=>v>0?v:''}/>
                           </Bar>
@@ -1388,6 +1415,9 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                           </Bar>
                           <Line type="monotone" dataKey="achieved" stroke={T.tealD} strokeWidth={2.5} dot={{r:4,fill:T.tealD,stroke:'#fff',strokeWidth:2}} activeDot={{r:5}} legendType="none" connectNulls={true}/>
                           <Line type="monotone" dataKey="target" stroke="#607d8b" strokeWidth={2} strokeDasharray="5 3" dot={{r:3,fill:'#607d8b',stroke:'#fff',strokeWidth:1.5}} activeDot={{r:4}} legendType="none" connectNulls={true}/>
+                          <Line type="monotone" dataKey="projection" name="Projection" stroke="#22c55e" strokeWidth={2.5} strokeDasharray="6 2" dot={({cx,cy,payload})=>payload.projection!=null?<circle cx={cx} cy={cy} r={5} fill="#22c55e" stroke="#fff" strokeWidth={2}/>:<g/>} activeDot={{r:6,fill:'#22c55e'}} connectNulls={false}>
+                            <LabelList dataKey="projection" position="top" style={{fill:'#16a34a',fontSize:9,fontWeight:900}} formatter={v=>v!=null?'▲'+v:''}/>
+                          </Line>
                         </ComposedChart>
                       </ResponsiveContainer>
                     </>);
