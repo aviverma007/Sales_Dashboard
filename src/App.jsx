@@ -2253,67 +2253,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
               <div style={{flex:1,height:1,background:'rgba(34,197,94,0.15)',borderRadius:1}}/>
             </div>
 
-            {/* ══ TOWER-WISE BOOKED & CANCELLED ══ */}
-            <GC style={{padding:16}}>
-              <SH title="Tower-wise Booking Status" sub="Booked · Cancelled · Booked Area (sq ft) · Avg Price/sq ft"/>
-              <div style={{overflowX:'auto'}}>
-                <table style={{width:'100%',borderCollapse:'collapse',fontSize:11}}>
-                  <thead>
-                    <tr style={{borderBottom:`2px solid rgba(0,151,167,0.18)`}}>
-                      {['Project','Tower','Booked','Cancelled','Success %','Booked Area (sq ft)','Cancelled Area (sq ft)','Total Sales','Avg ₹/sq ft'].map(h=>(
-                        <th key={h} style={{padding:'6px 10px',textAlign:'left',color:T.textM,fontSize:9,fontWeight:800,letterSpacing:0.5,textTransform:'uppercase',whiteSpace:'nowrap'}}>{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(towerExpanded?towerData:towerData.slice(0,10)).map((d,i)=>{
-                      const total=d.booked+d.cancelled;
-                      const successPct=total>0?Math.round((d.booked/total)*100):0;
-                      const col=successPct>=90?T.teal:successPct>=75?T.greenL:successPct>=60?T.amber:T.red;
-                      return(
-                        <tr key={i} className="tr" style={{borderBottom:`1px solid rgba(0,100,140,0.08)`}}>
-                          <td style={{padding:'7px 10px',color:T.textM,fontSize:10,fontWeight:600,whiteSpace:'nowrap'}}>{d.project?.split(' ').slice(-2).join(' ')}</td>
-                          <td style={{padding:'7px 10px',fontWeight:700,color:T.navy,whiteSpace:'nowrap'}}>{d.tower}</td>
-                          <td style={{padding:'7px 10px'}}>
-                            <span style={{display:'inline-flex',alignItems:'center',gap:5}}>
-                              <span style={{width:8,height:8,borderRadius:2,background:T.teal,display:'inline-block'}}/>
-                              <span style={{fontWeight:700,color:T.tealD}}>{d.booked}</span>
-                            </span>
-                          </td>
-                          <td style={{padding:'7px 10px'}}>
-                            <span style={{display:'inline-flex',alignItems:'center',gap:5}}>
-                              <span style={{width:8,height:8,borderRadius:2,background:T.red,display:'inline-block'}}/>
-                              <span style={{fontWeight:700,color:T.red}}>{d.cancelled}</span>
-                            </span>
-                          </td>
-                          <td style={{padding:'7px 10px'}}>
-                            <div style={{display:'flex',alignItems:'center',gap:6}}>
-                              <div style={{width:44,height:5,background:'rgba(0,100,140,0.1)',borderRadius:3}}>
-                                <div style={{width:`${successPct}%`,height:'100%',background:col,borderRadius:3}}/>
-                              </div>
-                              <span style={{color:col,fontWeight:800,fontSize:10}}>{successPct}%</span>
-                            </div>
-                          </td>
-                          <td style={{padding:'7px 10px',color:T.textM,fontWeight:600,whiteSpace:'nowrap'}}>{d.bookedArea?.toLocaleString('en-IN')} sq ft</td>
-                          <td style={{padding:'7px 10px',color:T.textL,fontWeight:600,whiteSpace:'nowrap'}}>{d.cancelledArea?.toLocaleString('en-IN')} sq ft</td>
-                          <td style={{padding:'7px 10px',color:T.amber,fontWeight:700,whiteSpace:'nowrap'}}>₹{d.totalBSPCr} Cr</td>
-                          <td style={{padding:'7px 10px'}}>
-                            <span style={{background:`${T.teal}12`,border:`1px solid ${T.teal}30`,borderRadius:6,padding:'2px 8px',color:T.tealD,fontWeight:700,fontSize:10,whiteSpace:'nowrap'}}>
-                              ₹{d.pricePerSqft?.toLocaleString('en-IN')}/sq ft
-                            </span>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-              {towerData.length>10&&(
-                <button onClick={()=>setTowerExpanded(e=>!e)} style={{display:'flex',alignItems:'center',gap:6,margin:'10px auto 0',padding:'6px 20px',background:'rgba(0,151,167,0.06)',border:'1px solid rgba(0,151,167,0.2)',borderRadius:20,cursor:'pointer',fontSize:10,fontWeight:700,color:T.tealD,transition:'all 0.15s'}}>
-                  {towerExpanded?`▲ Show less`:`▼ Show ${towerData.length-10} more towers`}
-                </button>
-              )}
-            </GC>
+
 
 {/* AREA & PRICING OVERVIEW — hidden, uncomment to restore */}
 {false&&(
