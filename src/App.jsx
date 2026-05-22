@@ -450,14 +450,8 @@ function AppInner() {
   const [cancelTab,setCancelTab]=useState('overview');
   const [showTowerType,setShowTowerType]=useState(false);
   // Chart month range slider (independent of top filters, only affects the 4 Sales & Pricing Trend charts)
-  // Auto-reset range when month list changes
+  // chartRangeIdx state — clampedRange/chartMonthFrom/To defined after ALL_CHART_MONTHS below
   const [chartRangeIdx,setChartRangeIdx]=useState([0,29]);
-  const clampedRange=useMemo(()=>{
-    const maxIdx=Math.max(0,ALL_CHART_MONTHS.length-1);
-    return [Math.min(chartRangeIdx[0],maxIdx), Math.min(chartRangeIdx[1],maxIdx)];
-  },[chartRangeIdx,ALL_CHART_MONTHS]);
-  const chartMonthFrom=ALL_CHART_MONTHS[clampedRange[0]]||'';
-  const chartMonthTo=ALL_CHART_MONTHS[clampedRange[1]]||'';
   // Sales & Pricing Trend chart offsets (must be at component level — hooks rules)
   const TODAY_LABEL=(()=>{const d=new Date();return d.toLocaleString('en-US',{month:'short'}).slice(0,3)+"'"+String(d.getFullYear()).slice(2);})();
   // Reset chart offsets to -1 (auto-center) whenever filters change
@@ -528,6 +522,12 @@ function AppInner() {
     const ms=new Set(src.map(r=>r.bookingMonth).filter(Boolean));
     return Array.from(ms).sort();
   },[pA,raw]);
+  const clampedRange=useMemo(()=>{
+    const maxIdx=Math.max(0,ALL_CHART_MONTHS.length-1);
+    return [Math.min(chartRangeIdx[0],maxIdx),Math.min(chartRangeIdx[1],maxIdx)];
+  },[chartRangeIdx,ALL_CHART_MONTHS]);
+  const chartMonthFrom=ALL_CHART_MONTHS[clampedRange[0]]||'';
+  const chartMonthTo=ALL_CHART_MONTHS[clampedRange[1]]||'';
   const pC=useMemo(()=>pF.filter(r=>r.status==='CANCELLED'),[pF]);
   const dF=useMemo(()=>{if(!raw?.dapp)return[];return raw.dapp.filter(r=>{if(filters.company&&r.companyNorm!==filters.company)return false;if(filters.project){const projs=filters.project.split('||').filter(Boolean);if(projs.length&&!projs.includes(r.project))return false;}if((filters.month||filters.quarter)&&!matchMo(r.billMonth))return false;return true;});},[raw,filters,matchMo]);
   const iF=useMemo(()=>{if(!raw?.invr)return[];return raw.invr.filter(r=>{
