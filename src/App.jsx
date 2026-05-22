@@ -2244,14 +2244,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
               })()}
             </GC>
 
-            {/* ── SECTION: Area-wise Segregation ── */}
-            <div style={{display:'flex',alignItems:'center',gap:12}}>
-              <div style={{background:'linear-gradient(135deg,#166534,#22c55e)',borderRadius:10,padding:'5px 18px',display:'flex',alignItems:'center',gap:8,boxShadow:'0 2px 10px rgba(34,197,94,0.3)'}}>
-                <span style={{fontSize:13}}>🗺️</span>
-                <span style={{fontSize:11,fontWeight:900,color:'#fff',textTransform:'uppercase',letterSpacing:1}}>Area-wise Segregation</span>
-              </div>
-              <div style={{flex:1,height:1,background:'rgba(34,197,94,0.15)',borderRadius:1}}/>
-            </div>
+
 
 
 
