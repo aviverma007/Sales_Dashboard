@@ -782,7 +782,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
     const fyRange=(fy)=>{const m=fy.match(/FY(\d{4})-(\d{2})/);if(!m)return null;return{start:`${m[1]}-04`,end:`${2000+parseInt(m[2])}-03`};};
     const inFY=(mo)=>{if(!selectedFYs.length)return true;return selectedFYs.some(fy=>{const r=fyRange(fy);return r&&mo>=r.start&&mo<=r.end;});};
 
-    // Filter targets by project + FY + quarter/month
+    // Filter targets by project + FY + quarter/month + chart slider range
     const targets=allTargets.filter(t=>{
       if(t.projectFilter){
         if(selectedProjects.length===0)return false;
@@ -790,6 +790,9 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
       }
       if(selectedFYs.length&&!inFY(t.month))return false;
       if(filters.quarter||filters.month){if(!matchMo(t.month))return false;}
+      // Chart slider range filter
+      if(chartMonthFrom&&t.month<chartMonthFrom)return false;
+      if(chartMonthTo&&t.month>chartMonthTo)return false;
       return true;
     });
 
