@@ -1527,77 +1527,46 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                   })()}
                 </GC>
 
-                {/* ── CHART 4: AREA Booked per Month (sq ft) ── */}
+                {/* ── CHART 4: AREA Booked vs Target ── */}
                 <GC style={{padding:16}}>
-                  <SH title="Area — Booked vs Available" sub="Monthly booked area (teal bars) · K sq ft · same window as other charts"/>
+                  <SH title="Area — Booked vs Target"/>
                   {(()=>{
                     const WIN=10;
-                    // Monthly booked area from pA (same as other charts, responds to all filters)
-                    const areaByMonth={};
-                    pA.filter(r=>(!chartMonthFrom||r.bookingMonth>=chartMonthFrom)&&(!chartMonthTo||r.bookingMonth<=chartMonthTo)).forEach(r=>{
-                      const m=r.bookingMonth;
-                      if(!m)return;
-                      if(!areaByMonth[m])areaByMonth[m]={month:m,label:fmtML(m),bookedSqft:0,units:0};
-                      areaByMonth[m].bookedSqft+=(r.superArea||0);
-                      areaByMonth[m].units++;
-                    });
-                    // Cumulative booked area per month → available = totalArea - cumBooked
-                    // Use pA superArea (now populated for all projects from Excel)
-                    // totalInvArea from iF for edition, or from pdrn+invr ratio for others
-                    const invArea=iF.reduce((s,r)=>s+(r.superArea||0),0);
-                    const pdrnTotalArea=pA.reduce((s,r)=>s+(r.superArea||0),0);
-                    // Estimate total inventory area: pA is booked; scale up by booked% from invr
-                    const bookedPct=iF.length>0?(iF.filter(r=>r.status==='Booked').length/iF.length):0.65;
-                    const totalInvArea=invArea>0?invArea:(bookedPct>0?pdrnTotalArea/bookedPct:pdrnTotalArea*1.5);
-                    let cumArea=0;
-                    const sortedMonths=Object.values(areaByMonth).sort((a,b)=>a.month.localeCompare(b.month));
-                    // Area projection: same-quarter catch-up redistribution
-                    const todayDA=new Date();
-                    const aQS=Math.floor((todayDA.getMonth())/3)*3+1;
-                    const mm2l=(y,m)=>{const nm={1:'Jan',2:'Feb',3:'Mar',4:'Apr',5:'May',6:'Jun',7:'Jul',8:'Aug',9:'Sep',10:'Oct',11:'Nov',12:'Dec'};return nm[m]+"'"+String(y).slice(2);};
-                    const moNA={Jan:1,Feb:2,Mar:3,Apr:4,May:5,Jun:6,Jul:7,Aug:8,Sep:9,Oct:10,Nov:11,Dec:12};
-                    const lblYmA=l=>{const p=l.match(/([A-Za-z]{3})'(\d{2})/);return p?(2000+parseInt(p[2]))*100+(moNA[p[1]]||0):0;};
-                    const todayYMA2=todayDA.getFullYear()*100+(todayDA.getMonth()+1);
-                    const cqObjA=[0,1,2].map(i=>{let m=aQS+i,y=todayDA.getFullYear();if(m>12){m-=12;y++;}return{label:mm2l(y,m),ym:y*100+m};});
-                    const pastCqA=cqObjA.filter(o=>o.ym<todayYMA2).map(o=>o.label);
-                    const futureCqA=cqObjA.filter(o=>o.ym>=todayYMA2).map(o=>o.label);
-                    const avgAreaPerUnit=pA.filter(r=>r.superArea>0).reduce((s,r,_,a)=>s+r.superArea/a.length,0)||3200;
-                    // Missed area = missed units × avg area
-                    const missedUnitsA=pastCqA.reduce((s,lbl)=>{const d=monthlyWithTargets.find(r=>r.label===lbl);return s+Math.max(0,(d?.targetUnitsLine||0)-(d?.bookedUnits||0));},0);
-                    const missedAreaK=+(missedUnitsA*avgAreaPerUnit/1000).toFixed(1);
-                    const addAreaPerMonth=futureCqA.length>0?+(missedAreaK/futureCqA.length).toFixed(1):0;
-                    const areaProjMap={};
-                    futureCqA.forEach(lbl=>{
-                      const baseUnits=monthlyWithTargets.find(d=>d.label===lbl)?.targetUnitsLine||0;
-                      const baseK=+(baseUnits*avgAreaPerUnit/1000).toFixed(1);
-                      areaProjMap[lbl]=+(baseK+addAreaPerMonth).toFixed(1);
-                    });
-                    const sortedAreaProj=Object.keys(areaProjMap).sort((a,b)=>lblYmA(a)-lblYmA(b));
-                    const lastAreaLbl=sortedAreaProj[sortedAreaProj.length-1];
-                    const nqBMoA=aQS+3>12?aQS-9:aQS+3;const nqBYA=aQS+3>12?todayDA.getFullYear()+1:todayDA.getFullYear();
-                    const nqBLblA=mm2l(nqBYA,nqBMoA);
-                    const rawData=sortedMonths.map(d=>{
-                      cumArea+=d.bookedSqft;
-                      const availSqft=Math.max(0,totalInvArea-cumArea);
-                      const lbl=fmtML(d.month);
-                      return{
-                        label:lbl,month:d.month,
-                        isCurrent:lbl===TODAY_LABEL,isFuture:false,
-                        bookedK:+(d.bookedSqft/1000).toFixed(1),
-                        cumBookedK:+(cumArea/1000).toFixed(1),
-                        availK:+(availSqft/1000).toFixed(1),
-                        units:d.units,
-                        projectionK:areaProjMap[lbl]||null,
-                        bridgeK:(lbl===lastAreaLbl?areaProjMap[lastAreaLbl]:lbl===nqBLblA?(()=>{const baseU=monthlyWithTargets.find(d=>d.label===nqBLblA)?.targetUnitsLine||0;return+(baseU*avgAreaPerUnit/1000).toFixed(1);})():null),
-                      };
-                    });
-                    const data=suMode==='quarterly'?toQuarterly(rawData,'label').map(q=>({...q,isFuture:false,isCurrent:false})):rawData;
-                    const totBooked=Math.round(iF.filter(r=>r.status==='Booked').reduce((s,r)=>s+(r.superArea||0),0)/1000);
-                    const totAvail=Math.round(iF.filter(r=>r.status==='Available').reduce((s,r)=>s+(r.superArea||0),0)/1000);
+                    // Build from monthlyWithTargets — same source as other 3 charts
+                    const todayA=new Date();
+                    const aQS2=Math.floor((todayA.getMonth())/3)*3+1;
+                    const ml4=(y,m)=>{const n={1:'Jan',2:'Feb',3:'Mar',4:'Apr',5:'May',6:'Jun',7:'Jul',8:'Aug',9:'Sep',10:'Oct',11:'Nov',12:'Dec'};return n[m]+"'"+String(y).slice(2);};
+                    const moNA2={Jan:1,Feb:2,Mar:3,Apr:4,May:5,Jun:6,Jul:7,Aug:8,Sep:9,Oct:10,Nov:11,Dec:12};
+                    const lblYmA2=l=>{const p=l.match(/([A-Za-z]{3})'(\d{2})/);return p?(2000+parseInt(p[2]))*100+(moNA2[p[1]]||0):0;};
+                    const todayYMA3=todayA.getFullYear()*100+(todayA.getMonth()+1);
+                    // Projection: same-quarter catch-up
+                    const cqObjA2=[0,1,2].map(i=>{let m=aQS2+i,y=todayA.getFullYear();if(m>12){m-=12;y++;}return{label:ml4(y,m),ym:y*100+m};});
+                    const pastCqA2=cqObjA2.filter(o=>o.ym<todayYMA3).map(o=>o.label);
+                    const futureCqA2=cqObjA2.filter(o=>o.ym>=todayYMA3).map(o=>o.label);
+                    const missedArea2=pastCqA2.reduce((s,lbl)=>{const d=monthlyWithTargets.find(r=>r.label===lbl);return s+Math.max(0,(d?.targetAreaSqft||0)-(d?.bookedAreaSqft||0));},0);
+                    const addAreaPer2=futureCqA2.length>0?Math.round(missedArea2/futureCqA2.length):0;
+                    const areaProjMap2={};
+                    futureCqA2.forEach(lbl=>{const base=monthlyWithTargets.find(d=>d.label===lbl)?.targetAreaSqft||0;areaProjMap2[lbl]=Math.round(base+addAreaPer2);});
+                    const sortedAP2=Object.keys(areaProjMap2).sort((a,b)=>lblYmA2(a)-lblYmA2(b));
+                    const lastALbl2=sortedAP2[sortedAP2.length-1];
+                    const nqBMoA2=aQS2+3>12?aQS2-9:aQS2+3;const nqBYA2=aQS2+3>12?todayA.getFullYear()+1:todayA.getFullYear();
+                    const nqBLblA2=ml4(nqBYA2,nqBMoA2);
+                    const rawDataA=monthlyWithTargets.map(d=>({
+                      label:d.label,isFuture:d.isFuture,isCurrent:d.label===TODAY_LABEL,
+                      achieved:d.isFuture?null:d.bookedAreaSqft!=null?+(d.bookedAreaSqft/1000).toFixed(1):null,
+                      target:d.targetAreaSqft?+(d.targetAreaSqft/1000).toFixed(1):null,
+                      targetLine:(()=>{if(areaProjMap2[d.label]!=null)return null;const p=d.label.match(/([A-Za-z]{3})'(\d{2})/);if(p&&(2000+parseInt(p[2]))*100+(moNA2[p[1]]||0)<todayYMA3)return null;return d.targetAreaSqft?+(d.targetAreaSqft/1000).toFixed(1):null;})(),
+                      projection:areaProjMap2[d.label]!=null?+(areaProjMap2[d.label]/1000).toFixed(1):null,
+                      bridge:(d.label===lastALbl2?+(areaProjMap2[lastALbl2]/1000).toFixed(1):d.label===nqBLblA2?(monthlyWithTargets.find(r=>r.label===nqBLblA2)?.targetAreaSqft?+(monthlyWithTargets.find(r=>r.label===nqBLblA2).targetAreaSqft/1000).toFixed(1):null):null),
+                    }));
+                    const data=suMode==='quarterly'?toQuarterly(rawDataA,'label').map(q=>({...q,isFuture:false,isCurrent:false})):rawDataA;
                     const cur=data.findIndex(d=>d.isCurrent);
                     const def=cur>=2?cur-2:Math.max(0,data.length-WIN);
                     const off=Math.min(Math.max(suOff<0?def:suOff,0),Math.max(0,data.length-WIN));
                     const sl=data.slice(off,off+WIN);
+                    // KPI pills
+                    const totBooked=monthlyWithTargets.filter(d=>!d.isFuture).reduce((s,d)=>s+(d.bookedAreaSqft||0),0);
+                    const totTarget=monthlyWithTargets.reduce((s,d)=>s+(d.targetAreaSqft||0),0);
                     return(<>
                       <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
                         <div style={{display:'flex',gap:3,background:'rgba(0,100,140,0.07)',borderRadius:20,padding:2}}>
@@ -1612,44 +1581,44 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                       <div style={{display:'flex',gap:10,marginBottom:6}}>
                         <div style={{background:'rgba(0,151,167,0.08)',borderRadius:6,padding:'3px 8px'}}>
                           <span style={{fontSize:8,color:T.textM,fontWeight:700}}>BOOKED </span>
-                          <span style={{fontSize:12,fontWeight:900,color:T.tealD}}>{totBooked.toLocaleString('en-IN')}K</span>
+                          <span style={{fontSize:12,fontWeight:900,color:T.tealD}}>{Math.round(totBooked/1000).toLocaleString('en-IN')}K</span>
                           <span style={{fontSize:8,color:T.textM}}> sq ft</span>
                         </div>
                         <div style={{background:'rgba(245,158,11,0.08)',borderRadius:6,padding:'3px 8px'}}>
-                          <span style={{fontSize:8,color:T.textM,fontWeight:700}}>AVAIL </span>
-                          <span style={{fontSize:12,fontWeight:900,color:T.amber}}>{totAvail.toLocaleString('en-IN')}K</span>
+                          <span style={{fontSize:8,color:T.textM,fontWeight:700}}>TARGET </span>
+                          <span style={{fontSize:12,fontWeight:900,color:T.amber}}>{Math.round(totTarget/1000).toLocaleString('en-IN')}K</span>
                           <span style={{fontSize:8,color:T.textM}}> sq ft</span>
                         </div>
                       </div>
-                      <ResponsiveContainer width="100%" height={180}>
-                        <ComposedChart data={sl} margin={{top:24,right:36,bottom:18,left:0}} barCategoryGap="30%">
+                      <ResponsiveContainer width="100%" height={220}>
+                        <ComposedChart data={sl} margin={{top:24,right:8,bottom:18,left:0}} barCategoryGap="30%">
                           <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.1)" vertical={false}/>
                           <XAxis dataKey="label" tick={({x,y,payload})=>{const d=sl.find(s=>s.label===payload.value);return<text x={x} y={y+10} textAnchor="middle" fontSize={9} fill={d?.isCurrent?T.tealD:T.textM} fontWeight={d?.isCurrent?900:600}>{payload.value}</text>;}} axisLine={false} tickLine={false}/>
-                          <YAxis yAxisId="l" tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={34} tickFormatter={v=>v+'K'}/>
-                          <YAxis yAxisId="r" orientation="right" tick={{fill:T.amber,fontSize:9}} axisLine={false} tickLine={false} width={34} tickFormatter={v=>v+'K'}/>
+                          <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={34} tickFormatter={v=>v+'K'}/>
                           <Tooltip content={({active,payload,label})=>{
                             if(!active||!payload?.length)return null;
                             const d=sl.find(s=>s.label===label);
                             return(<div style={{background:'rgba(255,255,255,0.97)',border:'1px solid rgba(0,151,167,0.3)',borderRadius:10,padding:'8px 12px',fontSize:10}}>
                               <p style={{color:T.tealD,fontWeight:800,margin:'0 0 4px'}}>{label}</p>
-                              <p style={{color:T.teal,margin:'0 0 2px',fontWeight:700}}>Booked: {d?.bookedK}K sq ft ({d?.units} units)</p>
-                              <p style={{color:T.amber,margin:'0 0 2px',fontWeight:700}}>Remaining Avail: {d?.availK}K sq ft</p>
-                              {d?.projectionK!=null&&<p style={{color:'#22c55e',margin:0,fontWeight:700}}>▲ Projection: {d.projectionK}K sq ft</p>}
+                              {d?.achieved!=null&&<p style={{color:T.teal,margin:'0 0 2px',fontWeight:700}}>Achieved: {d.achieved}K sq ft</p>}
+                              {d?.target!=null&&<p style={{color:'#607d8b',margin:'0 0 2px'}}>Target: {d.target}K sq ft</p>}
+                              {d?.projection!=null&&<p style={{color:'#22c55e',margin:0,fontWeight:700}}>▲ Projection: {d.projection}K sq ft</p>}
                             </div>);
                           }}/>
-                          <Legend wrapperStyle={{fontSize:9,fontWeight:700}} iconSize={8}/>
-                          <Bar yAxisId="l" dataKey="bookedK" name="Booked (K sqft)" stackId="s" fill={T.teal} radius={[0,0,3,3]} barSize={18} isAnimationActive={true} animationDuration={800}>
+                          <Legend wrapperStyle={{fontSize:9,fontWeight:700}} iconSize={8} payload={[{value:'Target',type:'rect',color:'#b0bec5'},{value:'Achieved',type:'rect',color:T.teal},{value:'Projection',type:'line',color:'#22c55e'}]}/>
+                          <Bar dataKey="target" name="Target" fill="#b0bec5" fillOpacity={0.75} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={1000}>
+                            <LabelList dataKey="target" position="insideTop" style={{fill:'#607d8b',fontSize:7,fontWeight:700}} formatter={v=>v>0?v+'K':''}/>
+                          </Bar>
+                          <Bar dataKey="achieved" name="Achieved" fill={T.teal} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={800}>
                             {sl.map((d,i)=><Cell key={i} fill={d.isCurrent?T.tealD:T.teal} fillOpacity={d.isCurrent?1:0.85}/>)}
-                            <LabelList dataKey="bookedK" position="insideTop" style={{fill:'#fff',fontSize:7,fontWeight:700}} formatter={v=>v>0?v+'K':''}/>
+                            <LabelList dataKey="achieved" position="top" style={{fill:T.tealD,fontSize:8,fontWeight:800}} formatter={v=>v!=null&&v>0?v+'K':''}/>
                           </Bar>
-                          <Bar yAxisId="l" dataKey="availK" name="Available (K sqft)" stackId="s" fill={T.amber} fillOpacity={0.45} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={1000}>
-                            <LabelList dataKey="availK" position="top" style={{fill:T.amber,fontSize:7,fontWeight:700}} formatter={v=>v>0?v+'K':''}/>
-                          </Bar>
-                          <Line yAxisId="r" type="monotone" dataKey="availK" name="" stroke={T.amber} strokeWidth={1.5} strokeDasharray="4 3" dot={{r:2,fill:T.amber}} activeDot={{r:4}} legendType="none"/>
-                          <Line yAxisId="l" type="monotone" dataKey="projectionK" name="Projection" stroke="#22c55e" strokeWidth={2.5} strokeDasharray="6 2" dot={({cx,cy,payload})=>payload.projectionK!=null?<circle cx={cx} cy={cy} r={5} fill="#22c55e" stroke="#fff" strokeWidth={2}/>:<g/>} activeDot={{r:6,fill:'#22c55e'}} connectNulls={false}>
-                            <LabelList dataKey="projectionK" position="top" style={{fill:'#16a34a',fontSize:8,fontWeight:900}} formatter={v=>v!=null?'▲'+v+'K':''}/>
+                          <Line type="monotone" dataKey="achieved" stroke={T.tealD} strokeWidth={2.5} dot={{r:4,fill:T.tealD,stroke:'#fff',strokeWidth:2}} activeDot={{r:5}} legendType="none" connectNulls={true}/>
+                          <Line type="monotone" dataKey="targetLine" stroke="#607d8b" strokeWidth={2} strokeDasharray="5 3" dot={{r:3,fill:'#607d8b',stroke:'#fff',strokeWidth:1.5}} activeDot={{r:4}} legendType="none" connectNulls={false}/>
+                          <Line type="monotone" dataKey="projection" name="Projection" stroke="#22c55e" strokeWidth={2.5} strokeDasharray="6 2" dot={({cx,cy,payload})=>payload.projection!=null?<circle cx={cx} cy={cy} r={5} fill="#22c55e" stroke="#fff" strokeWidth={2}/>:<g/>} activeDot={{r:6,fill:'#22c55e'}} connectNulls={false}>
+                            <LabelList dataKey="projection" position="top" style={{fill:'#16a34a',fontSize:8,fontWeight:900}} formatter={v=>v!=null?'▲'+v+'K':''}/>
                           </Line>
-                          <Line yAxisId="l" type="monotone" dataKey="bridgeK" stroke="#90a4ae" strokeWidth={1.5} strokeDasharray="4 3" dot={false} activeDot={false} legendType="none" connectNulls={true}/>
+                          <Line type="monotone" dataKey="bridge" stroke="#90a4ae" strokeWidth={1.5} strokeDasharray="4 3" dot={false} activeDot={false} legendType="none" connectNulls={true}/>
                         </ComposedChart>
                       </ResponsiveContainer>
                     </>);
