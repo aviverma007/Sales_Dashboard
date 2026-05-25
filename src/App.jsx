@@ -1379,11 +1379,18 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                       const base=monthlyWithTargets.find(d=>d.label===lbl)?.targetUnitsLine||0;
                       projMap[lbl]=base+addPerMonth; // revised target = original + catch-up
                     });
+                    // Next quarter first month target — to connect green line downward
+                    const nq1Mo=curQsMo+3>12?curQsMo-9:curQsMo+3;
+                    const nq1Y=curQsMo+3>12?todayD.getFullYear()+1:todayD.getFullYear();
+                    const nq1Label=ml(nq1Y,nq1Mo);
+                    const nq1Target=monthlyWithTargets.find(d=>d.label===nq1Label)?.targetUnitsLine||null;
+                    if(nq1Target) projMap[nq1Label]=nq1Target; // green line lands on first next-Q target
+
                     const rawData=monthlyWithTargets.map(d=>({
                       label:d.label,isFuture:d.isFuture,isCurrent:d.label===TODAY_LABEL,
                       achieved:d.isFuture?null:(d.bookedUnits||0),
-                      target:d.targetUnitsLine||null,
-                      // projection only on remaining months of current quarter (incl. today)
+                      // Null out target for projection months so grey line stops cleanly
+                      target:projMap[d.label]!=null?null:(d.targetUnitsLine||null),
                       projection:projMap[d.label]||null,
                     }));
                     const data=uMode==='quarterly'?toQuarterly(rawData,'label').map(q=>({...q,isFuture:false,isCurrent:false})):rawData;
@@ -1417,7 +1424,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                             <LabelList dataKey="achieved" position="top" style={{fill:T.tealD,fontSize:8,fontWeight:800}} formatter={v=>v>0?v:''}/>
                           </Bar>
                           <Line type="monotone" dataKey="achieved" stroke={T.tealD} strokeWidth={2.5} dot={{r:4,fill:T.tealD,stroke:'#fff',strokeWidth:2}} activeDot={{r:5}} legendType="none" connectNulls={true}/>
-                          <Line type="monotone" dataKey="target" stroke="#607d8b" strokeWidth={2} strokeDasharray="5 3" dot={{r:3,fill:'#607d8b',stroke:'#fff',strokeWidth:1.5}} activeDot={{r:4}} legendType="none" connectNulls={true}/>
+                          <Line type="monotone" dataKey="target" stroke="#607d8b" strokeWidth={2} strokeDasharray="5 3" dot={{r:3,fill:'#607d8b',stroke:'#fff',strokeWidth:1.5}} activeDot={{r:4}} legendType="none" connectNulls={false}/>
                           <Line type="monotone" dataKey="projection" name="Projection" stroke="#22c55e" strokeWidth={2.5} strokeDasharray="6 2" dot={({cx,cy,payload})=>payload.projection!=null?<circle cx={cx} cy={cy} r={5} fill="#22c55e" stroke="#fff" strokeWidth={2}/>:<g/>} activeDot={{r:6,fill:'#22c55e'}} connectNulls={false}>
                             <LabelList dataKey="projection" position="top" style={{fill:'#16a34a',fontSize:9,fontWeight:900}} formatter={v=>v!=null?'▲'+v:''}/>
                           </Line>
