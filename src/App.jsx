@@ -1162,17 +1162,17 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                         <div style={{flex:1,display:'flex',flexDirection:'column',gap:3}}>
                           <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline'}}>
                             <span style={{fontSize:7,color:T.textM,fontWeight:700}}>TOTAL PROJECT VALUE</span>
-                            <span style={{fontSize:11,fontWeight:900,color:T.navy}}>₹{(totalPotential/1000).toFixed(2)}K Cr</span>
+                            <span style={{fontSize:11,fontWeight:900,color:T.navy}}>₹{totalPotential.toFixed(0)} Cr</span>
                           </div>
                           <div style={{display:'flex',gap:4}}>
                             <div style={{flex:1,background:`${T.teal}0d`,borderRadius:4,padding:'3px 5px'}}>
                               <p style={{fontSize:6,color:T.textM,fontWeight:700,margin:0}}>SOLD</p>
-                              <p style={{fontSize:10,fontWeight:900,color:T.tealD,margin:0}}>₹{(soldBSP/1000).toFixed(2)}K</p>
-                              <p style={{fontSize:6,color:T.textM,margin:0}}>TCV ₹{(soldTCV/1000).toFixed(2)}K Cr</p>
+                              <p style={{fontSize:10,fontWeight:900,color:T.tealD,margin:0}}>₹{soldBSP.toFixed(0)} Cr</p>
+                              <p style={{fontSize:6,color:T.textM,margin:0}}>TCV ₹{(soldTCV).toFixed(0)} Cr</p>
                             </div>
                             <div style={{flex:1,background:'rgba(245,158,11,0.07)',borderRadius:4,padding:'3px 5px'}}>
                               <p style={{fontSize:6,color:T.textM,fontWeight:700,margin:0}}>UNSOLD</p>
-                              <p style={{fontSize:10,fontWeight:900,color:T.amber,margin:0}}>₹{(unsoldBSP/1000).toFixed(2)}K</p>
+                              <p style={{fontSize:10,fontWeight:900,color:T.amber,margin:0}}>₹{unsoldBSP.toFixed(0)} Cr</p>
                               <p style={{fontSize:6,color:T.textM,margin:0}}>{availUnits} units</p>
                             </div>
                           </div>
@@ -1190,11 +1190,11 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                         <div style={{display:'flex',justifyContent:'space-between'}}>
                           <div>
                             <p style={{fontSize:6,color:T.textM,fontWeight:700,margin:0}}>RECEIVED</p>
-                            <p style={{fontSize:11,fontWeight:900,color:T.tealD,margin:0}}>₹{(totalReceived/1000).toFixed(2)}K Cr</p>
+                            <p style={{fontSize:11,fontWeight:900,color:T.tealD,margin:0}}>₹{totalReceived.toFixed(0)} Cr</p>
                           </div>
                           <div style={{textAlign:'right'}}>
                             <p style={{fontSize:6,color:T.textM,fontWeight:700,margin:0}}>OUTSTANDING</p>
-                            <p style={{fontSize:11,fontWeight:900,color:'#ef4444',margin:0}}>₹{(outstanding/1000).toFixed(2)}K Cr</p>
+                            <p style={{fontSize:11,fontWeight:900,color:'#ef4444',margin:0}}>₹{outstanding.toFixed(0)} Cr</p>
                           </div>
                         </div>
                       </div>
