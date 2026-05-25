@@ -2347,61 +2347,49 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
               const todayM=today.slice(0,7);
 
               // ── Core KPI calculations ─────────────────────────────────
-              // ── KPI logic using PDRN as source of truth ──────────────
-              // PDRN has: Total Demand Amount (With Tax), Total Received, TCV
-              // Total Received in PDRN includes advances (can exceed demand)
-              // Collection Efficiency = min(Total Received / TCV, 100)%
+              // ── KPIs using correct DAPP columns ──────────────────────
+              // demand = 'Total Demand after adj of Credit'
+              // received = 'Received Amt (in Bank)'
+              // outstanding = 'Outstanding 1'
               const pdrnRecs=(raw?.pdrn||[]).filter(r=>r.status==='ACTIVE'&&(selProjs.length===0||selProjs.includes(r.project)));
               const totalTCV=pdrnRecs.reduce((s,r)=>s+(r.tcv||0),0);
-              const totalBSP=pdrnRecs.reduce((s,r)=>s+(r.bsp||0),0);
 
-              // DAPP = billed demand so far
-              const totalDemand=dF.reduce((s,r)=>s+(r.demandWithTax||0),0);
+              const totalDemand=dF.reduce((s,r)=>s+(r.demand||r.demandWithTax||0),0);
+              const totalReceived=dF.reduce((s,r)=>s+(r.received||0),0);
               const totalOutstanding=dF.reduce((s,r)=>s+(r.outstanding||0),0);
               const totalTax=dF.reduce((s,r)=>s+(r.taxAmt||0),0);
               const totalTaxDem=totalTax;
+              const totalCollected=totalReceived;
 
-              // Received = from PDRN (includes advances, correct for efficiency calc)
-              const totalReceived=pdrnRecs.reduce((s,r)=>s+(r.received||0),0);
-              const totalCollected=totalReceived; // actual money received
+              // Efficiency = Received / Demand × 100
+              const collEff=totalDemand>0?Math.round(totalReceived/totalDemand*100):0;
 
-              // Billed but not collected = max(0, Demand - Received)
-              const billedOutstanding=Math.max(0,totalDemand-totalReceived);
+              // Net outstanding = Outstanding 1 (billed but not yet paid)
+              const netOutstanding=totalOutstanding;
 
-              // Unbilled future demand = TCV - Demand Raised
+              // Billed outstanding (same as netOutstanding for display clarity)
+              const billedOutstanding=totalOutstanding;
+
+              // Upcoming = TCV - Demand Raised (not yet billed)
               const upcomingDem=Math.max(0,totalTCV-totalDemand);
 
-              // Net outstanding = sum of Outstanding Amount from DAPP (billed but not collected)
-              const netOutstanding=totalOutstanding; // only on raised demands
-
-              // Collection Efficiency = Received / TCV * 100
-              const collEff=totalTCV>0?Math.round(totalReceived/totalTCV*100):0;
-
-              // Overdue = records in DAPP where outstanding > 0 (billed but not paid)
-              const overdueRecs=dF.filter(r=>r.outstanding>0);
+              // Overdue = records with outstanding > 0
+              const overdueRecs=dF.filter(r=>(r.outstanding||0)>0);
               const overdueAmt=overdueRecs.reduce((s,r)=>s+(r.outstanding||0),0);
 
               // Current month
-              const currMonthDem=dF.filter(r=>r.billMonth===todayM).reduce((s,r)=>s+(r.demandWithTax||0),0);
-              const currMonthColl=pdrnRecs.filter(r=>{
-                if(!r.bookingMonth)return false;
-                return r.bookingMonth===todayM;
-              }).reduce((s,r)=>s+(r.received||0),0);
+              const currMonthDem=dF.filter(r=>r.billMonth===todayM).reduce((s,r)=>s+(r.demand||r.demandWithTax||0),0);
+              const currMonthColl=dF.filter(r=>r.billMonth===todayM).reduce((s,r)=>s+(r.received||0),0);
 
               // ── Monthly trend ─────────────────────────────────────────
               const byMonth={};
-              dF.forEach(r=>{if(!r.billMonth)return;const m=r.billMonth;if(!byMonth[m])byMonth[m]={label:fmtML(m),month:m,dem:0,out:0};byMonth[m].dem+=r.demandWithTax||0;byMonth[m].out+=r.outstanding||0;});
-              // Monthly received from PDRN bookingMonth (approximation)
-              pdrnRecs.forEach(r=>{if(!r.bookingMonth)return;const m=r.bookingMonth;if(!byMonth[m])byMonth[m]={label:fmtML(m),month:m,dem:0,out:0};if(!byMonth[m].rec)byMonth[m].rec=0;byMonth[m].rec+=(r.received||0)/12;});
-              const monthlyTrend=Object.values(byMonth).filter(v=>v.dem>0||v.rec>0).sort((a,b)=>a.month.localeCompare(b.month)).map(v=>({label:v.label,demCr:+(v.dem/1e7).toFixed(1),recCr:+((v.rec||0)/1e7).toFixed(1),outCr:+(v.out/1e7).toFixed(1),eff:v.dem>0?Math.round((v.rec||0)/v.dem*100):0}));
+              dF.forEach(r=>{if(!r.billMonth)return;const m=r.billMonth;if(!byMonth[m])byMonth[m]={label:fmtML(m),month:m,dem:0,out:0};byMonth[m].dem+=(r.demand||r.demandWithTax||0);byMonth[m].rec+=(r.received||0);byMonth[m].out+=(r.outstanding||0);});
+              const monthlyTrend=Object.values(byMonth).filter(v=>v.dem>0||v.rec>0).sort((a,b)=>a.month.localeCompare(b.month)).map(v=>({label:v.label,demCr:+(v.dem/1e7).toFixed(1),recCr:+(v.rec/1e7).toFixed(1),outCr:+(v.out/1e7).toFixed(1),eff:v.dem>0?Math.round(v.rec/v.dem*100):0}));
 
               // ── Project-wise ──────────────────────────────────────────
               const byProj={};
-              // Project received from PDRN
-              const pdrnByProj={};
-              pdrnRecs.forEach(r=>{const p=r.project||'Unknown';if(!pdrnByProj[p])pdrnByProj[p]={rec:0,tcv:0};pdrnByProj[p].rec+=(r.received||0);pdrnByProj[p].tcv+=(r.tcv||0);});
-              dF.forEach(r=>{const p=r.project||'Unknown';if(!byProj[p])byProj[p]={name:p.split(' ').slice(-2).join(' '),dem:0,out:0};byProj[p].dem+=r.demandWithTax||0;byProj[p].out+=r.outstanding||0;});
-              const projData=Object.entries(byProj).map(([k,v])=>{const pr=pdrnByProj[k]||{rec:0,tcv:0};return{fullName:k,name:v.name,demCr:+(v.dem/1e7).toFixed(1),recCr:+(pr.rec/1e7).toFixed(1),outCr:+(Math.max(0,pr.tcv-pr.rec)/1e7).toFixed(1),eff:pr.tcv>0?Math.round(pr.rec/pr.tcv*100):0};}).sort((a,b)=>b.demCr-a.demCr);
+              dF.forEach(r=>{const p=r.project||'Unknown';if(!byProj[p])byProj[p]={name:p.split(' ').slice(-2).join(' '),dem:0,rec:0,out:0};byProj[p].dem+=(r.demand||r.demandWithTax||0);byProj[p].rec+=(r.received||0);byProj[p].out+=(r.outstanding||0);});
+              const projData=Object.entries(byProj).map(([k,v])=>({fullName:k,name:v.name,demCr:+(v.dem/1e7).toFixed(1),recCr:+(v.rec/1e7).toFixed(1),outCr:+(v.out/1e7).toFixed(1),eff:v.dem>0?Math.round(v.rec/v.dem*100):0})).sort((a,b)=>b.demCr-a.demCr);
 
               // ── Ageing ────────────────────────────────────────────────
               const ageBuckets={Future:0,'0-30':0,'31-60':0,'61-90':0,'90+':0};
@@ -2423,7 +2411,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
 
               // ── Tower-wise ────────────────────────────────────────────
               const byTower={};
-              dF.forEach(r=>{const t=r.tower||'Unknown';if(!byTower[t])byTower[t]={name:t,dem:0,coll:0,out:0};byTower[t].dem+=r.demandWithTax||0;byTower[t].coll+=Math.max(0,(r.demandWithTax||0)-(r.outstanding||0));byTower[t].out+=r.outstanding||0;});
+              dF.forEach(r=>{const t=r.tower||'Unknown';if(!byTower[t])byTower[t]={name:t,dem:0,coll:0,out:0};byTower[t].dem+=(r.demand||r.demandWithTax||0);byTower[t].coll+=Math.max(0,(r.demandWithTax||0)-(r.outstanding||0));byTower[t].out+=r.outstanding||0;});
               const towerData2=Object.values(byTower).sort((a,b)=>a.name.localeCompare(b.name)).map(v=>({name:v.name,demCr:+(v.dem/1e7).toFixed(1),recCr:+(v.coll/1e7).toFixed(1),outCr:+(v.out/1e7).toFixed(1),eff:v.dem>0?Math.round(v.coll/v.dem*100):0}));
 
               // ── Upcoming demand by month (next 6 months) ──────────────
@@ -2449,7 +2437,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                   {[
                     {l:'Total Demand Raised',v:fmtC(totalDemand),c:T.amber,sub:`of ₹${(totalTCV/1e7).toFixed(0)}Cr TCV · Tax: ${fmtC(totalTaxDem)}`},
                     {l:'Total Received',v:fmtC(totalCollected),c:T.tealD,sub:`${collEff}% of TCV collected`},
-                    {l:'Outstanding (Billed)',v:fmtC(netOutstanding),c:T.red,sub:`On ₹${(totalDemand/1e7).toFixed(1)}Cr billed · ${overdueRecs.length} units`},
+                    {l:'Outstanding (Unpaid)',v:fmtC(netOutstanding),c:T.red,sub:`${overdueRecs.length} units pending`},
                     {l:'Collection Efficiency',v:`${collEff}%`,c:collEff>80?T.teal:collEff>50?T.amber:T.red,sub:`Received ÷ TCV`},
                   ].map((d,i)=>(<GC key={i} style={{padding:13}} cls="kc">
                     <p style={{fontSize:8,color:T.textM,fontWeight:700,textTransform:'uppercase',margin:'0 0 4px'}}>{d.l}</p>
@@ -2613,7 +2601,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                       </thead>
                       <tbody>
                         {unitRows.map((r,i)=>{
-                          const dem=+(r.dem/1e7).toFixed(2),rec=+(r.coll/1e7).toFixed(2),out=+(r.out/1e7).toFixed(2);
+                          const dem=+(r.dem/1e7).toFixed(2),rec=+(r.rec/1e7).toFixed(2),out=+(r.out/1e7).toFixed(2);
                           const bc=bkColor[r.bucket]||T.textM;
                           return(<tr key={i} style={{background:i%2===0?'transparent':'rgba(0,100,140,0.02)'}}>
                             <td style={{...TD,fontWeight:800,color:T.navy}}>{r.unit}</td>

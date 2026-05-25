@@ -166,9 +166,9 @@ def parse_dapp(rows):
             'unit': safe_str(r.get('Unit Number')),
             'customer': safe_str(r.get('Sold to Party Name') or r.get('Customer Name (Payer)')),
             'billMonth': month,
-            'demand': safe_num(r.get('Total Due Amount With Tax') or r.get('Installment Amount')),
-            'received': safe_num(r.get('Received Amount')),
-            'outstanding': safe_num(r.get('Outstanding Amount')),
+            'demand': safe_num(r.get('Total Demand after adj of Credit') or r.get('Total Due Amount With Tax')),
+            'received': safe_num(r.get('Received Amt (in Bank)')),
+            'outstanding': safe_num(r.get('Outstanding 1') or r.get('Outstanding Amount')),
         })
     return records
 
