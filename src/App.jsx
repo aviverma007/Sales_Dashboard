@@ -2381,10 +2381,12 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
               dF.forEach(r=>{const m=(r.milestone||'Other').slice(0,22);if(!byMile[m])byMile[m]={name:m,dem:0,rec:0,n:0};byMile[m].dem+=r.demandWithTax||0;byMile[m].rec+=r.received||0;byMile[m].n++;});
               const milestoneData=Object.values(byMile).sort((a,b)=>b.dem-a.dem).slice(0,10).map(v=>({name:v.name,demCr:+(v.dem/1e7).toFixed(1),recCr:+(v.rec/1e7).toFixed(1),eff:v.dem>0?Math.round(v.rec/v.dem*100):0}));
 
-              // ── Payment plan mix ──────────────────────────────────────
+              // ── Payment plan mix — count unique units per plan ────────
+              const unitPlanMap={};
+              dF.forEach(r=>{const key=`${r.project}||${r.unit}`;if(!unitPlanMap[key])unitPlanMap[key]={plan:r.paymentPlan||'Unknown',dem:0};unitPlanMap[key].dem+=r.demandWithTax||0;});
               const byPlan={};
-              dF.forEach(r=>{const p=(r.paymentPlan||'Unknown').split(' ').slice(0,3).join(' ');if(!byPlan[p])byPlan[p]={name:p,dem:0,n:0};byPlan[p].dem+=r.demandWithTax||0;byPlan[p].n++;});
-              const planData=Object.values(byPlan).sort((a,b)=>b.dem-a.dem).slice(0,8).map(v=>({name:v.name.length>18?v.name.slice(0,16)+'…':v.name,demCr:+(v.dem/1e7).toFixed(1),n:v.n}));
+              Object.values(unitPlanMap).forEach(u=>{const p=u.plan;if(!byPlan[p])byPlan[p]={name:p,dem:0,units:0};byPlan[p].dem+=u.dem;byPlan[p].units++;});
+              const planData=Object.values(byPlan).sort((a,b)=>b.units-a.units).map(v=>({name:v.name,demCr:+(v.dem/1e7).toFixed(1),n:v.units}));
 
               // ── Tower-wise ────────────────────────────────────────────
               const byTower={};
@@ -2493,18 +2495,25 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     </div>
                   </GC>
                   <GC style={{padding:16}}>
-                    <SH title="Payment Plan Mix"/>
-                    <div style={{overflowY:'auto',maxHeight:220}}>
-                      {planData.map((d,i)=>{const pct=totalDemand>0?Math.round(d.demCr/(totalDemand/1e7)*100):0;return(<div key={i} style={{marginBottom:8}}>
-                        <div style={{display:'flex',justifyContent:'space-between',marginBottom:2}}>
-                          <span style={{fontSize:8,color:T.textM,fontWeight:600,maxWidth:'65%',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{d.name}</span>
-                          <span style={{fontSize:8,color:T.tealD,fontWeight:800}}>₹{d.demCr}Cr · {d.n}u</span>
-                        </div>
-                        <div style={{height:5,background:'rgba(0,100,140,0.08)',borderRadius:3}}>
-                          <div style={{width:pct+'%',height:'100%',background:T.teal,borderRadius:3}}/>
-                        </div>
-                      </div>);})}
+                    <SH title={`Payment Plan Mix (${planData.reduce((s,d)=>s+d.n,0)} units)`}/>
+                    <div style={{overflowY:'auto',maxHeight:220,paddingRight:4}}>
+                      {planData.map((d,i)=>{
+                        const maxUnits=planData[0]?.n||1;
+                        const pct=Math.round(d.n/maxUnits*100);
+                        const totalUnits=planData.reduce((s,r)=>s+r.n,0);
+                        const unitPct=totalUnits>0?Math.round(d.n/totalUnits*100):0;
+                        return(<div key={i} style={{marginBottom:8}}>
+                          <div style={{display:'flex',justifyContent:'space-between',marginBottom:2,gap:8}}>
+                            <span style={{fontSize:8,color:T.textM,fontWeight:600,flex:1,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={d.name}>{d.name}</span>
+                            <span style={{fontSize:8,color:T.tealD,fontWeight:800,whiteSpace:'nowrap'}}>₹{d.demCr}Cr · {d.n} units · {unitPct}%</span>
+                          </div>
+                          <div style={{height:5,background:'rgba(0,100,140,0.08)',borderRadius:3}}>
+                            <div style={{width:pct+'%',height:'100%',background:T.teal,borderRadius:3,transition:'width 0.5s'}}/>
+                          </div>
+                        </div>);
+                      })}
                     </div>
+                    <p style={{fontSize:8,color:T.textL,margin:'6px 0 0',textAlign:'center'}}>↑↓ scroll to see all {planData.length} plans</p>
                   </GC>
                 </div>
 
