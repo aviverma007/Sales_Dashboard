@@ -2371,8 +2371,8 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
               // Unbilled future demand = TCV - Demand Raised
               const upcomingDem=Math.max(0,totalTCV-totalDemand);
 
-              // Net outstanding = TCV - Received (total yet to come)
-              const netOutstanding=Math.max(0,totalTCV-totalReceived);
+              // Net outstanding = sum of Outstanding Amount from DAPP (billed but not collected)
+              const netOutstanding=totalOutstanding; // only on raised demands
 
               // Collection Efficiency = Received / TCV * 100
               const collEff=totalTCV>0?Math.round(totalReceived/totalTCV*100):0;
@@ -2449,7 +2449,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                   {[
                     {l:'Total Demand Raised',v:fmtC(totalDemand),c:T.amber,sub:`of ₹${(totalTCV/1e7).toFixed(0)}Cr TCV · Tax: ${fmtC(totalTaxDem)}`},
                     {l:'Total Received',v:fmtC(totalCollected),c:T.tealD,sub:`${collEff}% of TCV collected`},
-                    {l:'Net Outstanding (vs TCV)',v:fmtC(netOutstanding),c:T.red,sub:`Billed unpaid: ${fmtC(billedOutstanding)}`},
+                    {l:'Outstanding (Billed)',v:fmtC(netOutstanding),c:T.red,sub:`On ₹${(totalDemand/1e7).toFixed(1)}Cr billed · ${overdueRecs.length} units`},
                     {l:'Collection Efficiency',v:`${collEff}%`,c:collEff>80?T.teal:collEff>50?T.amber:T.red,sub:`Received ÷ TCV`},
                   ].map((d,i)=>(<GC key={i} style={{padding:13}} cls="kc">
                     <p style={{fontSize:8,color:T.textM,fontWeight:700,textTransform:'uppercase',margin:'0 0 4px'}}>{d.l}</p>
