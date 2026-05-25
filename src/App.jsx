@@ -1359,11 +1359,13 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const todayD=new Date();
                     const curQsMo=Math.floor((todayD.getMonth())/3)*3+1;
                     const ml=(y,m)=>{const n={1:'Jan',2:'Feb',3:'Mar',4:'Apr',5:'May',6:'Jun',7:'Jul',8:'Aug',9:'Sep',10:'Oct',11:'Nov',12:'Dec'};return n[m]+"'"+String(y).slice(2);};
-                    const curQMonths=[0,1,2].map(i=>{let m=curQsMo+i,y=todayD.getFullYear();if(m>12){m-=12;y++;}return ml(y,m);});
+                    const curQMonthsObj=[0,1,2].map(i=>{let m=curQsMo+i,y=todayD.getFullYear();if(m>12){m-=12;y++;}return{label:ml(y,m),ym:y*100+m};});
+                    const curQMonths=curQMonthsObj.map(o=>o.label);
+                    const todayYMn=todayD.getFullYear()*100+(todayD.getMonth()+1);
                     const todayLabel=ml(todayD.getFullYear(),todayD.getMonth()+1);
-                    // Split quarter into: past months (missed), current month, future months
-                    const pastQMonths=curQMonths.filter(lbl=>lbl<todayLabel);
-                    const futureQMonths=curQMonths.filter(lbl=>lbl>=todayLabel); // current + future
+                    // Use numeric ym for correct date comparison (string compare fails: Jun < May alphabetically)
+                    const pastQMonths=curQMonthsObj.filter(o=>o.ym<todayYMn).map(o=>o.label);
+                    const futureQMonths=curQMonthsObj.filter(o=>o.ym>=todayYMn).map(o=>o.label);
                     // Gap = sum of (target - achieved) for past months in this quarter
                     const missedUnits=pastQMonths.reduce((s,lbl)=>{
                       const d=monthlyWithTargets.find(r=>r.label===lbl);
