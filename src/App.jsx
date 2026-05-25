@@ -1379,12 +1379,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                       const base=monthlyWithTargets.find(d=>d.label===lbl)?.targetUnitsLine||0;
                       projMap[lbl]=base+addPerMonth; // revised target = original + catch-up
                     });
-                    // Next quarter first month target — to connect green line downward
-                    const nq1Mo=curQsMo+3>12?curQsMo-9:curQsMo+3;
-                    const nq1Y=curQsMo+3>12?todayD.getFullYear()+1:todayD.getFullYear();
-                    const nq1Label=ml(nq1Y,nq1Mo);
-                    const nq1Target=monthlyWithTargets.find(d=>d.label===nq1Label)?.targetUnitsLine||null;
-                    if(nq1Target) projMap[nq1Label]=nq1Target; // green line lands on first next-Q target
+                    // No green line beyond current quarter — grey line resumes from Jul
 
                     const rawData=monthlyWithTargets.map(d=>({
                       label:d.label,isFuture:d.isFuture,isCurrent:d.label===TODAY_LABEL,
