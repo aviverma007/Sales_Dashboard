@@ -2404,7 +2404,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
               const TH={padding:'7px 10px',fontSize:9,fontWeight:800,color:T.textM,textTransform:'uppercase',letterSpacing:0.5,borderBottom:`1px solid rgba(0,100,140,0.12)`,background:'rgba(0,100,140,0.03)',whiteSpace:'nowrap',position:'sticky',top:0};
               const TD={padding:'6px 10px',fontSize:10,borderBottom:'1px solid rgba(0,100,140,0.05)',verticalAlign:'middle'};
               const bkColor={'Future':'#64748b','0-30':T.teal,'31-60':T.amber,'61-90':'#f97316','90+':T.red};
-              const SectionHead=({title,icon})=>(<div style={{display:'flex',alignItems:'center',gap:10,margin:'4px 0 10px'}}><div style={{width:4,height:20,background:T.tealD,borderRadius:2}}/><span style={{fontSize:13,fontWeight:900,color:T.navy,letterSpacing:0.3,textTransform:'uppercase'}}>{icon} {title}</span><div style={{flex:1,height:1,background:'rgba(0,100,140,0.1)'}}/></div>);
+              const SectionHead=({title,icon})=>(<div style={{display:'flex',alignItems:'center',gap:10,margin:'8px 0 12px',background:'linear-gradient(135deg,#0d2136,#0f3a5a)',borderRadius:10,padding:'8px 16px',boxShadow:'0 2px 10px rgba(0,0,0,0.25)'}}><span style={{fontSize:14}}>{icon}</span><span style={{fontSize:11,fontWeight:900,color:'#fff',letterSpacing:1,textTransform:'uppercase'}}>{title}</span><div style={{flex:1,height:1,background:'rgba(255,255,255,0.15)',marginLeft:8}}/></div>);
 
               return(<>
 
