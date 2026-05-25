@@ -2333,269 +2333,288 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
         ══════════════════════════════════════════════════════ */}
         {tab==='collections'&&(
           <div style={{display:'flex',flexDirection:'column',gap:14}}>
+            {(()=>{
+              // ── Rich DAPP data from new JSON ──────────────────────────────
+              const selProjs=filters.project?filters.project.split('||').filter(Boolean):[];
+              const dF=(raw?.dapp||[]).filter(r=>{
+                if(selProjs.length&&!selProjs.includes(r.project))return false;
+                if(filters.fy&&r.billMonth){const y=parseInt(r.billMonth.slice(0,4));const m=parseInt(r.billMonth.slice(5,7));const fyStr=m>=4?`FY${y}-${String(y+1).slice(2)}`:`FY${y-1}-${String(y).slice(2)}`;if(fyStr!==filters.fy)return false;}
+                return true;
+              });
+              const today=new Date();
+              const todayStr=today.toISOString().slice(0,7);
 
-            {/* KPI strip */}
-            <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:12}}>
-              {[
-                {l:'DAPP Demand',v:fmtCr(kpi.dappDemand),c:T.amber},
-                {l:'DAPP Received',v:fmtCr(kpi.dappReceived),c:T.teal},
-                {l:'Outstanding',v:fmtCr(kpi.dappOutstanding),c:T.red},
-                {l:'Collection Rate',v:`${tgtAch}%`,c:tgtAch>80?T.teal:tgtAch>50?T.amber:T.red},
-                {l:'Total Sales (PDRN)',v:fmtCr(kpi.totalSales),c:T.navy},
-              ].map((d,i)=>(
-                <GC key={i} style={{padding:14}} cls="kc">
-                  <p style={{color:T.textM,fontSize:9,fontWeight:800,textTransform:'uppercase',letterSpacing:0.5,margin:'0 0 4px'}}>{d.l}</p>
-                  <p style={{fontSize:20,fontWeight:900,color:d.c,margin:0,letterSpacing:-0.5}}>{d.v}</p>
-                  <div style={{position:'absolute',bottom:0,left:0,right:0,height:3,background:`linear-gradient(90deg,${d.c},transparent)`,borderRadius:'0 0 14px 14px'}}/>
-                </GC>
-              ))}
-            </div>
+              // ── KPIs ─────────────────────────────────────────────────────
+              const totalDemand=dF.reduce((s,r)=>s+(r.demandWithTax||r.demand||0),0);
+              const totalReceived=dF.reduce((s,r)=>s+(r.received||0),0);
+              const totalOutstanding=dF.reduce((s,r)=>s+(r.outstanding||0),0);
+              const totalTax=dF.reduce((s,r)=>s+(r.taxAmt||0),0);
+              const currMonthDemand=dF.filter(r=>r.billMonth===todayStr).reduce((s,r)=>s+(r.demandWithTax||r.demand||0),0);
+              const currMonthRcvd=dF.filter(r=>r.billMonth===todayStr).reduce((s,r)=>s+(r.received||0),0);
+              const overdue=dF.filter(r=>r.outstanding>0&&r.ageDays>30).reduce((s,r)=>s+(r.outstanding||0),0);
+              const collEff=totalDemand>0?Math.round(totalReceived/totalDemand*100):0;
+              // Advance = received > demand per unit (overpaid)
+              const unitMap={};
+              dF.forEach(r=>{const k=r.unit||'';if(!unitMap[k])unitMap[k]={d:0,r:0};unitMap[k].d+=(r.demandWithTax||r.demand||0);unitMap[k].r+=(r.received||0);});
+              const advance=Object.values(unitMap).reduce((s,v)=>s+Math.max(0,v.r-v.d),0);
+              const netOutstanding=Math.max(0,totalOutstanding-advance);
+              const fmtCrL=v=>`₹${(v/1e7).toFixed(1)}Cr`;
+              const demKPIs=[
+                {l:'Total Demand Raised',v:fmtCrL(totalDemand),c:T.amber,icon:'📋'},
+                {l:'Current Month Demand',v:fmtCrL(currMonthDemand),c:T.amber,icon:'📅'},
+                {l:'Overdue Demand (>30d)',v:fmtCrL(overdue),c:T.red,icon:'⚠️'},
+                {l:'GST / Tax Demand',v:fmtCrL(totalTax),c:'#7c3aed',icon:'🧾'},
+              ];
+              const colKPIs=[
+                {l:'Total Collection Received',v:fmtCrL(totalReceived),c:T.teal,icon:'💰'},
+                {l:'Current Month Collection',v:fmtCrL(currMonthRcvd),c:T.teal,icon:'📥'},
+                {l:'Collection Efficiency',v:`${collEff}%`,c:collEff>80?T.teal:collEff>50?T.amber:T.red,icon:'📊'},
+                {l:'Net Outstanding',v:fmtCrL(netOutstanding),c:T.red,icon:'🔴'},
+              ];
 
-            {/* Charts row */}
-            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
-              <GC style={{padding:16}}>
-                <SH title="DAPP Monthly — Demand vs. Collection" sub="₹ Crores"/>
-                <ResponsiveContainer width="100%" height={230}>
-                  <BarChart data={dappLast12} margin={{top:5,right:8,bottom:18,left:0}}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.2)" vertical={false}/>
-                    <XAxis dataKey="label" tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false} angle={-25} dy={6} interval="preserveStartEnd"/>
-                    <YAxis tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false} tickFormatter={v=>`${v}Cr`} width={30}/>
-                    <Tooltip content={<CTip fmt={v=>`₹${v} Cr`}/>}/>
-                    <Legend wrapperStyle={{color:T.text,fontSize:10,fontWeight:700}} iconSize={8}/>
-                    <Bar dataKey="demCr"  name="Demand"      fill={T.amber}  radius={[3,3,0,0]} fillOpacity={0.85}>
-                      <LabelList dataKey="demCr"  position="top" style={{fill:T.amber,fontSize:7,fontWeight:700}} formatter={v=>v>0?`${v}`:''} />
-                    </Bar>
-                    <Bar dataKey="recCr"  name="Received"    fill={T.teal}   radius={[3,3,0,0]} fillOpacity={0.85}>
-                      <LabelList dataKey="recCr"  position="top" style={{fill:T.tealD,fontSize:7,fontWeight:700}} formatter={v=>v>0?`${v}`:''} />
-                    </Bar>
-                    <Bar dataKey="outCr"  name="Outstanding" fill={T.red}    radius={[3,3,0,0]} fillOpacity={0.75}>
-                      <LabelList dataKey="outCr"  position="top" style={{fill:T.red,fontSize:7,fontWeight:700}} formatter={v=>v>0?`${v}`:''} />
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </GC>
+              // ── Monthly trend ─────────────────────────────────────────────
+              const byMonth={};
+              dF.forEach(r=>{const m=r.billMonth||'unknown';if(!byMonth[m])byMonth[m]={label:fmtML(m),demCr:0,recCr:0,outCr:0};byMonth[m].demCr+=+(( r.demandWithTax||r.demand||0)/1e7).toFixed(2);byMonth[m].recCr+=+((r.received||0)/1e7).toFixed(2);byMonth[m].outCr+=+((r.outstanding||0)/1e7).toFixed(2);});
+              const monthlyTrend=Object.entries(byMonth).filter(([m])=>m!=='unknown').sort(([a],[b])=>a.localeCompare(b)).slice(-18).map(([m,v])=>({...v,demCr:+v.demCr.toFixed(1),recCr:+v.recCr.toFixed(1),outCr:+v.outCr.toFixed(1)}));
 
-              <GC style={{padding:16}}>
-                <SH title="DAPP Collection by Project" sub="₹ Crores"/>
-                <ResponsiveContainer width="100%" height={230}>
-                  <BarChart data={dappByP} margin={{top:5,right:8,bottom:0,left:0}}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.2)" vertical={false}/>
-                    <XAxis dataKey="name" tick={{fill:T.textM,fontSize:10,fontWeight:600}} axisLine={false} tickLine={false} tickFormatter={v=>v?.split(' ').pop()}/>
-                    <YAxis tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false} tickFormatter={v=>`${v}Cr`} width={30}/>
-                    <Tooltip content={<CTip fmt={v=>`₹${v} Cr`}/>}/>
-                    <Legend wrapperStyle={{color:T.text,fontSize:10,fontWeight:700}} iconSize={8}/>
-                    <Bar dataKey="demCr"  name="Demand"      fill={T.amber} radius={[3,3,0,0]} fillOpacity={0.85}>
-                      <LabelList dataKey="demCr"  position="top" style={{fill:T.amber,fontSize:7,fontWeight:700}} formatter={v=>v>0?`${v}`:''} />
-                    </Bar>
-                    <Bar dataKey="recCr"  name="Received"    fill={T.teal}  radius={[3,3,0,0]} fillOpacity={0.85}>
-                      <LabelList dataKey="recCr"  position="top" style={{fill:T.tealD,fontSize:7,fontWeight:700}} formatter={v=>v>0?`${v}`:''} />
-                    </Bar>
-                    <Bar dataKey="outCr"  name="Outstanding" fill={T.red}   radius={[3,3,0,0]} fillOpacity={0.75}>
-                      <LabelList dataKey="outCr"  position="top" style={{fill:T.red,fontSize:7,fontWeight:700}} formatter={v=>v>0?`${v}`:''} />
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </GC>
-            </div>
+              // ── Ageing buckets ────────────────────────────────────────────
+              const ageing={'Future':0,'0-30':0,'31-60':0,'61-90':0,'90+':0};
+              dF.filter(r=>r.outstanding>0).forEach(r=>{const b=r.ageBucket||'90+';if(ageing[b]!==undefined)ageing[b]+=(r.outstanding||0)/1e7;});
+              const ageingData=[
+                {name:'Future',val:+ageing['Future'].toFixed(1),color:'#64748b'},
+                {name:'0–30d',val:+ageing['0-30'].toFixed(1),color:T.teal},
+                {name:'31–60d',val:+ageing['31-60'].toFixed(1),color:T.amber},
+                {name:'61–90d',val:+ageing['61-90'].toFixed(1),color:'#f97316'},
+                {name:'90+d',val:+ageing['90+'].toFixed(1),color:T.red},
+              ].filter(d=>d.val>0);
 
-            {/* Outstanding collection progress per project */}
-            <GC style={{padding:16}}>
-              <SH title="Collection Progress by Project" sub="Total Demand · Received · Outstanding"/>
-              <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(240px,1fr))',gap:12}}>
-                {dappByP.map((d,i)=>{
-                  const p=d.demCr>0?Math.min(Math.round((d.recCr/d.demCr)*100),100):0;
-                  const col=p>=100?T.teal:p>80?T.tealD:p>50?T.amber:T.red;
-                  return(
-                    <div key={i} style={{padding:'14px 16px',background:'rgba(255,255,255,0.93)',borderRadius:12,border:'1px solid rgba(255,255,255,0.85)',boxShadow:'0 2px 12px rgba(0,80,120,0.08)'}}>
-                      <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:6}}>
-                        <span style={{fontSize:12,fontWeight:800,color:T.navy,maxWidth:'70%',lineHeight:1.3}}>{d.name}</span>
-                        <span style={{fontSize:13,fontWeight:900,color:col,letterSpacing:-0.5}}>{p}%</span>
+              // ── Project-wise ──────────────────────────────────────────────
+              const byProj={};
+              dF.forEach(r=>{const p=r.project||'Unknown';if(!byProj[p])byProj[p]={name:p.split(' ').slice(-2).join(' '),demCr:0,recCr:0,outCr:0};byProj[p].demCr+=((r.demandWithTax||r.demand||0)/1e7);byProj[p].recCr+=((r.received||0)/1e7);byProj[p].outCr+=((r.outstanding||0)/1e7);});
+              const projData=Object.values(byProj).map(v=>({...v,demCr:+v.demCr.toFixed(1),recCr:+v.recCr.toFixed(1),outCr:+v.outCr.toFixed(1)})).sort((a,b)=>b.demCr-a.demCr);
+
+              // ── Milestone-wise ────────────────────────────────────────────
+              const byMilestone={};
+              dF.forEach(r=>{const m=r.milestone||'Other';const short=m.length>20?m.slice(0,18)+'…':m;if(!byMilestone[short])byMilestone[short]={name:short,demCr:0,recCr:0};byMilestone[short].demCr+=((r.demandWithTax||r.demand||0)/1e7);byMilestone[short].recCr+=((r.received||0)/1e7);});
+              const milestoneData=Object.values(byMilestone).map(v=>({...v,demCr:+v.demCr.toFixed(1),recCr:+v.recCr.toFixed(1)})).sort((a,b)=>b.demCr-a.demCr).slice(0,10);
+
+              // ── Unit-wise table ───────────────────────────────────────────
+              const unitTable={};
+              dF.forEach(r=>{const k=`${r.project}||${r.unit}`;if(!unitTable[k])unitTable[k]={unit:r.unit,customer:r.customer,project:r.project,tower:r.tower,demand:0,received:0,outstanding:0,dueDate:r.dueDate,bucket:r.ageBucket};unitTable[k].demand+=(r.demandWithTax||r.demand||0);unitTable[k].received+=(r.received||0);unitTable[k].outstanding+=(r.outstanding||0);});
+              const unitRows=Object.values(unitTable).filter(r=>r.demand>0).sort((a,b)=>b.outstanding-a.outstanding).slice(0,50);
+
+              // ── Collection Efficiency for gauge ──────────────────────────
+              const effData=[{name:'Collected',value:collEff,fill:collEff>80?T.teal:collEff>50?T.amber:T.red},{name:'Remaining',value:100-collEff,fill:'rgba(0,100,140,0.08)'}];
+
+              const TH={padding:'8px 10px',fontSize:9,fontWeight:800,color:T.textM,textTransform:'uppercase',letterSpacing:0.5,borderBottom:`1px solid rgba(0,100,140,0.12)`,background:'rgba(0,100,140,0.03)',whiteSpace:'nowrap'};
+              const TD={padding:'7px 10px',fontSize:10,borderBottom:'1px solid rgba(0,100,140,0.05)',verticalAlign:'middle'};
+              const bucketColor={'Future':'#64748b','0-30':T.teal,'31-60':T.amber,'61-90':'#f97316','90+':T.red};
+
+              return(<>
+                {/* ── 8 DEMAND KPIs ── */}
+                <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10}}>
+                  {demKPIs.map((d,i)=>(
+                    <GC key={i} style={{padding:12}} cls="kc">
+                      <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:4}}>
+                        <span style={{fontSize:14}}>{d.icon}</span>
+                        <p style={{color:T.textM,fontSize:8,fontWeight:800,textTransform:'uppercase',letterSpacing:0.5,margin:0}}>{d.l}</p>
                       </div>
-                      <div style={{marginBottom:8}}>
-                        <div style={{display:'flex',justifyContent:'space-between',marginBottom:3}}>
-                          <span style={{fontSize:9,color:T.textL,fontWeight:600}}>TOTAL DEMAND</span>
-                          <span style={{fontSize:11,fontWeight:800,color:T.navy}}>₹{d.demCr}Cr</span>
-                        </div>
-                        <div style={{width:'100%',height:7,background:'rgba(0,100,140,0.1)',borderRadius:4}}>
-                          <div style={{width:`${Math.min(p,100)}%`,height:'100%',background:`linear-gradient(90deg,${col},${p>=100?T.greenL:p>80?T.tealL:p>50?T.amberL:T.redL})`,borderRadius:4,transition:'width 0.5s ease'}}/>
-                        </div>
+                      <p style={{fontSize:18,fontWeight:900,color:d.c,margin:0,letterSpacing:-0.5}}>{d.v}</p>
+                      <div style={{position:'absolute',bottom:0,left:0,right:0,height:3,background:`linear-gradient(90deg,${d.c},transparent)`,borderRadius:'0 0 14px 14px'}}/>
+                    </GC>
+                  ))}
+                </div>
+                <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10}}>
+                  {colKPIs.map((d,i)=>(
+                    <GC key={i} style={{padding:12}} cls="kc">
+                      <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:4}}>
+                        <span style={{fontSize:14}}>{d.icon}</span>
+                        <p style={{color:T.textM,fontSize:8,fontWeight:800,textTransform:'uppercase',letterSpacing:0.5,margin:0}}>{d.l}</p>
                       </div>
-                      <div style={{display:'flex',justifyContent:'space-between',paddingTop:6,borderTop:'1px solid rgba(0,100,140,0.08)'}}>
-                        <div>
-                          <p style={{fontSize:9,color:T.textM,margin:'0 0 1px',fontWeight:800}}>RECEIVED</p>
-                          <p style={{fontSize:11,color:T.tealD,fontWeight:700,margin:0}}>₹{d.recCr}Cr</p>
-                        </div>
-                        <div style={{textAlign:'right'}}>
-                          <p style={{fontSize:9,color:T.textM,margin:'0 0 1px',fontWeight:800}}>OUTSTANDING</p>
-                          <p style={{fontSize:11,color:d.outCr>0?T.red:T.greenL,fontWeight:700,margin:0}}>₹{d.outCr}Cr</p>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </GC>
+                      <p style={{fontSize:18,fontWeight:900,color:d.c,margin:0,letterSpacing:-0.5}}>{d.v}</p>
+                      <div style={{position:'absolute',bottom:0,left:0,right:0,height:3,background:`linear-gradient(90deg,${d.c},transparent)`,borderRadius:'0 0 14px 14px'}}/>
+                    </GC>
+                  ))}
+                </div>
 
-            {/* ── UPCOMING DEMANDS ── */}
-            <GC style={{padding:18}}>
-              <SH title="Upcoming Demands" sub="Future due dates from DAPP · by Milestone"/>
-              {(()=>{
-                const ud = raw?.upcomingDemands || {};
-                const detail = ud.detail || [];
-                const buckets = ud.bucketSummary || [];
-                const BUCKET_COLORS = {'0–30 Days':T.red,'31–60 Days':T.orange,'61–90 Days':T.amber,'91–180 Days':T.teal,'181–365 Days':T.navy,'1+ Year':T.gray};
-                // filter by current project/company filters
-                const filtered = detail.filter(r=>{
-                  if(filters.company && r.company!==filters.company) return false;
-                  if(filters.project){const _p=filters.project.split('||').filter(Boolean);if(_p.length&&!_p.includes(r.project))return false;}
-                  return true;
-                });
-                if(filtered.length===0) return (
-                  <div style={{textAlign:'center',padding:'24px 0',color:T.textM}}>
-                    <p style={{fontSize:32,margin:'0 0 8px'}}>✅</p>
-                    <p style={{fontWeight:700,fontSize:14}}>No upcoming demands in selected period</p>
-                    <p style={{fontSize:11,color:T.textL}}>All future demands are beyond current horizon</p>
-                  </div>
-                );
-                return (
-                  <div>
-                    {/* Bucket KPI chips */}
-                    <div style={{display:'flex',gap:10,flexWrap:'wrap',marginBottom:16}}>
-                      {buckets.map((b,i)=>(
-                        <div key={i} style={{padding:'8px 14px',borderRadius:10,background:`${BUCKET_COLORS[b.bucket]||T.teal}15`,border:`1.5px solid ${BUCKET_COLORS[b.bucket]||T.teal}44`}}>
-                          <p style={{fontSize:9,fontWeight:800,color:BUCKET_COLORS[b.bucket]||T.teal,margin:'0 0 2px',textTransform:'uppercase',letterSpacing:0.5}}>{b.bucket}</p>
-                          <p style={{fontSize:15,fontWeight:900,color:T.navy,margin:'0 0 1px',letterSpacing:-0.5}}>{b.rows} <span style={{fontSize:10,fontWeight:600,color:T.textM}}>demands</span></p>
-                          <p style={{fontSize:11,fontWeight:700,color:BUCKET_COLORS[b.bucket]||T.teal,margin:0}}>₹{b.demandCr}Cr</p>
-                        </div>
-                      ))}
-                    </div>
-                    {/* Detail table */}
+                {/* ── CHART ROW 1: Monthly Trend + Collection Efficiency ── */}
+                <div style={{display:'grid',gridTemplateColumns:'2fr 1fr',gap:12}}>
+                  <GC style={{padding:16}}>
+                    <SH title="Demand vs Collection Trend"/>
                     <div style={{overflowX:'auto'}}>
-                      <table style={{width:'100%',borderCollapse:'collapse',fontSize:11}}>
-                        <thead><tr style={{borderBottom:`2px solid rgba(0,151,167,0.2)`}}>
-                          {['Due Date','Days Away','Project','Unit','Customer','Milestone','Demand','Outstanding','Status'].map(h=>(
-                            <th key={h} style={{padding:'7px 10px',textAlign:'left',color:T.textM,fontSize:9,fontWeight:800,letterSpacing:0.5,whiteSpace:'nowrap',textTransform:'uppercase'}}>{h}</th>
+                      <div style={{minWidth:Math.max(monthlyTrend.length*60,400)+'px'}}>
+                        <ResponsiveContainer width="100%" height={220}>
+                          <BarChart data={monthlyTrend} margin={{top:16,right:8,bottom:24,left:0}} barCategoryGap="25%">
+                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.08)" vertical={false}/>
+                            <XAxis dataKey="label" tick={{fill:T.textM,fontSize:8,fontWeight:600}} axisLine={false} tickLine={false} angle={-30} textAnchor="end" height={36}/>
+                            <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} tickFormatter={v=>v+'Cr'} width={32}/>
+                            <Tooltip content={<CTip fmt={v=>`₹${v} Cr`}/>}/>
+                            <Legend wrapperStyle={{fontSize:9,fontWeight:700}} iconSize={8}/>
+                            <Bar dataKey="demCr" name="Demand" fill={T.amber} radius={[3,3,0,0]} fillOpacity={0.85}>
+                              <LabelList dataKey="demCr" position="top" style={{fill:T.amber,fontSize:7,fontWeight:700}} formatter={v=>v>0?v:''}/>
+                            </Bar>
+                            <Bar dataKey="recCr" name="Received" fill={T.teal} radius={[3,3,0,0]} fillOpacity={0.85}>
+                              <LabelList dataKey="recCr" position="top" style={{fill:T.tealD,fontSize:7,fontWeight:700}} formatter={v=>v>0?v:''}/>
+                            </Bar>
+                            <Bar dataKey="outCr" name="Outstanding" fill={T.red} radius={[3,3,0,0]} fillOpacity={0.7}>
+                              <LabelList dataKey="outCr" position="top" style={{fill:T.red,fontSize:7,fontWeight:700}} formatter={v=>v>0?v:''}/>
+                            </Bar>
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+                  </GC>
+                  <GC style={{padding:16}}>
+                    <SH title="Collection Efficiency"/>
+                    <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:8}}>
+                      <div style={{position:'relative',width:140,height:140}}>
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie data={effData} cx="50%" cy="50%" startAngle={220} endAngle={-40} innerRadius={46} outerRadius={66} paddingAngle={2} dataKey="value" strokeWidth={0}>
+                              {effData.map((d,i)=><Cell key={i} fill={d.fill}/>)}
+                            </Pie>
+                          </PieChart>
+                        </ResponsiveContainer>
+                        <div style={{position:'absolute',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',pointerEvents:'none'}}>
+                          <span style={{fontSize:22,fontWeight:900,color:collEff>80?T.teal:collEff>50?T.amber:T.red,lineHeight:1}}>{collEff}%</span>
+                          <span style={{fontSize:8,color:T.textM,fontWeight:700}}>Efficiency</span>
+                        </div>
+                      </div>
+                      <div style={{width:'100%',display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+                        <div style={{background:`${T.amber}0d`,borderRadius:7,padding:'6px 10px',textAlign:'center'}}>
+                          <p style={{fontSize:7,color:T.textM,margin:0,fontWeight:700}}>DEMAND</p>
+                          <p style={{fontSize:12,fontWeight:900,color:T.amber,margin:0}}>{fmtCrL(totalDemand)}</p>
+                        </div>
+                        <div style={{background:`${T.teal}0d`,borderRadius:7,padding:'6px 10px',textAlign:'center'}}>
+                          <p style={{fontSize:7,color:T.textM,margin:0,fontWeight:700}}>RECEIVED</p>
+                          <p style={{fontSize:12,fontWeight:900,color:T.tealD,margin:0}}>{fmtCrL(totalReceived)}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </GC>
+                </div>
+
+                {/* ── CHART ROW 2: Ageing + Project-wise ── */}
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+                  <GC style={{padding:16}}>
+                    <SH title="Ageing Analysis — Outstanding"/>
+                    <ResponsiveContainer width="100%" height={200}>
+                      <BarChart data={ageingData} margin={{top:16,right:8,bottom:8,left:0}}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.08)" vertical={false}/>
+                        <XAxis dataKey="name" tick={{fill:T.textM,fontSize:10,fontWeight:700}} axisLine={false} tickLine={false}/>
+                        <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} tickFormatter={v=>v+'Cr'} width={32}/>
+                        <Tooltip content={<CTip fmt={v=>`₹${v} Cr`}/>}/>
+                        <Bar dataKey="val" name="Outstanding (₹Cr)" radius={[4,4,0,0]}>
+                          {ageingData.map((d,i)=><Cell key={i} fill={d.color}/>)}
+                          <LabelList dataKey="val" position="top" style={{fontSize:9,fontWeight:800}} formatter={v=>v>0?v+'Cr':''}/>
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </GC>
+                  <GC style={{padding:16}}>
+                    <SH title="Project-wise Outstanding"/>
+                    <ResponsiveContainer width="100%" height={200}>
+                      <BarChart data={projData} margin={{top:16,right:8,bottom:8,left:0}} barCategoryGap="30%">
+                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.08)" vertical={false}/>
+                        <XAxis dataKey="name" tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false} tickFormatter={v=>v?.split(' ').pop()}/>
+                        <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} tickFormatter={v=>v+'Cr'} width={32}/>
+                        <Tooltip content={<CTip fmt={v=>`₹${v} Cr`}/>}/>
+                        <Legend wrapperStyle={{fontSize:9,fontWeight:700}} iconSize={8}/>
+                        <Bar dataKey="demCr" name="Demand" fill={T.amber} radius={[3,3,0,0]} fillOpacity={0.8}/>
+                        <Bar dataKey="recCr" name="Received" fill={T.teal} radius={[3,3,0,0]} fillOpacity={0.85}/>
+                        <Bar dataKey="outCr" name="Outstanding" fill={T.red} radius={[3,3,0,0]} fillOpacity={0.7}/>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </GC>
+                </div>
+
+                {/* ── CHART ROW 3: Milestone-wise + Collection Progress ── */}
+                <div style={{display:'grid',gridTemplateColumns:'3fr 2fr',gap:12}}>
+                  <GC style={{padding:16}}>
+                    <SH title="Milestone-wise Demand"/>
+                    <div style={{overflowX:'auto'}}>
+                      <div style={{minWidth:Math.max(milestoneData.length*80,400)+'px'}}>
+                        <ResponsiveContainer width="100%" height={200}>
+                          <BarChart data={milestoneData} margin={{top:16,right:8,bottom:48,left:0}} barCategoryGap="30%">
+                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.08)" vertical={false}/>
+                            <XAxis dataKey="name" tick={{fill:T.textM,fontSize:7,fontWeight:600}} axisLine={false} tickLine={false} angle={-35} textAnchor="end" height={56} interval={0}/>
+                            <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} tickFormatter={v=>v+'Cr'} width={32}/>
+                            <Tooltip content={<CTip fmt={v=>`₹${v} Cr`}/>}/>
+                            <Legend wrapperStyle={{fontSize:9,fontWeight:700}} iconSize={8}/>
+                            <Bar dataKey="demCr" name="Demand" fill={T.amber} radius={[3,3,0,0]} fillOpacity={0.85}/>
+                            <Bar dataKey="recCr" name="Received" fill={T.teal} radius={[3,3,0,0]} fillOpacity={0.85}/>
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+                  </GC>
+                  <GC style={{padding:16}}>
+                    <SH title="Collection Progress by Project"/>
+                    <div style={{display:'flex',flexDirection:'column',gap:8}}>
+                      {projData.map((d,i)=>{
+                        const p=d.demCr>0?Math.min(Math.round(d.recCr/d.demCr*100),100):0;
+                        const col=p>=80?T.teal:p>=50?T.amber:T.red;
+                        return(<div key={i}>
+                          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:3}}>
+                            <span style={{fontSize:9,fontWeight:700,color:T.textM}}>{d.name}</span>
+                            <div style={{display:'flex',gap:8,alignItems:'center'}}>
+                              <span style={{fontSize:8,color:T.textL}}>₹{d.recCr}/{d.demCr}Cr</span>
+                              <span style={{fontSize:10,fontWeight:900,color:col,minWidth:32,textAlign:'right'}}>{p}%</span>
+                            </div>
+                          </div>
+                          <div style={{height:8,background:'rgba(0,100,140,0.08)',borderRadius:4,overflow:'hidden'}}>
+                            <div style={{width:p+'%',height:'100%',background:col,borderRadius:4,transition:'width 0.6s ease'}}/>
+                          </div>
+                        </div>);
+                      })}
+                    </div>
+                  </GC>
+                </div>
+
+                {/* ── UNIT-WISE TABLE ── */}
+                <GC style={{padding:16}}>
+                  <SH title="Customer / Unit-wise Collection Status"/>
+                  <div style={{overflowX:'auto',maxHeight:400,overflowY:'auto'}}>
+                    <table style={{width:'100%',borderCollapse:'collapse',fontSize:10}}>
+                      <thead style={{position:'sticky',top:0,zIndex:2}}>
+                        <tr>
+                          {['Unit','Customer','Project','Tower','Demand (₹Cr)','Received (₹Cr)','Outstanding (₹Cr)','Bucket'].map(h=>(
+                            <th key={h} style={{...TH,textAlign:h.includes('₹')?'right':'left'}}>{h}</th>
                           ))}
-                        </tr></thead>
-                        <tbody>{filtered.map((r,i)=>{
-                          const col = BUCKET_COLORS[r.Bucket]||T.teal;
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {unitRows.map((r,i)=>{
+                          const dem=+(r.demand/1e7).toFixed(2),rec=+(r.received/1e7).toFixed(2),out=+(r.outstanding/1e7).toFixed(2);
+                          const bc=bucketColor[r.bucket]||T.textM;
                           return(
-                            <tr key={i} className="tr" style={{borderBottom:`1px solid rgba(0,100,140,0.1)`}}>
-                              <td style={{padding:'8px 10px',color:T.navy,fontWeight:700,whiteSpace:'nowrap'}}>{r.dueDate}</td>
-                              <td style={{padding:'8px 10px'}}>
-                                <span style={{background:`${col}18`,border:`1px solid ${col}33`,borderRadius:8,padding:'2px 8px',fontSize:10,fontWeight:800,color:col,whiteSpace:'nowrap'}}>{r.daysAway}d</span>
-                              </td>
-                              <td style={{padding:'8px 10px',color:T.textM,fontSize:10,whiteSpace:'nowrap'}}>{r.project?.split(' ').pop()}</td>
-                              <td style={{padding:'8px 10px',color:T.tealD,fontFamily:'monospace',fontSize:10,fontWeight:700}}>{r.unit}</td>
-                              <td style={{padding:'8px 10px',color:T.text,fontWeight:600,maxWidth:160}}>{r.customer}</td>
-                              <td style={{padding:'8px 10px',color:T.textM,fontSize:10,maxWidth:200}}>{r.milestone}</td>
-                              <td style={{padding:'8px 10px',color:T.navy,fontWeight:700,whiteSpace:'nowrap'}}>₹{((r.demand||0)/1e7).toFixed(2)}Cr</td>
-                              <td style={{padding:'8px 10px',color:(r.outstanding||0)>0?T.red:T.teal,fontWeight:700,whiteSpace:'nowrap'}}>₹{((r.outstanding||0)/1e7).toFixed(2)}Cr</td>
-                              <td style={{padding:'8px 10px'}}>
-                                <span style={{background:`${(r.outstanding||0)>0?T.red:T.teal}18`,border:`1px solid ${(r.outstanding||0)>0?T.red:T.teal}33`,borderRadius:8,padding:'2px 8px',fontSize:9,fontWeight:700,color:(r.outstanding||0)>0?T.red:T.teal}}>
-                                  {(r.outstanding||0)>0?'Pending':'Cleared'}
-                                </span>
+                            <tr key={i} style={{background:i%2===0?'transparent':'rgba(0,100,140,0.02)'}}>
+                              <td style={{...TD,fontWeight:800,color:T.navy}}>{r.unit}</td>
+                              <td style={{...TD,maxWidth:140,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{r.customer}</td>
+                              <td style={{...TD,color:T.textM,fontSize:9}}>{(r.project||'').split(' ').slice(-2).join(' ')}</td>
+                              <td style={{...TD,color:T.textM}}>{r.tower||'—'}</td>
+                              <td style={{...TD,textAlign:'right',fontWeight:700,color:T.amber}}>₹{dem}</td>
+                              <td style={{...TD,textAlign:'right',fontWeight:700,color:T.tealD}}>₹{rec}</td>
+                              <td style={{...TD,textAlign:'right',fontWeight:700,color:out>0?T.red:T.teal}}>₹{out}</td>
+                              <td style={{...TD,textAlign:'center'}}>
+                                <span style={{background:bc+'22',color:bc,borderRadius:6,padding:'2px 7px',fontSize:8,fontWeight:800}}>{r.bucket}</span>
                               </td>
                             </tr>
                           );
-                        })}</tbody>
-                      </table>
-                    </div>
+                        })}
+                      </tbody>
+                    </table>
                   </div>
-                );
-              })()}
-            </GC>
+                  {unitRows.length===50&&<p style={{fontSize:9,color:T.textL,margin:'6px 0 0',textAlign:'center'}}>Showing top 50 by outstanding. Select a project to see all units.</p>}
+                </GC>
 
-            {/* ── ADVANCE PAYMENTS ── */}
-            <GC style={{padding:18}}>
-              <SH title="Advance Money Received" sub="Units where collections exceed demand raised"/>
-              {(()=>{
-                const ap = raw?.advancePayments || {};
-                const byProj = ap.byProject || [];
-                const top = ap.topAdvance || [];
-                const filtered = top.filter(r=>{
-                  if(filters.company && r.company!==filters.company) return false;
-                  if(filters.project){const _p=filters.project.split('||').filter(Boolean);if(_p.length&&!_p.includes(r.project))return false;}
-                  return true;
-                });
-                return(
-                  <div>
-                    {/* Summary strip */}
-                    <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:16}}>
-                      <div style={{padding:'10px 14px',borderRadius:10,background:`${T.teal}12`,border:`1.5px solid ${T.teal}33`}}>
-                        <p style={{fontSize:9,fontWeight:800,color:T.teal,margin:'0 0 2px',textTransform:'uppercase'}}>Total Demand</p>
-                        <p style={{fontSize:18,fontWeight:900,color:T.navy,margin:0,letterSpacing:-0.5}}>₹{ap.totalDemandCr}Cr</p>
-                      </div>
-                      <div style={{padding:'10px 14px',borderRadius:10,background:`${T.teal}12`,border:`1.5px solid ${T.teal}33`}}>
-                        <p style={{fontSize:9,fontWeight:800,color:T.teal,margin:'0 0 2px',textTransform:'uppercase'}}>Total Received</p>
-                        <p style={{fontSize:18,fontWeight:900,color:T.teal,margin:0,letterSpacing:-0.5}}>₹{ap.totalReceivedCr}Cr</p>
-                      </div>
-                      <div style={{padding:'10px 14px',borderRadius:10,background:`${T.greenL}12`,border:`1.5px solid ${T.greenL}33`}}>
-                        <p style={{fontSize:9,fontWeight:800,color:T.greenL,margin:'0 0 2px',textTransform:'uppercase'}}>Net Advance (Excess)</p>
-                        <p style={{fontSize:18,fontWeight:900,color:T.greenL,margin:0,letterSpacing:-0.5}}>+₹{ap.netExcessCr}Cr</p>
-                      </div>
-                      <div style={{padding:'10px 14px',borderRadius:10,background:`${T.navy}12`,border:`1.5px solid ${T.navy}33`}}>
-                        <p style={{fontSize:9,fontWeight:800,color:T.navy,margin:'0 0 2px',textTransform:'uppercase'}}>Units with Advance</p>
-                        <p style={{fontSize:18,fontWeight:900,color:T.navy,margin:0,letterSpacing:-0.5}}>{ap.unitsWithAdvance}</p>
-                      </div>
-                    </div>
-                    {/* By project bars */}
-                    <div style={{display:'flex',gap:10,marginBottom:14,flexWrap:'wrap'}}>
-                      {byProj.filter(p=>p.excessCr>0).map((p,i)=>{
-                        const pct = p.totalDemandCr>0?Math.round((p.totalReceivedCr/p.totalDemandCr)*100):0;
-                        return(
-                          <div key={i} style={{flex:1,minWidth:160,padding:'10px 14px',borderRadius:10,background:'rgba(255,255,255,0.5)',border:'1px solid rgba(0,100,140,0.15)'}}>
-                            <div style={{display:'flex',justifyContent:'space-between',marginBottom:4}}>
-                              <span style={{fontSize:10,fontWeight:700,color:T.navy}}>{p.project?.split(' ').pop()}</span>
-                              <span style={{fontSize:11,fontWeight:900,color:T.greenL}}>+₹{p.excessCr}Cr</span>
-                            </div>
-                            <div style={{width:'100%',height:5,background:'rgba(0,100,140,0.1)',borderRadius:3,marginBottom:4}}>
-                              <div style={{width:`${Math.min(pct,100)}%`,height:'100%',background:`linear-gradient(90deg,${T.teal},${T.greenL})`,borderRadius:3}}/>
-                            </div>
-                            <div style={{display:'flex',justifyContent:'space-between'}}>
-                              <span style={{fontSize:9,color:T.textM,fontWeight:600}}>Rcvd: ₹{p.totalReceivedCr}Cr</span>
-                              <span style={{fontSize:9,color:T.tealD,fontWeight:700}}>{pct}% collected</span>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                    {/* Top advance units table */}
-                    <div style={{overflowX:'auto'}}>
-                      <table style={{width:'100%',borderCollapse:'collapse',fontSize:11}}>
-                        <thead><tr style={{borderBottom:`2px solid rgba(0,151,167,0.2)`}}>
-                          {['#','Project','Unit','Customer','Total Demand','Total Received','Excess Advance'].map(h=>(
-                            <th key={h} style={{padding:'7px 10px',textAlign:'left',color:T.textM,fontSize:9,fontWeight:800,letterSpacing:0.5,whiteSpace:'nowrap',textTransform:'uppercase'}}>{h}</th>
-                          ))}
-                        </tr></thead>
-                        <tbody>{filtered.slice(0,20).map((r,i)=>(
-                          <tr key={i} className="tr" style={{borderBottom:`1px solid rgba(0,100,140,0.1)`}}>
-                            <td style={{padding:'7px 10px',color:T.textM,fontWeight:700,fontSize:11}}>#{i+1}</td>
-                            <td style={{padding:'7px 10px',color:T.textM,fontSize:10,whiteSpace:'nowrap'}}>{r.project?.split(' ').pop()}</td>
-                            <td style={{padding:'7px 10px',color:T.tealD,fontFamily:'monospace',fontSize:10,fontWeight:700}}>{r.unit}</td>
-                            <td style={{padding:'7px 10px',color:T.text,fontWeight:600,maxWidth:180}}>{r.customer}</td>
-                            <td style={{padding:'7px 10px',color:T.navy,fontWeight:700,whiteSpace:'nowrap'}}>₹{((r.totalDemand||0)/1e7).toFixed(2)}Cr</td>
-                            <td style={{padding:'7px 10px',color:T.teal,fontWeight:700,whiteSpace:'nowrap'}}>₹{((r.totalReceived||0)/1e7).toFixed(2)}Cr</td>
-                            <td style={{padding:'7px 10px'}}>
-                              <span style={{background:`${T.greenL}18`,border:`1px solid ${T.greenL}44`,borderRadius:8,padding:'3px 10px',fontSize:11,fontWeight:800,color:T.greenL,whiteSpace:'nowrap'}}>
-                                +₹{((r.Excess||0)/1e7).toFixed(2)}Cr
-                              </span>
-                            </td>
-                          </tr>
-                        ))}</tbody>
-                      </table>
-                    </div>
-                  </div>
-                );
-              })()}
-            </GC>
+              </>);
+            })()}
           </div>
         )}
 
-        {/* ══════════════════════════════════════════════════════
-            TAB: PIPELINE & DEALS
-        ══════════════════════════════════════════════════════ */}
-        {tab==='pipeline'&&(
+
+                {tab==='pipeline'&&(
           <div style={{display:'flex',flexDirection:'column',gap:14}}>
 
             {/* Top 10 Deals — dark card */}
