@@ -2347,38 +2347,61 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
               const todayM=today.slice(0,7);
 
               // ── Core KPI calculations ─────────────────────────────────
-              // ── Correct KPI logic ─────────────────────────────────────
-              // Outstanding = Outstanding Amount field (direct from SAP, most accurate)
-              // Received = Demand - Outstanding (per installment, not bank total which includes advances)
-              // Collection Efficiency = (Demand - Outstanding) / Demand × 100
-              const totalDemand=dF.reduce((s,r)=>s+(r.demandWithTax||0),0);
-              const totalOutstanding=dF.reduce((s,r)=>s+(r.outstanding||0),0);
-              const totalCollected=Math.max(0,totalDemand-totalOutstanding); // actual collected against demand
-              const totalTax=dF.reduce((s,r)=>s+(r.taxAmt||0),0);
-              const totalTaxDem=totalTax;
-              const collEff=totalDemand>0?Math.round(totalCollected/totalDemand*100):0;
-              const netOutstanding=totalOutstanding; // use outstanding field directly
-              // Overdue = outstanding > 0 AND due date is past (or no due date = all past)
-              const overdueRecs=dF.filter(r=>r.outstanding>0);
-              const overdueAmt=overdueRecs.reduce((s,r)=>s+(r.outstanding||0),0);
-              const currMonthDem=dF.filter(r=>r.billMonth===todayM).reduce((s,r)=>s+(r.demandWithTax||0),0);
-              const currMonthColl=dF.filter(r=>r.billMonth===todayM).reduce((s,r)=>s+Math.max(0,(r.demandWithTax||0)-(r.outstanding||0)),0);
-              // Upcoming = unbilled future demand — estimate from total TCV vs total demand raised
+              // ── KPI logic using PDRN as source of truth ──────────────
+              // PDRN has: Total Demand Amount (With Tax), Total Received, TCV
+              // Total Received in PDRN includes advances (can exceed demand)
+              // Collection Efficiency = min(Total Received / TCV, 100)%
               const pdrnRecs=(raw?.pdrn||[]).filter(r=>r.status==='ACTIVE'&&(selProjs.length===0||selProjs.includes(r.project)));
               const totalTCV=pdrnRecs.reduce((s,r)=>s+(r.tcv||0),0);
-              const upcomingDem=Math.max(0,totalTCV-totalDemand); // TCV not yet billed
-              const totalReceived=dF.reduce((s,r)=>s+(r.received||0),0); // keep for display
+              const totalBSP=pdrnRecs.reduce((s,r)=>s+(r.bsp||0),0);
+
+              // DAPP = billed demand so far
+              const totalDemand=dF.reduce((s,r)=>s+(r.demandWithTax||0),0);
+              const totalOutstanding=dF.reduce((s,r)=>s+(r.outstanding||0),0);
+              const totalTax=dF.reduce((s,r)=>s+(r.taxAmt||0),0);
+              const totalTaxDem=totalTax;
+
+              // Received = from PDRN (includes advances, correct for efficiency calc)
+              const totalReceived=pdrnRecs.reduce((s,r)=>s+(r.received||0),0);
+              const totalCollected=totalReceived; // actual money received
+
+              // Billed but not collected = max(0, Demand - Received)
+              const billedOutstanding=Math.max(0,totalDemand-totalReceived);
+
+              // Unbilled future demand = TCV - Demand Raised
+              const upcomingDem=Math.max(0,totalTCV-totalDemand);
+
+              // Net outstanding = TCV - Received (total yet to come)
+              const netOutstanding=Math.max(0,totalTCV-totalReceived);
+
+              // Collection Efficiency = Received / TCV * 100
+              const collEff=totalTCV>0?Math.round(totalReceived/totalTCV*100):0;
+
+              // Overdue = records in DAPP where outstanding > 0 (billed but not paid)
+              const overdueRecs=dF.filter(r=>r.outstanding>0);
+              const overdueAmt=overdueRecs.reduce((s,r)=>s+(r.outstanding||0),0);
+
+              // Current month
+              const currMonthDem=dF.filter(r=>r.billMonth===todayM).reduce((s,r)=>s+(r.demandWithTax||0),0);
+              const currMonthColl=pdrnRecs.filter(r=>{
+                if(!r.bookingMonth)return false;
+                return r.bookingMonth===todayM;
+              }).reduce((s,r)=>s+(r.received||0),0);
 
               // ── Monthly trend ─────────────────────────────────────────
               const byMonth={};
-              dF.forEach(r=>{if(!r.billMonth)return;const m=r.billMonth;if(!byMonth[m])byMonth[m]={label:fmtML(m),month:m,dem:0,coll:0,out:0};byMonth[m].dem+=r.demandWithTax||0;byMonth[m].coll+=Math.max(0,(r.demandWithTax||0)-(r.outstanding||0));byMonth[m].out+=r.outstanding||0;});
-              const monthlyTrend0=Object.values(byMonth).sort((a,b)=>a.month.localeCompare(b.month)).map(v=>({label:v.label,demCr:+(v.dem/1e7).toFixed(1),recCr:+(v.coll/1e7).toFixed(1),outCr:+(v.out/1e7).toFixed(1),eff:v.dem>0?Math.round(v.coll/v.dem*100):0}));
-              const monthlyTrend=monthlyTrend0;
+              dF.forEach(r=>{if(!r.billMonth)return;const m=r.billMonth;if(!byMonth[m])byMonth[m]={label:fmtML(m),month:m,dem:0,out:0};byMonth[m].dem+=r.demandWithTax||0;byMonth[m].out+=r.outstanding||0;});
+              // Monthly received from PDRN bookingMonth (approximation)
+              pdrnRecs.forEach(r=>{if(!r.bookingMonth)return;const m=r.bookingMonth;if(!byMonth[m])byMonth[m]={label:fmtML(m),month:m,dem:0,out:0};if(!byMonth[m].rec)byMonth[m].rec=0;byMonth[m].rec+=(r.received||0)/12;});
+              const monthlyTrend=Object.values(byMonth).filter(v=>v.dem>0||v.rec>0).sort((a,b)=>a.month.localeCompare(b.month)).map(v=>({label:v.label,demCr:+(v.dem/1e7).toFixed(1),recCr:+((v.rec||0)/1e7).toFixed(1),outCr:+(v.out/1e7).toFixed(1),eff:v.dem>0?Math.round((v.rec||0)/v.dem*100):0}));
 
               // ── Project-wise ──────────────────────────────────────────
               const byProj={};
-              dF.forEach(r=>{const p=r.project||'Unknown';if(!byProj[p])byProj[p]={name:p.split(' ').slice(-2).join(' '),dem:0,coll:0,out:0};byProj[p].dem+=r.demandWithTax||0;byProj[p].coll+=Math.max(0,(r.demandWithTax||0)-(r.outstanding||0));byProj[p].out+=r.outstanding||0;});
-              const projData=Object.entries(byProj).map(([k,v])=>({fullName:k,name:v.name,demCr:+(v.dem/1e7).toFixed(1),recCr:+(v.coll/1e7).toFixed(1),outCr:+(v.out/1e7).toFixed(1),eff:v.dem>0?Math.round(v.coll/v.dem*100):0})).sort((a,b)=>b.demCr-a.demCr);
+              // Project received from PDRN
+              const pdrnByProj={};
+              pdrnRecs.forEach(r=>{const p=r.project||'Unknown';if(!pdrnByProj[p])pdrnByProj[p]={rec:0,tcv:0};pdrnByProj[p].rec+=(r.received||0);pdrnByProj[p].tcv+=(r.tcv||0);});
+              dF.forEach(r=>{const p=r.project||'Unknown';if(!byProj[p])byProj[p]={name:p.split(' ').slice(-2).join(' '),dem:0,out:0};byProj[p].dem+=r.demandWithTax||0;byProj[p].out+=r.outstanding||0;});
+              const projData=Object.entries(byProj).map(([k,v])=>{const pr=pdrnByProj[k]||{rec:0,tcv:0};return{fullName:k,name:v.name,demCr:+(v.dem/1e7).toFixed(1),recCr:+(pr.rec/1e7).toFixed(1),outCr:+(Math.max(0,pr.tcv-pr.rec)/1e7).toFixed(1),eff:pr.tcv>0?Math.round(pr.rec/pr.tcv*100):0};}).sort((a,b)=>b.demCr-a.demCr);
 
               // ── Ageing ────────────────────────────────────────────────
               const ageBuckets={Future:0,'0-30':0,'31-60':0,'61-90':0,'90+':0};
@@ -2424,10 +2447,10 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                 <SectionHead title="Executive Summary" icon="📊"/>
                 <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10}}>
                   {[
-                    {l:'Total Demand Raised',v:fmtC(totalDemand),c:T.amber,sub:`Tax: ${fmtC(totalTaxDem)}`},
-                    {l:'Total Collected',v:fmtC(totalCollected),c:T.tealD,sub:`This month: ${fmtC(currMonthColl)}`},
-                    {l:'Net Outstanding',v:fmtC(netOutstanding),c:T.red,sub:`Overdue: ${fmtC(overdueAmt)}`},
-                    {l:'Collection Efficiency',v:`${collEff}%`,c:collEff>80?T.teal:collEff>50?T.amber:T.red,sub:`${projData.length} project${projData.length>1?'s':''}`},
+                    {l:'Total Demand Raised',v:fmtC(totalDemand),c:T.amber,sub:`of ₹${(totalTCV/1e7).toFixed(0)}Cr TCV · Tax: ${fmtC(totalTaxDem)}`},
+                    {l:'Total Received',v:fmtC(totalCollected),c:T.tealD,sub:`${collEff}% of TCV collected`},
+                    {l:'Net Outstanding (vs TCV)',v:fmtC(netOutstanding),c:T.red,sub:`Billed unpaid: ${fmtC(billedOutstanding)}`},
+                    {l:'Collection Efficiency',v:`${collEff}%`,c:collEff>80?T.teal:collEff>50?T.amber:T.red,sub:`Received ÷ TCV`},
                   ].map((d,i)=>(<GC key={i} style={{padding:13}} cls="kc">
                     <p style={{fontSize:8,color:T.textM,fontWeight:700,textTransform:'uppercase',margin:'0 0 4px'}}>{d.l}</p>
                     <p style={{fontSize:20,fontWeight:900,color:d.c,margin:'0 0 2px',letterSpacing:-0.5}}>{d.v}</p>
@@ -2470,9 +2493,9 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                 <SectionHead title="Collection Performance" icon="💰"/>
                 <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10}}>
                   {[
-                    {l:'Current Month Demand',v:fmtC(currMonthDem),c:T.amber,icon:'📅'},
-                    {l:'Current Month Collected',v:fmtC(currMonthColl),c:T.teal,icon:'📥'},
-                    {l:'Upcoming Demand',v:fmtC(upcomingDem),c:'#7c3aed',icon:'🔮'},
+                    {l:'Total Demand Billed',v:fmtC(totalDemand),c:T.amber,icon:'📋'},
+                    {l:'Billed But Unpaid',v:fmtC(billedOutstanding),c:T.red,icon:'🔴'},
+                    {l:'Upcoming (Unbilled)',v:fmtC(upcomingDem),c:'#7c3aed',icon:'🔮'},
                     {l:'GST / Tax Component',v:fmtC(totalTaxDem),c:'#0284c7',icon:'🧾'},
                   ].map((d,i)=>(<GC key={i} style={{padding:12}} cls="kc">
                     <div style={{display:'flex',gap:6,alignItems:'center',marginBottom:3}}>
