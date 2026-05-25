@@ -1124,7 +1124,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
 
               {/* CARD C: Total Potential Sales Value — Sold + Unsold */}
               <GC style={{padding:12}} cls="kc">
-                <SH title="Total Sales Value" compact/>
+                <SH title="Total Sales Value (₹Cr)" compact/>
                 {(()=>{
                   const soldBSP=kpiEx.totalBSPCr||0;
                   const soldTCV=kpiEx.totalTCVCr||0;
