@@ -1464,16 +1464,31 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                   {(()=>{
                     const WIN=10;
                     // TSV projection — same quarter logic
-                    const todayT=new Date();const tQS=Math.floor((todayT.getMonth())/3)*3;
+                    const todayT=new Date();
+                    const tQS=Math.floor((todayT.getMonth())/3)*3+1;
                     const ml2=(y,m)=>{const n={1:'Jan',2:'Feb',3:'Mar',4:'Apr',5:'May',6:'Jun',7:'Jul',8:'Aug',9:'Sep',10:'Oct',11:'Nov',12:'Dec'};return n[m]+"'"+String(y).slice(2);};
-                    const cqm=[0,1,2].map(i=>{let m=tQS+1+i,y=todayT.getFullYear();if(m>12){m-=12;y++;}return ml2(y,m);});
-                    const nqm=[0,1,2].map(i=>{let m=tQS+4+i,y=todayT.getFullYear();if(m>12){m-=12;y++;}return ml2(y,m);});
-                    const cqTsvTgt=monthlyWithTargets.filter(d=>cqm.includes(d.label)).reduce((s,d)=>s+(d.targetTsvLine||0),0);
-                    const cqTsvAch=monthlyWithTargets.filter(d=>cqm.includes(d.label)).reduce((s,d)=>s+(d.bspCr||0),0);
-                    const tsvGap=Math.max(0,cqTsvTgt-cqTsvAch);
-                    const tsvW=[0.3,0.4,0.3];
-                    const tsvProjMap={};nqm.forEach((lbl,i)=>{const base=monthlyWithTargets.find(d=>d.label===lbl)?.targetTsvLine||0;tsvProjMap[lbl]=+(base+tsvGap*tsvW[i]).toFixed(1);});
-                    const rawDataTsv=monthlyWithTargets.map(d=>({label:d.label,isFuture:d.isFuture,isCurrent:d.label===TODAY_LABEL,achieved:d.isFuture?null:(d.bspCr||0),target:d.targetTsvLine||null,projection:nqm.includes(d.label)?tsvProjMap[d.label]:null,}));
+                    const moNT={Jan:1,Feb:2,Mar:3,Apr:4,May:5,Jun:6,Jul:7,Aug:8,Sep:9,Oct:10,Nov:11,Dec:12};
+                    const lblYmT=l=>{const p=l.match(/([A-Za-z]{3})'(\d{2})/);return p?(2000+parseInt(p[2]))*100+(moNT[p[1]]||0):0;};
+                    const todayYMT=todayT.getFullYear()*100+(todayT.getMonth()+1);
+                    const cqmObj=[0,1,2].map(i=>{let m=tQS+i,y=todayT.getFullYear();if(m>12){m-=12;y++;}return{label:ml2(y,m),ym:y*100+m};});
+                    const pastCqmT=cqmObj.filter(o=>o.ym<todayYMT).map(o=>o.label);
+                    const futureCqmT=cqmObj.filter(o=>o.ym>=todayYMT).map(o=>o.label);
+                    const missedTsv=pastCqmT.reduce((s,lbl)=>{const d=monthlyWithTargets.find(r=>r.label===lbl);return s+Math.max(0,(d?.targetTsvLine||0)-(d?.bspCr||0));},0);
+                    const addTsvPer=futureCqmT.length>0?+(missedTsv/futureCqmT.length).toFixed(1):0;
+                    const tsvProjMap={};
+                    futureCqmT.forEach(lbl=>{const base=monthlyWithTargets.find(d=>d.label===lbl)?.targetTsvLine||0;tsvProjMap[lbl]=+(base+addTsvPer).toFixed(1);});
+                    // Bridge: last proj month → first next-Q target
+                    const sortedTsvProj=Object.keys(tsvProjMap).sort((a,b)=>lblYmT(a)-lblYmT(b));
+                    const lastTsvLbl=sortedTsvProj[sortedTsvProj.length-1];
+                    const nqBMoT=tQS+3>12?tQS-9:tQS+3;const nqBYT=tQS+3>12?todayT.getFullYear()+1:todayT.getFullYear();
+                    const nqBLblT=ml2(nqBYT,nqBMoT);
+                    const rawDataTsv=monthlyWithTargets.map(d=>({label:d.label,isFuture:d.isFuture,isCurrent:d.label===TODAY_LABEL,
+                      achieved:d.isFuture?null:(d.bspCr||0),
+                      target:d.targetTsvLine||null,
+                      targetLine:(()=>{if(tsvProjMap[d.label]!=null)return null;const p=d.label.match(/([A-Za-z]{3})'(\d{2})/);if(p&&(2000+parseInt(p[2]))*100+(moNT[p[1]]||0)<todayYMT)return null;return d.targetTsvLine||null;})(),
+                      projection:tsvProjMap[d.label]||null,
+                      bridge:(d.label===lastTsvLbl?tsvProjMap[lastTsvLbl]:d.label===nqBLblT?(monthlyWithTargets.find(r=>r.label===nqBLblT)?.targetTsvLine||null):null),
+                    }));
                     const data=tsvMode==='quarterly'?toQuarterly(rawDataTsv,'label').map(q=>({...q,isFuture:false,isCurrent:false})):rawDataTsv;
                     const cur=data.findIndex(d=>d.isCurrent);
                     const def=cur>=2?cur-2:Math.max(0,data.length-WIN);
@@ -1501,10 +1516,11 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                             <LabelList dataKey="achieved" position="top" style={{fill:T.tealD,fontSize:7,fontWeight:700}} formatter={v=>v>0?v+'Cr':''}/>
                           </Bar>
                           <Line type="monotone" dataKey="achieved" stroke={T.tealD} strokeWidth={2.5} dot={{r:4,fill:T.tealD,stroke:'#fff',strokeWidth:2}} activeDot={{r:5}} legendType="none" connectNulls={true}/>
-                          <Line type="monotone" dataKey="target" stroke="#607d8b" strokeWidth={2} strokeDasharray="5 3" dot={{r:3,fill:'#607d8b',stroke:'#fff',strokeWidth:1.5}} activeDot={{r:4}} legendType="none" connectNulls={true}/>
+                          <Line type="monotone" dataKey="targetLine" stroke="#607d8b" strokeWidth={2} strokeDasharray="5 3" dot={{r:3,fill:'#607d8b',stroke:'#fff',strokeWidth:1.5}} activeDot={{r:4}} legendType="none" connectNulls={false}/>
                           <Line type="monotone" dataKey="projection" name="Projection" stroke="#22c55e" strokeWidth={2.5} strokeDasharray="6 2" dot={({cx,cy,payload})=>payload.projection!=null?<circle cx={cx} cy={cy} r={5} fill="#22c55e" stroke="#fff" strokeWidth={2}/>:<g/>} activeDot={{r:6,fill:'#22c55e'}} connectNulls={false}>
                             <LabelList dataKey="projection" position="top" style={{fill:'#16a34a',fontSize:8,fontWeight:900}} formatter={v=>v!=null?'▲'+v+'Cr':''}/>
                           </Line>
+                          <Line type="monotone" dataKey="bridge" stroke="#90a4ae" strokeWidth={1.5} strokeDasharray="4 3" dot={false} activeDot={false} legendType="none" connectNulls={true}/>
                         </ComposedChart>
                       </ResponsiveContainer>
                     </>);
@@ -1535,28 +1551,31 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const totalInvArea=invArea>0?invArea:(bookedPct>0?pdrnTotalArea/bookedPct:pdrnTotalArea*1.5);
                     let cumArea=0;
                     const sortedMonths=Object.values(areaByMonth).sort((a,b)=>a.month.localeCompare(b.month));
-                    // Area projection: same quarter logic as Units chart
-                    const parseYMA=l=>{const mo={Jan:1,Feb:2,Mar:3,Apr:4,May:5,Jun:6,Jul:7,Aug:8,Sep:9,Oct:10,Nov:11,Dec:12};const m=l.match(/([A-Za-z]{3})'(\d{2})/);if(!m)return null;return{yr:parseInt(m[2])<50?2000+parseInt(m[2]):1900+parseInt(m[2]),mo:mo[m[1]]||0};};
-                    const todayDA=new Date();const todayYMA={yr:todayDA.getFullYear(),mo:todayDA.getMonth()+1};
-                    const curQStartA=((y,m)=>{const qs=Math.floor((m-1)/3)*3+1;return{yr:y,mo:qs};})(todayYMA.yr,todayYMA.mo);
+                    // Area projection: same-quarter catch-up redistribution
+                    const todayDA=new Date();
+                    const aQS=Math.floor((todayDA.getMonth())/3)*3+1;
                     const mm2l=(y,m)=>{const nm={1:'Jan',2:'Feb',3:'Mar',4:'Apr',5:'May',6:'Jun',7:'Jul',8:'Aug',9:'Sep',10:'Oct',11:'Nov',12:'Dec'};return nm[m]+"'"+String(y).slice(2);};
-                    const curQMonthsA=[0,1,2].map(i=>{let m=curQStartA.mo+i,y=curQStartA.yr;if(m>12){m-=12;y++;}return mm2l(y,m);});
-                    const nqMA=curQStartA.mo+3,nqYA=nqMA>12?curQStartA.yr+1:curQStartA.yr,nqM2=nqMA>12?nqMA-12:nqMA;
-                    const nextQMonthsA=[0,1,2].map(i=>{let m=nqM2+i,y=nqYA;if(m>12){m-=12;y++;}return mm2l(y,m);});
-                    // Current Q gap in sq ft (target area from monthlyWithTargets)
-                    const curQAreaTarget=monthlyWithTargets.filter(d=>curQMonthsA.includes(d.label)).reduce((s,d)=>s+(d.targetAreaSqft||0),0);
-                    const curQAreaActual=sortedMonths.filter(d=>curQMonthsA.includes(fmtML(d.month))).reduce((s,d)=>s+d.bookedSqft,0);
-                    // Fallback: use unit projection × avg area per unit
+                    const moNA={Jan:1,Feb:2,Mar:3,Apr:4,May:5,Jun:6,Jul:7,Aug:8,Sep:9,Oct:10,Nov:11,Dec:12};
+                    const lblYmA=l=>{const p=l.match(/([A-Za-z]{3})'(\d{2})/);return p?(2000+parseInt(p[2]))*100+(moNA[p[1]]||0):0;};
+                    const todayYMA2=todayDA.getFullYear()*100+(todayDA.getMonth()+1);
+                    const cqObjA=[0,1,2].map(i=>{let m=aQS+i,y=todayDA.getFullYear();if(m>12){m-=12;y++;}return{label:mm2l(y,m),ym:y*100+m};});
+                    const pastCqA=cqObjA.filter(o=>o.ym<todayYMA2).map(o=>o.label);
+                    const futureCqA=cqObjA.filter(o=>o.ym>=todayYMA2).map(o=>o.label);
                     const avgAreaPerUnit=pA.filter(r=>r.superArea>0).reduce((s,r,_,a)=>s+r.superArea/a.length,0)||3200;
-                    const curQUnitGap=Math.max(0,(monthlyWithTargets.filter(d=>curQMonthsA.includes(d.label)).reduce((s,d)=>s+(d.targetUnitsLine||0),0))-(monthlyWithTargets.filter(d=>curQMonthsA.includes(d.label)).reduce((s,d)=>s+(d.bookedUnits||0),0)));
-                    const areaGap=curQAreaTarget>0?Math.max(0,curQAreaTarget-curQAreaActual):curQUnitGap*avgAreaPerUnit;
-                    const aWeights=[0.3,0.4,0.3];
+                    // Missed area = missed units × avg area
+                    const missedUnitsA=pastCqA.reduce((s,lbl)=>{const d=monthlyWithTargets.find(r=>r.label===lbl);return s+Math.max(0,(d?.targetUnitsLine||0)-(d?.bookedUnits||0));},0);
+                    const missedAreaK=+(missedUnitsA*avgAreaPerUnit/1000).toFixed(1);
+                    const addAreaPerMonth=futureCqA.length>0?+(missedAreaK/futureCqA.length).toFixed(1):0;
                     const areaProjMap={};
-                    nextQMonthsA.forEach((lbl,i)=>{
-                      const baseUnits=monthlyWithTargets.find(d=>d.label===lbl)?.targetUnitsLine||10;
-                      const projK=+((baseUnits*avgAreaPerUnit+areaGap*aWeights[i])/1000).toFixed(1);
-                      areaProjMap[lbl]=projK;
+                    futureCqA.forEach(lbl=>{
+                      const baseUnits=monthlyWithTargets.find(d=>d.label===lbl)?.targetUnitsLine||0;
+                      const baseK=+(baseUnits*avgAreaPerUnit/1000).toFixed(1);
+                      areaProjMap[lbl]=+(baseK+addAreaPerMonth).toFixed(1);
                     });
+                    const sortedAreaProj=Object.keys(areaProjMap).sort((a,b)=>lblYmA(a)-lblYmA(b));
+                    const lastAreaLbl=sortedAreaProj[sortedAreaProj.length-1];
+                    const nqBMoA=aQS+3>12?aQS-9:aQS+3;const nqBYA=aQS+3>12?todayDA.getFullYear()+1:todayDA.getFullYear();
+                    const nqBLblA=mm2l(nqBYA,nqBMoA);
                     const rawData=sortedMonths.map(d=>{
                       cumArea+=d.bookedSqft;
                       const availSqft=Math.max(0,totalInvArea-cumArea);
@@ -1568,7 +1587,8 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                         cumBookedK:+(cumArea/1000).toFixed(1),
                         availK:+(availSqft/1000).toFixed(1),
                         units:d.units,
-                        projectionK:nextQMonthsA.includes(lbl)?areaProjMap[lbl]:null,
+                        projectionK:areaProjMap[lbl]||null,
+                        bridgeK:(lbl===lastAreaLbl?areaProjMap[lastAreaLbl]:lbl===nqBLblA?(()=>{const baseU=monthlyWithTargets.find(d=>d.label===nqBLblA)?.targetUnitsLine||0;return+(baseU*avgAreaPerUnit/1000).toFixed(1);})():null),
                       };
                     });
                     const data=suMode==='quarterly'?toQuarterly(rawData,'label').map(q=>({...q,isFuture:false,isCurrent:false})):rawData;
@@ -1629,6 +1649,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                           <Line yAxisId="l" type="monotone" dataKey="projectionK" name="Projection" stroke="#22c55e" strokeWidth={2.5} strokeDasharray="6 2" dot={({cx,cy,payload})=>payload.projectionK!=null?<circle cx={cx} cy={cy} r={5} fill="#22c55e" stroke="#fff" strokeWidth={2}/>:<g/>} activeDot={{r:6,fill:'#22c55e'}} connectNulls={false}>
                             <LabelList dataKey="projectionK" position="top" style={{fill:'#16a34a',fontSize:8,fontWeight:900}} formatter={v=>v!=null?'▲'+v+'K':''}/>
                           </Line>
+                          <Line yAxisId="l" type="monotone" dataKey="bridgeK" stroke="#90a4ae" strokeWidth={1.5} strokeDasharray="4 3" dot={false} activeDot={false} legendType="none" connectNulls={true}/>
                         </ComposedChart>
                       </ResponsiveContainer>
                     </>);
@@ -1641,18 +1662,31 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                   {(()=>{
                     const WIN=10;
                     // Rate projection — project avg rate for next quarter
-                    const todayR=new Date();const rQS=Math.floor((todayR.getMonth())/3)*3;
+                    const todayR=new Date();
+                    const rQS=Math.floor((todayR.getMonth())/3)*3+1;
                     const ml3=(y,m)=>{const n={1:'Jan',2:'Feb',3:'Mar',4:'Apr',5:'May',6:'Jun',7:'Jul',8:'Aug',9:'Sep',10:'Oct',11:'Nov',12:'Dec'};return n[m]+"'"+String(y).slice(2);};
-                    const cqmR=[0,1,2].map(i=>{let m=rQS+1+i,y=todayR.getFullYear();if(m>12){m-=12;y++;}return ml3(y,m);});
-                    const nqmR=[0,1,2].map(i=>{let m=rQS+4+i,y=todayR.getFullYear();if(m>12){m-=12;y++;}return ml3(y,m);});
-                    // Rate projection: recent trend (last 3 months avg rate) × 1.02 escalation per month
+                    const moNR={Jan:1,Feb:2,Mar:3,Apr:4,May:5,Jun:6,Jul:7,Aug:8,Sep:9,Oct:10,Nov:11,Dec:12};
+                    const lblYmR=l=>{const p=l.match(/([A-Za-z]{3})'(\d{2})/);return p?(2000+parseInt(p[2]))*100+(moNR[p[1]]||0):0;};
+                    const todayYMR=todayR.getFullYear()*100+(todayR.getMonth()+1);
+                    const cqmObjR=[0,1,2].map(i=>{let m=rQS+i,y=todayR.getFullYear();if(m>12){m-=12;y++;}return{label:ml3(y,m),ym:y*100+m};});
+                    const pastCqmR=cqmObjR.filter(o=>o.ym<todayYMR).map(o=>o.label);
+                    const futureCqmR=cqmObjR.filter(o=>o.ym>=todayYMR).map(o=>o.label);
+                    // Rate projection: avg of past months in Q vs target
                     const recentRates=monthlyWithTargets.filter(d=>!d.isFuture&&d.actualRate).slice(-3);
                     const avgRecentRate=recentRates.length>0?recentRates.reduce((s,d)=>s+(d.actualRate||0),0)/recentRates.length:0;
-                    const rateProjMap={};nqmR.forEach((lbl,i)=>{
-                      const base=monthlyWithTargets.find(d=>d.label===lbl)?.targetRateLine||avgRecentRate;
-                      rateProjMap[lbl]=Math.round(Math.max(base,avgRecentRate*(1+0.005*(i+1))));
-                    });
-                    const rawDataR=monthlyWithTargets.map(d=>({label:d.label,isFuture:d.isFuture,isCurrent:d.label===TODAY_LABEL,achieved:d.isFuture?null:(d.actualRate||0),target:d.targetRateLine||null,projection:nqmR.includes(d.label)?rateProjMap[d.label]:null,}));
+                    const rateProjMap={};
+                    futureCqmR.forEach((lbl,i)=>{const base=monthlyWithTargets.find(d=>d.label===lbl)?.targetRateLine||avgRecentRate;rateProjMap[lbl]=Math.round(Math.max(base,avgRecentRate*(1+0.005*(i+1))));});
+                    const sortedRateProj=Object.keys(rateProjMap).sort((a,b)=>lblYmR(a)-lblYmR(b));
+                    const lastRateLbl=sortedRateProj[sortedRateProj.length-1];
+                    const nqBMoR=rQS+3>12?rQS-9:rQS+3;const nqBYR=rQS+3>12?todayR.getFullYear()+1:todayR.getFullYear();
+                    const nqBLblR=ml3(nqBYR,nqBMoR);
+                    const rawDataR=monthlyWithTargets.map(d=>({label:d.label,isFuture:d.isFuture,isCurrent:d.label===TODAY_LABEL,
+                      achieved:d.isFuture?null:(d.actualRate||0),
+                      target:d.targetRateLine||null,
+                      targetLine:(()=>{if(rateProjMap[d.label]!=null)return null;const p=d.label.match(/([A-Za-z]{3})'(\d{2})/);if(p&&(2000+parseInt(p[2]))*100+(moNR[p[1]]||0)<todayYMR)return null;return d.targetRateLine||null;})(),
+                      projection:rateProjMap[d.label]||null,
+                      bridge:(d.label===lastRateLbl?rateProjMap[lastRateLbl]:d.label===nqBLblR?(monthlyWithTargets.find(r=>r.label===nqBLblR)?.targetRateLine||null):null),
+                    }));
                     const data=rMode==='quarterly'?toQuarterly(rawDataR,'label').map(q=>({...q,isFuture:false,isCurrent:false})):rawDataR;
                     const cur=data.findIndex(d=>d.isCurrent);
                     const def=cur>=2?cur-2:Math.max(0,data.length-WIN);
@@ -1680,10 +1714,11 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                             <LabelList dataKey="achieved" position="top" offset={4} style={{fill:T.tealD,fontSize:7,fontWeight:700}} formatter={v=>v?'₹'+Math.round(v/1000)+'K':''}/>
                           </Bar>
                           <Line type="monotone" dataKey="achieved" stroke={T.tealD} strokeWidth={2.5} dot={{r:4,fill:T.tealD,stroke:'#fff',strokeWidth:2}} activeDot={{r:5}} legendType="none" connectNulls={true}/>
-                          <Line type="monotone" dataKey="target" stroke="#607d8b" strokeWidth={2} strokeDasharray="5 3" dot={{r:3,fill:'#607d8b',stroke:'#fff',strokeWidth:1.5}} activeDot={{r:4}} legendType="none" connectNulls={true}/>
+                          <Line type="monotone" dataKey="targetLine" stroke="#607d8b" strokeWidth={2} strokeDasharray="5 3" dot={{r:3,fill:'#607d8b',stroke:'#fff',strokeWidth:1.5}} activeDot={{r:4}} legendType="none" connectNulls={false}/>
                           <Line type="monotone" dataKey="projection" name="Projection" stroke="#22c55e" strokeWidth={2.5} strokeDasharray="6 2" dot={({cx,cy,payload})=>payload.projection!=null?<circle cx={cx} cy={cy} r={5} fill="#22c55e" stroke="#fff" strokeWidth={2}/>:<g/>} activeDot={{r:6,fill:'#22c55e'}} connectNulls={false}>
                             <LabelList dataKey="projection" position="insideTopRight" offset={10} style={{fill:'#16a34a',fontSize:8,fontWeight:900,background:'white'}} formatter={v=>v!=null?'▲'+Math.round(v/1000)+'K':''}/>
                           </Line>
+                          <Line type="monotone" dataKey="bridge" stroke="#90a4ae" strokeWidth={1.5} strokeDasharray="4 3" dot={false} activeDot={false} legendType="none" connectNulls={true}/>
                         </ComposedChart>
                       </ResponsiveContainer>
                     </>);
