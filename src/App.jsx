@@ -1400,6 +1400,18 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                         return d.targetUnitsLine||null;
                       })(),
                       projection:projMap[d.label]||null,
+                      // Bridge: grey connecting line from last projection month to first next-Q target
+                      bridge:(()=>{
+                        const sortedProjKeys=Object.keys(projMap).sort();
+                        const lastProjLbl=sortedProjKeys[sortedProjKeys.length-1];
+                        // First next-Q month
+                        const nqMo2=curQsMo+3>12?curQsMo-9:curQsMo+3;
+                        const nqY2=curQsMo+3>12?todayD.getFullYear()+1:todayD.getFullYear();
+                        const nqLbl=ml(nqY2,nqMo2);
+                        if(d.label===lastProjLbl) return projMap[lastProjLbl]; // Jun: bridge starts here
+                        if(d.label===nqLbl) return d.targetUnitsLine||null;    // Jul: bridge ends here
+                        return null;
+                      })(),
                     }));
                     const data=uMode==='quarterly'?toQuarterly(rawData,'label').map(q=>({...q,isFuture:false,isCurrent:false})):rawData;
                     const cur=data.findIndex(d=>d.isCurrent);
@@ -1436,6 +1448,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                           <Line type="monotone" dataKey="projection" name="Projection" stroke="#22c55e" strokeWidth={2.5} strokeDasharray="6 2" dot={({cx,cy,payload})=>payload.projection!=null?<circle cx={cx} cy={cy} r={5} fill="#22c55e" stroke="#fff" strokeWidth={2}/>:<g/>} activeDot={{r:6,fill:'#22c55e'}} connectNulls={false}>
                             <LabelList dataKey="projection" position="top" style={{fill:'#16a34a',fontSize:9,fontWeight:900}} formatter={v=>v!=null?'▲'+v:''}/>
                           </Line>
+                          <Line type="monotone" dataKey="bridge" stroke="#90a4ae" strokeWidth={1.5} strokeDasharray="4 3" dot={false} activeDot={false} legendType="none" connectNulls={true}/>
                         </ComposedChart>
                       </ResponsiveContainer>
                     </>);
