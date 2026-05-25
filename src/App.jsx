@@ -1402,7 +1402,10 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                       projection:projMap[d.label]||null,
                       // Bridge: grey connecting line from last projection month to first next-Q target
                       bridge:(()=>{
-                        const sortedProjKeys=Object.keys(projMap).sort();
+                        // Sort by ym numerically to get true last month
+                        const moN2={Jan:1,Feb:2,Mar:3,Apr:4,May:5,Jun:6,Jul:7,Aug:8,Sep:9,Oct:10,Nov:11,Dec:12};
+                        const lblToYm=l=>{const p=l.match(/([A-Za-z]{3})'(\d{2})/);return p?(2000+parseInt(p[2]))*100+(moN2[p[1]]||0):0;};
+                        const sortedProjKeys=Object.keys(projMap).sort((a,b)=>lblToYm(a)-lblToYm(b));
                         const lastProjLbl=sortedProjKeys[sortedProjKeys.length-1];
                         // First next-Q month
                         const nqMo2=curQsMo+3>12?curQsMo-9:curQsMo+3;
