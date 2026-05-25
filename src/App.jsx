@@ -882,7 +882,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
   );
 
   // Tab labels
-  const tabs=[{k:'overview',l:'Overview'},{k:'collections',l:'Collections & DAPP'},{k:'pipeline',l:'Pipeline & Deals'}];
+  const tabs=[{k:'overview',l:'Overview'},{k:'collections',l:'Demands & Collections'},{k:'pipeline',l:'Pipeline & Deals'}];
 
   return (
     <div style={{minHeight:'100vh',backgroundImage:'url(/bg.jpg)',backgroundSize:'cover',backgroundPosition:'center',backgroundAttachment:'fixed',fontFamily:'Inter,sans-serif',color:T.text}}>
