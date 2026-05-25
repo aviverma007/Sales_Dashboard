@@ -1385,10 +1385,20 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                       label:d.label,isFuture:d.isFuture,isCurrent:d.label===TODAY_LABEL,
                       achieved:d.isFuture?null:(d.bookedUnits||0),
                       target:d.targetUnitsLine||null,          // keeps bars intact
-                      // targetLine: null for past achieved months + projection months (stops grey line)
-                      targetLine:(!d.isFuture&&d.label<TODAY_LABEL&&(d.bookedUnits||0)>0)?null:
-                                  projMap[d.label]!=null?null:
-                                  (d.targetUnitsLine||null),
+                      // targetLine: null for any past month (before today) + projection months
+                      // This stops grey connecting line for past months, green handles projection months
+                      // Use the same ym comparison as projMap
+                      targetLine:(()=>{
+                        if(projMap[d.label]!=null) return null; // projection month — green handles it
+                        // For past months (before today), null out so grey line doesn't draw backwards
+                        const dParts=d.label.match(/([A-Za-z]{3})'(\d{2})/);
+                        if(dParts){
+                          const moN={Jan:1,Feb:2,Mar:3,Apr:4,May:5,Jun:6,Jul:7,Aug:8,Sep:9,Oct:10,Nov:11,Dec:12};
+                          const dYm=(2000+parseInt(dParts[2]))*100+(moN[dParts[1]]||0);
+                          if(dYm<todayYMn) return null; // past month — no grey dot/line
+                        }
+                        return d.targetUnitsLine||null;
+                      })(),
                       projection:projMap[d.label]||null,
                     }));
                     const data=uMode==='quarterly'?toQuarterly(rawData,'label').map(q=>({...q,isFuture:false,isCurrent:false})):rawData;
