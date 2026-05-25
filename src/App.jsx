@@ -1354,34 +1354,36 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                   <SH title="Units — Booked vs Target" sub="Achieved (teal) · Target (grey) · Lines connect both"/>
                   {(()=>{
                     const WIN=10;
-                    // Projection: current quarter gap → distribute over next quarter
-                    const parseYM=l=>{const mo={Jan:1,Feb:2,Mar:3,Apr:4,May:5,Jun:6,Jul:7,Aug:8,Sep:9,Oct:10,Nov:11,Dec:12};const m=l.match(/([A-Za-z]{3})'(\d{2})/);if(!m)return null;const yr=m[2].length===2?(parseInt(m[2])<50?2000+parseInt(m[2]):1900+parseInt(m[2])):parseInt(m[2]);return{yr,mo:mo[m[1]]||0};};
-                    const todayD=new Date();const todayYM={yr:todayD.getFullYear(),mo:todayD.getMonth()+1};
-                    const getCurQStart=(yr,mo)=>{const qStart=Math.floor((mo-1)/3)*3+1;return{yr,mo:qStart};};
-                    const curQStart=getCurQStart(todayYM.yr,todayYM.mo);
-                    // Current quarter months (3 months from qStart)
-                    const curQMonths=[0,1,2].map(i=>{let m=curQStart.mo+i,y=curQStart.yr;if(m>12){m-=12;y++;}const mm={1:'Jan',2:'Feb',3:'Mar',4:'Apr',5:'May',6:'Jun',7:'Jul',8:'Aug',9:'Sep',10:'Oct',11:'Nov',12:'Dec'};return mm[m]+"'"+String(y).slice(2);});
-                    // Next quarter months
-                    const nqStartMo=curQStart.mo+3,nqStartYr=nqStartMo>12?curQStart.yr+1:curQStart.yr;
-                    const nqM=nqStartMo>12?nqStartMo-12:nqStartMo;
-                    const nextQMonths=[0,1,2].map(i=>{let m=nqM+i,y=nqStartYr;if(m>12){m-=12;y++;}const mm={1:'Jan',2:'Feb',3:'Mar',4:'Apr',5:'May',6:'Jun',7:'Jul',8:'Aug',9:'Sep',10:'Oct',11:'Nov',12:'Dec'};return mm[m]+"'"+String(y).slice(2);});
-                    // Calculate current quarter gap
-                    const curQData=monthlyWithTargets.filter(d=>curQMonths.includes(d.label));
-                    const curQAchieved=curQData.reduce((s,d)=>s+(d.bookedUnits||0),0);
-                    const curQTarget=curQData.reduce((s,d)=>s+(d.targetUnitsLine||0),0);
-                    const curQGap=Math.max(0,curQTarget-curQAchieved);
-                    // Velocity: last 3 months avg
-                    const recentMonths=monthlyWithTargets.filter(d=>!d.isFuture&&d.bookedUnits).slice(-3);
-                    const velocity=recentMonths.length>0?recentMonths.reduce((s,d)=>s+(d.bookedUnits||0),0)/recentMonths.length:0;
-                    // Per-month projection for next quarter: target + gap/3 distributed, weighted toward middle
-                    const weights=[0.3,0.4,0.3]; // bell curve distribution
+                    // Projection: redistribute MISSED targets from past months this quarter
+                    // into remaining months of SAME quarter as a revised target line
+                    const todayD=new Date();
+                    const curQsMo=Math.floor((todayD.getMonth())/3)*3+1;
+                    const ml=(y,m)=>{const n={1:'Jan',2:'Feb',3:'Mar',4:'Apr',5:'May',6:'Jun',7:'Jul',8:'Aug',9:'Sep',10:'Oct',11:'Nov',12:'Dec'};return n[m]+"'"+String(y).slice(2);};
+                    const curQMonths=[0,1,2].map(i=>{let m=curQsMo+i,y=todayD.getFullYear();if(m>12){m-=12;y++;}return ml(y,m);});
+                    const todayLabel=ml(todayD.getFullYear(),todayD.getMonth()+1);
+                    // Split quarter into: past months (missed), current month, future months
+                    const pastQMonths=curQMonths.filter(lbl=>lbl<todayLabel);
+                    const futureQMonths=curQMonths.filter(lbl=>lbl>=todayLabel); // current + future
+                    // Gap = sum of (target - achieved) for past months in this quarter
+                    const missedUnits=pastQMonths.reduce((s,lbl)=>{
+                      const d=monthlyWithTargets.find(r=>r.label===lbl);
+                      return s+Math.max(0,(d?.targetUnitsLine||0)-(d?.bookedUnits||0));
+                    },0);
+                    // Redistribute missed units evenly across remaining months (current + future in Q)
+                    const nRemaining=futureQMonths.length;
+                    const addPerMonth=nRemaining>0?Math.round(missedUnits/nRemaining):0;
                     const projMap={};
-                    nextQMonths.forEach((lbl,i)=>{
+                    futureQMonths.forEach(lbl=>{
                       const base=monthlyWithTargets.find(d=>d.label===lbl)?.targetUnitsLine||0;
-                      const catchUp=Math.round(curQGap*weights[i]);
-                      projMap[lbl]=base+catchUp;
+                      projMap[lbl]=base+addPerMonth; // revised target = original + catch-up
                     });
-                    const rawData=monthlyWithTargets.map(d=>({label:d.label,isFuture:d.isFuture,isCurrent:d.label===TODAY_LABEL,achieved:d.isFuture?null:(d.bookedUnits||0),target:d.targetUnitsLine||null,projection:nextQMonths.includes(d.label)?projMap[d.label]:null,}));
+                    const rawData=monthlyWithTargets.map(d=>({
+                      label:d.label,isFuture:d.isFuture,isCurrent:d.label===TODAY_LABEL,
+                      achieved:d.isFuture?null:(d.bookedUnits||0),
+                      target:d.targetUnitsLine||null,
+                      // projection only on remaining months of current quarter (incl. today)
+                      projection:projMap[d.label]||null,
+                    }));
                     const data=uMode==='quarterly'?toQuarterly(rawData,'label').map(q=>({...q,isFuture:false,isCurrent:false})):rawData;
                     const cur=data.findIndex(d=>d.isCurrent);
                     const def=cur>=2?cur-2:Math.max(0,data.length-WIN);
