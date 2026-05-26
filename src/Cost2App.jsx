@@ -226,20 +226,20 @@ export default function Cost2App() {
           {/* Budget Cost Distribution Pie */}
           <GC style={{padding:14}}>
             <p style={{textAlign:'center',fontSize:11,fontWeight:800,color:T.navy,marginBottom:4,textTransform:'uppercase',letterSpacing:.5}}>Budget Cost Distribution</p>
-            <ResponsiveContainer width="100%" height={200}>
+            <ResponsiveContainer width="100%" height={280}>
               <PieChart>
-                <Pie data={pieData} cx="50%" cy="50%" outerRadius={80} dataKey="value" startAngle={90} endAngle={-270}>
+                <Pie data={pieData} cx="50%" cy="50%" outerRadius={110} dataKey="value" startAngle={90} endAngle={-270}>
                   {pieData.map((_,i)=><Cell key={i} fill={PIE_COLORS[i]}/>)}
                 </Pie>
                 <Tooltip formatter={v=>`₹${Number(v).toLocaleString('en-IN',{maximumFractionDigits:1})} Cr`}/>
               </PieChart>
             </ResponsiveContainer>
-            <div style={{display:'flex',flexDirection:'column',gap:5,marginTop:4}}>
+            <div style={{display:'flex',flexDirection:'column',gap:8,marginTop:8}}>
               {pieData.map((d,i)=>(
-                <div key={i} style={{display:'flex',alignItems:'center',gap:7,fontSize:10}}>
-                  <div style={{width:10,height:10,borderRadius:2,background:PIE_COLORS[i],flexShrink:0}}/>
+                <div key={i} style={{display:'flex',alignItems:'center',gap:8,fontSize:13}}>
+                  <div style={{width:12,height:12,borderRadius:2,background:PIE_COLORS[i],flexShrink:0}}/>
                   <span style={{flex:1,color:T.textM,fontWeight:600}}>{d.name}</span>
-                  <span style={{fontWeight:800,color:T.navy}}>₹{Number(d.value).toLocaleString('en-IN',{maximumFractionDigits:1})} Cr</span>
+                  <span style={{fontWeight:900,color:T.navy,fontSize:14}}>₹{Number(d.value).toLocaleString('en-IN',{maximumFractionDigits:1})} Cr</span>
                 </div>
               ))}
             </div>
@@ -248,21 +248,21 @@ export default function Cost2App() {
           {/* Awarded Cost Distribution Donut */}
           <GC style={{padding:14}}>
             <p style={{textAlign:'center',fontSize:10,fontWeight:800,color:T.navy,marginBottom:4,letterSpacing:.3}}>Awarded Cost Distribution</p>
-            <ResponsiveContainer width="100%" height={160}>
+            <ResponsiveContainer width="100%" height={240}>
               <PieChart>
-                <Pie data={donutData} cx="50%" cy="50%" outerRadius={62} innerRadius={30} dataKey="value" startAngle={90} endAngle={-270}>
+                <Pie data={donutData} cx="50%" cy="50%" outerRadius={95} innerRadius={46} dataKey="value" startAngle={90} endAngle={-270}>
                   <Cell fill={T.tealD}/>
                   <Cell fill="#b0bec5"/>
                 </Pie>
                 <Tooltip formatter={v=>`₹${Number(v).toLocaleString('en-IN',{maximumFractionDigits:1})} Cr`}/>
               </PieChart>
             </ResponsiveContainer>
-            <div style={{display:'flex',flexDirection:'column',gap:5}}>
+            <div style={{display:'flex',flexDirection:'column',gap:8,marginTop:8}}>
               {donutData.map((d,i)=>(
-                <div key={i} style={{display:'flex',alignItems:'center',gap:6,fontSize:9}}>
-                  <div style={{width:8,height:8,borderRadius:2,background:i===0?T.tealD:'#b0bec5',flexShrink:0}}/>
+                <div key={i} style={{display:'flex',alignItems:'center',gap:8,fontSize:13}}>
+                  <div style={{width:12,height:12,borderRadius:2,background:i===0?T.tealD:'#b0bec5',flexShrink:0}}/>
                   <span style={{flex:1,color:T.textM,fontWeight:600}}>{d.name}</span>
-                  <span style={{fontWeight:800,color:T.navy}}>₹{Number(d.value).toLocaleString('en-IN',{maximumFractionDigits:1})} Cr</span>
+                  <span style={{fontWeight:900,color:T.navy,fontSize:14}}>₹{Number(d.value).toLocaleString('en-IN',{maximumFractionDigits:1})} Cr</span>
                 </div>
               ))}
             </div>
