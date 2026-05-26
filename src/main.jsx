@@ -2,18 +2,21 @@ import React, { useState } from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 import CostApp from './CostApp';
+import Cost2App from './Cost2App';
 import './index.css';
 
 // ─── CREDENTIALS MAP ────────────────────────────────────────────────────────
 const USERS = {
-  'Sales': { password: 'Smart@2026', profile: 'sales', sessionKey: 'sd_auth' },
-  'Cost':  { password: 'Smart@2026', profile: 'cost',  sessionKey: 'cost_auth' },
+  'Sales': { password: 'Smart@2026', profile: 'sales',  sessionKey: 'sd_auth' },
+  'Cost':  { password: 'Smart@2026', profile: 'cost',   sessionKey: 'cost_auth' },
+  'Cost2': { password: 'Smart@2026', profile: 'cost2',  sessionKey: 'cost2_auth' },
 };
 
 function Portal() {
   const [profile, setProfile] = useState(() => {
     if (sessionStorage.getItem('sd_auth')   === '1') return 'sales';
     if (sessionStorage.getItem('cost_auth') === '1') return 'cost';
+    if (sessionStorage.getItem('cost2_auth') === '1') return 'cost2';
     return null;
   });
 
@@ -35,6 +38,7 @@ function Portal() {
 
   if (profile === 'sales') return <App />;
   if (profile === 'cost')  return <CostApp />;
+  if (profile === 'cost2') return <Cost2App />;
 
   return (
     <div style={{minHeight:'100vh',backgroundImage:'url(/bg.jpg)',backgroundSize:'cover',backgroundPosition:'center',display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'Inter,sans-serif'}}>
