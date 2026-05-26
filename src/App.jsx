@@ -1419,10 +1419,12 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                       })(),
                     }));
                     const data=uMode==='quarterly'?toQuarterly(rawData,'label').map(q=>({...q,isFuture:false,isCurrent:false})):rawData;
-                    const cur=data.findIndex(d=>d.isCurrent);
-                    const def=cur>=2?cur-2:Math.max(0,data.length-WIN);
-                    const off=chartRangeCompact?0:Math.min(Math.max(uOff<0?def:uOff,0),Math.max(0,data.length-WIN));
-                    const sl=chartRangeCompact?data:data.slice(off,off+WIN);
+                    const parseM=l=>{const p=l.match(/([A-Za-z]{3})'(\d{2})/);if(!p)return'';const mn={Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'};return(p[2]>='90'?'19':'20')+p[2]+'-'+mn[p[1]];};const dataF=chartMonthFrom?data.filter(d=>parseM(d.label)>=chartMonthFrom):data;
+                    const dataFinal=chartRangeCompact?dataF:data;
+                    const cur=dataFinal.findIndex(d=>d.isCurrent);
+                    const def=cur>=2?cur-2:Math.max(0,dataFinal.length-WIN);
+                    const off=chartRangeCompact?0:Math.min(Math.max(uOff<0?def:uOff,0),Math.max(0,dataFinal.length-WIN));
+                    const sl=chartRangeCompact?dataFinal:dataFinal.slice(off,off+WIN);
                     return(<>
                       <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
                         <div style={{display:'flex',gap:3,background:'rgba(0,100,140,0.07)',borderRadius:20,padding:2}}>
@@ -1492,10 +1494,12 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                       bridge:(d.label===lastTsvLbl?tsvProjMap[lastTsvLbl]:d.label===nqBLblT?(monthlyWithTargets.find(r=>r.label===nqBLblT)?.targetTsvLine||null):null),
                     }));
                     const data=tsvMode==='quarterly'?toQuarterly(rawDataTsv,'label').map(q=>({...q,isFuture:false,isCurrent:false})):rawDataTsv;
-                    const cur=data.findIndex(d=>d.isCurrent);
-                    const def=cur>=2?cur-2:Math.max(0,data.length-WIN);
-                    const off=chartRangeCompact?0:Math.min(Math.max(tsvOff<0?def:tsvOff,0),Math.max(0,data.length-WIN));
-                    const sl=chartRangeCompact?data:data.slice(off,off+WIN);
+                    const parseM=l=>{const p=l.match(/([A-Za-z]{3})'(\d{2})/);if(!p)return'';const mn={Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'};return(p[2]>='90'?'19':'20')+p[2]+'-'+mn[p[1]];};const dataF=chartMonthFrom?data.filter(d=>parseM(d.label)>=chartMonthFrom):data;
+                    const dataFinal=chartRangeCompact?dataF:data;
+                    const cur=dataFinal.findIndex(d=>d.isCurrent);
+                    const def=cur>=2?cur-2:Math.max(0,dataFinal.length-WIN);
+                    const off=chartRangeCompact?0:Math.min(Math.max(tsvOff<0?def:tsvOff,0),Math.max(0,dataFinal.length-WIN));
+                    const sl=chartRangeCompact?dataFinal:dataFinal.slice(off,off+WIN);
                     return(<>
                       <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
                         <div style={{display:'flex',gap:3,background:'rgba(0,100,140,0.07)',borderRadius:20,padding:2}}>{[['monthly','Monthly'],['quarterly','Quarterly']].map(([k,l])=>(<button key={k} onClick={()=>{setTsvMode(k);setTsvOff(0);}} style={{padding:'3px 10px',borderRadius:18,border:'none',cursor:'pointer',fontSize:10,fontWeight:700,background:tsvMode===k?'#0097a7':'transparent',color:tsvMode===k?'#fff':'#546e7a',transition:'all 0.15s'}}>{l}</button>))}</div>
@@ -1562,10 +1566,12 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                       bridge:(d.label===lastALbl2?+(areaProjMap2[lastALbl2]/1000).toFixed(1):d.label===nqBLblA2?(monthlyWithTargets.find(r=>r.label===nqBLblA2)?.targetAreaSqft?+(monthlyWithTargets.find(r=>r.label===nqBLblA2).targetAreaSqft/1000).toFixed(1):null):null),
                     }));
                     const data=suMode==='quarterly'?toQuarterly(rawDataA,'label').map(q=>({...q,isFuture:false,isCurrent:false})):rawDataA;
-                    const cur=data.findIndex(d=>d.isCurrent);
-                    const def=cur>=2?cur-2:Math.max(0,data.length-WIN);
-                    const off=chartRangeCompact?0:Math.min(Math.max(suOff<0?def:suOff,0),Math.max(0,data.length-WIN));
-                    const sl=chartRangeCompact?data:data.slice(off,off+WIN);
+                    const parseM=l=>{const p=l.match(/([A-Za-z]{3})'(\d{2})/);if(!p)return'';const mn={Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'};return(p[2]>='90'?'19':'20')+p[2]+'-'+mn[p[1]];};const dataF=chartMonthFrom?data.filter(d=>parseM(d.label)>=chartMonthFrom):data;
+                    const dataFinal=chartRangeCompact?dataF:data;
+                    const cur=dataFinal.findIndex(d=>d.isCurrent);
+                    const def=cur>=2?cur-2:Math.max(0,dataFinal.length-WIN);
+                    const off=chartRangeCompact?0:Math.min(Math.max(suOff<0?def:suOff,0),Math.max(0,dataFinal.length-WIN));
+                    const sl=chartRangeCompact?dataFinal:dataFinal.slice(off,off+WIN);
                     // KPI pills
                     const totBooked=monthlyWithTargets.filter(d=>!d.isFuture).reduce((s,d)=>s+(d.bookedAreaSqft||0),0);
                     const totTarget=monthlyWithTargets.reduce((s,d)=>s+(d.targetAreaSqft||0),0);
@@ -1648,10 +1654,12 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                       bridge:(d.label===lastRateLbl?rateProjMap[lastRateLbl]:d.label===nqBLblR?(monthlyWithTargets.find(r=>r.label===nqBLblR)?.targetRateLine||null):null),
                     }));
                     const data=rMode==='quarterly'?toQuarterly(rawDataR,'label').map(q=>({...q,isFuture:false,isCurrent:false})):rawDataR;
-                    const cur=data.findIndex(d=>d.isCurrent);
-                    const def=cur>=2?cur-2:Math.max(0,data.length-WIN);
-                    const off=chartRangeCompact?0:Math.min(Math.max(rOff<0?def:rOff,0),Math.max(0,data.length-WIN));
-                    const sl=chartRangeCompact?data:data.slice(off,off+WIN);
+                    const parseM=l=>{const p=l.match(/([A-Za-z]{3})'(\d{2})/);if(!p)return'';const mn={Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'};return(p[2]>='90'?'19':'20')+p[2]+'-'+mn[p[1]];};const dataF=chartMonthFrom?data.filter(d=>parseM(d.label)>=chartMonthFrom):data;
+                    const dataFinal=chartRangeCompact?dataF:data;
+                    const cur=dataFinal.findIndex(d=>d.isCurrent);
+                    const def=cur>=2?cur-2:Math.max(0,dataFinal.length-WIN);
+                    const off=chartRangeCompact?0:Math.min(Math.max(rOff<0?def:rOff,0),Math.max(0,dataFinal.length-WIN));
+                    const sl=chartRangeCompact?dataFinal:dataFinal.slice(off,off+WIN);
                     return(<>
                       <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
                         <div style={{display:'flex',gap:3,background:'rgba(0,100,140,0.07)',borderRadius:20,padding:2}}>{[['monthly','Monthly'],['quarterly','Quarterly']].map(([k,l])=>(<button key={k} onClick={()=>{setRMode(k);setROff(0);}} style={{padding:'3px 10px',borderRadius:18,border:'none',cursor:'pointer',fontSize:10,fontWeight:700,background:rMode===k?'#0097a7':'transparent',color:rMode===k?'#fff':'#546e7a',transition:'all 0.15s'}}>{l}</button>))}</div>
