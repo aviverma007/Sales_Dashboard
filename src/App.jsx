@@ -1205,7 +1205,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                         </div>
                         <div style={{flex:1,display:'flex',flexDirection:'column',gap:3}}>
                           <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline'}}>
-                            <span style={{fontSize:7,color:T.textM,fontWeight:700}}>TOTAL PROJECT VALUE</span>
+                            <span style={{fontSize:7,color:T.textM,fontWeight:700}}>TOTAL PROJECT SALES VALUE</span>
                             <span style={{fontSize:11,fontWeight:900,color:T.navy}}>₹{totalPotential.toFixed(0)} Cr</span>
                           </div>
                           <div style={{display:'flex',gap:4}}>
