@@ -218,55 +218,62 @@ const MonthRangeSlider = ({months, rangeIdx, setRangeIdx, onReset}) => {
   const fromLabel = fmtML(months[safeL]);
   const toLabel = fmtML(months[safeR]);
 
-  const CalIcon = () => (
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-    </svg>
-  );
-
   if (N < 2) return null;
   return (
-    <div style={{background:'rgba(255,255,255,0.95)',borderRadius:12,padding:'10px 20px 16px',marginBottom:8,boxShadow:'0 2px 8px rgba(0,0,0,0.08)'}}>
-      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
-        <div style={{display:'flex',alignItems:'center',gap:8}}>
-          <span style={{fontSize:9,fontWeight:700,color:T.textM,textTransform:'uppercase',letterSpacing:0.5}}>Chart Range</span>
-          <span style={{background:T.tealD,color:'#fff',fontSize:10,fontWeight:800,borderRadius:10,padding:'2px 10px'}}>📅 {fromLabel} → {toLabel}</span>
+    <div style={{background:'rgba(255,255,255,0.96)',borderRadius:10,padding:'7px 16px 10px',marginBottom:6,boxShadow:'0 1px 6px rgba(0,0,0,0.07)',backdropFilter:'blur(8px)'}}>
+      {/* Header row */}
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
+        <div style={{display:'flex',alignItems:'center',gap:6}}>
+          <span style={{fontSize:8,fontWeight:700,color:T.textM,textTransform:'uppercase',letterSpacing:0.8}}>Chart Range</span>
+          <div style={{display:'flex',alignItems:'center',gap:4,background:`linear-gradient(135deg,${T.tealD},${T.teal})`,borderRadius:20,padding:'2px 10px 2px 7px'}}>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{opacity:0.9}}>
+              <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+            <span style={{color:'#fff',fontSize:10,fontWeight:800,letterSpacing:0.2}}>{fromLabel} → {toLabel}</span>
+          </div>
         </div>
-        <button onClick={onReset} style={{fontSize:9,color:T.tealD,fontWeight:700,background:'rgba(0,151,167,0.08)',border:'1px solid rgba(0,151,167,0.2)',borderRadius:8,cursor:'pointer',padding:'3px 10px'}}>↺ Reset</button>
+        <button onClick={onReset} style={{fontSize:8,color:T.tealD,fontWeight:700,background:'rgba(0,151,167,0.06)',border:'1px solid rgba(0,151,167,0.18)',borderRadius:6,cursor:'pointer',padding:'2px 8px',display:'flex',alignItems:'center',gap:3,transition:'all 0.15s'}}>
+          <span style={{fontSize:10}}>↺</span> Reset
+        </button>
       </div>
-      <div ref={trackRef} style={{position:'relative',height:48,userSelect:'none',touchAction:'none'}}>
-        {/* Track */}
-        <div style={{position:'absolute',top:'50%',transform:'translateY(-50%)',left:0,right:0,height:5,background:'rgba(0,100,140,0.1)',borderRadius:3}}/>
-        {/* Filled */}
-        <div style={{position:'absolute',top:'50%',transform:'translateY(-50%)',left:leftPct+'%',right:(100-rightPct)+'%',height:5,background:`linear-gradient(90deg,${T.teal},${T.tealD})`,borderRadius:3,pointerEvents:'none'}}/>
-        {/* Tick dots + labels */}
+      {/* Track area — compact */}
+      <div ref={trackRef} style={{position:'relative',height:32,userSelect:'none',touchAction:'none'}}>
+        {/* Base track */}
+        <div style={{position:'absolute',top:'50%',transform:'translateY(-50%)',left:0,right:0,height:3,background:'rgba(0,100,140,0.08)',borderRadius:2}}/>
+        {/* Filled range */}
+        <div style={{position:'absolute',top:'50%',transform:'translateY(-50%)',left:leftPct+'%',right:(100-rightPct)+'%',height:3,background:`linear-gradient(90deg,${T.teal},${T.tealD})`,borderRadius:2,pointerEvents:'none',transition:'left 0.1s,right 0.1s'}}/>
+        {/* Tick marks + labels */}
         {months.map((m, i) => {
           const pct = i / (N - 1) * 100;
-          const inRange = i > safeL && i < safeR;
+          const inRange = i >= safeL && i <= safeR;
           const showLbl = i === 0 || i === N-1 || (N <= 12 ? true : N <= 24 ? i%2===0 : i%4===0);
           return (
             <div key={m} style={{position:'absolute',left:pct+'%',top:'50%',transform:'translate(-50%,-50%)',pointerEvents:'none',display:'flex',flexDirection:'column',alignItems:'center'}}>
-              <div style={{width:inRange?6:4,height:inRange?6:4,borderRadius:'50%',background:inRange?'#fff':'rgba(255,255,255,0.45)',boxShadow:inRange?'0 0 3px rgba(255,255,255,0.8)':'none'}}/>
-              {showLbl && <span style={{fontSize:7,color:T.textL,fontWeight:500,whiteSpace:'nowrap',position:'absolute',top:14}}>{fmtML(m)}</span>}
+              <div style={{width:3,height:3,borderRadius:'50%',background:inRange?'rgba(255,255,255,0.7)':'rgba(0,100,140,0.15)',transition:'background 0.2s'}}/>
+              {showLbl && <span style={{fontSize:6.5,color:'rgba(80,100,120,0.7)',fontWeight:500,whiteSpace:'nowrap',position:'absolute',top:9,letterSpacing:0.1}}>{fmtML(m)}</span>}
             </div>
           );
         })}
         {/* Left handle */}
         <div onMouseDown={(e)=>startDrag('left',e)} onTouchStart={(e)=>startDrag('left',e)}
-          style={{position:'absolute',left:leftPct+'%',top:'50%',transform:'translate(-50%,-50%)',width:28,height:28,borderRadius:8,background:'#fff',color:T.tealD,display:'flex',alignItems:'center',justifyContent:'center',cursor:'grab',zIndex:10,boxShadow:'0 2px 8px rgba(0,151,167,0.4)',border:`2px solid ${T.tealD}`,userSelect:'none',touchAction:'none'}}>
-          <CalIcon/>
+          style={{position:'absolute',left:leftPct+'%',top:'50%',transform:'translate(-50%,-50%)',width:22,height:22,borderRadius:6,background:'#fff',color:T.tealD,display:'flex',alignItems:'center',justifyContent:'center',cursor:'grab',zIndex:10,boxShadow:`0 2px 8px rgba(0,151,167,0.35),0 0 0 1.5px ${T.tealD}`,userSelect:'none',touchAction:'none',transition:'transform 0.15s,box-shadow 0.15s'}}>
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
         </div>
-        {/* Left label */}
-        <div style={{position:'absolute',left:leftPct+'%',top:'calc(50% - 34px)',transform:'translateX(-50%)',background:T.tealD,color:'#fff',fontSize:8,fontWeight:800,borderRadius:6,padding:'2px 6px',whiteSpace:'nowrap',pointerEvents:'none'}}>
+        {/* Left label tooltip */}
+        <div style={{position:'absolute',left:leftPct+'%',top:'calc(50% - 26px)',transform:'translateX(-50%)',background:T.tealD,color:'#fff',fontSize:7.5,fontWeight:800,borderRadius:4,padding:'1px 5px',whiteSpace:'nowrap',pointerEvents:'none',boxShadow:'0 1px 4px rgba(0,151,167,0.3)',letterSpacing:0.2}}>
           {fromLabel}
         </div>
         {/* Right handle */}
         <div onMouseDown={(e)=>startDrag('right',e)} onTouchStart={(e)=>startDrag('right',e)}
-          style={{position:'absolute',left:rightPct+'%',top:'50%',transform:'translate(-50%,-50%)',width:28,height:28,borderRadius:8,background:'#fff',color:T.tealD,display:'flex',alignItems:'center',justifyContent:'center',cursor:'grab',zIndex:10,boxShadow:'0 2px 8px rgba(0,151,167,0.4)',border:`2px solid ${T.tealD}`,userSelect:'none',touchAction:'none'}}>
-          <CalIcon/>
+          style={{position:'absolute',left:rightPct+'%',top:'50%',transform:'translate(-50%,-50%)',width:22,height:22,borderRadius:6,background:'#fff',color:T.tealD,display:'flex',alignItems:'center',justifyContent:'center',cursor:'grab',zIndex:10,boxShadow:`0 2px 8px rgba(0,151,167,0.35),0 0 0 1.5px ${T.tealD}`,userSelect:'none',touchAction:'none',transition:'transform 0.15s,box-shadow 0.15s'}}>
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
         </div>
-        {/* Right label */}
-        <div style={{position:'absolute',left:rightPct+'%',top:'calc(50% - 34px)',transform:'translateX(-50%)',background:T.tealD,color:'#fff',fontSize:8,fontWeight:800,borderRadius:6,padding:'2px 6px',whiteSpace:'nowrap',pointerEvents:'none'}}>
+        {/* Right label tooltip */}
+        <div style={{position:'absolute',left:rightPct+'%',top:'calc(50% - 26px)',transform:'translateX(-50%)',background:T.tealD,color:'#fff',fontSize:7.5,fontWeight:800,borderRadius:4,padding:'1px 5px',whiteSpace:'nowrap',pointerEvents:'none',boxShadow:'0 1px 4px rgba(0,151,167,0.3)',letterSpacing:0.2}}>
           {toLabel}
         </div>
       </div>
