@@ -1698,7 +1698,18 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                       achieved:d.isFuture?null:(d.actualRate>0?d.actualRate:null),
                       target:d.targetRateLine||null,
                       targetLine:(()=>{if(futureCqmR.includes(d.label)&&rateProjMap[d.label]!=null)return null;const p=d.label.match(/([A-Za-z]{3})'(\d{2})/);if(p&&(2000+parseInt(p[2]))*100+(moNR[p[1]]||0)<todayYMR)return null;return d.targetRateLine||null;})(),
-                      projection:(()=>{if(d.label===lastKnownLbl)return lastKnownRate||null;if(futureCqmR.includes(d.label))return rateProjMap[d.label]||null;return null;})(),
+                      projection:(()=>{
+                        const dym=lblYmR(d.label);
+                        // Show projection dot on lastKnownLbl and all months from there to end of quarter
+                        if(d.label===lastKnownLbl)return lastKnownRate||null;
+                        // Fill gap months between lastKnown and first future quarter month with interpolation
+                        if(dym>lastKnownYm&&dym<lblYmR(futureCqmR[0]||''))  {
+                          const steps=Math.round((dym-lastKnownYm)/100)*12+((dym%100)-(lastKnownYm%100));
+                          return Math.round(lastKnownRate+cappedSlope*steps)||null;
+                        }
+                        if(futureCqmR.includes(d.label))return rateProjMap[d.label]||null;
+                        return null;
+                      })(),
                       bridge:(d.label===lastRateLbl?rateProjMap[lastRateLbl]:d.label===nqBLblR?(monthlyWithTargets.find(r=>r.label===nqBLblR)?.targetRateLine||null):null),
                     }));
                     const data=rMode==='quarterly'?toQuarterly(rawDataR,'label').map(q=>({...q,isFuture:false,isCurrent:false})):rawDataR;
@@ -1720,7 +1731,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                           <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.1)" vertical={false}/>
                           <XAxis dataKey="label" tick={({x,y,payload})=>{const d=sl.find(s=>s.label===payload.value);return <text x={x} y={y+10} textAnchor="middle" fontSize={9} fill={d?.isCurrent?T.tealD:d?.isFuture?'#90a4ae':T.textM} fontWeight={d?.isCurrent?900:600}>{payload.value}</text>;}} axisLine={false} tickLine={false}/>
                           <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={54} tickFormatter={v=>'₹'+v.toLocaleString('en-IN')}
-                            domain={[()=>{const vals=sl.flatMap(d=>[d.achieved,d.target,d.projection]).filter(v=>v!=null&&v>0);if(!vals.length)return 0;const mn=Math.min(...vals);const mx=Math.max(...vals);const spread=Math.max(mx-mn,500);return Math.max(0,Math.floor((mn-spread*0.15)/500)*500);},()=>{const vals=sl.flatMap(d=>[d.achieved,d.target,d.projection]).filter(v=>v!=null&&v>0);if(!vals.length)return 30000;const mx=Math.max(...vals);const mn=Math.min(...vals);const spread=Math.max(mx-mn,500);return Math.ceil((mx+spread*0.15)/500)*500;}]}
+                            domain={[()=>{const vals=[...sl.flatMap(d=>[d.achieved,d.target,d.projection,d.bridge,d.targetLine]).filter(v=>v!=null&&v>0)];if(!vals.length)return 18000;const mn=Math.min(...vals);const mx=Math.max(...vals);const spread=Math.max(mx-mn,300);return Math.max(0,Math.floor((mn-spread*0.2)/500)*500);},()=>{const vals=[...sl.flatMap(d=>[d.achieved,d.target,d.projection,d.bridge,d.targetLine]).filter(v=>v!=null&&v>0)];if(!vals.length)return 25000;const mx=Math.max(...vals);const mn=Math.min(...vals);const spread=Math.max(mx-mn,300);return Math.ceil((mx+spread*0.2)/500)*500;}]}
                           />
                           <Tooltip content={({active,payload,label})=>{if(!active||!payload?.length)return null;const d=sl.find(s=>s.label===label);return(<div style={{background:'rgba(255,255,255,0.97)',border:'1px solid rgba(0,151,167,0.3)',borderRadius:10,padding:'8px 12px',fontSize:10}}><p style={{color:T.tealD,fontWeight:800,margin:'0 0 4px'}}>{label}</p>{d?.achieved!=null&&<p style={{color:T.tealD,margin:0}}>Achieved: ₹{d.achieved?.toLocaleString('en-IN')}/sqft</p>}{d?.target!=null&&<p style={{color:'#607d8b',margin:0}}>Target: ₹{d.target?.toLocaleString('en-IN')}/sqft</p>}</div>);}}/>
                           <Legend wrapperStyle={{fontSize:9,fontWeight:700}} iconSize={8}/>
