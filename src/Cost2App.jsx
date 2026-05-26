@@ -124,6 +124,7 @@ export default function Cost2App() {
     if(!raw?.categoryData) return [];
     return raw.categoryData;
   },[raw]);
+  const bifData = useMemo(()=>raw?.bifurcationData||[],[raw]);
 
   const vendorData = useMemo(()=>raw?.topVendors||[],[raw]);
   const matData = useMemo(()=>raw?.materialData||[],[raw]);
@@ -229,17 +230,23 @@ export default function Cost2App() {
           {/* Charts Row 1 */}
           <div style={{display:'grid',gridTemplateColumns:'1.4fr 1fr',gap:16,marginBottom:16}}>
             <GC style={{padding:16}}>
-              <SH title="Cost Bifurcation — Top 8 WBS" sub="Budget vs Assigned vs Actual (₹ Cr)"/>
-              <ResponsiveContainer width="100%" height={240}>
-                <BarChart data={catData.slice(0,8)} margin={{top:16,right:8,bottom:40,left:0}} barCategoryGap="25%">
+              <SH title="Cost Bifurcation" sub="Budget Cost (Cr) · Awarded Amount (Cr) · Paid Amount (Cr)"/>
+              <ResponsiveContainer width="100%" height={260}>
+                <BarChart data={bifData} margin={{top:20,right:8,bottom:20,left:0}} barCategoryGap="30%" barGap={3}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.08)" vertical={false}/>
-                  <XAxis dataKey="WBS Description" tick={{fontSize:8,fill:T.textM}} angle={-35} textAnchor="end" height={50} tickLine={false} axisLine={false} interval={0}/>
-                  <YAxis tick={{fontSize:9,fill:T.textM}} tickLine={false} axisLine={false} tickFormatter={v=>`₹${v}Cr`}/>
+                  <XAxis dataKey="Category" tick={{fontSize:9,fill:T.textM,fontWeight:600}} tickLine={false} axisLine={false}/>
+                  <YAxis tick={{fontSize:9,fill:T.textM}} tickLine={false} axisLine={false} tickFormatter={v=>`${v}`} label={{value:'COST (₹ Cr)',angle:-90,position:'insideLeft',offset:-2,style:{fontSize:9,fill:T.gray}}}/>
                   <Tooltip content={<CTip/>}/>
-                  <Legend iconSize={8} wrapperStyle={{fontSize:9,paddingTop:4}}/>
-                  <Bar dataKey="Budget" name="Budget" fill={`${T.teal}40`} radius={[3,3,0,0]} barSize={14}/>
-                  <Bar dataKey="Assigned" name="Assigned" fill={T.teal} radius={[3,3,0,0]} barSize={14}/>
-                  <Bar dataKey="Actual" name="Actual" fill={T.green} radius={[3,3,0,0]} barSize={14}/>
+                  <Legend iconSize={10} wrapperStyle={{fontSize:10,paddingTop:6}} formatter={(v)=>v==='Budget'?'Budget Cost(in Cr)':v==='Assigned'?'Awarded Amount(in Cr)':'Paid Amount(in Cr)'}/>
+                  <Bar dataKey="Budget" name="Budget" fill="#b0bec5" radius={[3,3,0,0]} barSize={18}>
+                    <LabelList dataKey="Budget" position="top" style={{fontSize:8,fill:'#546e7a',fontWeight:700}} formatter={v=>v>0?Math.round(v):''}/>
+                  </Bar>
+                  <Bar dataKey="Assigned" name="Assigned" fill={T.teal} radius={[3,3,0,0]} barSize={18}>
+                    <LabelList dataKey="Assigned" position="top" style={{fontSize:8,fill:T.tealD,fontWeight:700}} formatter={v=>v>0?Math.round(v):''}/>
+                  </Bar>
+                  <Bar dataKey="Actual" name="Actual" fill={T.navy} radius={[3,3,0,0]} barSize={18}>
+                    <LabelList dataKey="Actual" position="top" style={{fontSize:8,fill:T.navy,fontWeight:700}} formatter={v=>v>0?Math.round(v):''}/>
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </GC>
