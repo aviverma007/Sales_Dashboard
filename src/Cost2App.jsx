@@ -202,22 +202,22 @@ export default function Cost2App() {
                 </div>
               ))}
             </div>
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={bifData} margin={{top:18,right:4,bottom:28,left:0}} barCategoryGap="28%" barGap={2}>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={bifData} margin={{top:24,right:8,bottom:30,left:8}} barCategoryGap="22%" barGap={3}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.07)" vertical={false}/>
                 <XAxis dataKey="Category" tick={{fontSize:8,fill:T.textM,fontWeight:600}} tickLine={false} axisLine={false}
                   label={{value:'Description',position:'insideBottom',offset:-18,style:{fontSize:9,fill:T.gray}}}/>
                 <YAxis tick={{fontSize:8,fill:T.textM}} tickLine={false} axisLine={false}
                   label={{value:'COST',angle:-90,position:'insideLeft',offset:8,style:{fontSize:9,fill:T.gray}}}/>
                 <Tooltip content={<CTip/>}/>
-                <Bar dataKey="Budget" name="Budget Cost" fill="#b0bec5" radius={[2,2,0,0]} barSize={16}>
-                  <LabelList dataKey="Budget" position="top" style={{fontSize:7.5,fill:T.gray,fontWeight:700}} formatter={v=>v>0?Math.round(v):''}/>
+                <Bar dataKey="Budget" name="Budget Cost" fill="#b0bec5" radius={[3,3,0,0]} barSize={26}>
+                  <LabelList dataKey="Budget" position="top" style={{fontSize:11,fill:T.gray,fontWeight:800}} formatter={v=>v>0?Math.round(v):''/>
                 </Bar>
-                <Bar dataKey="Assigned" name="Awarded Amount" fill={T.teal} radius={[2,2,0,0]} barSize={16}>
-                  <LabelList dataKey="Assigned" position="top" style={{fontSize:7.5,fill:T.tealD,fontWeight:700}} formatter={v=>v>0?Math.round(v):''}/>
+                <Bar dataKey="Assigned" name="Awarded Amount" fill={T.teal} radius={[3,3,0,0]} barSize={26}>
+                  <LabelList dataKey="Assigned" position="top" style={{fontSize:11,fill:T.tealD,fontWeight:800}} formatter={v=>v>0?Math.round(v):''/>
                 </Bar>
-                <Bar dataKey="Actual" name="Paid Amount" fill={T.navy} radius={[2,2,0,0]} barSize={16}>
-                  <LabelList dataKey="Actual" position="top" style={{fontSize:7.5,fill:T.navy,fontWeight:700}} formatter={v=>v>0?Math.round(v):''}/>
+                <Bar dataKey="Actual" name="Paid Amount" fill={T.navy} radius={[3,3,0,0]} barSize={26}>
+                  <LabelList dataKey="Actual" position="top" style={{fontSize:11,fill:T.navy,fontWeight:800}} formatter={v=>v>0?Math.round(v):''/>
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
@@ -275,17 +275,17 @@ export default function Cost2App() {
           {/* Package wise % Paid */}
           <GC style={{padding:14}}>
             <p style={{fontSize:10,fontWeight:800,color:T.navy,marginBottom:10,letterSpacing:.3}}>Package wise percentage Paid up Cost</p>
-            <ResponsiveContainer width="100%" height={Math.max(160, pkgData.length*42)}>
-              <BarChart data={pkgData} layout="vertical" margin={{top:0,right:50,bottom:0,left:80}} barCategoryGap="30%">
+            <ResponsiveContainer width="100%" height={Math.max(200, pkgData.length*55)}>
+              <BarChart data={pkgData} layout="vertical" margin={{top:0,right:70,bottom:0,left:90}} barCategoryGap="25%">
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.07)" horizontal={false}/>
-                <XAxis type="number" tick={{fontSize:8,fill:T.textM}} tickLine={false} axisLine={false} tickFormatter={v=>`${v}%`} domain={[0,120]}
-                  label={{value:'% Paid Cost',position:'insideBottom',offset:-4,style:{fontSize:9,fill:T.gray}}}/>
-                <YAxis type="category" dataKey="cat" tick={{fontSize:9,fill:T.textM,fontWeight:600}} width={80} tickLine={false} axisLine={false}
-                  label={{value:'Description',angle:-90,position:'insideLeft',offset:8,style:{fontSize:9,fill:T.gray}}}/>
+                <XAxis type="number" tick={{fontSize:10,fill:T.textM}} tickLine={false} axisLine={false} tickFormatter={v=>`${v}%`} domain={[0,130]}
+                  label={{value:'% Paid Cost',position:'insideBottom',offset:-4,style:{fontSize:10,fill:T.gray}}}/>
+                <YAxis type="category" dataKey="cat" tick={{fontSize:11,fill:T.textM,fontWeight:700}} width={90} tickLine={false} axisLine={false}
+                  label={{value:'Description',angle:-90,position:'insideLeft',offset:8,style:{fontSize:10,fill:T.gray}}}/>
                 <Tooltip formatter={v=>`${Number(v).toFixed(2)}%`}/>
-                <Bar dataKey="pct" name="% Paid" radius={[0,3,3,0]} barSize={20}>
+                <Bar dataKey="pct" name="% Paid" radius={[0,4,4,0]} barSize={32}>
                   {pkgData.map((d,i)=><Cell key={i} fill={CAT_COLORS[d.cat]||T.amber}/>)}
-                  <LabelList dataKey="pct" position="right" style={{fontSize:9,fontWeight:800,fill:T.navy}} formatter={v=>`${Number(v).toFixed(2)}%`}/>
+                  <LabelList dataKey="pct" position="right" style={{fontSize:12,fontWeight:800,fill:T.navy}} formatter={v=>`${Number(v).toFixed(2)}%`}/>
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
