@@ -1658,9 +1658,9 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const cqmObjR=[0,1,2].map(i=>{let m=rQS+i,y=todayR.getFullYear();if(m>12){m-=12;y++;}return{label:ml3(y,m),ym:y*100+m};});
                     const pastCqmR=cqmObjR.filter(o=>o.ym<todayYMR).map(o=>o.label);
                     const futureCqmR=cqmObjR.filter(o=>o.ym>=todayYMR).map(o=>o.label);
-                    // Rate projection: use last 3 months with actual sales to compute trend
-                    // Then project forward continuing that trend from the last known rate
-                    const allActualRates=monthlyWithTargets.filter(d=>!d.isFuture&&d.actualRate>0).sort((a,b)=>lblYmR(a.label)-lblYmR(b.label));
+                    // Rate projection: use RAW (unfiltered) actual rates so FY filter doesn't break projection
+                    const rawActualRatesMap=raw?.monthlyActualRates||{};
+                    const allActualRates=Object.entries(rawActualRatesMap).filter(([,v])=>v>0).map(([month,rate])=>({label:fmtML(month),actualRate:rate,ym:lblYmR(fmtML(month))})).filter(d=>d.ym>0&&d.ym<=todayYMR).sort((a,b)=>a.ym-b.ym);
                     const recentRates=allActualRates.slice(-3);
                     const lastKnownRate=recentRates.length>0?recentRates[recentRates.length-1].actualRate:0;
                     // Compute avg monthly trend (slope) from recent 3 months
@@ -1704,8 +1704,8 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                         const allCqm=cqmObjR.map(o=>o.label);
                         if(!allCqm.includes(d.label))return null;
                         // First CQ month with a rate is the anchor
-                        const cqAnchorLbl=pastCqmR.filter(l=>monthlyWithTargets.find(r=>r.label===l)?.actualRate>0).slice(-1)[0]||lastKnownLbl;
-                        const cqAnchorRate=(monthlyWithTargets.find(r=>r.label===cqAnchorLbl)?.actualRate)||lastKnownRate;
+                        const cqAnchorLbl=pastCqmR.filter(l=>allActualRates.find(r=>r.label===l)).slice(-1)[0]||lastKnownLbl;
+                        const cqAnchorRate=rawActualRatesMap[Object.keys(rawActualRatesMap).find(k=>fmtML(k)===cqAnchorLbl)||'']||lastKnownRate;
                         const dym=lblYmR(d.label);
                         const anchorYm=lblYmR(cqAnchorLbl);
                         if(d.label===cqAnchorLbl)return cqAnchorRate||null;
