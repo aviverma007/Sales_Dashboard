@@ -1182,8 +1182,8 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                   const availArea=iF.filter(r=>r.status==='Available').reduce((s,r)=>s+(r.superArea||0),0);
                   const availUnits=iF.filter(r=>r.status==='Available').length;
                   const unsoldBSP=+((availArea>0?availArea*avgRate:availUnits*avgRate*3000)/1e7).toFixed(2);
-                  const totalPotential=+(soldBSP+unsoldBSP).toFixed(2);
-                  const soldPct=totalPotential>0?Math.round(soldBSP/totalPotential*100):0;
+                  const totalPotential=+(soldTCV+unsoldBSP).toFixed(2);
+                  const soldPct=totalPotential>0?Math.round(soldTCV/totalPotential*100):0;
                   return(
                     <div style={{display:'flex',flexDirection:'column',gap:6}}>
                       {/* Row 1: donut + sold/unsold */}
@@ -1191,7 +1191,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                         <div style={{width:72,height:72,flexShrink:0,position:'relative'}}>
                           <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
-                              <Pie data={[{name:'Sold',value:soldBSP||0.01},{name:'Unsold',value:unsoldBSP||0.01}]}
+                              <Pie data={[{name:'Sold',value:soldTCV||0.01},{name:'Unsold',value:unsoldBSP||0.01}]}
                                 cx="50%" cy="50%" innerRadius={20} outerRadius={34} paddingAngle={3} dataKey="value" strokeWidth={1.5} stroke="rgba(255,255,255,0.9)" labelLine={false}>
                                 <Cell fill={T.teal}/><Cell fill={T.amber}/>
                               </Pie>
@@ -1211,8 +1211,8 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                           <div style={{display:'flex',gap:4}}>
                             <div style={{flex:1,background:`${T.teal}0d`,borderRadius:4,padding:'3px 5px'}}>
                               <p style={{fontSize:6,color:T.textM,fontWeight:700,margin:0}}>SOLD</p>
-                              <p style={{fontSize:10,fontWeight:900,color:T.tealD,margin:0}}>₹{soldBSP.toFixed(0)} Cr</p>
-                              <p style={{fontSize:6,color:T.textM,margin:0}}>TCV ₹{(soldTCV).toFixed(0)} Cr</p>
+                              <p style={{fontSize:10,fontWeight:900,color:T.tealD,margin:0}}>₹{soldTCV.toFixed(0)} Cr</p>
+                              <p style={{fontSize:6,color:T.textM,margin:0}}>Total Unit Cost</p>
                             </div>
                             <div style={{flex:1,background:'rgba(245,158,11,0.07)',borderRadius:4,padding:'3px 5px'}}>
                               <p style={{fontSize:6,color:T.textM,fontWeight:700,margin:0}}>UNSOLD</p>
