@@ -1086,7 +1086,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                         <p style={{fontSize:16,fontWeight:900,color:T.tealD,margin:0}}>{kpi.bookedUnits?.toLocaleString('en-IN')}</p>
                       </div>
                       <div style={{flex:1,background:`${T.amber}0d`,borderRadius:6,padding:'5px 8px'}}>
-                        <p style={{fontSize:8,color:T.textM,fontWeight:700,margin:'0 0 2px'}}>AVAILABLE</p>
+                        <p style={{fontSize:8,color:T.textM,fontWeight:700,margin:'0 0 2px'}}>Available</p>
                         <p style={{fontSize:16,fontWeight:900,color:T.amber,margin:0}}>{kpi.availableUnits?.toLocaleString('en-IN')}</p>
                       </div>
                     </div>
@@ -1134,7 +1134,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                             <p style={{fontSize:15,fontWeight:900,color:T.tealD,margin:0}}>{(sold/1000).toFixed(0)}K</p>
                           </div>
                           <div style={{flex:1,background:`${T.amber}0d`,borderRadius:6,padding:'5px 8px'}}>
-                            <p style={{fontSize:8,color:T.textM,fontWeight:700,margin:'0 0 2px'}}>AVAILABLE</p>
+                            <p style={{fontSize:8,color:T.textM,fontWeight:700,margin:'0 0 2px'}}>Available</p>
                             <p style={{fontSize:15,fontWeight:900,color:T.amber,margin:0}}>{(avail/1000).toFixed(0)}K</p>
                           </div>
                         </div>
