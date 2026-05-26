@@ -1658,20 +1658,47 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const cqmObjR=[0,1,2].map(i=>{let m=rQS+i,y=todayR.getFullYear();if(m>12){m-=12;y++;}return{label:ml3(y,m),ym:y*100+m};});
                     const pastCqmR=cqmObjR.filter(o=>o.ym<todayYMR).map(o=>o.label);
                     const futureCqmR=cqmObjR.filter(o=>o.ym>=todayYMR).map(o=>o.label);
-                    // Rate projection: avg of past months in Q vs target
-                    const recentRates=monthlyWithTargets.filter(d=>!d.isFuture&&d.actualRate).slice(-3);
-                    const avgRecentRate=recentRates.length>0?recentRates.reduce((s,d)=>s+(d.actualRate||0),0)/recentRates.length:0;
+                    // Rate projection: use last 3 months with actual sales to compute trend
+                    // Then project forward continuing that trend from the last known rate
+                    const allActualRates=monthlyWithTargets.filter(d=>!d.isFuture&&d.actualRate>0).sort((a,b)=>lblYmR(a.label)-lblYmR(b.label));
+                    const recentRates=allActualRates.slice(-3);
+                    const lastKnownRate=recentRates.length>0?recentRates[recentRates.length-1].actualRate:0;
+                    // Compute avg monthly trend (slope) from recent 3 months
+                    const rateSlope=(()=>{
+                      if(recentRates.length<2)return 0;
+                      const deltas=[];
+                      for(let i=1;i<recentRates.length;i++)deltas.push(recentRates[i].actualRate-recentRates[i-1].actualRate);
+                      return deltas.reduce((s,d)=>s+d,0)/deltas.length;
+                    })();
+                    // Cap slope to avoid wild projections — max ±2% of lastKnownRate per month
+                    const cappedSlope=Math.max(Math.min(rateSlope,lastKnownRate*0.02),-lastKnownRate*0.02);
                     const rateProjMap={};
-                    futureCqmR.forEach((lbl,i)=>{const base=monthlyWithTargets.find(d=>d.label===lbl)?.targetRateLine||avgRecentRate;rateProjMap[lbl]=Math.round(Math.max(base,avgRecentRate*(1+0.005*(i+1))));});
-                    const sortedRateProj=Object.keys(rateProjMap).sort((a,b)=>lblYmR(a)-lblYmR(b));
+                    // Find how many months gap between lastKnownRate and first future month
+                    const lastKnownLbl=recentRates.length>0?recentRates[recentRates.length-1].label:'';
+                    const lastKnownYm=lblYmR(lastKnownLbl);
+                    futureCqmR.forEach((lbl)=>{
+                      const lym=lblYmR(lbl);
+                      // Steps from last known rate to this future month
+                      const monthsAhead=Math.max(1,Math.round((lym-lastKnownYm)/100)*12+((lym%100)-(lastKnownYm%100)));
+                      const projected=Math.round(lastKnownRate+(cappedSlope*monthsAhead));
+                      rateProjMap[lbl]=projected>0?projected:lastKnownRate;
+                    });
+                    // Also bridge: fill gap months between lastKnown and first future month with interpolated values
+                    // so the green line connects smoothly from last actual bar to projection
+                    const bridgeRateProjMap={...rateProjMap};
+                    // Add the last known month to projMap anchor (for line continuity)
+                    if(lastKnownLbl&&!futureCqmR.includes(lastKnownLbl)){
+                      bridgeRateProjMap[lastKnownLbl]=lastKnownRate;
+                    }
+                    const sortedRateProj=Object.keys(bridgeRateProjMap).sort((a,b)=>lblYmR(a)-lblYmR(b));
                     const lastRateLbl=sortedRateProj[sortedRateProj.length-1];
                     const nqBMoR=rQS+3>12?rQS-9:rQS+3;const nqBYR=rQS+3>12?todayR.getFullYear()+1:todayR.getFullYear();
                     const nqBLblR=ml3(nqBYR,nqBMoR);
                     const rawDataR=monthlyWithTargets.map(d=>({label:d.label,isFuture:d.isFuture,isCurrent:d.label===TODAY_LABEL,
                       achieved:d.isFuture?null:(d.actualRate||0),
                       target:d.targetRateLine||null,
-                      targetLine:(()=>{if(rateProjMap[d.label]!=null)return null;const p=d.label.match(/([A-Za-z]{3})'(\d{2})/);if(p&&(2000+parseInt(p[2]))*100+(moNR[p[1]]||0)<todayYMR)return null;return d.targetRateLine||null;})(),
-                      projection:rateProjMap[d.label]||null,
+                      targetLine:(()=>{if(futureCqmR.includes(d.label)&&rateProjMap[d.label]!=null)return null;const p=d.label.match(/([A-Za-z]{3})'(\d{2})/);if(p&&(2000+parseInt(p[2]))*100+(moNR[p[1]]||0)<todayYMR)return null;return d.targetRateLine||null;})(),
+                      projection:(()=>{if(d.label===lastKnownLbl)return lastKnownRate||null;if(futureCqmR.includes(d.label))return rateProjMap[d.label]||null;return null;})(),
                       bridge:(d.label===lastRateLbl?rateProjMap[lastRateLbl]:d.label===nqBLblR?(monthlyWithTargets.find(r=>r.label===nqBLblR)?.targetRateLine||null):null),
                     }));
                     const data=rMode==='quarterly'?toQuarterly(rawDataR,'label').map(q=>({...q,isFuture:false,isCurrent:false})):rawDataR;
