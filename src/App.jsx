@@ -1580,7 +1580,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const nqBLblA2=ml4(nqBYA2,nqBMoA2);
                     const rawDataA=monthlyWithTargets.map(d=>({
                       label:d.label,isFuture:d.isFuture,isCurrent:d.label===TODAY_LABEL,
-                      achieved:d.isFuture?null:d.bookedAreaSqft!=null?+(d.bookedAreaSqft/1000).toFixed(1):null,
+                      achieved:d.isFuture?null:(d.bookedAreaSqft!=null&&d.bookedAreaSqft>0?+(d.bookedAreaSqft/1000).toFixed(1):0),
                       target:d.targetAreaSqft?+(d.targetAreaSqft/1000).toFixed(1):null,
                       targetLine:(()=>{if(areaProjMap2[d.label]!=null)return null;const p=d.label.match(/([A-Za-z]{3})'(\d{2})/);if(p&&(2000+parseInt(p[2]))*100+(moNA2[p[1]]||0)<todayYMA3)return null;return d.targetAreaSqft?+(d.targetAreaSqft/1000).toFixed(1):null;})(),
                       projection:areaProjMap2[d.label]!=null?+(areaProjMap2[d.label]/1000).toFixed(1):null,
@@ -1695,7 +1695,14 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const nqBMoR=rQS+3>12?rQS-9:rQS+3;const nqBYR=rQS+3>12?todayR.getFullYear()+1:todayR.getFullYear();
                     const nqBLblR=ml3(nqBYR,nqBMoR);
                     const rawDataR=monthlyWithTargets.map(d=>({label:d.label,isFuture:d.isFuture,isCurrent:d.label===TODAY_LABEL,
-                      achieved:d.isFuture?null:(d.actualRate>0?d.actualRate:null),
+                      achieved:(()=>{
+                        if(d.isFuture)return null;
+                        if(d.actualRate>0)return d.actualRate;
+                        // Past month with no rate — show last known rate so line extends to today
+                        const dym2=lblYmR(d.label);
+                        if(dym2<=todayYMR&&lastKnownRate>0)return lastKnownRate;
+                        return null;
+                      })(),
                       target:d.targetRateLine||null,
                       targetLine:(()=>{if(futureCqmR.includes(d.label)&&rateProjMap[d.label]!=null)return null;const p=d.label.match(/([A-Za-z]{3})'(\d{2})/);if(p&&(2000+parseInt(p[2]))*100+(moNR[p[1]]||0)<todayYMR)return null;return d.targetRateLine||null;})(),
                       projection:(()=>{
