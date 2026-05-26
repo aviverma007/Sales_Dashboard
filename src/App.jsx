@@ -1556,7 +1556,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
 
                 {/* ── CHART 4: AREA Booked vs Target ── */}
                 <GC style={{padding:16}}>
-                  <SH title="Area — Booked vs Target"/>
+                  <SH title="Area (sq ft) — Booked vs Target"/>
                   {(()=>{
                     const WIN=10;
                     // Build from monthlyWithTargets — same source as other 3 charts
