@@ -1699,21 +1699,11 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                       target:d.targetRateLine||null,
                       targetLine:(()=>{if(futureCqmR.includes(d.label)&&rateProjMap[d.label]!=null)return null;const p=d.label.match(/([A-Za-z]{3})'(\d{2})/);if(p&&(2000+parseInt(p[2]))*100+(moNR[p[1]]||0)<todayYMR)return null;return d.targetRateLine||null;})(),
                       projection:(()=>{
-                        // Only show projection for current quarter months (past CQ months with no rate + future CQ months)
-                        // Anchor: today's month (or last month with a rate in current Q)
-                        const allCqm=cqmObjR.map(o=>o.label);
-                        if(!allCqm.includes(d.label))return null;
-                        // First CQ month with a rate is the anchor
-                        const cqAnchorLbl=pastCqmR.filter(l=>allActualRates.find(r=>r.label===l)).slice(-1)[0]||lastKnownLbl;
-                        const cqAnchorRate=rawActualRatesMap[cqAnchorLbl]||lastKnownRate;
+                        // Only show projection for today + future months of current quarter
+                        if(!futureCqmR.includes(d.label))return null;
                         const dym=lblYmR(d.label);
-                        const anchorYm=lblYmR(cqAnchorLbl);
-                        if(d.label===cqAnchorLbl)return cqAnchorRate||null;
-                        if(dym>anchorYm){
-                          const steps=((dym%100)-(anchorYm%100))+Math.round((dym-anchorYm)/100)*12;
-                          return Math.round(cqAnchorRate+cappedSlope*Math.abs(steps))||null;
-                        }
-                        return null;
+                        const steps=((dym%100)-(lastKnownYm%100))+Math.round((dym-lastKnownYm)/100)*12;
+                        return Math.round(lastKnownRate+cappedSlope*Math.abs(steps))||null;
                       })(),
                       bridge:(d.label===lastRateLbl?rateProjMap[lastRateLbl]:d.label===nqBLblR?(monthlyWithTargets.find(r=>r.label===nqBLblR)?.targetRateLine||null):null),
                     }));
