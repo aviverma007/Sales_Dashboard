@@ -83,7 +83,7 @@ export default function Cost2App() {
   // Package-wise % paid (horizontal bar)
   const pkgData = useMemo(()=>bifData
     .filter(r=>r.Assigned>0)
-    .map(r=>({cat:r.Category, pct:parseFloat((r.Actual/r.Assigned*100).toFixed(2)}))
+    .map(r=>({cat:r.Category, pct:parseFloat((r.Actual/r.Assigned*100).toFixed(2))}))
     .sort((a,b)=>b.pct-a.pct)
   ,[bifData]);
 
