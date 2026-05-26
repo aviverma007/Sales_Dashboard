@@ -1708,21 +1708,32 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     })();
                     // Cap slope to avoid wild projections — max ±2% of lastKnownRate per month
                     const cappedSlope=Math.max(Math.min(rateSlope,lastKnownRate*0.02),-lastKnownRate*0.02);
-                    const rateProjMap={};
-                    // Find how many months gap between lastKnownRate and first future month
                     const lastKnownLbl=recentRates.length>0?recentRates[recentRates.length-1].label:'';
                     const lastKnownYm=lblYmR(lastKnownLbl);
+
+                    // ── REQUIRED RATE LOGIC ──────────────────────────────────────────────
+                    // Required Rate = (Target TSV - Sold TCV so far) / Remaining area to sell
+                    // This line runs from today to end of project showing what rate is needed
+                    const targetTSV=(kpiEx.totalBSPCr||0)*1e7; // total project sales value target (using BSP as proxy)
+                    const soldTCVVal=(kpiEx.totalTCVCr||0)*1e7; // already sold TCV
+                    const remainingTSV=Math.max(0,targetTSV-soldTCVVal);
+                    // Remaining area = sum of target units remaining × avg area per unit
+                    const avgAreaPerUnit=kpiEx.bookedAreaSqft>0&&kpiEx.bookedUnits>0?kpiEx.bookedAreaSqft/kpiEx.bookedUnits:1500;
+                    const futureMonths=monthlyWithTargets.filter(d=>d.isFuture);
+                    const totalTargetUnitsRemaining=futureMonths.reduce((s,d)=>s+(d.targetUnits||0),0);
+                    const remainingArea=totalTargetUnitsRemaining*avgAreaPerUnit;
+                    // Required rate per sqft to hit target TSV
+                    const requiredRate=remainingArea>0?Math.round(remainingTSV/remainingArea):0;
+
+                    // Current quarter projection (short-term trend)
+                    const rateProjMap={};
                     futureCqmR.forEach((lbl)=>{
                       const lym=lblYmR(lbl);
-                      // Steps from last known rate to this future month
                       const monthsAhead=Math.max(1,Math.round((lym-lastKnownYm)/100)*12+((lym%100)-(lastKnownYm%100)));
                       const projected=Math.round(lastKnownRate+(cappedSlope*monthsAhead));
                       rateProjMap[lbl]=projected>0?projected:lastKnownRate;
                     });
-                    // Also bridge: fill gap months between lastKnown and first future month with interpolated values
-                    // so the green line connects smoothly from last actual bar to projection
                     const bridgeRateProjMap={...rateProjMap};
-                    // Add the last known month to projMap anchor (for line continuity)
                     if(lastKnownLbl&&!futureCqmR.includes(lastKnownLbl)){
                       bridgeRateProjMap[lastKnownLbl]=lastKnownRate;
                     }
@@ -1734,12 +1745,18 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                       achieved:d.isFuture?null:(d.actualRate>0?d.actualRate:0),
                       target:d.targetRateLine||null,
                       targetLine:(()=>{if(futureCqmR.includes(d.label)&&rateProjMap[d.label]!=null)return null;const p=d.label.match(/([A-Za-z]{3})'(\d{2})/);if(p&&(2000+parseInt(p[2]))*100+(moNR[p[1]]||0)<todayYMR)return null;return d.targetRateLine||null;})(),
+                      // Current quarter short-term projection
                       projection:(()=>{
-                        // Only show projection for today + future months of current quarter
                         if(!futureCqmR.includes(d.label))return null;
                         const dym=lblYmR(d.label);
                         const steps=((dym%100)-(lastKnownYm%100))+Math.round((dym-lastKnownYm)/100)*12;
                         return Math.round(lastKnownRate+cappedSlope*Math.abs(steps))||null;
+                      })(),
+                      // Required rate line — runs from today through all future months
+                      requiredRate:(()=>{
+                        const dym=lblYmR(d.label);
+                        if(dym<todayYMR)return null; // only future months
+                        return requiredRate>0?requiredRate:null;
                       })(),
                       bridge:(d.label===lastRateLbl?rateProjMap[lastRateLbl]:d.label===nqBLblR?(monthlyWithTargets.find(r=>r.label===nqBLblR)?.targetRateLine||null):null),
                     }));
@@ -1784,8 +1801,19 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                             <LabelList dataKey="projection" position="top" offset={18} content={({x,y,value})=>{if(value==null)return null;const txt='▲₹'+Math.round(value).toLocaleString('en-IN');const w=txt.length*5.5+8;return(<g><rect x={x-w/2} y={y-28} width={w} height={16} rx={4} fill="white" stroke="#22c55e" strokeWidth={1} opacity={0.95}/><text x={x} y={y-17} textAnchor="middle" fill="#16a34a" fontSize={8} fontWeight={900}>{txt}</text></g>);}}/>
                           </Line>
                           <Line type="monotone" dataKey="bridge" stroke="#90a4ae" strokeWidth={1.5} strokeDasharray="4 3" dot={false} activeDot={false} legendType="none" connectNulls={true}/>
+                          <Line type="monotone" dataKey="requiredRate" name="Adjusted Rate for Balance Year" stroke="#2e7d32" strokeWidth={2} strokeDasharray="8 3" dot={({cx,cy,payload})=>payload.requiredRate!=null?<circle cx={cx} cy={cy} r={3} fill="#2e7d32" stroke="#fff" strokeWidth={1.5}/>:<g/>} activeDot={{r:5,fill:"#2e7d32"}} connectNulls={true} legendType="none"/>
                         </ComposedChart>
                       </ResponsiveContainer>
+                      {requiredRate>0&&(<div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:10,marginTop:8,flexWrap:'wrap'}}>
+                        <div style={{display:'flex',alignItems:'center',gap:6}}>
+                          <svg width="28" height="10"><line x1="0" y1="5" x2="28" y2="5" stroke="#2e7d32" strokeWidth="2.5" strokeDasharray="8 3"/><circle cx="14" cy="5" r="3" fill="#2e7d32" stroke="white" strokeWidth="1.5"/></svg>
+                          <span style={{fontSize:9,color:'#2e7d32',fontWeight:700}}>Adjusted Rate for Balance Year</span>
+                        </div>
+                        <div style={{background:'rgba(46,125,50,0.08)',border:'1px solid rgba(46,125,50,0.3)',borderRadius:8,padding:'5px 14px',textAlign:'right'}}>
+                          <p style={{fontSize:8,color:'#2e7d32',fontWeight:700,margin:'0 0 1px',textTransform:'uppercase',letterSpacing:.4}}>New Rate Required to achieve Target TSV</p>
+                          <p style={{fontSize:15,fontWeight:900,color:'#1b5e20',margin:0}}>₹{requiredRate.toLocaleString('en-IN')}<span style={{fontSize:10,fontWeight:600}}>/sqft</span></p>
+                        </div>
+                      </div>)}
                     </>);
                   })()}
                 </GC>
