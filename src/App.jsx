@@ -1578,18 +1578,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                         <div style={{flex:1,height:4,background:'rgba(0,151,167,0.1)',borderRadius:2,overflow:'hidden'}}><div style={{width:(WIN/Math.max(data.length,1)*100)+'%',marginLeft:(off/Math.max(data.length,1)*100)+'%',height:'100%',background:'#0097a7',borderRadius:2}}/></div>
                         <button onClick={()=>setSuOff(Math.min(data.length-WIN,off+1))} disabled={off>=data.length-WIN} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:off>=data.length-WIN?'default':'pointer',fontSize:13,color:off>=data.length-WIN?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>›</button>
                       </div>
-                      <div style={{display:'flex',gap:10,marginBottom:6}}>
-                        <div style={{background:'rgba(0,151,167,0.08)',borderRadius:6,padding:'3px 8px'}}>
-                          <span style={{fontSize:8,color:T.textM,fontWeight:700}}>BOOKED </span>
-                          <span style={{fontSize:12,fontWeight:900,color:T.tealD}}>{Math.round(totBooked/1000).toLocaleString('en-IN')}K</span>
-                          <span style={{fontSize:8,color:T.textM}}> sq ft</span>
-                        </div>
-                        <div style={{background:'rgba(245,158,11,0.08)',borderRadius:6,padding:'3px 8px'}}>
-                          <span style={{fontSize:8,color:T.textM,fontWeight:700}}>TARGET </span>
-                          <span style={{fontSize:12,fontWeight:900,color:T.amber}}>{Math.round(totTarget/1000).toLocaleString('en-IN')}K</span>
-                          <span style={{fontSize:8,color:T.textM}}> sq ft</span>
-                        </div>
-                      </div>
+
                       <ResponsiveContainer width="100%" height={220}>
                         <ComposedChart data={sl} margin={{top:24,right:8,bottom:18,left:0}} barCategoryGap="30%">
                           <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.1)" vertical={false}/>
