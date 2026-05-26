@@ -1454,7 +1454,13 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                           ))}
                         </div>
                         {!chartRangeCompact&&dataFinal.length>WIN&&<><button onClick={()=>setAllOff(Math.max(0,off-1))} disabled={off===0} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:off===0?'default':'pointer',fontSize:13,color:off===0?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>&#8249;</button>
-                        <div style={{flex:1,height:4,background:'rgba(0,151,167,0.1)',borderRadius:2,overflow:'hidden'}}><div style={{width:(WIN/Math.max(data.length,1)*100)+'%',marginLeft:(off/Math.max(data.length,1)*100)+'%',height:'100%',background:'#0097a7',borderRadius:2}}/></div>
+                        <div
+  style={{flex:1,height:10,background:'rgba(0,151,167,0.1)',borderRadius:5,cursor:'pointer',position:'relative'}}
+  onClick={e=>{const r=e.currentTarget.getBoundingClientRect();const p=(e.clientX-r.left)/r.width;setAllOff(Math.round(p*Math.max(0,dataFinal.length-WIN)));}}
+  onMouseDown={e=>{e.preventDefault();const track=e.currentTarget;const move=ev=>{const r=track.getBoundingClientRect();const p=Math.max(0,Math.min(1,(ev.clientX-r.left)/r.width));setAllOff(Math.round(p*Math.max(0,dataFinal.length-WIN)));};const up=()=>{window.removeEventListener('mousemove',move);window.removeEventListener('mouseup',up);};window.addEventListener('mousemove',move);window.addEventListener('mouseup',up);}}
+>
+  <div style={{position:'absolute',left:`${dataFinal.length>WIN?(off/Math.max(1,dataFinal.length-WIN))*(100-WIN/dataFinal.length*100):0}%`,width:`${dataFinal.length>0?(WIN/dataFinal.length)*100:100}%`,height:'100%',background:'linear-gradient(90deg,#0097a7,#4dd0e1)',borderRadius:5,transition:'left 0.1s',cursor:'grab'}}/>
+</div>
                         <button onClick={()=>setAllOff(Math.min(dataFinal.length-WIN,off+1))} disabled={off>=data.length-WIN} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:off>=data.length-WIN?'default':'pointer',fontSize:13,color:off>=data.length-WIN?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>&#8250;</button></> }
                       </div>
                       <ResponsiveContainer width="100%" height={210}>
@@ -1525,7 +1531,13 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                       <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
                         <div style={{display:'flex',gap:3,background:'rgba(0,100,140,0.07)',borderRadius:20,padding:2}}>{[['monthly','Monthly'],['quarterly','Quarterly']].map(([k,l])=>(<button key={k} onClick={()=>{setTsvMode(k);setTsvOff(0);}} style={{padding:'3px 10px',borderRadius:18,border:'none',cursor:'pointer',fontSize:10,fontWeight:700,background:tsvMode===k?'#0097a7':'transparent',color:tsvMode===k?'#fff':'#546e7a',transition:'all 0.15s'}}>{l}</button>))}</div>
                         {!chartRangeCompact&&dataFinal.length>WIN&&<><button onClick={()=>setAllOff(Math.max(0,off-1))} disabled={off===0} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:off===0?'default':'pointer',fontSize:13,color:off===0?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>‹</button>
-                        <div style={{flex:1,height:4,background:'rgba(0,151,167,0.1)',borderRadius:2,overflow:'hidden'}}><div style={{width:(WIN/Math.max(data.length,1)*100)+'%',marginLeft:(off/Math.max(data.length,1)*100)+'%',height:'100%',background:'#0097a7',borderRadius:2}}/></div>
+                        <div
+  style={{flex:1,height:10,background:'rgba(0,151,167,0.1)',borderRadius:5,cursor:'pointer',position:'relative'}}
+  onClick={e=>{const r=e.currentTarget.getBoundingClientRect();const p=(e.clientX-r.left)/r.width;setAllOff(Math.round(p*Math.max(0,dataFinal.length-WIN)));}}
+  onMouseDown={e=>{e.preventDefault();const track=e.currentTarget;const move=ev=>{const r=track.getBoundingClientRect();const p=Math.max(0,Math.min(1,(ev.clientX-r.left)/r.width));setAllOff(Math.round(p*Math.max(0,dataFinal.length-WIN)));};const up=()=>{window.removeEventListener('mousemove',move);window.removeEventListener('mouseup',up);};window.addEventListener('mousemove',move);window.addEventListener('mouseup',up);}}
+>
+  <div style={{position:'absolute',left:`${dataFinal.length>WIN?(off/Math.max(1,dataFinal.length-WIN))*(100-WIN/dataFinal.length*100):0}%`,width:`${dataFinal.length>0?(WIN/dataFinal.length)*100:100}%`,height:'100%',background:'linear-gradient(90deg,#0097a7,#4dd0e1)',borderRadius:5,transition:'left 0.1s',cursor:'grab'}}/>
+</div>
                         <button onClick={()=>setAllOff(Math.min(dataFinal.length-WIN,off+1))} disabled={off>=data.length-WIN} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:off>=data.length-WIN?'default':'pointer',fontSize:13,color:off>=data.length-WIN?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>›</button></> }
                       </div>
                       <ResponsiveContainer width="100%" height={210}>
@@ -1604,7 +1616,13 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                           ))}
                         </div>
                         {!chartRangeCompact&&dataFinal.length>WIN&&<><button onClick={()=>setAllOff(Math.max(0,off-1))} disabled={off===0} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:off===0?'default':'pointer',fontSize:13,color:off===0?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>‹</button>
-                        <div style={{flex:1,height:4,background:'rgba(0,151,167,0.1)',borderRadius:2,overflow:'hidden'}}><div style={{width:(WIN/Math.max(data.length,1)*100)+'%',marginLeft:(off/Math.max(data.length,1)*100)+'%',height:'100%',background:'#0097a7',borderRadius:2}}/></div>
+                        <div
+  style={{flex:1,height:10,background:'rgba(0,151,167,0.1)',borderRadius:5,cursor:'pointer',position:'relative'}}
+  onClick={e=>{const r=e.currentTarget.getBoundingClientRect();const p=(e.clientX-r.left)/r.width;setAllOff(Math.round(p*Math.max(0,dataFinal.length-WIN)));}}
+  onMouseDown={e=>{e.preventDefault();const track=e.currentTarget;const move=ev=>{const r=track.getBoundingClientRect();const p=Math.max(0,Math.min(1,(ev.clientX-r.left)/r.width));setAllOff(Math.round(p*Math.max(0,dataFinal.length-WIN)));};const up=()=>{window.removeEventListener('mousemove',move);window.removeEventListener('mouseup',up);};window.addEventListener('mousemove',move);window.addEventListener('mouseup',up);}}
+>
+  <div style={{position:'absolute',left:`${dataFinal.length>WIN?(off/Math.max(1,dataFinal.length-WIN))*(100-WIN/dataFinal.length*100):0}%`,width:`${dataFinal.length>0?(WIN/dataFinal.length)*100:100}%`,height:'100%',background:'linear-gradient(90deg,#0097a7,#4dd0e1)',borderRadius:5,transition:'left 0.1s',cursor:'grab'}}/>
+</div>
                         <button onClick={()=>setAllOff(Math.min(dataFinal.length-WIN,off+1))} disabled={off>=data.length-WIN} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:off>=data.length-WIN?'default':'pointer',fontSize:13,color:off>=data.length-WIN?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>›</button></> }
                       </div>
 
@@ -1718,7 +1736,13 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                       <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
                         <div style={{display:'flex',gap:3,background:'rgba(0,100,140,0.07)',borderRadius:20,padding:2}}>{[['monthly','Monthly'],['quarterly','Quarterly']].map(([k,l])=>(<button key={k} onClick={()=>{setRMode(k);setROff(0);}} style={{padding:'3px 10px',borderRadius:18,border:'none',cursor:'pointer',fontSize:10,fontWeight:700,background:rMode===k?'#0097a7':'transparent',color:rMode===k?'#fff':'#546e7a',transition:'all 0.15s'}}>{l}</button>))}</div>
                         {!chartRangeCompact&&dataFinal.length>WIN&&<><button onClick={()=>setAllOff(Math.max(0,off-1))} disabled={off===0} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:off===0?'default':'pointer',fontSize:13,color:off===0?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>‹</button>
-                        <div style={{flex:1,height:4,background:'rgba(0,151,167,0.1)',borderRadius:2,overflow:'hidden'}}><div style={{width:(WIN/Math.max(data.length,1)*100)+'%',marginLeft:(off/Math.max(data.length,1)*100)+'%',height:'100%',background:'#0097a7',borderRadius:2}}/></div>
+                        <div
+  style={{flex:1,height:10,background:'rgba(0,151,167,0.1)',borderRadius:5,cursor:'pointer',position:'relative'}}
+  onClick={e=>{const r=e.currentTarget.getBoundingClientRect();const p=(e.clientX-r.left)/r.width;setAllOff(Math.round(p*Math.max(0,dataFinal.length-WIN)));}}
+  onMouseDown={e=>{e.preventDefault();const track=e.currentTarget;const move=ev=>{const r=track.getBoundingClientRect();const p=Math.max(0,Math.min(1,(ev.clientX-r.left)/r.width));setAllOff(Math.round(p*Math.max(0,dataFinal.length-WIN)));};const up=()=>{window.removeEventListener('mousemove',move);window.removeEventListener('mouseup',up);};window.addEventListener('mousemove',move);window.addEventListener('mouseup',up);}}
+>
+  <div style={{position:'absolute',left:`${dataFinal.length>WIN?(off/Math.max(1,dataFinal.length-WIN))*(100-WIN/dataFinal.length*100):0}%`,width:`${dataFinal.length>0?(WIN/dataFinal.length)*100:100}%`,height:'100%',background:'linear-gradient(90deg,#0097a7,#4dd0e1)',borderRadius:5,transition:'left 0.1s',cursor:'grab'}}/>
+</div>
                         <button onClick={()=>setAllOff(Math.min(dataFinal.length-WIN,off+1))} disabled={off>=data.length-WIN} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:off>=data.length-WIN?'default':'pointer',fontSize:13,color:off>=data.length-WIN?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>›</button></> }
                       </div>
                       <ResponsiveContainer width="100%" height={210}>
