@@ -923,6 +923,15 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
         @keyframes flipIn{0%{opacity:0;transform:rotateY(-90deg) scale(0.95)}60%{opacity:1;transform:rotateY(0deg) scale(1)}100%{opacity:1;transform:rotateY(0deg) scale(1)}}
         .flip-container{perspective:1200px;transform-style:preserve-3d;}
         .kc{transition:transform 0.2s ease,box-shadow 0.2s ease}.kc:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(0,80,120,0.18)!important}
+        .chart-slider-track{flex:1;height:12px;background:rgba(0,151,167,0.08);border-radius:6px;cursor:pointer;position:relative;box-shadow:inset 0 1px 3px rgba(0,0,0,0.08);transition:background 0.2s ease}
+        .chart-slider-track:hover{background:rgba(0,151,167,0.14)}
+        .chart-slider-thumb{position:absolute;height:100%;background:linear-gradient(90deg,#0097a7,#26c6da);border-radius:6px;cursor:grab;box-shadow:0 2px 8px rgba(0,151,167,0.35);transition:left 0.18s cubic-bezier(0.25,0.46,0.45,0.94),width 0.18s ease,box-shadow 0.2s ease}
+        .chart-slider-thumb:hover{box-shadow:0 3px 14px rgba(0,151,167,0.55);background:linear-gradient(90deg,#00838f,#0097a7,#26c6da)}
+        .chart-slider-thumb:active,.chart-slider-thumb.dragging{cursor:grabbing;box-shadow:0 4px 20px rgba(0,151,167,0.65);background:linear-gradient(90deg,#006064,#0097a7,#4dd0e1);transition:none}
+        .chart-slider-btn{width:26px;height:26px;border-radius:50%;border:1.5px solid rgba(0,151,167,0.25);background:rgba(255,255,255,0.9);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all 0.18s ease;flex-shrink:0;color:#0097a7;box-shadow:0 1px 4px rgba(0,0,0,0.08)}
+        .chart-slider-btn:hover:not(:disabled){background:#0097a7;color:white;border-color:#0097a7;box-shadow:0 3px 10px rgba(0,151,167,0.4);transform:scale(1.08)}
+        .chart-slider-btn:active:not(:disabled){transform:scale(0.95)}
+        .chart-slider-btn:disabled{color:#ccc;cursor:default;border-color:rgba(0,0,0,0.08);box-shadow:none}
         .tr:hover td{background:rgba(0,151,167,0.06)!important}
         select option{background:#fff;color:#0d2137}
         .tab{transition:all 0.2s;cursor:pointer}
@@ -1453,15 +1462,14 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                             <button key={k} onClick={()=>{setUMode(k);setUOff(0);}} style={{padding:'3px 10px',borderRadius:18,border:'none',cursor:'pointer',fontSize:10,fontWeight:700,background:uMode===k?'#0097a7':'transparent',color:uMode===k?'#fff':'#546e7a',transition:'all 0.15s'}}>{l}</button>
                           ))}
                         </div>
-                        {!chartRangeCompact&&dataFinal.length>WIN&&<><button onClick={()=>setAllOff(Math.max(0,off-1))} disabled={off===0} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:off===0?'default':'pointer',fontSize:13,color:off===0?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>&#8249;</button>
-                        <div
-  style={{flex:1,height:10,background:'rgba(0,151,167,0.1)',borderRadius:5,cursor:'pointer',position:'relative'}}
+                        {!chartRangeCompact&&dataFinal.length>WIN&&<><button className="chart-slider-btn" onClick={()=>setAllOff(Math.max(0,off-1))} disabled={off===0}>&#8249;</button>
+                        <div className="chart-slider-track"
   onClick={e=>{const r=e.currentTarget.getBoundingClientRect();const p=(e.clientX-r.left)/r.width;setAllOff(Math.round(p*Math.max(0,dataFinal.length-WIN)));}}
-  onMouseDown={e=>{e.preventDefault();const track=e.currentTarget;const move=ev=>{const r=track.getBoundingClientRect();const p=Math.max(0,Math.min(1,(ev.clientX-r.left)/r.width));setAllOff(Math.round(p*Math.max(0,dataFinal.length-WIN)));};const up=()=>{window.removeEventListener('mousemove',move);window.removeEventListener('mouseup',up);};window.addEventListener('mousemove',move);window.addEventListener('mouseup',up);}}
+  onMouseDown={e=>{e.preventDefault();const thumb=e.currentTarget.querySelector('.chart-slider-thumb');if(thumb)thumb.classList.add('dragging');const track=e.currentTarget;const move=ev=>{const r=track.getBoundingClientRect();const p=Math.max(0,Math.min(1,(ev.clientX-r.left)/r.width));setAllOff(Math.round(p*Math.max(0,dataFinal.length-WIN)));};const up=()=>{if(thumb)thumb.classList.remove('dragging');window.removeEventListener('mousemove',move);window.removeEventListener('mouseup',up);};window.addEventListener('mousemove',move);window.addEventListener('mouseup',up);}}
 >
-  <div style={{position:'absolute',left:`${dataFinal.length>WIN?(off/Math.max(1,dataFinal.length-WIN))*(100-WIN/dataFinal.length*100):0}%`,width:`${dataFinal.length>0?(WIN/dataFinal.length)*100:100}%`,height:'100%',background:'linear-gradient(90deg,#0097a7,#4dd0e1)',borderRadius:5,transition:'left 0.1s',cursor:'grab'}}/>
+  <div className="chart-slider-thumb" style={{left:`${dataFinal.length>WIN?(off/Math.max(1,dataFinal.length-WIN))*(100-WIN/dataFinal.length*100):0}%`,width:`${dataFinal.length>0?(WIN/dataFinal.length)*100:100}%`}}/>
 </div>
-                        <button onClick={()=>setAllOff(Math.min(dataFinal.length-WIN,off+1))} disabled={off>=data.length-WIN} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:off>=data.length-WIN?'default':'pointer',fontSize:13,color:off>=data.length-WIN?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>&#8250;</button></> }
+                        <button className="chart-slider-btn" onClick={()=>setAllOff(Math.min(dataFinal.length-WIN,off+1))} disabled={off>=dataFinal.length-WIN}>&#8250;</button></> }
                       </div>
                       <ResponsiveContainer width="100%" height={210}>
                         <ComposedChart data={sl} margin={{top:26,right:8,bottom:18,left:0}} barGap={4} barCategoryGap="30%">
@@ -1530,15 +1538,14 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     return(<>
                       <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
                         <div style={{display:'flex',gap:3,background:'rgba(0,100,140,0.07)',borderRadius:20,padding:2}}>{[['monthly','Monthly'],['quarterly','Quarterly']].map(([k,l])=>(<button key={k} onClick={()=>{setTsvMode(k);setTsvOff(0);}} style={{padding:'3px 10px',borderRadius:18,border:'none',cursor:'pointer',fontSize:10,fontWeight:700,background:tsvMode===k?'#0097a7':'transparent',color:tsvMode===k?'#fff':'#546e7a',transition:'all 0.15s'}}>{l}</button>))}</div>
-                        {!chartRangeCompact&&dataFinal.length>WIN&&<><button onClick={()=>setAllOff(Math.max(0,off-1))} disabled={off===0} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:off===0?'default':'pointer',fontSize:13,color:off===0?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>‹</button>
-                        <div
-  style={{flex:1,height:10,background:'rgba(0,151,167,0.1)',borderRadius:5,cursor:'pointer',position:'relative'}}
+                        {!chartRangeCompact&&dataFinal.length>WIN&&<><button className="chart-slider-btn" onClick={()=>setAllOff(Math.max(0,off-1))} disabled={off===0}>‹</button>
+                        <div className="chart-slider-track"
   onClick={e=>{const r=e.currentTarget.getBoundingClientRect();const p=(e.clientX-r.left)/r.width;setAllOff(Math.round(p*Math.max(0,dataFinal.length-WIN)));}}
-  onMouseDown={e=>{e.preventDefault();const track=e.currentTarget;const move=ev=>{const r=track.getBoundingClientRect();const p=Math.max(0,Math.min(1,(ev.clientX-r.left)/r.width));setAllOff(Math.round(p*Math.max(0,dataFinal.length-WIN)));};const up=()=>{window.removeEventListener('mousemove',move);window.removeEventListener('mouseup',up);};window.addEventListener('mousemove',move);window.addEventListener('mouseup',up);}}
+  onMouseDown={e=>{e.preventDefault();const thumb=e.currentTarget.querySelector('.chart-slider-thumb');if(thumb)thumb.classList.add('dragging');const track=e.currentTarget;const move=ev=>{const r=track.getBoundingClientRect();const p=Math.max(0,Math.min(1,(ev.clientX-r.left)/r.width));setAllOff(Math.round(p*Math.max(0,dataFinal.length-WIN)));};const up=()=>{if(thumb)thumb.classList.remove('dragging');window.removeEventListener('mousemove',move);window.removeEventListener('mouseup',up);};window.addEventListener('mousemove',move);window.addEventListener('mouseup',up);}}
 >
-  <div style={{position:'absolute',left:`${dataFinal.length>WIN?(off/Math.max(1,dataFinal.length-WIN))*(100-WIN/dataFinal.length*100):0}%`,width:`${dataFinal.length>0?(WIN/dataFinal.length)*100:100}%`,height:'100%',background:'linear-gradient(90deg,#0097a7,#4dd0e1)',borderRadius:5,transition:'left 0.1s',cursor:'grab'}}/>
+  <div className="chart-slider-thumb" style={{left:`${dataFinal.length>WIN?(off/Math.max(1,dataFinal.length-WIN))*(100-WIN/dataFinal.length*100):0}%`,width:`${dataFinal.length>0?(WIN/dataFinal.length)*100:100}%`}}/>
 </div>
-                        <button onClick={()=>setAllOff(Math.min(dataFinal.length-WIN,off+1))} disabled={off>=data.length-WIN} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:off>=data.length-WIN?'default':'pointer',fontSize:13,color:off>=data.length-WIN?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>›</button></> }
+                        <button className="chart-slider-btn" onClick={()=>setAllOff(Math.min(dataFinal.length-WIN,off+1))} disabled={off>=dataFinal.length-WIN}>›</button></> }
                       </div>
                       <ResponsiveContainer width="100%" height={210}>
                         <ComposedChart data={sl} margin={{top:26,right:8,bottom:18,left:0}} barGap={4} barCategoryGap="30%">
@@ -1615,15 +1622,14 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                             <button key={k} onClick={()=>{setSuMode(k);setSuOff(0);}} style={{padding:'3px 10px',borderRadius:18,border:'none',cursor:'pointer',fontSize:10,fontWeight:700,background:suMode===k?'#0097a7':'transparent',color:suMode===k?'#fff':'#546e7a',transition:'all 0.15s'}}>{l}</button>
                           ))}
                         </div>
-                        {!chartRangeCompact&&dataFinal.length>WIN&&<><button onClick={()=>setAllOff(Math.max(0,off-1))} disabled={off===0} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:off===0?'default':'pointer',fontSize:13,color:off===0?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>‹</button>
-                        <div
-  style={{flex:1,height:10,background:'rgba(0,151,167,0.1)',borderRadius:5,cursor:'pointer',position:'relative'}}
+                        {!chartRangeCompact&&dataFinal.length>WIN&&<><button className="chart-slider-btn" onClick={()=>setAllOff(Math.max(0,off-1))} disabled={off===0}>‹</button>
+                        <div className="chart-slider-track"
   onClick={e=>{const r=e.currentTarget.getBoundingClientRect();const p=(e.clientX-r.left)/r.width;setAllOff(Math.round(p*Math.max(0,dataFinal.length-WIN)));}}
-  onMouseDown={e=>{e.preventDefault();const track=e.currentTarget;const move=ev=>{const r=track.getBoundingClientRect();const p=Math.max(0,Math.min(1,(ev.clientX-r.left)/r.width));setAllOff(Math.round(p*Math.max(0,dataFinal.length-WIN)));};const up=()=>{window.removeEventListener('mousemove',move);window.removeEventListener('mouseup',up);};window.addEventListener('mousemove',move);window.addEventListener('mouseup',up);}}
+  onMouseDown={e=>{e.preventDefault();const thumb=e.currentTarget.querySelector('.chart-slider-thumb');if(thumb)thumb.classList.add('dragging');const track=e.currentTarget;const move=ev=>{const r=track.getBoundingClientRect();const p=Math.max(0,Math.min(1,(ev.clientX-r.left)/r.width));setAllOff(Math.round(p*Math.max(0,dataFinal.length-WIN)));};const up=()=>{if(thumb)thumb.classList.remove('dragging');window.removeEventListener('mousemove',move);window.removeEventListener('mouseup',up);};window.addEventListener('mousemove',move);window.addEventListener('mouseup',up);}}
 >
-  <div style={{position:'absolute',left:`${dataFinal.length>WIN?(off/Math.max(1,dataFinal.length-WIN))*(100-WIN/dataFinal.length*100):0}%`,width:`${dataFinal.length>0?(WIN/dataFinal.length)*100:100}%`,height:'100%',background:'linear-gradient(90deg,#0097a7,#4dd0e1)',borderRadius:5,transition:'left 0.1s',cursor:'grab'}}/>
+  <div className="chart-slider-thumb" style={{left:`${dataFinal.length>WIN?(off/Math.max(1,dataFinal.length-WIN))*(100-WIN/dataFinal.length*100):0}%`,width:`${dataFinal.length>0?(WIN/dataFinal.length)*100:100}%`}}/>
 </div>
-                        <button onClick={()=>setAllOff(Math.min(dataFinal.length-WIN,off+1))} disabled={off>=data.length-WIN} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:off>=data.length-WIN?'default':'pointer',fontSize:13,color:off>=data.length-WIN?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>›</button></> }
+                        <button className="chart-slider-btn" onClick={()=>setAllOff(Math.min(dataFinal.length-WIN,off+1))} disabled={off>=dataFinal.length-WIN}>›</button></> }
                       </div>
 
                       <ResponsiveContainer width="100%" height={220}>
@@ -1735,15 +1741,14 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     return(<>
                       <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
                         <div style={{display:'flex',gap:3,background:'rgba(0,100,140,0.07)',borderRadius:20,padding:2}}>{[['monthly','Monthly'],['quarterly','Quarterly']].map(([k,l])=>(<button key={k} onClick={()=>{setRMode(k);setROff(0);}} style={{padding:'3px 10px',borderRadius:18,border:'none',cursor:'pointer',fontSize:10,fontWeight:700,background:rMode===k?'#0097a7':'transparent',color:rMode===k?'#fff':'#546e7a',transition:'all 0.15s'}}>{l}</button>))}</div>
-                        {!chartRangeCompact&&dataFinal.length>WIN&&<><button onClick={()=>setAllOff(Math.max(0,off-1))} disabled={off===0} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:off===0?'default':'pointer',fontSize:13,color:off===0?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>‹</button>
-                        <div
-  style={{flex:1,height:10,background:'rgba(0,151,167,0.1)',borderRadius:5,cursor:'pointer',position:'relative'}}
+                        {!chartRangeCompact&&dataFinal.length>WIN&&<><button className="chart-slider-btn" onClick={()=>setAllOff(Math.max(0,off-1))} disabled={off===0}>‹</button>
+                        <div className="chart-slider-track"
   onClick={e=>{const r=e.currentTarget.getBoundingClientRect();const p=(e.clientX-r.left)/r.width;setAllOff(Math.round(p*Math.max(0,dataFinal.length-WIN)));}}
-  onMouseDown={e=>{e.preventDefault();const track=e.currentTarget;const move=ev=>{const r=track.getBoundingClientRect();const p=Math.max(0,Math.min(1,(ev.clientX-r.left)/r.width));setAllOff(Math.round(p*Math.max(0,dataFinal.length-WIN)));};const up=()=>{window.removeEventListener('mousemove',move);window.removeEventListener('mouseup',up);};window.addEventListener('mousemove',move);window.addEventListener('mouseup',up);}}
+  onMouseDown={e=>{e.preventDefault();const thumb=e.currentTarget.querySelector('.chart-slider-thumb');if(thumb)thumb.classList.add('dragging');const track=e.currentTarget;const move=ev=>{const r=track.getBoundingClientRect();const p=Math.max(0,Math.min(1,(ev.clientX-r.left)/r.width));setAllOff(Math.round(p*Math.max(0,dataFinal.length-WIN)));};const up=()=>{if(thumb)thumb.classList.remove('dragging');window.removeEventListener('mousemove',move);window.removeEventListener('mouseup',up);};window.addEventListener('mousemove',move);window.addEventListener('mouseup',up);}}
 >
-  <div style={{position:'absolute',left:`${dataFinal.length>WIN?(off/Math.max(1,dataFinal.length-WIN))*(100-WIN/dataFinal.length*100):0}%`,width:`${dataFinal.length>0?(WIN/dataFinal.length)*100:100}%`,height:'100%',background:'linear-gradient(90deg,#0097a7,#4dd0e1)',borderRadius:5,transition:'left 0.1s',cursor:'grab'}}/>
+  <div className="chart-slider-thumb" style={{left:`${dataFinal.length>WIN?(off/Math.max(1,dataFinal.length-WIN))*(100-WIN/dataFinal.length*100):0}%`,width:`${dataFinal.length>0?(WIN/dataFinal.length)*100:100}%`}}/>
 </div>
-                        <button onClick={()=>setAllOff(Math.min(dataFinal.length-WIN,off+1))} disabled={off>=data.length-WIN} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:off>=data.length-WIN?'default':'pointer',fontSize:13,color:off>=data.length-WIN?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>›</button></> }
+                        <button className="chart-slider-btn" onClick={()=>setAllOff(Math.min(dataFinal.length-WIN,off+1))} disabled={off>=dataFinal.length-WIN}>›</button></> }
                       </div>
                       <ResponsiveContainer width="100%" height={210}>
                         <ComposedChart data={sl} margin={{top:26,right:8,bottom:18,left:0}} barGap={4} barCategoryGap="30%">
