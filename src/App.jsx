@@ -741,13 +741,10 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
     const totalTCVCr     = +(pAAll.reduce((s,r)=>s+(r.tcv||0),0)/1e7).toFixed(1);
     const cancelledBSPCr = +(pCAll.reduce((s,r)=>s+(r.bsp||0),0)/1e7).toFixed(1);
     const cancelledAreaSqft = pCAll.reduce((s,r)=>s+(r.superArea||0),0);
-    // Correct avg rate = total BSP / total booked area (weighted average)
-    const pAWithArea=pAAll.filter(r=>r.bsp>0&&r.superArea>0);
-    const totalBSPForRate=pAWithArea.reduce((s,r)=>s+(r.bsp||0),0);
-    const totalAreaForRate=pAWithArea.reduce((s,r)=>s+(r.superArea||0),0);
-    const avgRatePerSqft = totalAreaForRate>0
-      ? Math.round(totalBSPForRate/totalAreaForRate)
-      : (bookedAreaSqft>0?Math.round(pAAll.reduce((s,r)=>s+(r.bsp||0),0)/bookedAreaSqft):0);
+    // Avg rate = Total Sales Value (BSP) / Total Sold Area
+    const avgRatePerSqft = bookedAreaSqft>0
+      ? Math.round((totalBSPCr*1e7)/bookedAreaSqft)
+      : 0;
     const base = raw?.kpiExtra||{};
     return {
       bookedAreaSqft:  bookedAreaSqft>0?bookedAreaSqft:base.bookedAreaSqft||0,
