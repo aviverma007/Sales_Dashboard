@@ -1660,7 +1660,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const futureCqmR=cqmObjR.filter(o=>o.ym>=todayYMR).map(o=>o.label);
                     // Rate projection: use RAW (unfiltered) actual rates so FY filter doesn't break projection
                     const rawActualRatesMap=raw?.monthlyActualRates||{};
-                    const allActualRates=Object.entries(rawActualRatesMap).filter(([,v])=>v>0).map(([month,rate])=>({label:fmtML(month),actualRate:rate,ym:lblYmR(fmtML(month))})).filter(d=>d.ym>0&&d.ym<=todayYMR).sort((a,b)=>a.ym-b.ym);
+                    const allActualRates=Object.entries(rawActualRatesMap).filter(([,v])=>v>0).map(([label,rate])=>({label,actualRate:rate,ym:lblYmR(label)})).filter(d=>d.ym>0&&d.ym<=todayYMR).sort((a,b)=>a.ym-b.ym);
                     const recentRates=allActualRates.slice(-3);
                     const lastKnownRate=recentRates.length>0?recentRates[recentRates.length-1].actualRate:0;
                     // Compute avg monthly trend (slope) from recent 3 months
@@ -1705,7 +1705,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                         if(!allCqm.includes(d.label))return null;
                         // First CQ month with a rate is the anchor
                         const cqAnchorLbl=pastCqmR.filter(l=>allActualRates.find(r=>r.label===l)).slice(-1)[0]||lastKnownLbl;
-                        const cqAnchorRate=rawActualRatesMap[Object.keys(rawActualRatesMap).find(k=>fmtML(k)===cqAnchorLbl)||'']||lastKnownRate;
+                        const cqAnchorRate=rawActualRatesMap[cqAnchorLbl]||lastKnownRate;
                         const dym=lblYmR(d.label);
                         const anchorYm=lblYmR(cqAnchorLbl);
                         if(d.label===cqAnchorLbl)return cqAnchorRate||null;
