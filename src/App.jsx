@@ -1689,42 +1689,28 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                         <button onClick={()=>setAllOff(Math.min(dataFinal.length-WIN,off+1))} disabled={off>=data.length-WIN} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:off>=data.length-WIN?'default':'pointer',fontSize:13,color:off>=data.length-WIN?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>›</button></> }
                       </div>
                       <ResponsiveContainer width="100%" height={210}>
-                        {(()=>{
-                          const allVals=sl.flatMap(d=>[d.achieved,d.target,d.projection]).filter(v=>v!=null&&v>0);
-                          const yMin=allVals.length?Math.floor((Math.min(...allVals)-200)/500)*500:0;
-                          const yMax=allVals.length?Math.ceil((Math.max(...allVals)+200)/500)*500:30000;
-                          const slB=sl.map(d=>({...d,
-                            tBase:d.target!=null&&d.target>0?yMin:null,
-                            tVal:d.target!=null&&d.target>0?d.target-yMin:null,
-                            aBase:d.achieved!=null&&d.achieved>0?yMin:null,
-                            aVal:d.achieved!=null&&d.achieved>0?d.achieved-yMin:null,
-                            aValLine:d.achieved!=null&&d.achieved>0?d.achieved-yMin:null,
-                          }));
-                          return(
-                        <ComposedChart data={slB} margin={{top:26,right:8,bottom:18,left:0}} barGap={4} barCategoryGap="30%">
+                        <ComposedChart data={sl} margin={{top:26,right:8,bottom:18,left:0}} barGap={4} barCategoryGap="30%">
                           <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.1)" vertical={false}/>
                           <XAxis dataKey="label" tick={({x,y,payload})=>{const d=sl.find(s=>s.label===payload.value);return <text x={x} y={y+10} textAnchor="middle" fontSize={9} fill={d?.isCurrent?T.tealD:d?.isFuture?'#90a4ae':T.textM} fontWeight={d?.isCurrent?900:600}>{payload.value}</text>;}} axisLine={false} tickLine={false}/>
-                          <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={54} tickFormatter={v=>'₹'+(v+yMin).toLocaleString('en-IN')} domain={[0,yMax-yMin]}/>
+                          <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={54} tickFormatter={v=>'₹'+v.toLocaleString('en-IN')}
+                            domain={[()=>{const vals=sl.flatMap(d=>[d.achieved,d.target,d.projection]).filter(v=>v!=null&&v>0);if(!vals.length)return 0;const mn=Math.min(...vals);const mx=Math.max(...vals);const spread=Math.max(mx-mn,500);return Math.max(0,Math.floor((mn-spread*0.15)/500)*500);},()=>{const vals=sl.flatMap(d=>[d.achieved,d.target,d.projection]).filter(v=>v!=null&&v>0);if(!vals.length)return 30000;const mx=Math.max(...vals);const mn=Math.min(...vals);const spread=Math.max(mx-mn,500);return Math.ceil((mx+spread*0.15)/500)*500;}]}
+                          />
                           <Tooltip content={({active,payload,label})=>{if(!active||!payload?.length)return null;const d=sl.find(s=>s.label===label);return(<div style={{background:'rgba(255,255,255,0.97)',border:'1px solid rgba(0,151,167,0.3)',borderRadius:10,padding:'8px 12px',fontSize:10}}><p style={{color:T.tealD,fontWeight:800,margin:'0 0 4px'}}>{label}</p>{d?.achieved!=null&&<p style={{color:T.tealD,margin:0}}>Achieved: ₹{d.achieved?.toLocaleString('en-IN')}/sqft</p>}{d?.target!=null&&<p style={{color:'#607d8b',margin:0}}>Target: ₹{d.target?.toLocaleString('en-IN')}/sqft</p>}</div>);}}/>
                           <Legend wrapperStyle={{fontSize:9,fontWeight:700}} iconSize={8}/>
-                          <Bar dataKey="tBase" stackId="t" fill="transparent" barSize={18} legendType="none" isAnimationActive={false}/>
-                          <Bar dataKey="tVal" stackId="t" name="Target Rate" fill="#b0bec5" fillOpacity={0.75} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={1000} animationEasing="ease-out">
+                          <Bar dataKey="target" name="Target Rate" fill="#b0bec5" fillOpacity={0.75} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={1000} animationEasing="ease-out">
                             <LabelList dataKey="target" position="insideTop" style={{fill:'#607d8b',fontSize:7,fontWeight:700}} formatter={v=>v?'₹'+Math.round(v).toLocaleString('en-IN'):''}/>
                           </Bar>
-                          <Bar dataKey="aBase" stackId="a" fill="transparent" barSize={18} legendType="none" isAnimationActive={false}/>
-                          <Bar dataKey="aVal" stackId="a" name="Actual Rate" fill={T.teal} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={800} animationEasing="ease-out">
-                            {slB.map((d,i)=><Cell key={i} fill={d.isCurrent?T.tealD:T.teal} fillOpacity={d.isCurrent?1:0.85}/>)}
+                          <Bar dataKey="achieved" name="Actual Rate" fill={T.teal} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={800} animationEasing="ease-out">
+                            {sl.map((d,i)=><Cell key={i} fill={d.isCurrent?T.tealD:T.teal} fillOpacity={d.isCurrent?1:0.85}/>)}
                             <LabelList dataKey="achieved" position="top" offset={4} style={{fill:T.tealD,fontSize:7,fontWeight:700}} formatter={v=>v?'₹'+Math.round(v).toLocaleString('en-IN'):''}/>
                           </Bar>
-                          <Line type="monotone" dataKey="aValLine" stroke={T.tealD} strokeWidth={2.5} dot={{r:4,fill:T.tealD,stroke:'#fff',strokeWidth:2}} activeDot={{r:5}} legendType="none" connectNulls={true}/>
+                          <Line type="monotone" dataKey="achieved" stroke={T.tealD} strokeWidth={2.5} dot={{r:4,fill:T.tealD,stroke:'#fff',strokeWidth:2}} activeDot={{r:5}} legendType="none" connectNulls={true}/>
                           <Line type="monotone" dataKey="targetLine" stroke="#607d8b" strokeWidth={2} strokeDasharray="5 3" dot={{r:3,fill:'#607d8b',stroke:'#fff',strokeWidth:1.5}} activeDot={{r:4}} legendType="none" connectNulls={false}/>
                           <Line type="monotone" dataKey="projection" name="Projection" stroke="#22c55e" strokeWidth={2.5} strokeDasharray="6 2" dot={({cx,cy,payload})=>payload.projection!=null?<circle cx={cx} cy={cy} r={5} fill="#22c55e" stroke="#fff" strokeWidth={2}/>:<g/>} activeDot={{r:6,fill:'#22c55e'}} connectNulls={false}>
                             <LabelList dataKey="projection" position="insideTopRight" offset={10} style={{fill:'#16a34a',fontSize:8,fontWeight:900,background:'white'}} formatter={v=>v!=null?'▲₹'+Math.round(v).toLocaleString('en-IN'):''}/>
                           </Line>
                           <Line type="monotone" dataKey="bridge" stroke="#90a4ae" strokeWidth={1.5} strokeDasharray="4 3" dot={false} activeDot={false} legendType="none" connectNulls={true}/>
                         </ComposedChart>
-                          );
-                        })()}
                       </ResponsiveContainer>
                     </>);
                   })()}
