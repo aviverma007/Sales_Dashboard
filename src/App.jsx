@@ -657,6 +657,10 @@ function AppInner() {
   });},[raw,filters,matchMo]);
   const pA=useMemo(()=>pF.filter(r=>r.status==='ACTIVE'),[pF]);
   const pC=useMemo(()=>pF.filter(r=>r.status==='CANCELLED'),[pF]);
+  // Unfiltered (project-only) versions for KPI cards — ignore FY/quarter/month/broker/typology
+  const pAAll=useMemo(()=>{if(!raw?.pdrn)return[];const projs=filters.project?filters.project.split('||').filter(Boolean):[];return raw.pdrn.filter(r=>r.status==='ACTIVE'&&(!filters.company||r.companyNorm===filters.company)&&(!projs.length||projs.includes(r.project)));},[raw,filters.project,filters.company]);
+  const pCAll=useMemo(()=>{if(!raw?.pdrn)return[];const projs=filters.project?filters.project.split('||').filter(Boolean):[];return raw.pdrn.filter(r=>r.status==='CANCELLED'&&(!filters.company||r.companyNorm===filters.company)&&(!projs.length||projs.includes(r.project)));},[raw,filters.project,filters.company]);
+  const iFAll=useMemo(()=>{if(!raw?.invr)return[];const projs=filters.project?filters.project.split('||').filter(Boolean):[];return raw.invr.filter(r=>(!filters.company||r.companyNorm===filters.company)&&(!projs.length||projs.includes(r.project)));},[raw,filters.project,filters.company]);
   const dF=useMemo(()=>{if(!raw?.dapp)return[];return raw.dapp.filter(r=>{if(filters.company&&r.companyNorm!==filters.company)return false;if(filters.project){const projs=filters.project.split('||').filter(Boolean);if(projs.length&&!projs.includes(r.project))return false;}if((filters.month||filters.quarter)&&!matchMo(r.billMonth))return false;return true;});},[raw,filters,matchMo]);
   const iF=useMemo(()=>{if(!raw?.invr)return[];return raw.invr.filter(r=>{
     if(filters.company&&r.companyNorm!==filters.company)return false;
@@ -703,7 +707,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
     return qs;
   },[fo,filters.fy]);
 
-  const kpi=useMemo(()=>{const tS=pA.reduce((s,r)=>s+(r.bsp||0),0),tD=dF.reduce((s,r)=>s+(r.demand||0),0),tR=dF.reduce((s,r)=>s+(r.received||0),0),tO=dF.reduce((s,r)=>s+(r.outstanding||0),0);const ws={APPROVED:0,PENDING:0,REJECTED:0};wF.forEach(r=>{if(ws[r.status]!==undefined)ws[r.status]++;});return{totalUnits:iF.length,bookedUnits:iF.filter(r=>r.status==='Booked').length,availableUnits:iF.filter(r=>r.status==='Available').length,inProgressUnits:iF.filter(r=>r.status==='In Progress').length,totalSales:tS,dappDemand:tD,dappReceived:tR,dappOutstanding:tO,activeBookings:pA.length,cancelledBookings:pC.length,pipelineBookings:wF.filter(r=>r.status==='PENDING').length,wfApproved:ws.APPROVED,wfPending:ws.PENDING,wfRejected:ws.REJECTED};},[pA,pC,dF,iF,wF]);
+  const kpi=useMemo(()=>{const tS=pA.reduce((s,r)=>s+(r.bsp||0),0),tD=dF.reduce((s,r)=>s+(r.demand||0),0),tR=dF.reduce((s,r)=>s+(r.received||0),0),tO=dF.reduce((s,r)=>s+(r.outstanding||0),0);const ws={APPROVED:0,PENDING:0,REJECTED:0};wF.forEach(r=>{if(ws[r.status]!==undefined)ws[r.status]++;});return{totalUnits:iFAll.length,bookedUnits:iFAll.filter(r=>r.status==='Booked').length,availableUnits:iFAll.filter(r=>r.status==='Available').length,inProgressUnits:iFAll.filter(r=>r.status==='In Progress').length,totalSales:tS,dappDemand:tD,dappReceived:tR,dappOutstanding:tO,activeBookings:pAAll.length,cancelledBookings:pCAll.length,pipelineBookings:wF.filter(r=>r.status==='PENDING').length,wfApproved:ws.APPROVED,wfPending:ws.PENDING,wfRejected:ws.REJECTED};},[pAAll,pCAll,dF,iFAll,wF]);
 
   const monthly=useMemo(()=>{const map={};pA.forEach(r=>{const m=r.bookingMonth;if(!m)return;if(!map[m])map[m]={month:m,label:fmtML(m),units:0,bspCr:0,demCr:0,recCr:0};map[m].units++;map[m].bspCr+=(r.bsp||0)/1e7;map[m].demCr+=(r.demand||0)/1e7;map[m].recCr+=(r.received||0)/1e7;});return Object.values(map).sort((a,b)=>a.month.localeCompare(b.month)).map(r=>({...r,bspCr:+r.bspCr.toFixed(1),demCr:+r.demCr.toFixed(1),recCr:+r.recCr.toFixed(1)}));},[pA]);
   const dappM=useMemo(()=>{const map={};dF.forEach(r=>{const m=r.billMonth;if(!m)return;if(!map[m])map[m]={month:m,label:fmtML(m),demCr:0,recCr:0,outCr:0};map[m].demCr+=(r.demand||0)/1e7;map[m].recCr+=(r.received||0)/1e7;map[m].outCr+=(r.outstanding||0)/1e7;});return Object.values(map).sort((a,b)=>a.month.localeCompare(b.month)).map(r=>({...r,demCr:+r.demCr.toFixed(1),recCr:+r.recCr.toFixed(1),outCr:+r.outCr.toFixed(1)}));},[dF]);
@@ -724,26 +728,24 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
     });
   },[pA,pC,raw,iF]);
   const kpiEx=useMemo(()=>{
-    // Compute from filtered data so it responds to all filters
-    // Use iF (invr) as primary source for area — has Total Super Area for Edition, covers all projects
-    const bookedAreaSqft = iF.filter(r=>r.status==='Booked').reduce((s,r)=>s+(r.superArea||0),0)
-                        || pA.reduce((s,r)=>s+(r.superArea||0),0); // fallback to pdrn
-    const carpetAreaSqft = iF.filter(r=>r.status==='Booked').reduce((s,r)=>s+(r.carpetArea||0),0)
-                        || pA.reduce((s,r)=>s+(r.carpet||0),0);
-    const availAreaSqft  = iF.filter(r=>r.status==='Available').reduce((s,r)=>s+(r.superArea||0),0);
-    const totalSuperArea = iF.reduce((s,r)=>s+(r.superArea||0),0); // total project area from invr
-    const totalBSPCr     = +(pA.reduce((s,r)=>s+(r.bsp||0),0)/1e7).toFixed(1);
-    const totalTCVCr     = +(pA.reduce((s,r)=>s+(r.tcv||0),0)/1e7).toFixed(1);
-    const cancelledBSPCr = +(pC.reduce((s,r)=>s+(r.bsp||0),0)/1e7).toFixed(1);
-    const cancelledAreaSqft = pC.reduce((s,r)=>s+(r.superArea||0),0);
-    // Correct avg rate = total TSV (BSP) / total booked area (weighted average, not avg of unit rates)
-    const pAWithArea=pA.filter(r=>r.bsp>0&&r.superArea>0);
+    // KPI cards always use project-only filtered data (ignore FY/quarter/month/broker/typology)
+    const bookedAreaSqft = iFAll.filter(r=>r.status==='Booked').reduce((s,r)=>s+(r.superArea||0),0)
+                        || pAAll.reduce((s,r)=>s+(r.superArea||0),0);
+    const carpetAreaSqft = iFAll.filter(r=>r.status==='Booked').reduce((s,r)=>s+(r.carpetArea||0),0)
+                        || pAAll.reduce((s,r)=>s+(r.carpet||0),0);
+    const availAreaSqft  = iFAll.filter(r=>r.status==='Available').reduce((s,r)=>s+(r.superArea||0),0);
+    const totalSuperArea = iFAll.reduce((s,r)=>s+(r.superArea||0),0);
+    const totalBSPCr     = +(pAAll.reduce((s,r)=>s+(r.bsp||0),0)/1e7).toFixed(1);
+    const totalTCVCr     = +(pAAll.reduce((s,r)=>s+(r.tcv||0),0)/1e7).toFixed(1);
+    const cancelledBSPCr = +(pCAll.reduce((s,r)=>s+(r.bsp||0),0)/1e7).toFixed(1);
+    const cancelledAreaSqft = pCAll.reduce((s,r)=>s+(r.superArea||0),0);
+    // Correct avg rate = total BSP / total booked area (weighted average)
+    const pAWithArea=pAAll.filter(r=>r.bsp>0&&r.superArea>0);
     const totalBSPForRate=pAWithArea.reduce((s,r)=>s+(r.bsp||0),0);
     const totalAreaForRate=pAWithArea.reduce((s,r)=>s+(r.superArea||0),0);
     const avgRatePerSqft = totalAreaForRate>0
       ? Math.round(totalBSPForRate/totalAreaForRate)
-      : (bookedAreaSqft>0?Math.round(pA.reduce((s,r)=>s+(r.bsp||0),0)/bookedAreaSqft):0);
-    // Fall back to static JSON values for area if pdrn has no superArea
+      : (bookedAreaSqft>0?Math.round(pAAll.reduce((s,r)=>s+(r.bsp||0),0)/bookedAreaSqft):0);
     const base = raw?.kpiExtra||{};
     return {
       bookedAreaSqft:  bookedAreaSqft>0?bookedAreaSqft:base.bookedAreaSqft||0,
@@ -756,7 +758,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
       cancelledAreaSqft: cancelledAreaSqft>0?cancelledAreaSqft:base.cancelledAreaSqft||0,
       avgRatePerSqft:  avgRatePerSqft>0?avgRatePerSqft:base.avgRatePerSqft||0,
     };
-  },[pA,pC,iF,raw]);
+  },[pAAll,pCAll,iFAll,raw]);
   const salesVsRefund=useMemo(()=>{
     if(!raw?.salesVsRefund) return [];
     if(!filters.project) return raw.salesVsRefund;
