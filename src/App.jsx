@@ -1783,41 +1783,60 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
 </div>
                         <button className="chart-slider-btn" onClick={()=>setAllOff(Math.min(dataFinal.length-WIN,off+1))} disabled={off>=dataFinal.length-WIN}>›</button></> }
                       </div>
-                      <ResponsiveContainer width="100%" height={210}>
-                        <ComposedChart data={sl} margin={{top:26,right:8,bottom:18,left:0}} barGap={4} barCategoryGap="30%">
-                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.1)" vertical={false}/>
-                          <XAxis dataKey="label" tick={({x,y,payload})=>{const d=sl.find(s=>s.label===payload.value);return <text x={x} y={y+10} textAnchor="middle" fontSize={9} fill={d?.isCurrent?T.tealD:d?.isFuture?'#90a4ae':T.textM} fontWeight={d?.isCurrent?900:600}>{payload.value}</text>;}} axisLine={false} tickLine={false}/>
-                          <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={54} tickFormatter={v=>'₹'+v.toLocaleString('en-IN')}
-                            domain={[()=>{const vals=[...sl.flatMap(d=>[d.achieved,d.target,d.projection,d.bridge,d.targetLine]).filter(v=>v!=null&&v>0)];if(!vals.length)return 18000;const mn=Math.min(...vals);const mx=Math.max(...vals);const spread=Math.max(mx-mn,300);return Math.max(0,Math.floor((mn-spread*0.2)/500)*500);},()=>{const vals=[...sl.flatMap(d=>[d.achieved,d.target,d.projection,d.bridge,d.targetLine]).filter(v=>v!=null&&v>0)];if(!vals.length)return 25000;const mx=Math.max(...vals);const mn=Math.min(...vals);const spread=Math.max(mx-mn,300);return Math.ceil((mx+spread*0.2)/500)*500;}]}
-                          />
-                          <Tooltip content={({active,payload,label})=>{if(!active||!payload?.length)return null;const d=sl.find(s=>s.label===label);return(<div style={{background:'rgba(255,255,255,0.97)',border:'1px solid rgba(0,151,167,0.3)',borderRadius:10,padding:'8px 12px',fontSize:10}}><p style={{color:T.tealD,fontWeight:800,margin:'0 0 4px'}}>{label}</p>{d?.achieved!=null&&<p style={{color:T.tealD,margin:0}}>Achieved: ₹{d.achieved?.toLocaleString('en-IN')}/sqft</p>}{d?.target!=null&&<p style={{color:'#607d8b',margin:0}}>Target: ₹{d.target?.toLocaleString('en-IN')}/sqft</p>}</div>);}}/>
-                          <Legend wrapperStyle={{fontSize:9,fontWeight:700}} iconSize={8}/>
-                          <Bar dataKey="target" name="Target Rate" fill="#b0bec5" fillOpacity={0.75} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={1000} animationEasing="ease-out">
-                            <LabelList dataKey="target" position="insideTop" style={{fill:'#607d8b',fontSize:7,fontWeight:700}} formatter={v=>v?'₹'+Math.round(v).toLocaleString('en-IN'):''}/>
-                          </Bar>
-                          <Bar dataKey="achieved" name="Actual Rate" fill={T.teal} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={800} animationEasing="ease-out">
-                            {sl.map((d,i)=><Cell key={i} fill={d.isCurrent?T.tealD:T.teal} fillOpacity={d.isCurrent?1:0.85}/>)}
-                            <LabelList dataKey="achieved" position="top" offset={4} style={{fill:T.tealD,fontSize:7,fontWeight:700}} formatter={v=>v?'₹'+Math.round(v).toLocaleString('en-IN'):''}/>
-                          </Bar>
-                          <Line type="monotone" dataKey="achieved" stroke={T.tealD} strokeWidth={2.5} dot={{r:4,fill:T.tealD,stroke:'#fff',strokeWidth:2}} activeDot={{r:5}} legendType="none" connectNulls={true}/>
-                          <Line type="monotone" dataKey="targetLine" stroke="#607d8b" strokeWidth={2} strokeDasharray="5 3" dot={{r:3,fill:'#607d8b',stroke:'#fff',strokeWidth:1.5}} activeDot={{r:4}} legendType="none" connectNulls={false}/>
-                          <Line type="monotone" dataKey="projection" name="Projection" stroke="#22c55e" strokeWidth={2.5} strokeDasharray="6 2" dot={({cx,cy,payload})=>payload.projection!=null?<circle cx={cx} cy={cy} r={5} fill="#22c55e" stroke="#fff" strokeWidth={2}/>:<g/>} activeDot={{r:6,fill:'#22c55e'}} connectNulls={false}>
-                            <LabelList dataKey="projection" position="top" offset={18} content={({x,y,value})=>{if(value==null)return null;const txt='▲₹'+Math.round(value).toLocaleString('en-IN');const w=txt.length*5.5+8;return(<g><rect x={x-w/2} y={y-28} width={w} height={16} rx={4} fill="white" stroke="#22c55e" strokeWidth={1} opacity={0.95}/><text x={x} y={y-17} textAnchor="middle" fill="#16a34a" fontSize={8} fontWeight={900}>{txt}</text></g>);}}/>
-                          </Line>
-                          <Line type="monotone" dataKey="bridge" stroke="#90a4ae" strokeWidth={1.5} strokeDasharray="4 3" dot={false} activeDot={false} legendType="none" connectNulls={true}/>
-                          <Line type="monotone" dataKey="requiredRate" name="Adjusted Rate for Balance Year" stroke="#2e7d32" strokeWidth={2} strokeDasharray="8 3" dot={({cx,cy,payload})=>payload.requiredRate!=null?<circle cx={cx} cy={cy} r={3} fill="#2e7d32" stroke="#fff" strokeWidth={1.5}/>:<g/>} activeDot={{r:5,fill:"#2e7d32"}} connectNulls={true} legendType="none"/>
-                        </ComposedChart>
-                      </ResponsiveContainer>
-                      {requiredRate>0&&(<div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:10,marginTop:8,flexWrap:'wrap'}}>
-                        <div style={{display:'flex',alignItems:'center',gap:6}}>
-                          <svg width="28" height="10"><line x1="0" y1="5" x2="28" y2="5" stroke="#2e7d32" strokeWidth="2.5" strokeDasharray="8 3"/><circle cx="14" cy="5" r="3" fill="#2e7d32" stroke="white" strokeWidth="1.5"/></svg>
-                          <span style={{fontSize:9,color:'#2e7d32',fontWeight:700}}>Adjusted Rate for Balance Year</span>
+                      {/* Legend row */}
+                      <div style={{display:'flex',gap:16,marginBottom:8,flexWrap:'wrap',alignItems:'center'}}>
+                        {[['#8b1a1a','Achieved Rate (psf)','—'],['#1a237e','Target Rate (psf)','—'],['#2e7d32','Adjusted Rate for Balance Year','– –']].map(([col,lbl,dash])=>(
+                          <div key={lbl} style={{display:'flex',alignItems:'center',gap:5}}>
+                            <svg width="22" height="8"><line x1="0" y1="4" x2="22" y2="4" stroke={col} strokeWidth="2.5" strokeDasharray={dash==='– –'?'6 3':'0'}/></svg>
+                            <span style={{fontSize:9,color:col,fontWeight:700}}>{lbl}</span>
+                          </div>
+                        ))}
+                        {/* % achieved badge */}
+                        {(()=>{
+                          const bookedU=kpiEx.bookedAreaSqft>0?pAAll.length:0;
+                          const totalU=kpiEx.totalSuperArea>0?Math.round(kpiEx.totalSuperArea/(kpiEx.bookedAreaSqft/Math.max(bookedU,1))):0;
+                          const pctSold=totalU>0?Math.round(bookedU/totalU*100):Math.round((kpiEx.bookedAreaSqft/(kpiEx.totalSuperArea||1))*100);
+                          return <div style={{marginLeft:'auto',background:'#fff9c4',border:'2px solid #f9a825',borderRadius:6,padding:'2px 10px',fontSize:14,fontWeight:900,color:'#e65100'}}>{pctSold}%</div>;
+                        })()}
+                      </div>
+                      <div style={{display:'flex',gap:12}}>
+                        {/* Main dual-axis chart */}
+                        <div style={{flex:1}}>
+                          <ResponsiveContainer width="100%" height={240}>
+                            <ComposedChart data={sl} margin={{top:8,right:8,bottom:18,left:0}}>
+                              <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.08)" vertical={false}/>
+                              <XAxis dataKey="label" tick={({x,y,payload})=>{const d=sl.find(s=>s.label===payload.value);return <text x={x} y={y+10} textAnchor="middle" fontSize={8} fill={d?.isCurrent?T.tealD:d?.isFuture?'#90a4ae':T.textM} fontWeight={d?.isCurrent?900:600}>{payload.value}</text>;}} axisLine={false} tickLine={false}/>
+                              {/* Left Y: units (target units per month) */}
+                              <YAxis yAxisId="units" orientation="left" tick={{fill:'#546e7a',fontSize:8}} tickLine={false} axisLine={false} width={36} tickFormatter={v=>v>=1000?(v/1000).toFixed(0)+'k':v}/>
+                              {/* Right Y: rate ₹/sqft */}
+                              <YAxis yAxisId="rate" orientation="right" tick={{fill:'#37474f',fontSize:8}} tickLine={false} axisLine={false} width={52} tickFormatter={v=>v.toLocaleString('en-IN')}
+                                domain={[()=>{const vals=sl.flatMap(d=>[d.achieved,d.targetLine,d.requiredRate]).filter(v=>v!=null&&v>0);if(!vals.length)return 21000;const mn=Math.min(...vals);return Math.floor((mn-500)/500)*500;},()=>{const vals=sl.flatMap(d=>[d.achieved,d.targetLine,d.requiredRate]).filter(v=>v!=null&&v>0);if(!vals.length)return 24000;const mx=Math.max(...vals);return Math.ceil((mx+200)/500)*500;}]}
+                              />
+                              <Tooltip content={({active,payload,label})=>{if(!active||!payload?.length)return null;const d=sl.find(s=>s.label===label);return(<div style={{background:'rgba(255,255,255,0.97)',border:'1px solid rgba(0,100,140,0.2)',borderRadius:8,padding:'7px 10px',fontSize:10}}><p style={{fontWeight:800,margin:'0 0 4px',color:T.navy}}>{label}</p>{d?.bookedUnits!=null&&<p style={{color:'#8b1a1a',margin:'2px 0'}}>Booked Units: {d.bookedUnits}</p>}{d?.targetUnitsLine!=null&&<p style={{color:'#1a237e',margin:'2px 0'}}>Target Units: {d.targetUnitsLine}</p>}{d?.achieved!=null&&d.achieved>0&&<p style={{color:'#8b1a1a',margin:'2px 0'}}>Achieved Rate: ₹{Math.round(d.achieved).toLocaleString('en-IN')}/sqft</p>}{d?.targetLine!=null&&<p style={{color:'#1a237e',margin:'2px 0'}}>Target Rate: ₹{Math.round(d.targetLine).toLocaleString('en-IN')}/sqft</p>}{d?.requiredRate!=null&&<p style={{color:'#2e7d32',margin:'2px 0'}}>Required Rate: ₹{Math.round(d.requiredRate).toLocaleString('en-IN')}/sqft</p>}</div>);}}/>
+                              {/* Unit bars (left axis) */}
+                              <Bar yAxisId="units" dataKey="bookedUnits" name="Booked Units" fill="#8b1a1a" fillOpacity={0.85} radius={[2,2,0,0]} barSize={12}/>
+                              <Bar yAxisId="units" dataKey="targetUnitsLine" name="Target Units" fill="#1a237e" fillOpacity={0.25} radius={[2,2,0,0]} barSize={12}/>
+                              {/* Rate lines (right axis) */}
+                              <Line yAxisId="rate" type="monotone" dataKey="achieved" name="Achieved Rate" stroke="#8b1a1a" strokeWidth={2.5} dot={{r:3,fill:'#8b1a1a',stroke:'#fff',strokeWidth:1.5}} activeDot={{r:5}} connectNulls={true} legendType="none"/>
+                              <Line yAxisId="rate" type="monotone" dataKey="targetLine" name="Target Rate" stroke="#1a237e" strokeWidth={2} dot={{r:3,fill:'#1a237e',stroke:'#fff',strokeWidth:1.5}} activeDot={{r:4}} connectNulls={true} legendType="none"/>
+                              <Line yAxisId="rate" type="monotone" dataKey="requiredRate" name="Adjusted Rate" stroke="#2e7d32" strokeWidth={2.5} strokeDasharray="8 3" dot={({cx,cy,payload})=>payload.requiredRate!=null&&payload.label===sl[0]?.label?<circle cx={cx} cy={cy} r={4} fill="#2e7d32" stroke="#fff" strokeWidth={2}/>:<g/>} activeDot={{r:5,fill:'#2e7d32'}} connectNulls={true} legendType="none"/>
+                            </ComposedChart>
+                          </ResponsiveContainer>
                         </div>
-                        <div style={{background:'rgba(46,125,50,0.08)',border:'1px solid rgba(46,125,50,0.3)',borderRadius:8,padding:'5px 14px',textAlign:'right'}}>
-                          <p style={{fontSize:8,color:'#2e7d32',fontWeight:700,margin:'0 0 1px',textTransform:'uppercase',letterSpacing:.4}}>New Rate Required to achieve Target TSV</p>
-                          <p style={{fontSize:15,fontWeight:900,color:'#1b5e20',margin:0}}>₹{requiredRate.toLocaleString('en-IN')}<span style={{fontSize:10,fontWeight:600}}>/sqft</span></p>
-                        </div>
-                      </div>)}
+                        {/* Callout box — right side like reference */}
+                        {requiredRate>0&&(
+                          <div style={{width:160,flexShrink:0,display:'flex',flexDirection:'column',gap:8}}>
+                            <div style={{background:'rgba(106,27,154,0.08)',border:'1.5px solid rgba(106,27,154,0.3)',borderRadius:8,padding:'8px 10px'}}>
+                              <p style={{fontSize:9,fontWeight:900,color:'#4a148c',margin:'0 0 2px',textTransform:'uppercase',lineHeight:1.3}}>TARGET BUSINESS PLAN TSV AT RISK WITH CURRENT RATE</p>
+                            </div>
+                            <div style={{background:'rgba(255,255,255,0.9)',border:'1.5px solid rgba(0,100,140,0.15)',borderRadius:8,padding:'8px 10px',flex:1}}>
+                              <p style={{fontSize:10,fontWeight:800,color:'#1a237e',margin:'0 0 6px'}}>Rate (Target Vs Actual)</p>
+                              <p style={{fontSize:9,fontWeight:700,color:'#e65100',margin:'0 0 2px'}}>New Rate of {requiredRate.toLocaleString('en-IN')}</p>
+                              <p style={{fontSize:9,color:'#37474f',margin:0}}>required against {(kpiEx.avgRatePerSqft||0).toLocaleString('en-IN')} of AOP to maintain AOP TSV</p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </>);
                   })()}
                 </GC>
