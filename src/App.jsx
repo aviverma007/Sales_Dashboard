@@ -558,15 +558,33 @@ function AppInner() {
     ]);
     return Array.from(ms).sort();
   },[raw]);
+  // Filtered months for the chart range slider — respects FY/quarter/month filters
+  const FILTERED_CHART_MONTHS=useMemo(()=>{
+    if(!raw) return ALL_CHART_MONTHS;
+    const hasFYFilter=!!(filters.fy||filters.quarter||filters.month);
+    if(!hasFYFilter) return ALL_CHART_MONTHS;
+    const selectedFYs2=filters.fy?filters.fy.split('||').filter(Boolean):[];
+    const fyRange2=(fy)=>{const m=fy.match(/FY(\d{4})-(\d{2})/);if(!m)return null;const sy=parseInt(m[1]);return{start:`${sy}-04`,end:`${sy+1}-03`};};
+    const inFY2=(mo)=>{if(!selectedFYs2.length)return true;return selectedFYs2.some(fy=>{const r=fyRange2(fy);return r&&mo>=r.start&&mo<=r.end;});};
+    const FYQ2={'Q1':['04','05','06'],'Q2':['07','08','09'],'Q3':['10','11','12'],'Q4':['01','02','03']};
+    const matchMo2=(mo)=>{
+      if(!mo)return false;
+      const moNum=mo.slice(5,7);
+      if(filters.month){const mons=filters.month.split('||').filter(Boolean);const moNames={Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'};if(mons.length&&!mons.some(mn=>moNames[mn]===moNum))return false;}
+      if(filters.quarter){const qs=filters.quarter.split('||').filter(Boolean);if(qs.length&&!qs.some(q=>(FYQ2[q]||[]).includes(moNum)))return false;}
+      return true;
+    };
+    return ALL_CHART_MONTHS.filter(mo=>inFY2(mo)&&matchMo2(mo));
+  },[ALL_CHART_MONTHS,raw,filters.fy,filters.quarter,filters.month]);
   const [chartRangeIdx,setChartRangeIdx]=useState([0,999]);
-  const chartMonthFrom=ALL_CHART_MONTHS[Math.min(chartRangeIdx[0],ALL_CHART_MONTHS.length-1)]||'';
-  const chartMonthTo=ALL_CHART_MONTHS[Math.min(chartRangeIdx[1],ALL_CHART_MONTHS.length-1)]||'';
-  const chartRangeMonths=(()=>{const l=Math.min(chartRangeIdx[0],ALL_CHART_MONTHS.length-1);const r=Math.min(chartRangeIdx[1],ALL_CHART_MONTHS.length-1);return Math.max(0,r-l+1);})();
+  const chartMonthFrom=FILTERED_CHART_MONTHS[Math.min(chartRangeIdx[0],FILTERED_CHART_MONTHS.length-1)]||'';
+  const chartMonthTo=FILTERED_CHART_MONTHS[Math.min(chartRangeIdx[1],FILTERED_CHART_MONTHS.length-1)]||'';
+  const chartRangeMonths=(()=>{const l=Math.min(chartRangeIdx[0],FILTERED_CHART_MONTHS.length-1);const r=Math.min(chartRangeIdx[1],FILTERED_CHART_MONTHS.length-1);return Math.max(0,r-l+1);})();
   const chartRangeCompact=chartRangeMonths>0&&chartRangeMonths<=12;
   // Sales & Pricing Trend chart offsets (must be at component level — hooks rules)
   const TODAY_LABEL=(()=>{const d=new Date();return d.toLocaleString('en-US',{month:'short'}).slice(0,3)+"'"+String(d.getFullYear()).slice(2);})();
   // Reset chart offsets to -1 (auto-center) whenever filters change
-  useEffect(()=>{setAllOff(-1);setChartOff(-1);setCpScroll(0);setCpScroll2(0);},[filters.project,filters.fy,filters.quarter,filters.month,filters.broker]);
+  useEffect(()=>{setAllOff(-1);setChartOff(-1);setCpScroll(0);setCpScroll2(0);setChartRangeIdx([0,999]);},[filters.project,filters.fy,filters.quarter,filters.month,filters.broker]);
   // Initialize offset so current month is bar #2 (index 1 in view), show 1 past + current + 11 future
   const _initOff=(data,WIN=13)=>{const idx=data.findIndex(d=>d.label===TODAY_LABEL);return idx>=1?idx-1:Math.max(0,idx);};
   const [uOff,setUOff]=useState(-1);
@@ -1337,7 +1355,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
 
               {/* Full-width Month Range Slider */}
               <MonthRangeSlider
-                months={ALL_CHART_MONTHS}
+                months={FILTERED_CHART_MONTHS}
                 rangeIdx={chartRangeIdx}
                 setRangeIdx={(updater)=>{
                   setChartRangeIdx(updater);
