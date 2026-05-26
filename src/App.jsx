@@ -1712,18 +1712,22 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const lastKnownYm=lblYmR(lastKnownLbl);
 
                     // ── REQUIRED RATE LOGIC ──────────────────────────────────────────────
-                    // Required Rate = (Target TSV - Sold TCV so far) / Remaining area to sell
-                    // This line runs from today to end of project showing what rate is needed
-                    const targetTSV=(kpiEx.totalBSPCr||0)*1e7; // total project sales value target (using BSP as proxy)
-                    const soldTCVVal=(kpiEx.totalTCVCr||0)*1e7; // already sold TCV
-                    const remainingTSV=Math.max(0,targetTSV-soldTCVVal);
-                    // Remaining area = sum of target units remaining × avg area per unit
-                    const avgAreaPerUnit=kpiEx.bookedAreaSqft>0&&kpiEx.bookedUnits>0?kpiEx.bookedAreaSqft/kpiEx.bookedUnits:1500;
-                    const futureMonths=monthlyWithTargets.filter(d=>d.isFuture);
+                    // Required Rate = (Total Project Sales Value - Sold TCV) / Remaining area to sell
+                    const soldTCVVal=(kpiEx.totalTCVCr||0)*1e7;
+                    // Total project sales value = soldTCV + avg rate × available area
+                    const availAreaR=kpiEx.availAreaSqft||0;
+                    const avgRateR=kpiEx.avgRatePerSqft||0;
+                    const totalProjectSalesValue=soldTCVVal+(availAreaR*avgRateR);
+                    const remainingTSV=Math.max(0,totalProjectSalesValue-soldTCVVal); // = availArea × avgRate
+                    // Remaining area = future target units × avg sqft per booked unit
+                    const bookedUnitsR=kpiEx.bookedAreaSqft>0?pAAll.length:0;
+                    const avgAreaPerUnit=bookedUnitsR>0?(kpiEx.bookedAreaSqft/bookedUnitsR):1500;
+                    const futureMonths=monthlyWithTargets.filter(d=>d.isFuture||d.label===TODAY_LABEL);
                     const totalTargetUnitsRemaining=futureMonths.reduce((s,d)=>s+(d.targetUnits||0),0);
-                    const remainingArea=totalTargetUnitsRemaining*avgAreaPerUnit;
-                    // Required rate per sqft to hit target TSV
-                    const requiredRate=remainingArea>0?Math.round(remainingTSV/remainingArea):0;
+                    const remainingArea=totalTargetUnitsRemaining>0?totalTargetUnitsRemaining*avgAreaPerUnit:availAreaR;
+                    // Required rate per sqft to achieve total project sales value
+                    const requiredRate=remainingArea>0?Math.round(remainingTSV/remainingArea):avgRateR;
+                    console.log('RequiredRate debug:',{soldTCVVal,availAreaR,avgRateR,totalProjectSalesValue,remainingTSV,remainingArea,requiredRate,bookedUnitsR,avgAreaPerUnit});
 
                     // Current quarter projection (short-term trend)
                     const rateProjMap={};
