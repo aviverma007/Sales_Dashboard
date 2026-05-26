@@ -211,13 +211,13 @@ export default function Cost2App() {
                   label={{value:'COST',angle:-90,position:'insideLeft',offset:8,style:{fontSize:9,fill:T.gray}}}/>
                 <Tooltip content={<CTip/>}/>
                 <Bar dataKey="Budget" name="Budget Cost" fill="#b0bec5" radius={[3,3,0,0]} barSize={26}>
-                  <LabelList dataKey="Budget" position="top" style={{fontSize:11,fill:T.gray,fontWeight:800}} formatter={v=>v>0?Math.round(v):''/>
+                  <LabelList dataKey="Budget" position="top" style={{fontSize:11,fill:T.gray,fontWeight:800}} formatter={v=>v>0?Math.round(v):''}/>
                 </Bar>
                 <Bar dataKey="Assigned" name="Awarded Amount" fill={T.teal} radius={[3,3,0,0]} barSize={26}>
-                  <LabelList dataKey="Assigned" position="top" style={{fontSize:11,fill:T.tealD,fontWeight:800}} formatter={v=>v>0?Math.round(v):''/>
+                  <LabelList dataKey="Assigned" position="top" style={{fontSize:11,fill:T.tealD,fontWeight:800}} formatter={v=>v>0?Math.round(v):''}/>
                 </Bar>
                 <Bar dataKey="Actual" name="Paid Amount" fill={T.navy} radius={[3,3,0,0]} barSize={26}>
-                  <LabelList dataKey="Actual" position="top" style={{fontSize:11,fill:T.navy,fontWeight:800}} formatter={v=>v>0?Math.round(v):''/>
+                  <LabelList dataKey="Actual" position="top" style={{fontSize:11,fill:T.navy,fontWeight:800}} formatter={v=>v>0?Math.round(v):''}/>
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
