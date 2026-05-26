@@ -1474,7 +1474,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                           <Line type="monotone" dataKey="achieved" stroke={T.tealD} strokeWidth={2.5} dot={{r:4,fill:T.tealD,stroke:'#fff',strokeWidth:2}} activeDot={{r:5}} legendType="none" connectNulls={true}/>
                           <Line type="monotone" dataKey="targetLine" stroke="#607d8b" strokeWidth={2} strokeDasharray="5 3" dot={{r:3,fill:'#607d8b',stroke:'#fff',strokeWidth:1.5}} activeDot={{r:4}} legendType="none" connectNulls={false}/>
                           <Line type="monotone" dataKey="projection" name="Projection" stroke="#22c55e" strokeWidth={2.5} strokeDasharray="6 2" dot={({cx,cy,payload})=>payload.projection!=null?<circle cx={cx} cy={cy} r={5} fill="#22c55e" stroke="#fff" strokeWidth={2}/>:<g/>} activeDot={{r:6,fill:'#22c55e'}} connectNulls={false}>
-                            <LabelList dataKey="projection" position="top" style={{fill:'#16a34a',fontSize:9,fontWeight:900}} formatter={v=>v!=null?'▲'+v:''}/>
+                            <LabelList dataKey="projection" position="top" offset={18} content={({x,y,value})=>{if(value==null)return null;const txt='▲'+value;const w=txt.length*5.5+8;return(<g><rect x={x-w/2} y={y-28} width={w} height={16} rx={4} fill="white" stroke="#22c55e" strokeWidth={1} opacity={0.95}/><text x={x} y={y-17} textAnchor="middle" fill="#16a34a" fontSize={8} fontWeight={900}>{txt}</text></g>);}}/>
                           </Line>
                           <Line type="monotone" dataKey="bridge" stroke="#90a4ae" strokeWidth={1.5} strokeDasharray="4 3" dot={false} activeDot={false} legendType="none" connectNulls={true}/>
                         </ComposedChart>
@@ -1545,7 +1545,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                           <Line type="monotone" dataKey="achieved" stroke={T.tealD} strokeWidth={2.5} dot={{r:4,fill:T.tealD,stroke:'#fff',strokeWidth:2}} activeDot={{r:5}} legendType="none" connectNulls={true}/>
                           <Line type="monotone" dataKey="targetLine" stroke="#607d8b" strokeWidth={2} strokeDasharray="5 3" dot={{r:3,fill:'#607d8b',stroke:'#fff',strokeWidth:1.5}} activeDot={{r:4}} legendType="none" connectNulls={false}/>
                           <Line type="monotone" dataKey="projection" name="Projection" stroke="#22c55e" strokeWidth={2.5} strokeDasharray="6 2" dot={({cx,cy,payload})=>payload.projection!=null?<circle cx={cx} cy={cy} r={5} fill="#22c55e" stroke="#fff" strokeWidth={2}/>:<g/>} activeDot={{r:6,fill:'#22c55e'}} connectNulls={false}>
-                            <LabelList dataKey="projection" position="top" style={{fill:'#16a34a',fontSize:8,fontWeight:900}} formatter={v=>v!=null?'▲'+v+'Cr':''}/>
+                            <LabelList dataKey="projection" position="top" offset={18} content={({x,y,value})=>{if(value==null)return null;const txt='▲'+value+'Cr';const w=txt.length*5.5+8;return(<g><rect x={x-w/2} y={y-28} width={w} height={16} rx={4} fill="white" stroke="#22c55e" strokeWidth={1} opacity={0.95}/><text x={x} y={y-17} textAnchor="middle" fill="#16a34a" fontSize={8} fontWeight={900}>{txt}</text></g>);}}/>
                           </Line>
                           <Line type="monotone" dataKey="bridge" stroke="#90a4ae" strokeWidth={1.5} strokeDasharray="4 3" dot={false} activeDot={false} legendType="none" connectNulls={true}/>
                         </ComposedChart>
@@ -1634,7 +1634,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                           <Line type="monotone" dataKey="achieved" stroke={T.tealD} strokeWidth={2.5} dot={{r:4,fill:T.tealD,stroke:'#fff',strokeWidth:2}} activeDot={{r:5}} legendType="none" connectNulls={true}/>
                           <Line type="monotone" dataKey="targetLine" stroke="#607d8b" strokeWidth={2} strokeDasharray="5 3" dot={{r:3,fill:'#607d8b',stroke:'#fff',strokeWidth:1.5}} activeDot={{r:4}} legendType="none" connectNulls={false}/>
                           <Line type="monotone" dataKey="projection" name="Projection" stroke="#22c55e" strokeWidth={2.5} strokeDasharray="6 2" dot={({cx,cy,payload})=>payload.projection!=null?<circle cx={cx} cy={cy} r={5} fill="#22c55e" stroke="#fff" strokeWidth={2}/>:<g/>} activeDot={{r:6,fill:'#22c55e'}} connectNulls={false}>
-                            <LabelList dataKey="projection" position="top" style={{fill:'#16a34a',fontSize:8,fontWeight:900}} formatter={v=>v!=null?'▲'+v+'K':''}/>
+                            <LabelList dataKey="projection" position="top" offset={18} content={({x,y,value})=>{if(value==null)return null;const txt='▲'+value+'K';const w=txt.length*5.5+8;return(<g><rect x={x-w/2} y={y-28} width={w} height={16} rx={4} fill="white" stroke="#22c55e" strokeWidth={1} opacity={0.95}/><text x={x} y={y-17} textAnchor="middle" fill="#16a34a" fontSize={8} fontWeight={900}>{txt}</text></g>);}}/>
                           </Line>
                           <Line type="monotone" dataKey="bridge" stroke="#90a4ae" strokeWidth={1.5} strokeDasharray="4 3" dot={false} activeDot={false} legendType="none" connectNulls={true}/>
                         </ComposedChart>
@@ -1750,7 +1750,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                           <Line type="monotone" dataKey="achieved" stroke={T.tealD} strokeWidth={2.5} dot={{r:4,fill:T.tealD,stroke:'#fff',strokeWidth:2}} activeDot={{r:5}} legendType="none" connectNulls={true}/>
                           <Line type="monotone" dataKey="targetLine" stroke="#607d8b" strokeWidth={2} strokeDasharray="5 3" dot={{r:3,fill:'#607d8b',stroke:'#fff',strokeWidth:1.5}} activeDot={{r:4}} legendType="none" connectNulls={false}/>
                           <Line type="monotone" dataKey="projection" name="Projection" stroke="#22c55e" strokeWidth={2.5} strokeDasharray="6 2" dot={({cx,cy,payload})=>payload.projection!=null?<circle cx={cx} cy={cy} r={5} fill="#22c55e" stroke="#fff" strokeWidth={2}/>:<g/>} activeDot={{r:6,fill:'#22c55e'}} connectNulls={false}>
-                            <LabelList dataKey="projection" position="insideTopRight" offset={10} style={{fill:'#16a34a',fontSize:8,fontWeight:900,background:'white'}} formatter={v=>v!=null?'▲₹'+Math.round(v).toLocaleString('en-IN'):''}/>
+                            <LabelList dataKey="projection" position="top" offset={18} content={({x,y,value})=>{if(value==null)return null;const txt='▲₹'+Math.round(value).toLocaleString('en-IN');const w=txt.length*5.5+8;return(<g><rect x={x-w/2} y={y-28} width={w} height={16} rx={4} fill="white" stroke="#22c55e" strokeWidth={1} opacity={0.95}/><text x={x} y={y-17} textAnchor="middle" fill="#16a34a" fontSize={8} fontWeight={900}>{txt}</text></g>);}}/>
                           </Line>
                           <Line type="monotone" dataKey="bridge" stroke="#90a4ae" strokeWidth={1.5} strokeDasharray="4 3" dot={false} activeDot={false} legendType="none" connectNulls={true}/>
                         </ComposedChart>
