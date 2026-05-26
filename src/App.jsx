@@ -741,9 +741,10 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
     const totalTCVCr     = +(pAAll.reduce((s,r)=>s+(r.tcv||0),0)/1e7).toFixed(1);
     const cancelledBSPCr = +(pCAll.reduce((s,r)=>s+(r.bsp||0),0)/1e7).toFixed(1);
     const cancelledAreaSqft = pCAll.reduce((s,r)=>s+(r.superArea||0),0);
-    // Avg rate = Total Sales Value (BSP) / Total Sold Area
+    // Avg rate = Total Unit Cost (TCV) / Total Super Area of booked units
+    const totalTCVRaw = pAAll.reduce((s,r)=>s+(r.tcv||0),0);
     const avgRatePerSqft = bookedAreaSqft>0
-      ? Math.round((totalBSPCr*1e7)/bookedAreaSqft)
+      ? Math.round(totalTCVRaw/bookedAreaSqft)
       : 0;
     const base = raw?.kpiExtra||{};
     return {
