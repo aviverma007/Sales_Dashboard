@@ -561,6 +561,8 @@ function AppInner() {
   const [chartRangeIdx,setChartRangeIdx]=useState([0,999]);
   const chartMonthFrom=ALL_CHART_MONTHS[Math.min(chartRangeIdx[0],ALL_CHART_MONTHS.length-1)]||'';
   const chartMonthTo=ALL_CHART_MONTHS[Math.min(chartRangeIdx[1],ALL_CHART_MONTHS.length-1)]||'';
+  const chartRangeMonths=(()=>{const l=Math.min(chartRangeIdx[0],ALL_CHART_MONTHS.length-1);const r=Math.min(chartRangeIdx[1],ALL_CHART_MONTHS.length-1);return Math.max(0,r-l+1);})();
+  const chartRangeCompact=chartRangeMonths>0&&chartRangeMonths<=12;
   // Sales & Pricing Trend chart offsets (must be at component level — hooks rules)
   const TODAY_LABEL=(()=>{const d=new Date();return d.toLocaleString('en-US',{month:'short'}).slice(0,3)+"'"+String(d.getFullYear()).slice(2);})();
   // Reset chart offsets to -1 (auto-center) whenever filters change
@@ -1419,8 +1421,8 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const data=uMode==='quarterly'?toQuarterly(rawData,'label').map(q=>({...q,isFuture:false,isCurrent:false})):rawData;
                     const cur=data.findIndex(d=>d.isCurrent);
                     const def=cur>=2?cur-2:Math.max(0,data.length-WIN);
-                    const off=Math.min(Math.max(uOff<0?def:uOff,0),Math.max(0,data.length-WIN));
-                    const sl=data.slice(off,off+WIN);
+                    const off=chartRangeCompact?0:Math.min(Math.max(uOff<0?def:uOff,0),Math.max(0,data.length-WIN));
+                    const sl=chartRangeCompact?data:data.slice(off,off+WIN);
                     return(<>
                       <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
                         <div style={{display:'flex',gap:3,background:'rgba(0,100,140,0.07)',borderRadius:20,padding:2}}>
@@ -1428,9 +1430,9 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                             <button key={k} onClick={()=>{setUMode(k);setUOff(0);}} style={{padding:'3px 10px',borderRadius:18,border:'none',cursor:'pointer',fontSize:10,fontWeight:700,background:uMode===k?'#0097a7':'transparent',color:uMode===k?'#fff':'#546e7a',transition:'all 0.15s'}}>{l}</button>
                           ))}
                         </div>
-                        <button onClick={()=>setUOff(Math.max(0,off-1))} disabled={off===0} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:off===0?'default':'pointer',fontSize:13,color:off===0?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>&#8249;</button>
+                        {!chartRangeCompact&&<><button onClick={()=>setUOff(Math.max(0,off-1))} disabled={off===0} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:off===0?'default':'pointer',fontSize:13,color:off===0?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>&#8249;</button>
                         <div style={{flex:1,height:4,background:'rgba(0,151,167,0.1)',borderRadius:2,overflow:'hidden'}}><div style={{width:(WIN/Math.max(data.length,1)*100)+'%',marginLeft:(off/Math.max(data.length,1)*100)+'%',height:'100%',background:'#0097a7',borderRadius:2}}/></div>
-                        <button onClick={()=>setUOff(Math.min(data.length-WIN,off+1))} disabled={off>=data.length-WIN} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:off>=data.length-WIN?'default':'pointer',fontSize:13,color:off>=data.length-WIN?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>&#8250;</button>
+                        <button onClick={()=>setUOff(Math.min(data.length-WIN,off+1))} disabled={off>=data.length-WIN} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:off>=data.length-WIN?'default':'pointer',fontSize:13,color:off>=data.length-WIN?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>&#8250;</button></> }
                       </div>
                       <ResponsiveContainer width="100%" height={210}>
                         <ComposedChart data={sl} margin={{top:26,right:8,bottom:18,left:0}} barGap={4} barCategoryGap="30%">
@@ -1492,14 +1494,14 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const data=tsvMode==='quarterly'?toQuarterly(rawDataTsv,'label').map(q=>({...q,isFuture:false,isCurrent:false})):rawDataTsv;
                     const cur=data.findIndex(d=>d.isCurrent);
                     const def=cur>=2?cur-2:Math.max(0,data.length-WIN);
-                    const off=Math.min(Math.max(tsvOff<0?def:tsvOff,0),Math.max(0,data.length-WIN));
-                    const sl=data.slice(off,off+WIN);
+                    const off=chartRangeCompact?0:Math.min(Math.max(tsvOff<0?def:tsvOff,0),Math.max(0,data.length-WIN));
+                    const sl=chartRangeCompact?data:data.slice(off,off+WIN);
                     return(<>
                       <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
                         <div style={{display:'flex',gap:3,background:'rgba(0,100,140,0.07)',borderRadius:20,padding:2}}>{[['monthly','Monthly'],['quarterly','Quarterly']].map(([k,l])=>(<button key={k} onClick={()=>{setTsvMode(k);setTsvOff(0);}} style={{padding:'3px 10px',borderRadius:18,border:'none',cursor:'pointer',fontSize:10,fontWeight:700,background:tsvMode===k?'#0097a7':'transparent',color:tsvMode===k?'#fff':'#546e7a',transition:'all 0.15s'}}>{l}</button>))}</div>
-                        <button onClick={()=>setTsvOff(Math.max(0,off-1))} disabled={off===0} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:off===0?'default':'pointer',fontSize:13,color:off===0?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>‹</button>
+                        {!chartRangeCompact&&<><button onClick={()=>setTsvOff(Math.max(0,off-1))} disabled={off===0} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:off===0?'default':'pointer',fontSize:13,color:off===0?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>‹</button>
                         <div style={{flex:1,height:4,background:'rgba(0,151,167,0.1)',borderRadius:2,overflow:'hidden'}}><div style={{width:(WIN/Math.max(data.length,1)*100)+'%',marginLeft:(off/Math.max(data.length,1)*100)+'%',height:'100%',background:'#0097a7',borderRadius:2}}/></div>
-                        <button onClick={()=>setTsvOff(Math.min(data.length-WIN,off+1))} disabled={off>=data.length-WIN} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:off>=data.length-WIN?'default':'pointer',fontSize:13,color:off>=data.length-WIN?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>›</button>
+                        <button onClick={()=>setTsvOff(Math.min(data.length-WIN,off+1))} disabled={off>=data.length-WIN} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:off>=data.length-WIN?'default':'pointer',fontSize:13,color:off>=data.length-WIN?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>›</button></> }
                       </div>
                       <ResponsiveContainer width="100%" height={210}>
                         <ComposedChart data={sl} margin={{top:26,right:8,bottom:18,left:0}} barGap={4} barCategoryGap="30%">
@@ -1562,8 +1564,8 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const data=suMode==='quarterly'?toQuarterly(rawDataA,'label').map(q=>({...q,isFuture:false,isCurrent:false})):rawDataA;
                     const cur=data.findIndex(d=>d.isCurrent);
                     const def=cur>=2?cur-2:Math.max(0,data.length-WIN);
-                    const off=Math.min(Math.max(suOff<0?def:suOff,0),Math.max(0,data.length-WIN));
-                    const sl=data.slice(off,off+WIN);
+                    const off=chartRangeCompact?0:Math.min(Math.max(suOff<0?def:suOff,0),Math.max(0,data.length-WIN));
+                    const sl=chartRangeCompact?data:data.slice(off,off+WIN);
                     // KPI pills
                     const totBooked=monthlyWithTargets.filter(d=>!d.isFuture).reduce((s,d)=>s+(d.bookedAreaSqft||0),0);
                     const totTarget=monthlyWithTargets.reduce((s,d)=>s+(d.targetAreaSqft||0),0);
@@ -1574,9 +1576,9 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                             <button key={k} onClick={()=>{setSuMode(k);setSuOff(0);}} style={{padding:'3px 10px',borderRadius:18,border:'none',cursor:'pointer',fontSize:10,fontWeight:700,background:suMode===k?'#0097a7':'transparent',color:suMode===k?'#fff':'#546e7a',transition:'all 0.15s'}}>{l}</button>
                           ))}
                         </div>
-                        <button onClick={()=>setSuOff(Math.max(0,off-1))} disabled={off===0} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:off===0?'default':'pointer',fontSize:13,color:off===0?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>‹</button>
+                        {!chartRangeCompact&&<><button onClick={()=>setSuOff(Math.max(0,off-1))} disabled={off===0} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:off===0?'default':'pointer',fontSize:13,color:off===0?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>‹</button>
                         <div style={{flex:1,height:4,background:'rgba(0,151,167,0.1)',borderRadius:2,overflow:'hidden'}}><div style={{width:(WIN/Math.max(data.length,1)*100)+'%',marginLeft:(off/Math.max(data.length,1)*100)+'%',height:'100%',background:'#0097a7',borderRadius:2}}/></div>
-                        <button onClick={()=>setSuOff(Math.min(data.length-WIN,off+1))} disabled={off>=data.length-WIN} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:off>=data.length-WIN?'default':'pointer',fontSize:13,color:off>=data.length-WIN?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>›</button>
+                        <button onClick={()=>setSuOff(Math.min(data.length-WIN,off+1))} disabled={off>=data.length-WIN} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:off>=data.length-WIN?'default':'pointer',fontSize:13,color:off>=data.length-WIN?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>›</button></> }
                       </div>
 
                       <ResponsiveContainer width="100%" height={220}>
@@ -1648,14 +1650,14 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const data=rMode==='quarterly'?toQuarterly(rawDataR,'label').map(q=>({...q,isFuture:false,isCurrent:false})):rawDataR;
                     const cur=data.findIndex(d=>d.isCurrent);
                     const def=cur>=2?cur-2:Math.max(0,data.length-WIN);
-                    const off=Math.min(Math.max(rOff<0?def:rOff,0),Math.max(0,data.length-WIN));
-                    const sl=data.slice(off,off+WIN);
+                    const off=chartRangeCompact?0:Math.min(Math.max(rOff<0?def:rOff,0),Math.max(0,data.length-WIN));
+                    const sl=chartRangeCompact?data:data.slice(off,off+WIN);
                     return(<>
                       <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
                         <div style={{display:'flex',gap:3,background:'rgba(0,100,140,0.07)',borderRadius:20,padding:2}}>{[['monthly','Monthly'],['quarterly','Quarterly']].map(([k,l])=>(<button key={k} onClick={()=>{setRMode(k);setROff(0);}} style={{padding:'3px 10px',borderRadius:18,border:'none',cursor:'pointer',fontSize:10,fontWeight:700,background:rMode===k?'#0097a7':'transparent',color:rMode===k?'#fff':'#546e7a',transition:'all 0.15s'}}>{l}</button>))}</div>
-                        <button onClick={()=>setROff(Math.max(0,off-1))} disabled={off===0} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:off===0?'default':'pointer',fontSize:13,color:off===0?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>‹</button>
+                        {!chartRangeCompact&&<><button onClick={()=>setROff(Math.max(0,off-1))} disabled={off===0} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:off===0?'default':'pointer',fontSize:13,color:off===0?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>‹</button>
                         <div style={{flex:1,height:4,background:'rgba(0,151,167,0.1)',borderRadius:2,overflow:'hidden'}}><div style={{width:(WIN/Math.max(data.length,1)*100)+'%',marginLeft:(off/Math.max(data.length,1)*100)+'%',height:'100%',background:'#0097a7',borderRadius:2}}/></div>
-                        <button onClick={()=>setROff(Math.min(data.length-WIN,off+1))} disabled={off>=data.length-WIN} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:off>=data.length-WIN?'default':'pointer',fontSize:13,color:off>=data.length-WIN?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>›</button>
+                        <button onClick={()=>setROff(Math.min(data.length-WIN,off+1))} disabled={off>=data.length-WIN} style={{width:22,height:22,borderRadius:'50%',border:'1px solid rgba(0,151,167,0.2)',background:'rgba(255,255,255,0.8)',cursor:off>=data.length-WIN?'default':'pointer',fontSize:13,color:off>=data.length-WIN?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center'}}>›</button></> }
                       </div>
                       <ResponsiveContainer width="100%" height={210}>
                         {(()=>{
