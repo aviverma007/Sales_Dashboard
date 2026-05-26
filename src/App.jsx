@@ -1173,8 +1173,9 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                 {(()=>{
                   const soldBSP=kpiEx.totalBSPCr||0;
                   const soldTCV=kpiEx.totalTCVCr||0;
-                  const totalReceived=+(pAAll.reduce((s,r)=>s+(r.received||0),0)/1e7).toFixed(2);
-                  const totalDemand=+(pA.reduce((s,r)=>s+(r.demand||0),0)/1e7).toFixed(2);
+                  // Use dFAll (demand/collection module, project-only filtered) for accurate received amount
+                  const totalReceived=+(dFAll.reduce((s,r)=>s+(r.received||0),0)/1e7).toFixed(2);
+                  const totalDemand=+(dFAll.reduce((s,r)=>s+(r.demand||0),0)/1e7).toFixed(2);
                   const outstanding=+(Math.max(0,soldTCV-totalReceived)).toFixed(2);
                   const collectedPct=soldTCV>0?Math.round(totalReceived/soldTCV*100):0;
                   // Unsold potential
