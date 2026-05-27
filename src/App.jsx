@@ -1955,7 +1955,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                 <GC style={{padding:16}}>
                   <SH title="Rate Trend Over Time" sub="₹/sqft per booking · coloured by tower · scroll for full timeline · filtered by project"/>
                   {(()=>{
-                    const pts=pA.filter(r=>r.bookingDate&&r.bsp&&r.superArea>0).map(r=>({
+                    const pts=pAAll.filter(r=>r.bookingDate&&r.bsp&&r.superArea>0).map(r=>({
                       date:r.bookingDate,
                       ts:new Date(r.bookingDate).getTime(),
                       rate:Math.round(r.bsp/r.superArea),
