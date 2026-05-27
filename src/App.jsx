@@ -88,11 +88,6 @@ const ChartControls=({mode,setMode,offset,setOffset,total,window:win=6})=>{
   const displayOffset=Math.min(offset,maxOffset);
   return(
     <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:8}}>
-      <div style={{display:'flex',gap:3,background:'rgba(0,100,140,0.07)',borderRadius:20,padding:2,flexShrink:0}}>
-        {[['monthly','Monthly'],['quarterly','Quarterly']].map(([k,l])=>(
-          <button key={k} onClick={()=>{setMode(k);setOffset(0);}} style={{padding:'3px 12px',borderRadius:18,border:'none',cursor:'pointer',fontSize:10,fontWeight:700,background:mode===k?'#0097a7':'transparent',color:mode===k?'#fff':'#546e7a',transition:'all 0.15s'}}>{l}</button>
-        ))}
-      </div>
       <button onClick={()=>setOffset(o=>Math.max(0,Math.min(o,maxOffset)-1))} disabled={displayOffset===0} style={{width:24,height:24,borderRadius:'50%',border:'1px solid rgba(0,100,140,0.2)',background:'rgba(255,255,255,0.8)',cursor:displayOffset===0?'default':'pointer',fontSize:14,color:displayOffset===0?'#ccc':'#0097a7',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>‹</button>
       <div style={{flex:1,height:5,background:'rgba(0,100,140,0.1)',borderRadius:3,position:'relative',cursor:'pointer',minWidth:60}} onClick={e=>{const r=e.currentTarget.getBoundingClientRect();const p=(e.clientX-r.left)/r.width;setOffset(Math.round(p*maxOffset));}}>
         <div style={{position:'absolute',left:`${maxOffset>0?(displayOffset/maxOffset)*(100-win/total*100):0}%`,width:`${total>0?(win/total)*100:100}%`,height:'100%',background:'linear-gradient(90deg,#0097a7,#4dd0e1)',borderRadius:3,transition:'left 0.2s'}}/>
@@ -1469,11 +1464,6 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const sl=dataFinal.slice(off,off+WIN);
                     return(<>
                       <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
-                        <div style={{display:'flex',gap:3,background:'rgba(0,100,140,0.07)',borderRadius:20,padding:2}}>
-                          {[['monthly','Monthly'],['quarterly','Quarterly']].map(([k,l])=>(
-                            <button key={k} onClick={()=>{setUMode(k);setUOff(0);}} style={{padding:'3px 10px',borderRadius:18,border:'none',cursor:'pointer',fontSize:10,fontWeight:700,background:uMode===k?'#0097a7':'transparent',color:uMode===k?'#fff':'#546e7a',transition:'all 0.15s'}}>{l}</button>
-                          ))}
-                        </div>
                         {!chartRangeCompact&&dataFinal.length>WIN&&<><button className="chart-slider-btn" onClick={()=>setAllOff(Math.max(0,off-1))} disabled={off===0}>&#8249;</button>
                         <div className="chart-slider-track"
   onClick={e=>{const r=e.currentTarget.getBoundingClientRect();const p=(e.clientX-r.left)/r.width;setAllOff(Math.round(p*Math.max(0,dataFinal.length-WIN)));}}
@@ -1549,7 +1539,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const sl=dataFinal.slice(off,off+WIN);
                     return(<>
                       <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
-                        <div style={{display:'flex',gap:3,background:'rgba(0,100,140,0.07)',borderRadius:20,padding:2}}>{[['monthly','Monthly'],['quarterly','Quarterly']].map(([k,l])=>(<button key={k} onClick={()=>{setTsvMode(k);setTsvOff(0);}} style={{padding:'3px 10px',borderRadius:18,border:'none',cursor:'pointer',fontSize:10,fontWeight:700,background:tsvMode===k?'#0097a7':'transparent',color:tsvMode===k?'#fff':'#546e7a',transition:'all 0.15s'}}>{l}</button>))}</div>
+                        
                         {!chartRangeCompact&&dataFinal.length>WIN&&<><button className="chart-slider-btn" onClick={()=>setAllOff(Math.max(0,off-1))} disabled={off===0}>‹</button>
                         <div className="chart-slider-track"
   onClick={e=>{const r=e.currentTarget.getBoundingClientRect();const p=(e.clientX-r.left)/r.width;setAllOff(Math.round(p*Math.max(0,dataFinal.length-WIN)));}}
@@ -1629,11 +1619,6 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const totTarget=monthlyWithTargets.reduce((s,d)=>s+(d.targetAreaSqft||0),0);
                     return(<>
                       <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
-                        <div style={{display:'flex',gap:3,background:'rgba(0,100,140,0.07)',borderRadius:20,padding:2}}>
-                          {[['monthly','Monthly'],['quarterly','Quarterly']].map(([k,l])=>(
-                            <button key={k} onClick={()=>{setSuMode(k);setSuOff(0);}} style={{padding:'3px 10px',borderRadius:18,border:'none',cursor:'pointer',fontSize:10,fontWeight:700,background:suMode===k?'#0097a7':'transparent',color:suMode===k?'#fff':'#546e7a',transition:'all 0.15s'}}>{l}</button>
-                          ))}
-                        </div>
                         {!chartRangeCompact&&dataFinal.length>WIN&&<><button className="chart-slider-btn" onClick={()=>setAllOff(Math.max(0,off-1))} disabled={off===0}>‹</button>
                         <div className="chart-slider-track"
   onClick={e=>{const r=e.currentTarget.getBoundingClientRect();const p=(e.clientX-r.left)/r.width;setAllOff(Math.round(p*Math.max(0,dataFinal.length-WIN)));}}
@@ -1773,7 +1758,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const sl=dataFinal.slice(off,off+WIN);
                     return(<>
                       <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
-                        <div style={{display:'flex',gap:3,background:'rgba(0,100,140,0.07)',borderRadius:20,padding:2}}>{[['monthly','Monthly'],['quarterly','Quarterly']].map(([k,l])=>(<button key={k} onClick={()=>{setRMode(k);setROff(0);}} style={{padding:'3px 10px',borderRadius:18,border:'none',cursor:'pointer',fontSize:10,fontWeight:700,background:rMode===k?'#0097a7':'transparent',color:rMode===k?'#fff':'#546e7a',transition:'all 0.15s'}}>{l}</button>))}</div>
+                        
                         {!chartRangeCompact&&dataFinal.length>WIN&&<><button className="chart-slider-btn" onClick={()=>setAllOff(Math.max(0,off-1))} disabled={off===0}>‹</button>
                         <div className="chart-slider-track"
   onClick={e=>{const r=e.currentTarget.getBoundingClientRect();const p=(e.clientX-r.left)/r.width;setAllOff(Math.round(p*Math.max(0,dataFinal.length-WIN)));}}
