@@ -1728,7 +1728,15 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const nqBMoR=rQS+3>12?rQS-9:rQS+3;const nqBYR=rQS+3>12?todayR.getFullYear()+1:todayR.getFullYear();
                     const nqBLblR=ml3(nqBYR,nqBMoR);
                     const rawDataR=monthlyWithTargets.map(d=>({label:d.label,isFuture:d.isFuture,isCurrent:d.label===TODAY_LABEL,
-                      achieved:d.isFuture?null:(d.actualRate>0?d.actualRate:null),
+                      achieved:(()=>{
+                        if(d.isFuture)return null;
+                        if(d.actualRate>0)return d.actualRate;
+                        // For current/past months with no booking, carry last known rate
+                        // so the line stays visible up to today
+                        const dym=lblYmR(d.label);
+                        if(dym<=todayYMR&&lastKnownRate>0&&dym>=lastKnownYm)return lastKnownRate;
+                        return null;
+                      })(),
                       target:d.targetRateLine||null,
                       targetLine:(()=>{if(futureCqmR.includes(d.label)&&rateProjMap[d.label]!=null)return null;const p=d.label.match(/([A-Za-z]{3})'(\d{2})/);if(p&&(2000+parseInt(p[2]))*100+(moNR[p[1]]||0)<todayYMR)return null;return d.targetRateLine||null;})(),
                       // Current quarter short-term projection
@@ -1750,7 +1758,9 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const parseM=l=>{const p=l.match(/([A-Za-z]{3})'(\d{2})/);if(!p)return'';const mn={Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'};return(p[2]>='90'?'19':'20')+p[2]+'-'+mn[p[1]];};const dataF=chartMonthFrom?data.filter(d=>parseM(d.label)>=chartMonthFrom):data;
                     const dataFinal=chartMonthFrom?dataF:data;
                     const cur=dataFinal.findIndex(d=>d.isCurrent);
-                    const def=cur>=2?cur-2:Math.max(0,dataFinal.length-WIN);
+                    // Start from first month with actual rate data so achieved line is visible
+                    const firstActualIdx=dataFinal.findIndex(d=>d.achieved!=null&&d.achieved>0);
+                    const def=firstActualIdx>=0?Math.max(0,firstActualIdx):cur>=2?cur-2:Math.max(0,dataFinal.length-WIN);
                     const off=chartMonthFrom?Math.min(Math.max(chartOff<0?0:chartOff,0),Math.max(0,dataFinal.length-WIN)):Math.min(Math.max(chartOff<0?def:chartOff,0),Math.max(0,dataFinal.length-WIN));
                     const sl=dataFinal.slice(off,off+WIN);
                     return(<>
