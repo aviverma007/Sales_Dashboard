@@ -789,11 +789,11 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
     const map={};
     // Booked from pdrn (filtered) — track area sum
     const areaMap={};
-    pA.forEach(r=>{const b=r.bhk||'Other';if(!map[b])map[b]={bhk:b,booked:0,total:0};map[b].booked++;if(!areaMap[b])areaMap[b]={sum:0,count:0};if(r.superArea>0){areaMap[b].sum+=r.superArea;areaMap[b].count++;};});
-    // Total from inventory (filtered)
-    iF.forEach(r=>{const b=r.bhk||'Other';if(!map[b])map[b]={bhk:b,booked:0,total:0};map[b].total++;});
+    pAAll.forEach(r=>{const b=r.bhk||'Other';if(!map[b])map[b]={bhk:b,booked:0,total:0};map[b].booked++;if(!areaMap[b])areaMap[b]={sum:0,count:0};if(r.superArea>0){areaMap[b].sum+=r.superArea;areaMap[b].count++;};});
+    // Total from inventory (project-only filtered)
+    iFAll.forEach(r=>{const b=r.bhk||'Other';if(!map[b])map[b]={bhk:b,booked:0,total:0};map[b].total++;});
     return Object.values(map).sort((a,b)=>b.booked-a.booked).map(r=>({...r,available:Math.max(0,r.total-r.booked),avgArea:areaMap[r.bhk]?.count>0?Math.round(areaMap[r.bhk].sum/areaMap[r.bhk].count):0}));
-  },[pA,iF]);
+  },[pAAll,iFAll]);
   const cpVsDirect=useMemo(()=>{
     if(!raw?.cpVsDirect) return [];
     if(!filters.project) return raw.cpVsDirect;
@@ -1923,7 +1923,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const FY_COLORS={[FYS[0]]:'#0077b6',[FYS[1]]:'#0097a7',[FYS[2]]:'#1a3a5c'};
                     const FY_LABELS={[FYS[0]]:'FY 2024',[FYS[1]]:'FY 2025',[FYS[2]]:'FY 2026'};
                     const map={};
-                    pA.forEach(r=>{
+                    pAAll.forEach(r=>{
                       const t=r.tower||'';const fy=r.bookingFY||'';
                       if(!t||!fy)return;
                       if(!map[t])map[t]={};
