@@ -1171,12 +1171,16 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                   const totalDemand=+(dFAll.reduce((s,r)=>s+(r.demand||0),0)/1e7).toFixed(2);
                   const outstanding=+(Math.max(0,soldTCV-totalReceived)).toFixed(2);
                   const collectedPct=soldTCV>0?Math.round(totalReceived/soldTCV*100):0;
-                  // Unsold = avg rate × super area of available units
-                  const avgRateForUnsold = kpiEx.avgRatePerSqft||0;
+                  // Unsold = (Target Project Sales Value - Sold TCV) derived from AOP targets
+                  // AOP unsold rate = implied from monthly targets (tsvCr/areaSqft for future months)
                   const availArea=iFAll.filter(r=>r.status==='Available').reduce((s,r)=>s+(r.superArea||0),0);
                   const availUnits=iFAll.filter(r=>r.status==='Available').length;
-                  const unsoldBSP=+((availArea>0?availArea*avgRateForUnsold:0)/1e7).toFixed(2);
-                  // Total Project Sales Value = Sold (TCV) + Avg Rate × Available Area
+                  // Get AOP target rate from monthlyTargets (use future months targetRate avg)
+                  const allTargets=raw?.monthlyTargets||[];
+                  const futureTargets=allTargets.filter(t=>t.targetRate>0);
+                  const aopRate=futureTargets.length>0?Math.round(futureTargets.reduce((s,t)=>s+t.targetRate,0)/futureTargets.length):kpiEx.avgRatePerSqft||0;
+                  // Total Project Sales Value = Sold TCV + Available Area × AOP rate
+                  const unsoldBSP=+((availArea>0?availArea*aopRate:0)/1e7).toFixed(2);
                   const totalPotential=+(soldTCV+unsoldBSP).toFixed(2);
                   const soldPct=totalPotential>0?Math.round(soldTCV/totalPotential*100):0;
                   return(
