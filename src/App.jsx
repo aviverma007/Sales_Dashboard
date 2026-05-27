@@ -1735,15 +1735,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const nqBMoR=rQS+3>12?rQS-9:rQS+3;const nqBYR=rQS+3>12?todayR.getFullYear()+1:todayR.getFullYear();
                     const nqBLblR=ml3(nqBYR,nqBMoR);
                     const rawDataR=monthlyWithTargets.map(d=>({label:d.label,isFuture:d.isFuture,isCurrent:d.label===TODAY_LABEL,
-                      achieved:(()=>{
-                        if(d.isFuture)return null;
-                        if(d.actualRate>0)return d.actualRate;
-                        // For current/past months with no booking, carry last known rate
-                        // so the line stays visible up to today
-                        const dym=lblYmR(d.label);
-                        if(dym<=todayYMR&&lastKnownRate>0&&dym>=lastKnownYm)return lastKnownRate;
-                        return null;
-                      })(),
+                      achieved:d.actualRate>0?d.actualRate:null,
                       target:d.targetRateLine||null,
                       targetLine:(()=>{if(futureCqmR.includes(d.label)&&rateProjMap[d.label]!=null)return null;const p=d.label.match(/([A-Za-z]{3})'(\d{2})/);if(p&&(2000+parseInt(p[2]))*100+(moNR[p[1]]||0)<todayYMR)return null;return d.targetRateLine||null;})(),
                       // Current quarter short-term projection
