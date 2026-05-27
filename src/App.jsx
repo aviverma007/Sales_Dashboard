@@ -310,7 +310,7 @@ const SH = ({title,sub,light=false,compact=false}) => (
 );
 
 // ─── FILTER SELECT ────────────────────────────────────────────────────────────
-const FSel = ({label,options,value,onChange,multi=false,openId='',activeOpen=null,setActiveOpen=()=>{}}) => {
+const FSel = ({label,options,value,onChange,multi=false,openId='',activeOpen=null,setActiveOpen=()=>{},mandatory=false}) => {
   if(multi){
     const vals=value?value.split('||').filter(Boolean):[];
     const toggle=v=>{const n=vals.includes(v)?vals.filter(x=>x!==v):[...vals,v];onChange(n.join('||'));};
@@ -328,14 +328,14 @@ const FSel = ({label,options,value,onChange,multi=false,openId='',activeOpen=nul
             {/* Select All / Clear All row */}
             <div style={{display:'flex',gap:4,padding:'5px 8px 6px',borderBottom:'1px solid rgba(0,151,167,0.1)',marginBottom:3}}>
               <button onClick={()=>onChange(options.join('||'))} style={{flex:1,padding:'3px 8px',borderRadius:6,border:`1px solid ${T.teal}40`,background:`${T.teal}0d`,color:T.tealD,fontSize:9,fontWeight:800,cursor:'pointer'}}>✓ All</button>
-              <button onClick={()=>onChange('')} style={{flex:1,padding:'3px 8px',borderRadius:6,border:'1px solid rgba(200,40,40,0.3)',background:'rgba(200,40,40,0.06)',color:'#c62828',fontSize:9,fontWeight:800,cursor:'pointer'}}>✕ Clear</button>
+              {!mandatory&&<button onClick={()=>onChange('')} style={{flex:1,padding:'3px 8px',borderRadius:6,border:'1px solid rgba(200,40,40,0.3)',background:'rgba(200,40,40,0.06)',color:'#c62828',fontSize:9,fontWeight:800,cursor:'pointer'}}>✕ Clear</button>}
             </div>
             {options.map(o=>(
               <div key={o}
                 onClick={e=>{
                   const cbClicked=e.target.closest('[data-cb]');
                   if(cbClicked){e.stopPropagation();toggle(o);}
-                  else{onChange(o===vals[0]&&vals.length===1?'':o);setActiveOpen(null);}
+                  else{if(mandatory&&vals.length===1&&vals[0]===o)return;onChange(o===vals[0]&&vals.length===1?'':o);setActiveOpen(null);}
                 }}
                 style={{display:'flex',alignItems:'center',gap:10,padding:'7px 10px',borderRadius:5,cursor:'pointer',background:vals.includes(o)?`${T.teal}10`:'transparent',fontSize:10,fontWeight:vals.includes(o)?700:400,color:vals.includes(o)?T.tealD:T.text,transition:'background 0.1s'}}
               >
@@ -536,7 +536,7 @@ function AppInner() {
   const [loading,setLoading]=useState(true);
   const [tab,setTab]=useState('overview'); // overview | collections | pipeline
 
-  const [filters,setFilters]=useState({company:'',project:'',month:'',quarter:'',broker:'',typology:'',fy:''});
+  const [filters,setFilters]=useState({company:'',project:'SMARTWORLD THE EDITION',month:'',quarter:'',broker:'',typology:'',fy:''});
   const sf=useCallback((k,v)=>setFilters(p=>({...p,[k]:v})),[]);
   // Chart controls (lifted to comply with React hooks rules)
   const [tMode,setTMode]=useState('monthly');
@@ -609,7 +609,7 @@ function AppInner() {
   const [cpScroll2,setCpScroll2]=useState(0);
   const [showAllT,setShowAllT]=useState(false);
 
-  useEffect(()=>{fetch('/data/dashboard_data.json').then(r=>r.json()).then(d=>{setRaw(d);setLoading(false);}).catch(()=>setLoading(false));}, []);
+  useEffect(()=>{fetch('/data/dashboard_data.json').then(r=>r.json()).then(d=>{setRaw(d);setLoading(false);const firstProj=(d.filterOptions?.projects||[])[0]||'SMARTWORLD THE EDITION';setFilters(f=>({...f,project:f.project||firstProj}));}).catch(()=>setLoading(false));}, []);
 
   const fo=raw?.filterOptions||{};
   const availProj=useMemo(()=>(!raw||!filters.company)?fo.projects||[]:(fo.projects||[]).filter(p=>(fo.projCompany||{})[p]===filters.company),[raw,filters.company,fo]);
@@ -991,7 +991,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
 
         {/* Filter strip */}
         <div onClick={e=>e.stopPropagation()} style={{maxWidth:1440,margin:'0 auto',padding:'4px 24px 8px',display:'flex',alignItems:'flex-end',gap:10,flexWrap:'wrap'}}>
-          <FSel label="Project"    options={availProj}                           value={filters.project}  onChange={v=>sf('project',v)}   multi={true} openId="project"    activeOpen={activeFilter} setActiveOpen={setActiveFilter}/>
+          <FSel label="Project"    options={availProj}                           value={filters.project}  onChange={v=>sf('project',v)}   multi={true} openId="project"    activeOpen={activeFilter} setActiveOpen={setActiveFilter} mandatory={true}/>
           <FSel label="Fin. Year"  options={fo.financialYears||[]}               value={filters.fy}       onChange={v=>sf('fy',v)}         multi={true} openId="fy"         activeOpen={activeFilter} setActiveOpen={setActiveFilter}/>
           <FSel label="Quarter"       options={FY_QUARTERS}                              value={filters.quarter}  onChange={v=>sf('quarter',v)}    multi={true} openId="quarter"    activeOpen={activeFilter} setActiveOpen={setActiveFilter}/>
           <FSel label="Month"        options={MONTHS_LIST}                              value={filters.month}    onChange={v=>sf('month',v)}      multi={true} openId="month"      activeOpen={activeFilter} setActiveOpen={setActiveFilter}/>
