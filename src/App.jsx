@@ -1697,22 +1697,19 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const lastKnownYm=lblYmR(lastKnownLbl);
 
                     // ── REQUIRED RATE LOGIC ──────────────────────────────────────────────
-                    // Required Rate = (Total Project Sales Value - Sold TCV) / Remaining area to sell
+                    // Required Rate = (Total Project Sales Value - Sold TCV) / Available area
+                    // i.e. what rate must be achieved on remaining inventory to hit overall target TSV
                     const soldTCVVal=(kpiEx.totalTCVCr||0)*1e7;
-                    // Total project sales value = soldTCV + avg rate × available area
                     const availAreaR=kpiEx.availAreaSqft||0;
-                    const avgRateR=kpiEx.avgRatePerSqft||0;
-                    const totalProjectSalesValue=soldTCVVal+(availAreaR*avgRateR);
-                    const remainingTSV=Math.max(0,totalProjectSalesValue-soldTCVVal); // = availArea × avgRate
-                    // Remaining area = future target units × avg sqft per booked unit
-                    const bookedUnitsR=kpiEx.bookedAreaSqft>0?pAAll.length:0;
-                    const avgAreaPerUnit=bookedUnitsR>0?(kpiEx.bookedAreaSqft/bookedUnitsR):1500;
-                    const futureMonths=monthlyWithTargets.filter(d=>d.isFuture||d.label===TODAY_LABEL);
-                    const totalTargetUnitsRemaining=futureMonths.reduce((s,d)=>s+(d.targetUnits||0),0);
-                    const remainingArea=totalTargetUnitsRemaining>0?totalTargetUnitsRemaining*avgAreaPerUnit:availAreaR;
-                    // Required rate per sqft to achieve total project sales value
-                    const requiredRate=remainingArea>0?Math.round(remainingTSV/remainingArea):avgRateR;
-                    console.log('RequiredRate debug:',{soldTCVVal,availAreaR,avgRateR,totalProjectSalesValue,remainingTSV,remainingArea,requiredRate,bookedUnitsR,avgAreaPerUnit});
+                    // AOP target rate = average of future target rate lines
+                    const futureTargetRates=monthlyWithTargets.filter(d=>d.isFuture&&d.targetRateLine>0).map(d=>d.targetRateLine);
+                    const aopTargetRate=futureTargetRates.length>0?Math.round(futureTargetRates.reduce((s,v)=>s+v,0)/futureTargetRates.length):lastKnownRate;
+                    // Target TSV = soldTCV + (available area × AOP target rate)
+                    const targetTSVVal=soldTCVVal+(availAreaR*aopTargetRate);
+                    const remainingTSV=Math.max(0,targetTSVVal-soldTCVVal);
+                    // Required rate = remainingTSV / available area
+                    const requiredRate=availAreaR>0?Math.round(remainingTSV/availAreaR):aopTargetRate;
+                    const avgRateR=aopTargetRate;
 
                     // Current quarter projection (short-term trend)
                     const rateProjMap={};
@@ -1731,7 +1728,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const nqBMoR=rQS+3>12?rQS-9:rQS+3;const nqBYR=rQS+3>12?todayR.getFullYear()+1:todayR.getFullYear();
                     const nqBLblR=ml3(nqBYR,nqBMoR);
                     const rawDataR=monthlyWithTargets.map(d=>({label:d.label,isFuture:d.isFuture,isCurrent:d.label===TODAY_LABEL,
-                      achieved:d.isFuture?null:(d.actualRate>0?d.actualRate:0),
+                      achieved:d.isFuture?null:(d.actualRate>0?d.actualRate:null),
                       target:d.targetRateLine||null,
                       targetLine:(()=>{if(futureCqmR.includes(d.label)&&rateProjMap[d.label]!=null)return null;const p=d.label.match(/([A-Za-z]{3})'(\d{2})/);if(p&&(2000+parseInt(p[2]))*100+(moNR[p[1]]||0)<todayYMR)return null;return d.targetRateLine||null;})(),
                       // Current quarter short-term projection
@@ -1794,8 +1791,8 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                               {/* Left Y: units (target units per month) */}
                               <YAxis yAxisId="units" orientation="left" tick={{fill:'#546e7a',fontSize:8}} tickLine={false} axisLine={false} width={36} tickFormatter={v=>v>=1000?(v/1000).toFixed(0)+'k':v}/>
                               {/* Right Y: rate ₹/sqft */}
-                              <YAxis yAxisId="rate" orientation="right" tick={{fill:'#37474f',fontSize:8}} tickLine={false} axisLine={false} width={52} tickFormatter={v=>v.toLocaleString('en-IN')}
-                                domain={[()=>{const vals=sl.flatMap(d=>[d.achieved,d.targetLine,d.requiredRate]).filter(v=>v!=null&&v>0);if(!vals.length)return 21000;const mn=Math.min(...vals);return Math.floor((mn-500)/500)*500;},()=>{const vals=sl.flatMap(d=>[d.achieved,d.targetLine,d.requiredRate]).filter(v=>v!=null&&v>0);if(!vals.length)return 24000;const mx=Math.max(...vals);return Math.ceil((mx+200)/500)*500;}]}
+                              <YAxis yAxisId="rate" orientation="right" tick={{fill:'#37474f',fontSize:8}} tickLine={false} axisLine={false} width={52} tickFormatter={v=>'₹'+v.toLocaleString('en-IN')}
+                                domain={[()=>{const vals=sl.flatMap(d=>[d.achieved,d.targetLine,d.requiredRate]).filter(v=>v!=null&&v>0&&v<100000);if(!vals.length)return 21000;const mn=Math.min(...vals);const mx=Math.max(...vals);const spread=Math.max(mx-mn,500);return Math.floor((mn-spread*0.2)/500)*500;},()=>{const vals=sl.flatMap(d=>[d.achieved,d.targetLine,d.requiredRate]).filter(v=>v!=null&&v>0&&v<100000);if(!vals.length)return 24000;const mx=Math.max(...vals);const mn=Math.min(...vals);const spread=Math.max(mx-mn,500);return Math.ceil((mx+spread*0.2)/500)*500;}]}
                               />
                               <Tooltip content={({active,payload,label})=>{if(!active||!payload?.length)return null;const d=sl.find(s=>s.label===label);return(<div style={{background:'rgba(255,255,255,0.97)',border:'1px solid rgba(0,100,140,0.2)',borderRadius:8,padding:'7px 10px',fontSize:10}}><p style={{fontWeight:800,margin:'0 0 4px',color:T.navy}}>{label}</p>{d?.bookedUnits!=null&&<p style={{color:'#8b1a1a',margin:'2px 0'}}>Booked Units: {d.bookedUnits}</p>}{d?.targetUnitsLine!=null&&<p style={{color:'#1a237e',margin:'2px 0'}}>Target Units: {d.targetUnitsLine}</p>}{d?.achieved!=null&&d.achieved>0&&<p style={{color:'#8b1a1a',margin:'2px 0'}}>Achieved Rate: ₹{Math.round(d.achieved).toLocaleString('en-IN')}/sqft</p>}{d?.targetLine!=null&&<p style={{color:'#1a237e',margin:'2px 0'}}>Target Rate: ₹{Math.round(d.targetLine).toLocaleString('en-IN')}/sqft</p>}{d?.requiredRate!=null&&<p style={{color:'#2e7d32',margin:'2px 0'}}>Required Rate: ₹{Math.round(d.requiredRate).toLocaleString('en-IN')}/sqft</p>}</div>);}}/>
                               {/* Unit bars (left axis) */}
