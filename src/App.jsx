@@ -1705,14 +1705,17 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     // i.e. what rate must be achieved on remaining inventory to hit overall target TSV
                     const soldTCVVal=(kpiEx.totalTCVCr||0)*1e7;
                     const availAreaR=kpiEx.availAreaSqft||0;
-                    // AOP target rate = average of future target rate lines
-                    const futureTargetRates=monthlyWithTargets.filter(d=>d.isFuture&&d.targetRateLine>0).map(d=>d.targetRateLine);
-                    const aopTargetRate=futureTargetRates.length>0?Math.round(futureTargetRates.reduce((s,v)=>s+v,0)/futureTargetRates.length):lastKnownRate;
+                    // AOP target rate = average of ALL monthly target rates (from raw targets)
+                    const allRawTargets=(raw?.monthlyTargets||[]).filter(t=>t.targetRate>0);
+                    const aopTargetRate=allRawTargets.length>0?Math.round(allRawTargets.reduce((s,t)=>s+t.targetRate,0)/allRawTargets.length):lastKnownRate;
                     // Target TSV = soldTCV + (available area × AOP target rate)
                     const targetTSVVal=soldTCVVal+(availAreaR*aopTargetRate);
                     const remainingTSV=Math.max(0,targetTSVVal-soldTCVVal);
-                    // Required rate = remainingTSV / available area
+                    // Required rate = remainingTSV / available area = aopTargetRate (by definition)
                     const requiredRate=availAreaR>0?Math.round(remainingTSV/availAreaR):aopTargetRate;
+                    // Current achieved avg rate = TCV / booked area (more accurate than kpiEx.avgRatePerSqft)
+                    const bookedAreaActual=kpiEx.bookedAreaSqft||1;
+                    const currentAvgRate=soldTCVVal>0&&bookedAreaActual>0?Math.round(soldTCVVal/bookedAreaActual):kpiEx.avgRatePerSqft||0;
                     const avgRateR=aopTargetRate;
 
                     // Current quarter projection (short-term trend)
@@ -1828,7 +1831,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                             <div style={{background:'rgba(255,255,255,0.9)',border:'1.5px solid rgba(0,100,140,0.15)',borderRadius:8,padding:'8px 10px',flex:1}}>
                               <p style={{fontSize:10,fontWeight:800,color:'#1a237e',margin:'0 0 6px'}}>Rate (Target Vs Actual)</p>
                               <p style={{fontSize:9,fontWeight:700,color:'#e65100',margin:'0 0 2px'}}>New Rate of {requiredRate.toLocaleString('en-IN')}</p>
-                              <p style={{fontSize:9,color:'#37474f',margin:0}}>required against {(kpiEx.avgRatePerSqft||0).toLocaleString('en-IN')} (current avg) to maintain AOP TSV of ₹{((soldTCVVal+(availAreaR*requiredRate))/1e7).toFixed(0)} Cr</p>
+                              <p style={{fontSize:9,color:'#37474f',margin:0}}>required against ₹{currentAvgRate.toLocaleString('en-IN')} (current avg rate) to maintain AOP TSV of ₹{((soldTCVVal+(availAreaR*requiredRate))/1e7).toFixed(0)} Cr</p>
                             </div>
                           </div>
                         )}
