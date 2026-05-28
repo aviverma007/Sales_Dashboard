@@ -633,7 +633,7 @@ const PnLTab = ({T, GC, SH, filters, sf}) => {
       {/* KPI Row */}
       <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12,marginBottom:16}}>
         <KpiCard label="Revenue (Collection)" value={`₹${totalRevenue.toLocaleString('en-IN',{maximumFractionDigits:1})} Cr`} sub="Total received from customers" color="#0097a7"/>
-        <KpiCard label="Total Expense (Actual)" value={`₹${totalExpense.toLocaleString('en-IN',{maximumFractionDigits:1})} Cr`} sub="Actual spend to date" color="#ef4444"/>
+        <KpiCard label="Total Expense (Actual)" value={`₹${totalExpense.toLocaleString('en-IN',{maximumFractionDigits:2})} Cr`} sub="Actual spend to date" color="#ef4444"/>
 
         <KpiCard label="Profit / Loss" value={`₹${Math.abs(pnl).toLocaleString('en-IN',{maximumFractionDigits:1})} Cr`} sub={pnl>=0?'Surplus':'Deficit'} color={pnl>=0?'#10b981':'#ef4444'}/>
       </div>
@@ -660,7 +660,7 @@ const PnLTab = ({T, GC, SH, filters, sf}) => {
                 <div key={i} style={{display:'flex',alignItems:'center',gap:6,marginBottom:5}}>
                   <div style={{width:8,height:8,borderRadius:2,background:CC[i%CC.length],flexShrink:0}}/>
                   <span style={{fontSize:10,flex:1,color:T.textM,fontWeight:600}}>{r.SubCat}</span>
-                  <span style={{fontSize:10,fontWeight:800,color:T.navy}}>₹{Number(r.Actual).toFixed(1)}Cr</span>
+                  <span style={{fontSize:10,fontWeight:800,color:T.navy}}>₹{Number(r.Actual).toFixed(2)}Cr</span>
                   <span style={{fontSize:9,color:T.gray,minWidth:28,textAlign:'right'}}>{kpi.totalActual>0?Math.round(r.Actual/kpi.totalActual*100):0}%</span>
                 </div>
               ))}
@@ -687,7 +687,7 @@ const PnLTab = ({T, GC, SH, filters, sf}) => {
                 <div key={i} style={{display:'flex',alignItems:'center',gap:6,marginBottom:5}}>
                   <div style={{width:8,height:8,borderRadius:2,background:CC[(i+6)%CC.length],flexShrink:0}}/>
                   <span style={{fontSize:10,flex:1,color:T.textM,fontWeight:600}}>{r.SubCat}</span>
-                  <span style={{fontSize:10,fontWeight:800,color:T.navy}}>₹{Number(r.Actual).toFixed(1)}Cr</span>
+                  <span style={{fontSize:10,fontWeight:800,color:T.navy}}>₹{Number(r.Actual).toFixed(2)}Cr</span>
                 </div>
               ))}
             </div>
