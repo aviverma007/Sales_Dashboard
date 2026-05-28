@@ -911,7 +911,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
   );
 
   // Tab labels
-  const tabs=[{k:'overview',l:'Overview'},{k:'collections',l:'Demands & Collections'},{k:'pipeline',l:'Pipeline & Deals'}];
+  const tabs=[{k:'overview',l:'Overview'},{k:'collections',l:'Demands & Collections'},{k:'pipeline',l:'Pipeline & Deals'},{k:'pnl',l:'P&L'}];
 
   return (
     <div style={{minHeight:'100vh',backgroundImage:'url(/bg.jpg)',backgroundSize:'cover',backgroundPosition:'center',backgroundAttachment:'fixed',fontFamily:'Inter,sans-serif',color:T.text}}>
@@ -2872,7 +2872,18 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
         )}
 
 
-                {tab==='pipeline'&&(
+                {tab==='pnl'&&(
+                <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',minHeight:400,gap:24}}>
+                  <div style={{background:'rgba(255,255,255,0.92)',backdropFilter:'blur(12px)',borderRadius:20,padding:'48px 64px',textAlign:'center',boxShadow:'0 4px 32px rgba(0,80,120,0.10)',border:'1px solid rgba(255,255,255,0.8)'}}>
+                    <div style={{fontSize:48,marginBottom:12}}>📊</div>
+                    <h2 style={{fontSize:24,fontWeight:900,color:T.navy,margin:'0 0 8px',letterSpacing:0.5}}>P&L Dashboard</h2>
+                    <p style={{fontSize:13,color:T.gray,margin:'0 0 4px',fontWeight:500}}>Profit & Loss Intelligence</p>
+                    <div style={{width:48,height:3,background:`linear-gradient(90deg,${T.teal},${T.tealD})`,borderRadius:2,margin:'16px auto 0'}}/>
+                    <p style={{fontSize:12,color:T.textM,marginTop:20,fontWeight:600}}>KPIs coming soon — stay tuned.</p>
+                  </div>
+                </div>
+              )}
+              {tab==='pipeline'&&(
           <div style={{display:'flex',flexDirection:'column',gap:14}}>
 
             {/* Top 10 Deals — dark card */}
