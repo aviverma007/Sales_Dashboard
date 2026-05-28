@@ -661,7 +661,7 @@ const PnLTab = ({T, GC, SH, filters, sf}) => {
                   <div style={{width:8,height:8,borderRadius:2,background:CC[i%CC.length],flexShrink:0}}/>
                   <span style={{fontSize:10,flex:1,color:T.textM,fontWeight:600}}>{r.SubCat}</span>
                   <span style={{fontSize:10,fontWeight:800,color:T.navy}}>₹{Number(r.Actual).toFixed(2)}Cr</span>
-                  <span style={{fontSize:9,color:T.gray,minWidth:28,textAlign:'right'}}>{kpi.totalActual>0?Math.round(r.Actual/kpi.totalActual*100):0}%</span>
+                  <span style={{fontSize:9,color:T.gray,minWidth:28,textAlign:'right'}}>{kpi.totalActual>0?(r.Actual/kpi.totalActual*100).toFixed(1):0}%</span>
                 </div>
               ))}
             </div>
