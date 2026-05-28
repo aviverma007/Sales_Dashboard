@@ -526,6 +526,267 @@ class AppErrorBoundary extends React.Component {
   }
 }
 
+
+// ── P&L Tab Component ────────────────────────────────────────────────────────
+const PnLTab = ({T, GC, SH, filters, sf}) => {
+  const [pnlRaw, setPnlRaw] = React.useState(null);
+  const [fyFilter, setFyFilter] = React.useState('');
+  const [qFilter, setQFilter] = React.useState('');
+  const [moFilter, setMoFilter] = React.useState('');
+
+  React.useEffect(()=>{
+    fetch('/data/pnl_data.json').then(r=>r.json()).then(d=>setPnlRaw(d)).catch(()=>{});
+  },[]);
+
+  const kpi = pnlRaw?.kpi || {};
+  const projExp = pnlRaw?.projectExpense || [];
+  const npExp = pnlRaw?.nonProjectExpense || [];
+  const monthlyColl = pnlRaw?.monthlyCollection || [];
+
+  // FY helper
+  const getFY = (mo) => {
+    if(!mo) return '';
+    const [y,m] = mo.split('-').map(Number);
+    return m >= 4 ? `FY${y}-${String(y+1).slice(2)}` : `FY${y-1}-${String(y).slice(2)}`;
+  };
+  const getQ = (mo) => {
+    if(!mo) return '';
+    const m = parseInt(mo.split('-')[1]);
+    const fy = getFY(mo);
+    if([4,5,6].includes(m)) return `Q1 ${fy}`;
+    if([7,8,9].includes(m)) return `Q2 ${fy}`;
+    if([10,11,12].includes(m)) return `Q3 ${fy}`;
+    return `Q4 ${fy}`;
+  };
+  const fmtMo = (mo) => {
+    if(!mo) return '';
+    const mn = {1:'Jan',2:'Feb',3:'Mar',4:'Apr',5:'May',6:'Jun',7:'Jul',8:'Aug',9:'Sep',10:'Oct',11:'Nov',12:'Dec'};
+    const [y,m] = mo.split('-').map(Number);
+    return `${mn[m]}'${String(y).slice(2)}`;
+  };
+
+  const allFYs = [...new Set(monthlyColl.map(r=>getFY(r.month)))].sort();
+  const allQs = [...new Set(monthlyColl.map(r=>getQ(r.month)))].sort();
+  const allMos = monthlyColl.map(r=>r.month).sort();
+
+  const filteredColl = monthlyColl.filter(r=>{
+    if(fyFilter && getFY(r.month) !== fyFilter) return false;
+    if(qFilter && getQ(r.month) !== qFilter) return false;
+    if(moFilter && r.month !== moFilter) return false;
+    return true;
+  });
+
+  const totalRevenue = filteredColl.reduce((s,r)=>s+r.received,0);
+  const totalExpense = kpi.totalActual || 0;
+  const pnl = totalRevenue - totalExpense;
+
+  const CC = ['#0097a7','#7c3aed','#10b981','#f59e0b','#ef4444','#1565c0','#e65100','#2e7d32','#d81b60','#37474f','#00838f','#4a148c','#1b5e20','#b71c1c','#e65100','#006064','#33691e'];
+
+  const KpiCard = ({label,value,sub,color='#0097a7',icon}) => (
+    <GC style={{padding:'14px 18px'}}>
+      <div style={{position:'absolute',top:0,left:0,right:0,height:3,background:color,borderRadius:'14px 14px 0 0'}}/>
+      <p style={{fontSize:9,fontWeight:800,color:'#94a3b8',textTransform:'uppercase',letterSpacing:.7,margin:'4px 0 6px'}}>{label}</p>
+      <p style={{fontSize:20,fontWeight:900,color:T.navy,margin:'0 0 3px',lineHeight:1}}>{value}</p>
+      {sub&&<p style={{fontSize:10,color:T.gray,margin:0}}>{sub}</p>}
+    </GC>
+  );
+
+  if(!pnlRaw) return (
+    <div style={{display:'flex',alignItems:'center',justifyContent:'center',minHeight:300}}>
+      <p style={{color:T.gray,fontWeight:600}}>Loading P&L data…</p>
+    </div>
+  );
+
+  return (
+    <div>
+      {/* Filters */}
+      <div style={{background:'rgba(255,255,255,0.92)',borderRadius:10,padding:'10px 16px',marginBottom:16,display:'flex',gap:14,alignItems:'flex-end',flexWrap:'wrap',boxShadow:'0 2px 8px rgba(0,80,120,0.07)'}}>
+        <span style={{fontSize:9,fontWeight:800,color:T.gray,textTransform:'uppercase',letterSpacing:.5,alignSelf:'center'}}>Filters (Mar 2025+)</span>
+        <div>
+          <p style={{fontSize:9,fontWeight:700,color:T.textM,textTransform:'uppercase',letterSpacing:.4,margin:'0 0 3px'}}>FIN. YEAR</p>
+          <select value={fyFilter} onChange={e=>{setFyFilter(e.target.value);setQFilter('');setMoFilter('');}} style={{padding:'5px 10px',border:'1.5px solid rgba(0,100,140,0.2)',borderRadius:6,fontSize:11,color:T.navy,fontWeight:600,outline:'none'}}>
+            <option value=''>All</option>
+            {allFYs.map(f=><option key={f} value={f}>{f}</option>)}
+          </select>
+        </div>
+        <div>
+          <p style={{fontSize:9,fontWeight:700,color:T.textM,textTransform:'uppercase',letterSpacing:.4,margin:'0 0 3px'}}>QUARTER</p>
+          <select value={qFilter} onChange={e=>{setQFilter(e.target.value);setMoFilter('');}} style={{padding:'5px 10px',border:'1.5px solid rgba(0,100,140,0.2)',borderRadius:6,fontSize:11,color:T.navy,fontWeight:600,outline:'none'}}>
+            <option value=''>All</option>
+            {allQs.filter(q=>!fyFilter||q.includes(fyFilter)).map(q=><option key={q} value={q}>{q}</option>)}
+          </select>
+        </div>
+        <div>
+          <p style={{fontSize:9,fontWeight:700,color:T.textM,textTransform:'uppercase',letterSpacing:.4,margin:'0 0 3px'}}>MONTH</p>
+          <select value={moFilter} onChange={e=>setMoFilter(e.target.value)} style={{padding:'5px 10px',border:'1.5px solid rgba(0,100,140,0.2)',borderRadius:6,fontSize:11,color:T.navy,fontWeight:600,outline:'none'}}>
+            <option value=''>All</option>
+            {allMos.filter(m=>(!fyFilter||getFY(m)===fyFilter)&&(!qFilter||getQ(m)===qFilter)).map(m=><option key={m} value={m}>{fmtMo(m)}</option>)}
+          </select>
+        </div>
+        {(fyFilter||qFilter||moFilter)&&<button onClick={()=>{setFyFilter('');setQFilter('');setMoFilter('');}} style={{padding:'5px 12px',background:T.teal,color:'#fff',border:'none',borderRadius:6,fontSize:11,fontWeight:700,cursor:'pointer',alignSelf:'flex-end'}}>✕ Reset</button>}
+      </div>
+
+      {/* KPI Row */}
+      <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:16}}>
+        <KpiCard label="Revenue (Collection)" value={`₹${totalRevenue.toLocaleString('en-IN',{maximumFractionDigits:1})} Cr`} sub="Total received from customers" color="#0097a7"/>
+        <KpiCard label="Total Expense (Actual)" value={`₹${totalExpense.toLocaleString('en-IN',{maximumFractionDigits:1})} Cr`} sub="Actual spend to date" color="#ef4444"/>
+        <KpiCard label="Total Budget" value={`₹${kpi.totalBudget?.toLocaleString('en-IN',{maximumFractionDigits:1})||'—'} Cr`} sub="Sanctioned budget" color="#7c3aed"/>
+        <KpiCard label="Profit / Loss" value={`₹${Math.abs(pnl).toLocaleString('en-IN',{maximumFractionDigits:1})} Cr`} sub={pnl>=0?'Surplus':'Deficit'} color={pnl>=0?'#10b981':'#ef4444'}/>
+      </div>
+
+      {/* Charts Row */}
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginBottom:16}}>
+
+        {/* Project Expense Pie */}
+        <GC style={{padding:16}}>
+          <SH title="Cost of Construction — Project Expenses" sub="By category (Actual spend in ₹ Cr)"/>
+          <div style={{display:'flex',gap:16,alignItems:'center'}}>
+            <div style={{position:'relative',width:180,height:180,flexShrink:0}}>
+              <ResponsiveContainer width={180} height={180}>
+                <PieChart>
+                  <Pie data={projExp} dataKey="Actual" nameKey="SubCat" cx="50%" cy="50%" outerRadius={80} innerRadius={44}>
+                    {projExp.map((_,i)=><Cell key={i} fill={CC[i%CC.length]}/>)}
+                  </Pie>
+                  <Tooltip formatter={(v)=>`₹${Number(v).toFixed(1)} Cr`}/>
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            <div style={{flex:1}}>
+              {projExp.sort((a,b)=>b.Actual-a.Actual).map((r,i)=>(
+                <div key={i} style={{display:'flex',alignItems:'center',gap:6,marginBottom:5}}>
+                  <div style={{width:8,height:8,borderRadius:2,background:CC[i%CC.length],flexShrink:0}}/>
+                  <span style={{fontSize:10,flex:1,color:T.textM,fontWeight:600}}>{r.SubCat}</span>
+                  <span style={{fontSize:10,fontWeight:800,color:T.navy}}>₹{Number(r.Actual).toFixed(1)}Cr</span>
+                  <span style={{fontSize:9,color:T.gray,minWidth:28,textAlign:'right'}}>{kpi.totalActual>0?Math.round(r.Actual/kpi.totalActual*100):0}%</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </GC>
+
+        {/* Non-Project Expense Pie */}
+        <GC style={{padding:16}}>
+          <SH title="Non-Project Expenses" sub="By category (Actual spend in ₹ Cr)"/>
+          <div style={{display:'flex',gap:16,alignItems:'center'}}>
+            <div style={{position:'relative',width:180,height:180,flexShrink:0}}>
+              <ResponsiveContainer width={180} height={180}>
+                <PieChart>
+                  <Pie data={npExp.filter(r=>r.Actual>0)} dataKey="Actual" nameKey="SubCat" cx="50%" cy="50%" outerRadius={80} innerRadius={44}>
+                    {npExp.filter(r=>r.Actual>0).map((_,i)=><Cell key={i} fill={CC[(i+6)%CC.length]}/>)}
+                  </Pie>
+                  <Tooltip formatter={(v)=>`₹${Number(v).toFixed(1)} Cr`}/>
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            <div style={{flex:1}}>
+              {npExp.filter(r=>r.Actual>0).sort((a,b)=>b.Actual-a.Actual).map((r,i)=>(
+                <div key={i} style={{display:'flex',alignItems:'center',gap:6,marginBottom:5}}>
+                  <div style={{width:8,height:8,borderRadius:2,background:CC[(i+6)%CC.length],flexShrink:0}}/>
+                  <span style={{fontSize:10,flex:1,color:T.textM,fontWeight:600}}>{r.SubCat}</span>
+                  <span style={{fontSize:10,fontWeight:800,color:T.navy}}>₹{Number(r.Actual).toFixed(1)}Cr</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </GC>
+      </div>
+
+      {/* Monthly Collection Bar Chart */}
+      <GC style={{padding:16,marginBottom:16}}>
+        <SH title="Monthly Collection (Revenue)" sub="Received amount per month (₹ Cr) · Mar 2025 onwards"/>
+        <ResponsiveContainer width="100%" height={220}>
+          <ComposedChart data={filteredColl} margin={{top:16,right:8,bottom:20,left:0}}>
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.08)" vertical={false}/>
+            <XAxis dataKey="month" tick={{fontSize:9,fill:T.textM}} tickLine={false} axisLine={false} tickFormatter={fmtMo}/>
+            <YAxis tick={{fontSize:9,fill:T.textM}} tickLine={false} axisLine={false} tickFormatter={v=>`₹${v}Cr`}/>
+            <Tooltip formatter={(v)=>[`₹${Number(v).toFixed(2)} Cr`,'Received']} labelFormatter={fmtMo}/>
+            <Bar dataKey="received" name="Received" fill={T.teal} radius={[3,3,0,0]} barSize={28}>
+              <LabelList dataKey="received" position="top" style={{fontSize:8,fill:T.tealD,fontWeight:700}} formatter={v=>v>0?`₹${Number(v).toFixed(1)}Cr`:''}/>
+            </Bar>
+          </ComposedChart>
+        </ResponsiveContainer>
+      </GC>
+
+      {/* Expense Detail Tables */}
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
+        {/* Project Expense Table */}
+        <GC style={{padding:16}}>
+          <SH title="Project Expense Breakdown" sub="Budget vs Actual vs Commitment (₹ Cr)"/>
+          <table style={{width:'100%',borderCollapse:'collapse',fontSize:11}}>
+            <thead>
+              <tr style={{background:T.navy}}>
+                {['Category','Budget','Actual','Commitment','% Spent'].map(h=>(
+                  <th key={h} style={{padding:'7px 8px',textAlign:h==='Category'?'left':'right',fontSize:9,fontWeight:700,color:'#fff',textTransform:'uppercase'}}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {projExp.sort((a,b)=>b.Actual-a.Actual).map((r,i)=>{
+                const pct = r.Budget>0?Math.round(r.Actual/r.Budget*100):0;
+                return(
+                  <tr key={i} style={{borderBottom:'1px solid #f1f5f9',background:i%2===0?'#f8fafc':'#fff'}}>
+                    <td style={{padding:'7px 8px',color:T.navy,fontWeight:600}}>{r.SubCat}</td>
+                    <td style={{padding:'7px 8px',textAlign:'right',color:T.gray}}>{Number(r.Budget).toLocaleString('en-IN',{maximumFractionDigits:1})}</td>
+                    <td style={{padding:'7px 8px',textAlign:'right',color:'#ef4444',fontWeight:700}}>{Number(r.Actual).toLocaleString('en-IN',{maximumFractionDigits:1})}</td>
+                    <td style={{padding:'7px 8px',textAlign:'right',color:'#f59e0b'}}>{Number(r.Commitment).toLocaleString('en-IN',{maximumFractionDigits:1})}</td>
+                    <td style={{padding:'7px 8px',textAlign:'right'}}>
+                      <span style={{fontSize:10,fontWeight:700,padding:'1px 6px',borderRadius:8,background:pct>100?'#fee2e2':pct>50?'#fef3c7':'#d1fae5',color:pct>100?'#991b1b':pct>50?'#92400e':'#065f46'}}>{pct}%</span>
+                    </td>
+                  </tr>
+                );
+              })}
+              <tr style={{background:T.navy,fontWeight:800}}>
+                <td style={{padding:'7px 8px',color:'#fff'}}>Total</td>
+                <td style={{padding:'7px 8px',textAlign:'right',color:'#fff'}}>{projExp.reduce((s,r)=>s+r.Budget,0).toLocaleString('en-IN',{maximumFractionDigits:1})}</td>
+                <td style={{padding:'7px 8px',textAlign:'right',color:'#fca5a5'}}>{projExp.reduce((s,r)=>s+r.Actual,0).toLocaleString('en-IN',{maximumFractionDigits:1})}</td>
+                <td style={{padding:'7px 8px',textAlign:'right',color:'#fcd34d'}}>{projExp.reduce((s,r)=>s+r.Commitment,0).toLocaleString('en-IN',{maximumFractionDigits:1})}</td>
+                <td/>
+              </tr>
+            </tbody>
+          </table>
+        </GC>
+
+        {/* Non-Project Expense Table */}
+        <GC style={{padding:16}}>
+          <SH title="Non-Project Expense Breakdown" sub="Budget vs Actual vs Commitment (₹ Cr)"/>
+          <table style={{width:'100%',borderCollapse:'collapse',fontSize:11}}>
+            <thead>
+              <tr style={{background:T.navy}}>
+                {['Category','Budget','Actual','Commitment','% Spent'].map(h=>(
+                  <th key={h} style={{padding:'7px 8px',textAlign:h==='Category'?'left':'right',fontSize:9,fontWeight:700,color:'#fff',textTransform:'uppercase'}}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {npExp.sort((a,b)=>b.Actual-a.Actual).map((r,i)=>{
+                const pct = r.Budget>0?Math.round(r.Actual/r.Budget*100):0;
+                return(
+                  <tr key={i} style={{borderBottom:'1px solid #f1f5f9',background:i%2===0?'#f8fafc':'#fff'}}>
+                    <td style={{padding:'7px 8px',color:T.navy,fontWeight:600}}>{r.SubCat}</td>
+                    <td style={{padding:'7px 8px',textAlign:'right',color:T.gray}}>{Number(r.Budget).toLocaleString('en-IN',{maximumFractionDigits:1})}</td>
+                    <td style={{padding:'7px 8px',textAlign:'right',color:'#ef4444',fontWeight:700}}>{Number(r.Actual).toLocaleString('en-IN',{maximumFractionDigits:1})}</td>
+                    <td style={{padding:'7px 8px',textAlign:'right',color:'#f59e0b'}}>{Number(r.Commitment).toLocaleString('en-IN',{maximumFractionDigits:1})}</td>
+                    <td style={{padding:'7px 8px',textAlign:'right'}}>
+                      <span style={{fontSize:10,fontWeight:700,padding:'1px 6px',borderRadius:8,background:pct>100?'#fee2e2':pct>50?'#fef3c7':'#d1fae5',color:pct>100?'#991b1b':pct>50?'#92400e':'#065f46'}}>{pct}%</span>
+                    </td>
+                  </tr>
+                );
+              })}
+              <tr style={{background:T.navy,fontWeight:800}}>
+                <td style={{padding:'7px 8px',color:'#fff'}}>Total</td>
+                <td style={{padding:'7px 8px',textAlign:'right',color:'#fff'}}>{npExp.reduce((s,r)=>s+r.Budget,0).toLocaleString('en-IN',{maximumFractionDigits:1})}</td>
+                <td style={{padding:'7px 8px',textAlign:'right',color:'#fca5a5'}}>{npExp.reduce((s,r)=>s+r.Actual,0).toLocaleString('en-IN',{maximumFractionDigits:1})}</td>
+                <td style={{padding:'7px 8px',textAlign:'right',color:'#fcd34d'}}>{npExp.reduce((s,r)=>s+r.Commitment,0).toLocaleString('en-IN',{maximumFractionDigits:1})}</td>
+                <td/>
+              </tr>
+            </tbody>
+          </table>
+        </GC>
+      </div>
+    </div>
+  );
+};
+
 export default function App() {
   return <AppErrorBoundary><AppInner/></AppErrorBoundary>;
 }
@@ -2872,17 +3133,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
         )}
 
 
-                {tab==='pnl'&&(
-                <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',minHeight:400,gap:24}}>
-                  <div style={{background:'rgba(255,255,255,0.92)',backdropFilter:'blur(12px)',borderRadius:20,padding:'48px 64px',textAlign:'center',boxShadow:'0 4px 32px rgba(0,80,120,0.10)',border:'1px solid rgba(255,255,255,0.8)'}}>
-                    <div style={{fontSize:48,marginBottom:12}}>📊</div>
-                    <h2 style={{fontSize:24,fontWeight:900,color:T.navy,margin:'0 0 8px',letterSpacing:0.5}}>P&L Dashboard</h2>
-                    <p style={{fontSize:13,color:T.gray,margin:'0 0 4px',fontWeight:500}}>Profit & Loss Intelligence</p>
-                    <div style={{width:48,height:3,background:`linear-gradient(90deg,${T.teal},${T.tealD})`,borderRadius:2,margin:'16px auto 0'}}/>
-                    <p style={{fontSize:12,color:T.textM,marginTop:20,fontWeight:600}}>KPIs coming soon — stay tuned.</p>
-                  </div>
-                </div>
-              )}
+                {tab==='pnl'&&(<PnLTab T={T} GC={GC} SH={SH} filters={filters} sf={sf}/>)}
               {tab==='pipeline'&&(
           <div style={{display:'flex',flexDirection:'column',gap:14}}>
 
