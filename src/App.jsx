@@ -631,10 +631,10 @@ const PnLTab = ({T, GC, SH, filters, sf}) => {
       </div>
 
       {/* KPI Row */}
-      <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:16}}>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12,marginBottom:16}}>
         <KpiCard label="Revenue (Collection)" value={`₹${totalRevenue.toLocaleString('en-IN',{maximumFractionDigits:1})} Cr`} sub="Total received from customers" color="#0097a7"/>
         <KpiCard label="Total Expense (Actual)" value={`₹${totalExpense.toLocaleString('en-IN',{maximumFractionDigits:1})} Cr`} sub="Actual spend to date" color="#ef4444"/>
-        <KpiCard label="Total Budget" value={`₹${kpi.totalBudget?.toLocaleString('en-IN',{maximumFractionDigits:1})||'—'} Cr`} sub="Sanctioned budget" color="#7c3aed"/>
+
         <KpiCard label="Profit / Loss" value={`₹${Math.abs(pnl).toLocaleString('en-IN',{maximumFractionDigits:1})} Cr`} sub={pnl>=0?'Surplus':'Deficit'} color={pnl>=0?'#10b981':'#ef4444'}/>
       </div>
 
@@ -746,7 +746,7 @@ const PnLTab = ({T, GC, SH, filters, sf}) => {
           <table style={{width:'100%',borderCollapse:'collapse',fontSize:11}}>
             <thead>
               <tr style={{background:T.navy}}>
-                {['Category','Budget','Actual','Commitment','% Spent'].map(h=>(
+                {['Category','Actual (Cr)','Commitment (Cr)','% vs Commitment'].map(h=>(
                   <th key={h} style={{padding:'7px 8px',textAlign:h==='Category'?'left':'right',fontSize:9,fontWeight:700,color:'#fff',textTransform:'uppercase'}}>{h}</th>
                 ))}
               </tr>
@@ -768,7 +768,6 @@ const PnLTab = ({T, GC, SH, filters, sf}) => {
               })}
               <tr style={{background:T.navy,fontWeight:800}}>
                 <td style={{padding:'7px 8px',color:'#fff'}}>Total</td>
-                <td style={{padding:'7px 8px',textAlign:'right',color:'#fff'}}>{projExp.reduce((s,r)=>s+r.Budget,0).toLocaleString('en-IN',{maximumFractionDigits:1})}</td>
                 <td style={{padding:'7px 8px',textAlign:'right',color:'#fca5a5'}}>{projExp.reduce((s,r)=>s+r.Actual,0).toLocaleString('en-IN',{maximumFractionDigits:1})}</td>
                 <td style={{padding:'7px 8px',textAlign:'right',color:'#fcd34d'}}>{projExp.reduce((s,r)=>s+r.Commitment,0).toLocaleString('en-IN',{maximumFractionDigits:1})}</td>
                 <td/>
@@ -783,7 +782,7 @@ const PnLTab = ({T, GC, SH, filters, sf}) => {
           <table style={{width:'100%',borderCollapse:'collapse',fontSize:11}}>
             <thead>
               <tr style={{background:T.navy}}>
-                {['Category','Budget','Actual','Commitment','% Spent'].map(h=>(
+                {['Category','Actual (Cr)','Commitment (Cr)','% vs Commitment'].map(h=>(
                   <th key={h} style={{padding:'7px 8px',textAlign:h==='Category'?'left':'right',fontSize:9,fontWeight:700,color:'#fff',textTransform:'uppercase'}}>{h}</th>
                 ))}
               </tr>
@@ -805,7 +804,6 @@ const PnLTab = ({T, GC, SH, filters, sf}) => {
               })}
               <tr style={{background:T.navy,fontWeight:800}}>
                 <td style={{padding:'7px 8px',color:'#fff'}}>Total</td>
-                <td style={{padding:'7px 8px',textAlign:'right',color:'#fff'}}>{npExp.reduce((s,r)=>s+r.Budget,0).toLocaleString('en-IN',{maximumFractionDigits:1})}</td>
                 <td style={{padding:'7px 8px',textAlign:'right',color:'#fca5a5'}}>{npExp.reduce((s,r)=>s+r.Actual,0).toLocaleString('en-IN',{maximumFractionDigits:1})}</td>
                 <td style={{padding:'7px 8px',textAlign:'right',color:'#fcd34d'}}>{npExp.reduce((s,r)=>s+r.Commitment,0).toLocaleString('en-IN',{maximumFractionDigits:1})}</td>
                 <td/>
