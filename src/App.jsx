@@ -673,45 +673,72 @@ const PnLTab = ({T, GC, SH, filters, sf}) => {
         </GC>
       </div>
 
-      {/* Revenue vs Expense vs P&L Chart */}
-      <GC style={{padding:16,marginBottom:16}}>
-        <SH title="Revenue vs Expense vs Profit/Loss" sub="Monthly comparison (₹ Cr) · Mar 2025 onwards"/>
+      {/* Revenue vs Expense vs P&L Chart — Chart.js */}
+      <GC style={{padding:20,marginBottom:16}}>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:12,flexWrap:'wrap',gap:8}}>
+          <div>
+            <p style={{fontSize:12,fontWeight:800,color:T.tealD,letterSpacing:.4,margin:0,textTransform:'uppercase'}}>Revenue vs Expense vs Profit / Loss</p>
+            <p style={{fontSize:10,color:T.gray,margin:'2px 0 0'}}>Monthly comparison · ₹ Cr · Mar 2025 onwards</p>
+          </div>
+          <div style={{display:'flex',gap:16}}>
+            {[['#0097a7','Revenue',''],['#ef4444','Expense',''],['#f59e0b','Profit/Loss','- -']].map(([col,lbl,dash])=>(
+              <div key={lbl} style={{display:'flex',alignItems:'center',gap:5,fontSize:11,color:T.textM}}>
+                {dash?<svg width="22" height="3"><line x1="0" y1="1.5" x2="22" y2="1.5" stroke={col} strokeWidth="2.5" strokeDasharray="6 3"/></svg>:<div style={{width:12,height:12,borderRadius:2,background:col}}/>}
+                <span style={{fontWeight:600}}>{lbl}</span>
+              </div>
+            ))}
+          </div>
+        </div>
         {(()=>{
-          const monthlyData=(pnlRaw?.monthlyData||[]).filter(r=>{
-            if(fyFilter&&getFY(r.month)!==fyFilter)return false;
-            if(qFilter&&getQ(r.month)!==qFilter)return false;
-            if(moFilter&&r.month!==moFilter)return false;
+          const md=(pnlRaw?.monthlyData||[]).filter(r=>{
+            if(!r.month||r.month==='NaT')return false;
+            if(fyFilter){const fys=fyFilter.split('||').filter(Boolean);if(fys.length&&!fys.some(fy=>getFY(r.month)===fy))return false;}
+            if(qFilter){const qs=qFilter.split('||').filter(Boolean);const moN=parseInt(r.month.split('-')[1]);const Q={Q1:[4,5,6],Q2:[7,8,9],Q3:[10,11,12],Q4:[1,2,3]};if(qs.length&&!qs.some(q=>(Q[q]||[]).includes(moN)))return false;}
+            if(moFilter){const mos=moFilter.split('||').filter(Boolean);const moNum=r.month.split('-')[1];if(mos.length&&!mos.some(mn=>({Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'})[mn]===moNum))return false;}
             return true;
           });
+          const chartId='pnlChart_'+Math.random().toString(36).slice(2,6);
+          React.useEffect(()=>{
+            const el=document.getElementById(chartId);
+            if(!el||!md.length)return;
+            if(el._chartInst){el._chartInst.destroy();}
+            const labels=md.map(r=>r.label);
+            const revData=md.map(r=>r.revenue||0);
+            const expData=md.map(r=>r.expense||0);
+            const pnlData=md.map(r=>r.pnl||0);
+            const Chart=window.Chart;
+            if(!Chart)return;
+            el._chartInst=new Chart(el,{
+              data:{
+                labels,
+                datasets:[
+                  {type:'bar',label:'Revenue',data:revData,backgroundColor:'rgba(0,151,167,0.85)',borderColor:'#0097a7',borderWidth:0,borderRadius:4,borderSkipped:false,order:2},
+                  {type:'bar',label:'Expense',data:expData,backgroundColor:'rgba(239,68,68,0.8)',borderColor:'#ef4444',borderWidth:0,borderRadius:4,borderSkipped:false,order:2},
+                  {type:'line',label:'Profit/Loss',data:pnlData,borderColor:'#f59e0b',borderWidth:3,borderDash:[8,4],pointBackgroundColor:pnlData.map(v=>v>=0?'#10b981':'#ef4444'),pointRadius:6,pointHoverRadius:8,pointBorderColor:'#fff',pointBorderWidth:2,fill:false,tension:0.3,order:1,yAxisID:'y'},
+                ]
+              },
+              options:{
+                responsive:true,maintainAspectRatio:false,
+                interaction:{mode:'index',intersect:false},
+                plugins:{
+                  legend:{display:false},
+                  tooltip:{
+                    backgroundColor:'rgba(255,255,255,0.97)',titleColor:'#0d2137',bodyColor:'#334155',borderColor:'rgba(0,151,167,0.3)',borderWidth:1,padding:12,titleFont:{size:13,weight:'bold'},bodyFont:{size:12},
+                    callbacks:{label:ctx=>{const v=ctx.raw;const sign=ctx.dataset.label==='Profit/Loss'?(v>=0?'▲ ':'▼ '):'';return ` ${ctx.dataset.label}: ${sign}₹${Math.abs(v).toFixed(2)} Cr`;}}
+                  },
+                  datalabels:{display:false}
+                },
+                scales:{
+                  x:{grid:{display:false},ticks:{color:'#546e7a',font:{size:11,weight:'600'},maxRotation:30},border:{display:false}},
+                  y:{grid:{color:'rgba(0,80,120,0.06)',drawBorder:false},ticks:{color:'#546e7a',font:{size:11},callback:v=>`₹${v}Cr`},border:{display:false}},
+                }
+              }
+            });
+          },[md.length,fyFilter,qFilter,moFilter]);
           return(
-            <ResponsiveContainer width="100%" height={260}>
-              <ComposedChart data={monthlyData} margin={{top:24,right:8,bottom:20,left:0}} barGap={3} barCategoryGap="25%">
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.08)" vertical={false}/>
-                <XAxis dataKey="label" tick={{fontSize:9,fill:T.textM}} tickLine={false} axisLine={false}/>
-                <YAxis tick={{fontSize:9,fill:T.textM}} tickLine={false} axisLine={false} tickFormatter={v=>`₹${v}Cr`}/>
-                <Tooltip content={({active,payload,label})=>{
-                  if(!active||!payload?.length)return null;
-                  return(<div style={{background:'rgba(255,255,255,0.97)',border:'1px solid rgba(0,151,167,0.2)',borderRadius:8,padding:'8px 12px',fontSize:10}}>
-                    <p style={{fontWeight:800,color:T.navy,margin:'0 0 4px'}}>{label}</p>
-                    {payload.map((p,i)=><p key={i} style={{color:p.fill||p.stroke,margin:'2px 0'}}>{p.name}: ₹{Number(p.value).toFixed(2)} Cr</p>)}
-                  </div>);
-                }}/>
-                <Legend iconSize={10} wrapperStyle={{fontSize:10,paddingTop:4}}/>
-                <Bar dataKey="revenue" name="Revenue" fill={T.teal} radius={[3,3,0,0]} barSize={20}>
-                  <LabelList dataKey="revenue" position="top" style={{fontSize:8,fill:T.tealD,fontWeight:700}} formatter={v=>v>0?`₹${Number(v).toFixed(1)}Cr`:''}/>
-                </Bar>
-                <Bar dataKey="expense" name="Expense" fill="#ef4444" fillOpacity={0.85} radius={[3,3,0,0]} barSize={20}>
-                  <LabelList dataKey="expense" position="top" style={{fontSize:8,fill:'#991b1b',fontWeight:700}} formatter={v=>v>0?`₹${Number(v).toFixed(1)}Cr`:''}/>
-                </Bar>
-                <Line type="monotone" dataKey="pnl" name="Profit/Loss" stroke="#f59e0b" strokeWidth={2.5} dot={({cx,cy,payload})=><circle cx={cx} cy={cy} r={4} fill={payload.pnl>=0?'#10b981':'#ef4444'} stroke="#fff" strokeWidth={1.5}/>} activeDot={{r:5}} connectNulls={true}>
-                  <LabelList dataKey="pnl" position="top" offset={8} style={{fontWeight:800,fontSize:8}} content={({x,y,value})=>{
-                    if(value==null)return null;
-                    const col=value>=0?'#10b981':'#ef4444';
-                    return <text x={x} y={y-6} textAnchor="middle" fill={col} fontSize={8} fontWeight={900}>{value>=0?'▲':'▼'}₹{Math.abs(value).toFixed(1)}Cr</text>;
-                  }}/>
-                </Line>
-              </ComposedChart>
-            </ResponsiveContainer>
+            <div style={{position:'relative',height:320}}>
+              <canvas id={chartId} role="img" aria-label="Revenue vs Expense vs Profit/Loss monthly bar and line chart"/>
+            </div>
           );
         })()}
       </GC>
