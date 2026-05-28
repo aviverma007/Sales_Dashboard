@@ -1172,7 +1172,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
   );
 
   // Tab labels
-  const tabs=[{k:'overview',l:'Overview'},{k:'collections',l:'Demands & Collections'},{k:'pipeline',l:'Pipeline & Deals'},{k:'pnl',l:'P&L'}];
+  const tabs=[{k:'overview',l:'Overview'},{k:'collections',l:'Demands & Collections'},{k:'pnl',l:'P&L'}];
 
   return (
     <div style={{minHeight:'100vh',backgroundImage:'url(/bg.jpg)',backgroundSize:'cover',backgroundPosition:'center',backgroundAttachment:'fixed',fontFamily:'Inter,sans-serif',color:T.text}}>
@@ -3134,103 +3134,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
 
 
                 {tab==='pnl'&&(<PnLTab T={T} GC={GC} SH={SH} filters={filters} sf={sf}/>)}
-              {tab==='pipeline'&&(
-          <div style={{display:'flex',flexDirection:'column',gap:14}}>
-
-            {/* Top 10 Deals — dark card */}
-            <GC dark style={{padding:18}}>
-              <SH title="Top 10 Deals" sub="Ranked by Total Contract Value" light/>
-              <div style={{overflowX:'auto'}}>
-                <table style={{width:'100%',borderCollapse:'collapse',fontSize:11}}>
-                  <thead><tr style={{borderBottom:'1px solid rgba(255,255,255,0.12)'}}>
-                    {['#','Customer','Project','Unit','BHK','TCV','Received','CP / Broker','Date'].map(h=>(
-                      <th key={h} style={{padding:'6px 10px',textAlign:'left',color:'rgba(255,255,255,0.45)',fontSize:9,fontWeight:700,letterSpacing:0.8,whiteSpace:'nowrap',textTransform:'uppercase'}}>{h}</th>
-                    ))}
-                  </tr></thead>
-                  <tbody>{top10.map((d,i)=>(
-                    <tr key={i} className="tr" style={{borderBottom:'1px solid rgba(255,255,255,0.06)'}}>
-                      <td style={{padding:'8px 10px',color:'#00bcd4',fontWeight:700,fontSize:11}}>{i===0?'🥇':i===1?'🥈':i===2?'🥉':`#${i+1}`}</td>
-                      <td style={{padding:'8px 10px',color:'rgba(255,255,255,0.9)',fontWeight:600,maxWidth:160}}>{d.customer}</td>
-                      <td style={{padding:'8px 10px',color:'rgba(255,255,255,0.5)',fontSize:10,whiteSpace:'nowrap'}}>{d.project}</td>
-                      <td style={{padding:'8px 10px',color:'#00bcd4',fontFamily:'monospace',fontSize:10}}>{d.unit}</td>
-                      <td style={{padding:'8px 10px'}}><span style={{background:'rgba(255,255,255,0.08)',borderRadius:4,padding:'1px 6px',color:'rgba(255,255,255,0.5)',fontSize:9}}>{d.bhk}</span></td>
-                      <td style={{padding:'8px 10px',color:T.amberL,fontWeight:700,whiteSpace:'nowrap'}}>{fmtCr(d.tcv)}</td>
-                      <td style={{padding:'8px 10px',color:'#00e5ff',whiteSpace:'nowrap'}}>{fmtCr(d.received)}</td>
-                      <td style={{padding:'8px 10px',color:'rgba(255,255,255,0.4)',fontSize:10,maxWidth:150}}>{d.brokerName||'—'}</td>
-                      <td style={{padding:'8px 10px',color:'rgba(255,255,255,0.3)',fontSize:10,whiteSpace:'nowrap'}}>{d.bookingDate}</td>
-                    </tr>
-                  ))}</tbody>
-                </table>
-              </div>
-            </GC>
-
-            {/* Open Bookings */}
-            <GC style={{padding:18}}>
-              <SH title="Open Bookings / Opportunities" sub="Active · Highest Deal Value"/>
-              <div style={{overflowX:'auto'}}>
-                <table style={{width:'100%',borderCollapse:'collapse',fontSize:11}}>
-                  <thead><tr style={{borderBottom:`2px solid rgba(0,151,167,0.2)`}}>
-                    {['Customer','Project','Unit','BHK','BSP','Demand','Received','Balance','Funding','Broker','Date'].map(h=>(
-                      <th key={h} style={{padding:'6px 10px',textAlign:'left',color:T.textM,fontSize:10,fontWeight:800,letterSpacing:0.5,whiteSpace:'nowrap',textTransform:'uppercase'}}>{h}</th>
-                    ))}
-                  </tr></thead>
-                  <tbody>{openBkg.map((b,i)=>{
-                    const bal=(b.demand||0)-(b.received||0);
-                    const p=b.demand>0?Math.round((b.received/b.demand)*100):0;
-                    return(
-                      <tr key={i} className="tr" style={{borderBottom:`1px solid rgba(0,100,140,0.1)`}}>
-                        <td style={{padding:'7px 10px',color:T.text,fontWeight:600,maxWidth:140}}>{b.customer}</td>
-                        <td style={{padding:'7px 10px',color:T.textM,fontSize:10,whiteSpace:'nowrap'}}>{b.project}</td>
-                        <td style={{padding:'7px 10px',color:T.tealD,fontFamily:'monospace',fontSize:10,fontWeight:600}}>{b.unit}</td>
-                        <td style={{padding:'7px 10px'}}><span style={{background:`${T.teal}12`,borderRadius:4,padding:'1px 6px',color:T.tealD,fontSize:9,fontWeight:600}}>{b.bhk}</span></td>
-                        <td style={{padding:'7px 10px',color:T.navyM,fontWeight:700,whiteSpace:'nowrap'}}>{fmtCr(b.bsp)}</td>
-                        <td style={{padding:'7px 10px',color:T.amber,whiteSpace:'nowrap'}}>{fmtCr(b.demand)}</td>
-                        <td style={{padding:'7px 10px',color:T.tealD,fontWeight:600,whiteSpace:'nowrap'}}>{fmtCr(b.received)}</td>
-                        <td style={{padding:'7px 10px',whiteSpace:'nowrap'}}>
-                          <div style={{display:'flex',alignItems:'center',gap:5}}>
-                            <div style={{width:40,height:4,background:'rgba(0,100,140,0.1)',borderRadius:2}}>
-                              <div style={{width:`${p}%`,height:'100%',background:p>80?T.teal:p>50?T.amber:T.red,borderRadius:2}}/>
-                            </div>
-                            <span style={{color:bal>0?T.red:T.tealD,fontSize:10,fontWeight:600}}>{fmtCr(Math.abs(bal))}</span>
-                          </div>
-                        </td>
-                        <td style={{padding:'7px 10px'}}><Badge label={b.loanStatus==='BANK FUNDED'?'🏦 Bank':'💼 Self'} color={b.loanStatus==='BANK FUNDED'?T.teal:T.navyM}/></td>
-                        <td style={{padding:'7px 10px',color:T.textM,fontSize:10,fontWeight:600,maxWidth:120}}>{b.brokerName||'—'}</td>
-                        <td style={{padding:'7px 10px',color:T.textM,fontSize:10,fontWeight:600,whiteSpace:'nowrap'}}>{b.bookingDate}</td>
-                      </tr>
-                    );
-                  })}</tbody>
-                </table>
-              </div>
-            </GC>
-
-            {/* Pending Pipeline */}
-            {pendingWF.length>0&&(
-              <GC style={{padding:16}}>
-                <SH title="Pipeline — Pending Workflow" sub={`${pendingWF.length} bookings awaiting approval`}/>
-                <div style={{overflowX:'auto'}}>
-                  <table style={{width:'100%',borderCollapse:'collapse',fontSize:11}}>
-                    <thead><tr style={{borderBottom:`2px solid rgba(0,151,167,0.2)`}}>
-                      {['Unit','Customer','Project','Company','L1 Status','L2 Status'].map(h=>(
-                        <th key={h} style={{padding:'6px 10px',textAlign:'left',color:T.textM,fontSize:10,fontWeight:800,letterSpacing:0.5,whiteSpace:'nowrap',textTransform:'uppercase'}}>{h}</th>
-                      ))}
-                    </tr></thead>
-                    <tbody>{pendingWF.map((r,i)=>(
-                      <tr key={i} className="tr" style={{borderBottom:`1px solid rgba(0,100,140,0.1)`}}>
-                        <td style={{padding:'7px 10px',color:T.tealD,fontFamily:'monospace',fontSize:10,fontWeight:600}}>{r.unit}</td>
-                        <td style={{padding:'7px 10px',color:T.text,fontWeight:600}}>{r.customer}</td>
-                        <td style={{padding:'7px 10px',color:T.textM,fontSize:10}}>{r.project}</td>
-                        <td style={{padding:'7px 10px',color:T.textL,fontSize:10}}>{r.companyNorm}</td>
-                        <td style={{padding:'7px 10px'}}><Badge label={r.l1} color={r.l1==='APPROVED'?T.teal:T.amber}/></td>
-                        <td style={{padding:'7px 10px'}}><Badge label={r.l2} color={T.red}/></td>
-                      </tr>
-                    ))}</tbody>
-                  </table>
-                </div>
-              </GC>
-            )}
-          </div>
-        )}
+              }
 
         {/* FOOTER */}
         <div style={{marginTop:16,display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:8,background:'rgba(255,255,255,0.95)',borderRadius:12,padding:'8px 16px',border:'1px solid rgba(255,255,255,0.9)'}}>
