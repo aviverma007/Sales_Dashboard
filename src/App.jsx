@@ -3161,7 +3161,6 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
 
 
                 {tab==='pnl'&&(<PnLTab T={T} GC={GC} SH={SH} filters={filters} sf={sf}/>)}
-              }
 
         {/* FOOTER */}
         <div style={{marginTop:16,display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:8,background:'rgba(255,255,255,0.95)',borderRadius:12,padding:'8px 16px',border:'1px solid rgba(255,255,255,0.9)'}}>
