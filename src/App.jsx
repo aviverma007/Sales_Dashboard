@@ -530,9 +530,10 @@ class AppErrorBoundary extends React.Component {
 // ── P&L Tab Component ────────────────────────────────────────────────────────
 const PnLTab = ({T, GC, SH, filters, sf}) => {
   const [pnlRaw, setPnlRaw] = React.useState(null);
-  const [fyFilter, setFyFilter] = React.useState('');
-  const [qFilter, setQFilter] = React.useState('');
-  const [moFilter, setMoFilter] = React.useState('');
+  // Use main filters for FY/Quarter/Month
+  const fyFilter = filters.fy||'';
+  const qFilter = filters.quarter||'';
+  const moFilter = filters.month||'';
 
   React.useEffect(()=>{
     fetch('/data/pnl_data.json').then(r=>r.json()).then(d=>setPnlRaw(d)).catch(()=>{});
@@ -569,10 +570,12 @@ const PnLTab = ({T, GC, SH, filters, sf}) => {
   const allQs = [...new Set(monthlyColl.map(r=>getQ(r.month)))].sort();
   const allMos = monthlyColl.map(r=>r.month).sort();
 
+  const MO_NAME={Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'};
   const filteredColl = (pnlRaw?.monthlyData||[]).filter(r=>{
-    if(fyFilter && getFY(r.month) !== fyFilter) return false;
-    if(qFilter && getQ(r.month) !== qFilter) return false;
-    if(moFilter && r.month !== moFilter) return false;
+    if(!r.month||r.month==='NaT')return false;
+    if(fyFilter){const fys=fyFilter.split('||').filter(Boolean);if(fys.length&&!fys.some(fy=>getFY(r.month)===fy))return false;}
+    if(qFilter){const qs=qFilter.split('||').filter(Boolean);const moN=parseInt(r.month.split('-')[1]);const Q={Q1:[4,5,6],Q2:[7,8,9],Q3:[10,11,12],Q4:[1,2,3]};if(qs.length&&!qs.some(q=>(Q[q]||[]).includes(moN)))return false;}
+    if(moFilter){const mos=moFilter.split('||').filter(Boolean);const moNum=r.month.split('-')[1];if(mos.length&&!mos.some(mn=>MO_NAME[mn]===moNum))return false;}
     return true;
   });
 
@@ -603,32 +606,7 @@ const PnLTab = ({T, GC, SH, filters, sf}) => {
 
   return (
     <div>
-      {/* Filters */}
-      <div style={{background:'rgba(255,255,255,0.92)',borderRadius:10,padding:'10px 16px',marginBottom:16,display:'flex',gap:14,alignItems:'flex-end',flexWrap:'wrap',boxShadow:'0 2px 8px rgba(0,80,120,0.07)'}}>
-        <span style={{fontSize:9,fontWeight:800,color:T.gray,textTransform:'uppercase',letterSpacing:.5,alignSelf:'center'}}>Filters (Mar 2025+)</span>
-        <div>
-          <p style={{fontSize:9,fontWeight:700,color:T.textM,textTransform:'uppercase',letterSpacing:.4,margin:'0 0 3px'}}>FIN. YEAR</p>
-          <select value={fyFilter} onChange={e=>{setFyFilter(e.target.value);setQFilter('');setMoFilter('');}} style={{padding:'5px 10px',border:'1.5px solid rgba(0,100,140,0.2)',borderRadius:6,fontSize:11,color:T.navy,fontWeight:600,outline:'none'}}>
-            <option value=''>All</option>
-            {allFYs.map(f=><option key={f} value={f}>{f}</option>)}
-          </select>
-        </div>
-        <div>
-          <p style={{fontSize:9,fontWeight:700,color:T.textM,textTransform:'uppercase',letterSpacing:.4,margin:'0 0 3px'}}>QUARTER</p>
-          <select value={qFilter} onChange={e=>{setQFilter(e.target.value);setMoFilter('');}} style={{padding:'5px 10px',border:'1.5px solid rgba(0,100,140,0.2)',borderRadius:6,fontSize:11,color:T.navy,fontWeight:600,outline:'none'}}>
-            <option value=''>All</option>
-            {allQs.filter(q=>!fyFilter||q.includes(fyFilter)).map(q=><option key={q} value={q}>{q}</option>)}
-          </select>
-        </div>
-        <div>
-          <p style={{fontSize:9,fontWeight:700,color:T.textM,textTransform:'uppercase',letterSpacing:.4,margin:'0 0 3px'}}>MONTH</p>
-          <select value={moFilter} onChange={e=>setMoFilter(e.target.value)} style={{padding:'5px 10px',border:'1.5px solid rgba(0,100,140,0.2)',borderRadius:6,fontSize:11,color:T.navy,fontWeight:600,outline:'none'}}>
-            <option value=''>All</option>
-            {allMos.filter(m=>(!fyFilter||getFY(m)===fyFilter)&&(!qFilter||getQ(m)===qFilter)).map(m=><option key={m} value={m}>{fmtMo(m)}</option>)}
-          </select>
-        </div>
-        {(fyFilter||qFilter||moFilter)&&<button onClick={()=>{setFyFilter('');setQFilter('');setMoFilter('');}} style={{padding:'5px 12px',background:T.teal,color:'#fff',border:'none',borderRadius:6,fontSize:11,fontWeight:700,cursor:'pointer',alignSelf:'flex-end'}}>✕ Reset</button>}
-      </div>
+
 
       {/* KPI Row */}
       <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12,marginBottom:16}}>
@@ -1282,11 +1260,11 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
         {/* Filter strip */}
         <div onClick={e=>e.stopPropagation()} style={{maxWidth:1440,margin:'0 auto',padding:'4px 24px 8px',display:'flex',alignItems:'flex-end',gap:10,flexWrap:'wrap'}}>
           <FSel label="Project"    options={availProj}                           value={filters.project}  onChange={v=>sf('project',v)}   multi={true} openId="project"    activeOpen={activeFilter} setActiveOpen={setActiveFilter} mandatory={true}/>
-          {tab!=='pnl'&&<FSel label="Fin. Year"  options={fo.financialYears||[]}               value={filters.fy}       onChange={v=>sf('fy',v)}         multi={true} openId="fy"         activeOpen={activeFilter} setActiveOpen={setActiveFilter}/>}
-          {tab!=='pnl'&&<FSel label="Quarter"       options={FY_QUARTERS}                              value={filters.quarter}  onChange={v=>sf('quarter',v)}    multi={true} openId="quarter"    activeOpen={activeFilter} setActiveOpen={setActiveFilter}/>}
-          {tab!=='pnl'&&<FSel label="Month"        options={MONTHS_LIST}                              value={filters.month}    onChange={v=>sf('month',v)}      multi={true} openId="month"      activeOpen={activeFilter} setActiveOpen={setActiveFilter}/>}
-          {tab!=='pnl'&&<FSel label="CP"         options={availBrokers}                         value={filters.broker}   onChange={v=>sf('broker',v)}     multi={true} openId="cp"         activeOpen={activeFilter} setActiveOpen={setActiveFilter}/>}
-          {tab!=='pnl'&&<FSel label="Typology"   options={availTypologies}                      value={filters.typology} onChange={v=>sf('typology',v)}   multi={true} openId="typology"   activeOpen={activeFilter} setActiveOpen={setActiveFilter}/>}
+          <FSel label="Fin. Year"  options={fo.financialYears||[]}               value={filters.fy}       onChange={v=>sf('fy',v)}         multi={true} openId="fy"         activeOpen={activeFilter} setActiveOpen={setActiveFilter}/>
+          <FSel label="Quarter"       options={FY_QUARTERS}                              value={filters.quarter}  onChange={v=>sf('quarter',v)}    multi={true} openId="quarter"    activeOpen={activeFilter} setActiveOpen={setActiveFilter}/>
+          <FSel label="Month"        options={MONTHS_LIST}                              value={filters.month}    onChange={v=>sf('month',v)}      multi={true} openId="month"      activeOpen={activeFilter} setActiveOpen={setActiveFilter}/>
+          {tab!=='pnl'&&<FSel label="CP"         options={availBrokers}                         value={filters.broker}   onChange={v=>sf('broker',v)}     multi={true} openId="cp"         activeOpen={activeFilter} setActiveOpen={setActiveFilter}/>
+          {tab!=='pnl'&&<FSel label="Typology"   options={availTypologies}                      value={filters.typology} onChange={v=>sf('typology',v)}   multi={true} openId="typology"   activeOpen={activeFilter} setActiveOpen={setActiveFilter}/>
           {Object.values(filters).some(Boolean)&&(
             <button onClick={()=>setFilters({company:'',project:'',year:'',month:'',quarter:'',broker:'',typology:'',fy:''})}
               style={{background:'linear-gradient(135deg,#c62828,#ef5350)',border:'none',borderRadius:7,color:'#fff',padding:'5px 14px',fontSize:10,cursor:'pointer',fontWeight:700,boxShadow:'0 2px 8px rgba(200,40,40,0.3)',alignSelf:'flex-end'}}>
