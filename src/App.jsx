@@ -569,14 +569,14 @@ const PnLTab = ({T, GC, SH, filters, sf}) => {
   const allQs = [...new Set(monthlyColl.map(r=>getQ(r.month)))].sort();
   const allMos = monthlyColl.map(r=>r.month).sort();
 
-  const filteredColl = monthlyColl.filter(r=>{
+  const filteredColl = (pnlRaw?.monthlyData||[]).filter(r=>{
     if(fyFilter && getFY(r.month) !== fyFilter) return false;
     if(qFilter && getQ(r.month) !== qFilter) return false;
     if(moFilter && r.month !== moFilter) return false;
     return true;
   });
 
-  const totalRevenue = filteredColl.reduce((s,r)=>s+r.received,0);
+  const totalRevenue = filteredColl.reduce((s,r)=>s+(r.revenue||0),0);
   const totalExpense = kpi.totalActual || 0;
   const pnl = totalRevenue - totalExpense;
 
@@ -691,20 +691,47 @@ const PnLTab = ({T, GC, SH, filters, sf}) => {
         </GC>
       </div>
 
-      {/* Monthly Collection Bar Chart */}
+      {/* Revenue vs Expense vs P&L Chart */}
       <GC style={{padding:16,marginBottom:16}}>
-        <SH title="Monthly Collection (Revenue)" sub="Received amount per month (₹ Cr) · Mar 2025 onwards"/>
-        <ResponsiveContainer width="100%" height={220}>
-          <ComposedChart data={filteredColl} margin={{top:16,right:8,bottom:20,left:0}}>
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.08)" vertical={false}/>
-            <XAxis dataKey="month" tick={{fontSize:9,fill:T.textM}} tickLine={false} axisLine={false} tickFormatter={fmtMo}/>
-            <YAxis tick={{fontSize:9,fill:T.textM}} tickLine={false} axisLine={false} tickFormatter={v=>`₹${v}Cr`}/>
-            <Tooltip formatter={(v)=>[`₹${Number(v).toFixed(2)} Cr`,'Received']} labelFormatter={fmtMo}/>
-            <Bar dataKey="received" name="Received" fill={T.teal} radius={[3,3,0,0]} barSize={28}>
-              <LabelList dataKey="received" position="top" style={{fontSize:8,fill:T.tealD,fontWeight:700}} formatter={v=>v>0?`₹${Number(v).toFixed(1)}Cr`:''}/>
-            </Bar>
-          </ComposedChart>
-        </ResponsiveContainer>
+        <SH title="Revenue vs Expense vs Profit/Loss" sub="Monthly comparison (₹ Cr) · Mar 2025 onwards"/>
+        {(()=>{
+          const monthlyData=(pnlRaw?.monthlyData||[]).filter(r=>{
+            if(fyFilter&&getFY(r.month)!==fyFilter)return false;
+            if(qFilter&&getQ(r.month)!==qFilter)return false;
+            if(moFilter&&r.month!==moFilter)return false;
+            return true;
+          });
+          return(
+            <ResponsiveContainer width="100%" height={260}>
+              <ComposedChart data={monthlyData} margin={{top:24,right:8,bottom:20,left:0}} barGap={3} barCategoryGap="25%">
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.08)" vertical={false}/>
+                <XAxis dataKey="label" tick={{fontSize:9,fill:T.textM}} tickLine={false} axisLine={false}/>
+                <YAxis tick={{fontSize:9,fill:T.textM}} tickLine={false} axisLine={false} tickFormatter={v=>`₹${v}Cr`}/>
+                <Tooltip content={({active,payload,label})=>{
+                  if(!active||!payload?.length)return null;
+                  return(<div style={{background:'rgba(255,255,255,0.97)',border:'1px solid rgba(0,151,167,0.2)',borderRadius:8,padding:'8px 12px',fontSize:10}}>
+                    <p style={{fontWeight:800,color:T.navy,margin:'0 0 4px'}}>{label}</p>
+                    {payload.map((p,i)=><p key={i} style={{color:p.fill||p.stroke,margin:'2px 0'}}>{p.name}: ₹{Number(p.value).toFixed(2)} Cr</p>)}
+                  </div>);
+                }}/>
+                <Legend iconSize={10} wrapperStyle={{fontSize:10,paddingTop:4}}/>
+                <Bar dataKey="revenue" name="Revenue" fill={T.teal} radius={[3,3,0,0]} barSize={20}>
+                  <LabelList dataKey="revenue" position="top" style={{fontSize:8,fill:T.tealD,fontWeight:700}} formatter={v=>v>0?`₹${Number(v).toFixed(1)}Cr`:''}/>
+                </Bar>
+                <Bar dataKey="expense" name="Expense" fill="#ef4444" fillOpacity={0.85} radius={[3,3,0,0]} barSize={20}>
+                  <LabelList dataKey="expense" position="top" style={{fontSize:8,fill:'#991b1b',fontWeight:700}} formatter={v=>v>0?`₹${Number(v).toFixed(1)}Cr`:''}/>
+                </Bar>
+                <Line type="monotone" dataKey="pnl" name="Profit/Loss" stroke="#f59e0b" strokeWidth={2.5} dot={({cx,cy,payload})=><circle cx={cx} cy={cy} r={4} fill={payload.pnl>=0?'#10b981':'#ef4444'} stroke="#fff" strokeWidth={1.5}/>} activeDot={{r:5}} connectNulls={true}>
+                  <LabelList dataKey="pnl" position="top" offset={8} style={{fontWeight:800,fontSize:8}} content={({x,y,value})=>{
+                    if(value==null)return null;
+                    const col=value>=0?'#10b981':'#ef4444';
+                    return <text x={x} y={y-6} textAnchor="middle" fill={col} fontSize={8} fontWeight={900}>{value>=0?'▲':'▼'}₹{Math.abs(value).toFixed(1)}Cr</text>;
+                  }}/>
+                </Line>
+              </ComposedChart>
+            </ResponsiveContainer>
+          );
+        })()}
       </GC>
 
       {/* Expense Detail Tables */}
