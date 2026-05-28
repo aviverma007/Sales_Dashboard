@@ -576,8 +576,12 @@ const PnLTab = ({T, GC, SH, filters, sf}) => {
     return true;
   });
 
-  const totalRevenue = filteredColl.reduce((s,r)=>s+(r.revenue||0),0);
-  const totalExpense = kpi.totalActual || 0;
+  const totalRevenue = (fyFilter||qFilter||moFilter)
+    ? filteredColl.reduce((s,r)=>s+(r.revenue||0),0)
+    : (kpi.totalRevenue||0);
+  const totalExpense = (fyFilter||qFilter||moFilter)
+    ? filteredColl.reduce((s,r)=>s+(r.expense||0),0)
+    : (kpi.totalActual||0);
   const pnl = totalRevenue - totalExpense;
 
   const CC = ['#0097a7','#7c3aed','#10b981','#f59e0b','#ef4444','#1565c0','#e65100','#2e7d32','#d81b60','#37474f','#00838f','#4a148c','#1b5e20','#b71c1c','#e65100','#006064','#33691e'];
