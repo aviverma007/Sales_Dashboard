@@ -688,10 +688,10 @@ const PnLTab = ({T, GC, SH, filters, sf}) => {
                   <Tooltip formatter={(v)=>`₹${Number(v).toFixed(2)} Cr`}/>
                 </PieChart>
               </ResponsiveContainer>
-              <div style={{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',textAlign:'center',pointerEvents:'none'}}>
-                <p style={{fontSize:8,fontWeight:700,color:T.gray,margin:0,textTransform:'uppercase',letterSpacing:.3}}>Total</p>
-                <p style={{fontSize:12,fontWeight:900,color:T.navy,margin:0,lineHeight:1.2}}>₹{projTotal.toFixed(1)}</p>
-                <p style={{fontSize:8,fontWeight:600,color:T.gray,margin:0}}>Cr</p>
+              <div style={{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',textAlign:'center',pointerEvents:'none',whiteSpace:'nowrap'}}>
+                <p style={{fontSize:10,fontWeight:700,color:T.gray,margin:0,textTransform:'uppercase',letterSpacing:.4}}>Total</p>
+                <p style={{fontSize:16,fontWeight:900,color:T.navy,margin:'2px 0',lineHeight:1}}>₹{projTotal.toFixed(1)}</p>
+                <p style={{fontSize:10,fontWeight:700,color:T.gray,margin:0}}>Cr</p>
               </div>
             </div>
             <div style={{flex:1}}>
@@ -725,10 +725,10 @@ const PnLTab = ({T, GC, SH, filters, sf}) => {
                   <Tooltip formatter={(v)=>`₹${Number(v).toFixed(2)} Cr`}/>
                 </PieChart>
               </ResponsiveContainer>
-              <div style={{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',textAlign:'center',pointerEvents:'none'}}>
-                <p style={{fontSize:8,fontWeight:700,color:T.gray,margin:0,textTransform:'uppercase',letterSpacing:.3}}>Total</p>
-                <p style={{fontSize:12,fontWeight:900,color:T.navy,margin:0,lineHeight:1.2}}>₹{npTotal.toFixed(1)}</p>
-                <p style={{fontSize:8,fontWeight:600,color:T.gray,margin:0}}>Cr</p>
+              <div style={{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',textAlign:'center',pointerEvents:'none',whiteSpace:'nowrap'}}>
+                <p style={{fontSize:10,fontWeight:700,color:T.gray,margin:0,textTransform:'uppercase',letterSpacing:.4}}>Total</p>
+                <p style={{fontSize:16,fontWeight:900,color:T.navy,margin:'2px 0',lineHeight:1}}>₹{npTotal.toFixed(1)}</p>
+                <p style={{fontSize:10,fontWeight:700,color:T.gray,margin:0}}>Cr</p>
               </div>
             </div>
             <div style={{flex:1}}>
