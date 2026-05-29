@@ -657,7 +657,18 @@ const PnLTab = ({T, GC, SH, filters, sf}) => {
         <KpiCard label="Revenue (Collection)" value={`₹${totalRevenue.toLocaleString('en-IN',{maximumFractionDigits:1})} Cr`} sub="Total received from customers" color="#0097a7"/>
         <KpiCard label="Total Expense (Actual)" value={`₹${totalExpense.toLocaleString('en-IN',{maximumFractionDigits:2})} Cr`} sub="Actual spend to date" color="#ef4444"/>
 
-        <KpiCard label="Profit / Loss" value={`₹${Math.abs(pnl).toLocaleString('en-IN',{maximumFractionDigits:1})} Cr`} sub={pnl>=0?'Surplus':'Deficit'} color={pnl>=0?'#10b981':'#ef4444'}/>
+        <div style={{position:'relative',overflow:'hidden',background:'rgba(255,255,255,0.92)',backdropFilter:'blur(12px)',borderRadius:14,padding:'16px 18px',boxShadow:'0 2px 16px rgba(0,80,120,0.08)',border:`2px solid ${pnl>=0?'#10b981':'#ef4444'}`}}>
+          <div style={{position:'absolute',top:0,left:0,right:0,height:4,background:pnl>=0?'linear-gradient(90deg,#10b981,#34d399)':'linear-gradient(90deg,#ef4444,#f87171)',borderRadius:'14px 14px 0 0'}}/>
+          <div style={{position:'absolute',right:12,top:12,fontSize:32,opacity:0.12}}>{pnl>=0?'📈':'📉'}</div>
+          <p style={{fontSize:9,fontWeight:800,color:'#94a3b8',textTransform:'uppercase',letterSpacing:.7,margin:'4px 0 6px'}}>Profit / Loss</p>
+          <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
+            <span style={{fontSize:22,fontWeight:900,color:pnl>=0?'#065f46':'#991b1b',lineHeight:1}}>{pnl>=0?'▲':'▼'} ₹{Math.abs(pnl).toLocaleString('en-IN',{maximumFractionDigits:1})} Cr</span>
+          </div>
+          <div style={{display:'inline-flex',alignItems:'center',gap:5,background:pnl>=0?'#d1fae5':'#fee2e2',borderRadius:20,padding:'3px 10px'}}>
+            <div style={{width:6,height:6,borderRadius:'50%',background:pnl>=0?'#10b981':'#ef4444'}}/>
+            <span style={{fontSize:10,fontWeight:800,color:pnl>=0?'#065f46':'#991b1b'}}>{pnl>=0?'SURPLUS':'DEFICIT'}</span>
+          </div>
+        </div>
       </div>
 
       {/* Charts Row */}
