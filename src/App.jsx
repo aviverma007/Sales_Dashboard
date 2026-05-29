@@ -696,16 +696,16 @@ const PnLTab = ({T, GC, SH, filters, sf}) => {
             </div>
             <div style={{flex:1}}>
               {projExp.sort((a,b)=>b.Actual-a.Actual).map((r,i)=>(
-                <div key={i} style={{display:'flex',alignItems:'center',gap:6,marginBottom:5}}>
-                  <div style={{width:8,height:8,borderRadius:2,background:CC[i%CC.length],flexShrink:0}}/>
-                  <span style={{fontSize:10,flex:1,color:T.textM,fontWeight:600}}>{r.SubCat}</span>
-                  <span style={{fontSize:10,fontWeight:800,color:T.navy}}>₹{Number(r.Actual).toFixed(2)}Cr</span>
-                  <span style={{fontSize:9,color:T.gray,minWidth:28,textAlign:'right'}}>{projTotal>0?(r.Actual/projTotal*100).toFixed(1):0}%</span>
+                <div key={i} style={{display:'flex',alignItems:'center',gap:7,marginBottom:7}}>
+                  <div style={{width:10,height:10,borderRadius:2,background:CC[i%CC.length],flexShrink:0}}/>
+                  <span style={{fontSize:13,flex:1,color:T.textM,fontWeight:600}}>{r.SubCat}</span>
+                  <span style={{fontSize:13,fontWeight:800,color:T.navy}}>₹{Number(r.Actual).toFixed(2)}Cr</span>
+                  <span style={{fontSize:11,color:T.gray,minWidth:36,textAlign:'right'}}>{projTotal>0?(r.Actual/projTotal*100).toFixed(1):0}%</span>
                 </div>
               ))}
-              <div style={{borderTop:'1px solid #e2e8f0',marginTop:6,paddingTop:6,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-                <span style={{fontSize:10,fontWeight:800,color:T.navy}}>Total</span>
-                <span style={{fontSize:11,fontWeight:900,color:T.tealD}}>₹{projTotal.toFixed(2)} Cr</span>
+              <div style={{borderTop:'1px solid #e2e8f0',marginTop:8,paddingTop:8,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                <span style={{fontSize:14,fontWeight:800,color:T.navy}}>Total</span>
+                <span style={{fontSize:14,fontWeight:900,color:T.tealD}}>₹{projTotal.toFixed(2)} Cr</span>
               </div>
             </div>
           </div>);})()}
@@ -733,16 +733,16 @@ const PnLTab = ({T, GC, SH, filters, sf}) => {
             </div>
             <div style={{flex:1}}>
               {npFiltered.sort((a,b)=>b.Actual-a.Actual).map((r,i)=>(
-                <div key={i} style={{display:'flex',alignItems:'center',gap:6,marginBottom:5}}>
-                  <div style={{width:8,height:8,borderRadius:2,background:CC[(i+6)%CC.length],flexShrink:0}}/>
-                  <span style={{fontSize:10,flex:1,color:T.textM,fontWeight:600}}>{r.SubCat}</span>
-                  <span style={{fontSize:10,fontWeight:800,color:T.navy}}>₹{Number(r.Actual).toFixed(2)}Cr</span>
-                  <span style={{fontSize:9,color:T.gray,minWidth:28,textAlign:'right'}}>{npTotal>0?(r.Actual/npTotal*100).toFixed(1):0}%</span>
+                <div key={i} style={{display:'flex',alignItems:'center',gap:7,marginBottom:7}}>
+                  <div style={{width:10,height:10,borderRadius:2,background:CC[(i+6)%CC.length],flexShrink:0}}/>
+                  <span style={{fontSize:13,flex:1,color:T.textM,fontWeight:600}}>{r.SubCat}</span>
+                  <span style={{fontSize:13,fontWeight:800,color:T.navy}}>₹{Number(r.Actual).toFixed(2)}Cr</span>
+                  <span style={{fontSize:11,color:T.gray,minWidth:36,textAlign:'right'}}>{npTotal>0?(r.Actual/npTotal*100).toFixed(1):0}%</span>
                 </div>
               ))}
-              <div style={{borderTop:'1px solid #e2e8f0',marginTop:6,paddingTop:6,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-                <span style={{fontSize:10,fontWeight:800,color:T.navy}}>Total</span>
-                <span style={{fontSize:11,fontWeight:900,color:T.tealD}}>₹{npTotal.toFixed(2)} Cr</span>
+              <div style={{borderTop:'1px solid #e2e8f0',marginTop:8,paddingTop:8,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                <span style={{fontSize:14,fontWeight:800,color:T.navy}}>Total</span>
+                <span style={{fontSize:14,fontWeight:900,color:T.tealD}}>₹{npTotal.toFixed(2)} Cr</span>
               </div>
             </div>
           </div>);})()}
