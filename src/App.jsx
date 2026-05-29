@@ -528,6 +528,50 @@ class AppErrorBoundary extends React.Component {
 
 
 // ── P&L Tab Component ────────────────────────────────────────────────────────
+
+const PnLChart = ({md}) => {
+  const canvasRef = React.useRef(null);
+  React.useEffect(()=>{
+    const el = canvasRef.current;
+    if(!el) return;
+    if(el._chartInst){el._chartInst.destroy();el._chartInst=null;}
+    const Chart = window.Chart;
+    if(!Chart||!md||!md.length) return;
+    const labels=md.map(r=>r.label);
+    const revData=md.map(r=>+(r.revenue||0));
+    const expData=md.map(r=>+(r.expense||0));
+    const pnlData=md.map(r=>+(r.pnl||0));
+    el._chartInst=new Chart(el,{
+      data:{labels,datasets:[
+        {type:'bar',label:'Revenue',data:revData,backgroundColor:'rgba(0,151,167,0.85)',borderRadius:4,borderSkipped:false,order:2},
+        {type:'bar',label:'Expense',data:expData,backgroundColor:'rgba(239,68,68,0.8)',borderRadius:4,borderSkipped:false,order:2},
+        {type:'line',label:'Profit/Loss',data:pnlData,borderColor:'#f59e0b',borderWidth:3,borderDash:[8,4],
+          pointBackgroundColor:pnlData.map(v=>v>=0?'#10b981':'#ef4444'),
+          pointRadius:6,pointHoverRadius:8,pointBorderColor:'#fff',pointBorderWidth:2,
+          fill:false,tension:0.3,order:1},
+      ]},
+      options:{
+        responsive:true,maintainAspectRatio:false,
+        interaction:{mode:'index',intersect:false},
+        plugins:{
+          legend:{display:false},
+          tooltip:{
+            backgroundColor:'rgba(255,255,255,0.97)',titleColor:'#0d2137',bodyColor:'#334155',
+            borderColor:'rgba(0,151,167,0.3)',borderWidth:1,padding:12,
+            titleFont:{size:13,weight:'bold'},bodyFont:{size:12},
+            callbacks:{label:ctx=>{const v=ctx.raw;const sign=ctx.dataset.label==='Profit/Loss'?(v>=0?'▲ ':'▼ '):'';return ` ${ctx.dataset.label}: ${sign}₹${Math.abs(v).toFixed(2)} Cr`;}}
+          }
+        },
+        scales:{
+          x:{grid:{display:false},ticks:{color:'#546e7a',font:{size:11,weight:'600'},maxRotation:30},border:{display:false}},
+          y:{grid:{color:'rgba(0,80,120,0.06)'},ticks:{color:'#546e7a',font:{size:11},callback:v=>`₹${v}Cr`},border:{display:false}},
+        }
+      }
+    });
+  },[md]);
+  return <div style={{position:'relative',height:320}}><canvas ref={canvasRef} role="img" aria-label="Revenue vs Expense vs Profit/Loss chart"/></div>;
+};
+
 const PnLTab = ({T, GC, SH, filters, sf}) => {
   const [pnlRaw, setPnlRaw] = React.useState(null);
   // Use main filters for FY/Quarter/Month
@@ -574,7 +618,7 @@ const PnLTab = ({T, GC, SH, filters, sf}) => {
   const filteredColl = (pnlRaw?.monthlyData||[]).filter(r=>{
     if(!r.month||r.month==='NaT')return false;
     if(fyFilter){const fys=fyFilter.split('||').filter(Boolean);if(fys.length&&!fys.some(fy=>getFY(r.month)===fy))return false;}
-    if(qFilter){const qs=qFilter.split('||').filter(Boolean);const moN=parseInt(r.month.split('-')[1]);const Q={Q1:[4,5,6],Q2:[7,8,9],Q3:[10,11,12],Q4:[1,2,3]};if(qs.length&&!qs.some(q=>(Q[q]||[]).includes(moN)))return false;}
+    if(qFilter){const qs=qFilter.split('||').filter(Boolean).map(q=>q.split(' ')[0]);const moN=parseInt(r.month.split('-')[1]);const Q={Q1:[4,5,6],Q2:[7,8,9],Q3:[10,11,12],Q4:[1,2,3]};if(qs.length&&!qs.some(q=>(Q[q]||[]).includes(moN)))return false;}
     if(moFilter){const mos=moFilter.split('||').filter(Boolean);const moNum=r.month.split('-')[1];if(mos.length&&!mos.some(mn=>MO_NAME[mn]===moNum))return false;}
     return true;
   });
@@ -689,58 +733,7 @@ const PnLTab = ({T, GC, SH, filters, sf}) => {
             ))}
           </div>
         </div>
-        {(()=>{
-          const md=(pnlRaw?.monthlyData||[]).filter(r=>{
-            if(!r.month||r.month==='NaT')return false;
-            if(fyFilter){const fys=fyFilter.split('||').filter(Boolean);if(fys.length&&!fys.some(fy=>getFY(r.month)===fy))return false;}
-            if(qFilter){const qs=qFilter.split('||').filter(Boolean);const moN=parseInt(r.month.split('-')[1]);const Q={Q1:[4,5,6],Q2:[7,8,9],Q3:[10,11,12],Q4:[1,2,3]};if(qs.length&&!qs.some(q=>(Q[q]||[]).includes(moN)))return false;}
-            if(moFilter){const mos=moFilter.split('||').filter(Boolean);const moNum=r.month.split('-')[1];if(mos.length&&!mos.some(mn=>({Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'})[mn]===moNum))return false;}
-            return true;
-          });
-          const chartId='pnlChart_'+Math.random().toString(36).slice(2,6);
-          React.useEffect(()=>{
-            const el=document.getElementById(chartId);
-            if(!el||!md.length)return;
-            if(el._chartInst){el._chartInst.destroy();}
-            const labels=md.map(r=>r.label);
-            const revData=md.map(r=>r.revenue||0);
-            const expData=md.map(r=>r.expense||0);
-            const pnlData=md.map(r=>r.pnl||0);
-            const Chart=window.Chart;
-            if(!Chart)return;
-            el._chartInst=new Chart(el,{
-              data:{
-                labels,
-                datasets:[
-                  {type:'bar',label:'Revenue',data:revData,backgroundColor:'rgba(0,151,167,0.85)',borderColor:'#0097a7',borderWidth:0,borderRadius:4,borderSkipped:false,order:2},
-                  {type:'bar',label:'Expense',data:expData,backgroundColor:'rgba(239,68,68,0.8)',borderColor:'#ef4444',borderWidth:0,borderRadius:4,borderSkipped:false,order:2},
-                  {type:'line',label:'Profit/Loss',data:pnlData,borderColor:'#f59e0b',borderWidth:3,borderDash:[8,4],pointBackgroundColor:pnlData.map(v=>v>=0?'#10b981':'#ef4444'),pointRadius:6,pointHoverRadius:8,pointBorderColor:'#fff',pointBorderWidth:2,fill:false,tension:0.3,order:1,yAxisID:'y'},
-                ]
-              },
-              options:{
-                responsive:true,maintainAspectRatio:false,
-                interaction:{mode:'index',intersect:false},
-                plugins:{
-                  legend:{display:false},
-                  tooltip:{
-                    backgroundColor:'rgba(255,255,255,0.97)',titleColor:'#0d2137',bodyColor:'#334155',borderColor:'rgba(0,151,167,0.3)',borderWidth:1,padding:12,titleFont:{size:13,weight:'bold'},bodyFont:{size:12},
-                    callbacks:{label:ctx=>{const v=ctx.raw;const sign=ctx.dataset.label==='Profit/Loss'?(v>=0?'▲ ':'▼ '):'';return ` ${ctx.dataset.label}: ${sign}₹${Math.abs(v).toFixed(2)} Cr`;}}
-                  },
-                  datalabels:{display:false}
-                },
-                scales:{
-                  x:{grid:{display:false},ticks:{color:'#546e7a',font:{size:11,weight:'600'},maxRotation:30},border:{display:false}},
-                  y:{grid:{color:'rgba(0,80,120,0.06)',drawBorder:false},ticks:{color:'#546e7a',font:{size:11},callback:v=>`₹${v}Cr`},border:{display:false}},
-                }
-              }
-            });
-          },[md.length,fyFilter,qFilter,moFilter]);
-          return(
-            <div style={{position:'relative',height:320}}>
-              <canvas id={chartId} role="img" aria-label="Revenue vs Expense vs Profit/Loss monthly bar and line chart"/>
-            </div>
-          );
-        })()}
+<PnLChart md={filteredColl}/>
       </GC>
 
       {/* Expense Detail Tables */}
