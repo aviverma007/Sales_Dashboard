@@ -677,16 +677,22 @@ const PnLTab = ({T, GC, SH, filters, sf}) => {
         {/* Project Expense Pie */}
         <GC style={{padding:16}}>
           <SH title="Cost of Construction — Project Expenses" sub="By category (Actual spend in ₹ Cr)"/>
+          {(()=>{const projTotal=projExp.reduce((s,r)=>s+r.Actual,0);return(
           <div style={{display:'flex',gap:16,alignItems:'center'}}>
             <div style={{position:'relative',width:180,height:180,flexShrink:0}}>
               <ResponsiveContainer width={180} height={180}>
                 <PieChart>
-                  <Pie data={projExp} dataKey="Actual" nameKey="SubCat" cx="50%" cy="50%" outerRadius={80} innerRadius={44}>
+                  <Pie data={projExp} dataKey="Actual" nameKey="SubCat" cx="50%" cy="50%" outerRadius={80} innerRadius={50}>
                     {projExp.map((_,i)=><Cell key={i} fill={CC[i%CC.length]}/>)}
                   </Pie>
-                  <Tooltip formatter={(v)=>`₹${Number(v).toFixed(1)} Cr`}/>
+                  <Tooltip formatter={(v)=>`₹${Number(v).toFixed(2)} Cr`}/>
                 </PieChart>
               </ResponsiveContainer>
+              <div style={{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',textAlign:'center',pointerEvents:'none'}}>
+                <p style={{fontSize:8,fontWeight:700,color:T.gray,margin:0,textTransform:'uppercase',letterSpacing:.3}}>Total</p>
+                <p style={{fontSize:12,fontWeight:900,color:T.navy,margin:0,lineHeight:1.2}}>₹{projTotal.toFixed(1)}</p>
+                <p style={{fontSize:8,fontWeight:600,color:T.gray,margin:0}}>Cr</p>
+              </div>
             </div>
             <div style={{flex:1}}>
               {projExp.sort((a,b)=>b.Actual-a.Actual).map((r,i)=>(
@@ -694,37 +700,52 @@ const PnLTab = ({T, GC, SH, filters, sf}) => {
                   <div style={{width:8,height:8,borderRadius:2,background:CC[i%CC.length],flexShrink:0}}/>
                   <span style={{fontSize:10,flex:1,color:T.textM,fontWeight:600}}>{r.SubCat}</span>
                   <span style={{fontSize:10,fontWeight:800,color:T.navy}}>₹{Number(r.Actual).toFixed(2)}Cr</span>
-                  <span style={{fontSize:9,color:T.gray,minWidth:28,textAlign:'right'}}>{kpi.totalActual>0?(r.Actual/kpi.totalActual*100).toFixed(1):0}%</span>
+                  <span style={{fontSize:9,color:T.gray,minWidth:28,textAlign:'right'}}>{projTotal>0?(r.Actual/projTotal*100).toFixed(1):0}%</span>
                 </div>
               ))}
+              <div style={{borderTop:'1px solid #e2e8f0',marginTop:6,paddingTop:6,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                <span style={{fontSize:10,fontWeight:800,color:T.navy}}>Total</span>
+                <span style={{fontSize:11,fontWeight:900,color:T.tealD}}>₹{projTotal.toFixed(2)} Cr</span>
+              </div>
             </div>
-          </div>
+          </div>);})()}
         </GC>
 
         {/* Non-Project Expense Pie */}
         <GC style={{padding:16}}>
           <SH title="Non-Project Expenses" sub="By category (Actual spend in ₹ Cr)"/>
+          {(()=>{const npFiltered=npExp.filter(r=>r.Actual>0);const npTotal=npFiltered.reduce((s,r)=>s+r.Actual,0);return(
           <div style={{display:'flex',gap:16,alignItems:'center'}}>
             <div style={{position:'relative',width:180,height:180,flexShrink:0}}>
               <ResponsiveContainer width={180} height={180}>
                 <PieChart>
-                  <Pie data={npExp.filter(r=>r.Actual>0)} dataKey="Actual" nameKey="SubCat" cx="50%" cy="50%" outerRadius={80} innerRadius={44}>
-                    {npExp.filter(r=>r.Actual>0).map((_,i)=><Cell key={i} fill={CC[(i+6)%CC.length]}/>)}
+                  <Pie data={npFiltered} dataKey="Actual" nameKey="SubCat" cx="50%" cy="50%" outerRadius={80} innerRadius={50}>
+                    {npFiltered.map((_,i)=><Cell key={i} fill={CC[(i+6)%CC.length]}/>)}
                   </Pie>
-                  <Tooltip formatter={(v)=>`₹${Number(v).toFixed(1)} Cr`}/>
+                  <Tooltip formatter={(v)=>`₹${Number(v).toFixed(2)} Cr`}/>
                 </PieChart>
               </ResponsiveContainer>
+              <div style={{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',textAlign:'center',pointerEvents:'none'}}>
+                <p style={{fontSize:8,fontWeight:700,color:T.gray,margin:0,textTransform:'uppercase',letterSpacing:.3}}>Total</p>
+                <p style={{fontSize:12,fontWeight:900,color:T.navy,margin:0,lineHeight:1.2}}>₹{npTotal.toFixed(1)}</p>
+                <p style={{fontSize:8,fontWeight:600,color:T.gray,margin:0}}>Cr</p>
+              </div>
             </div>
             <div style={{flex:1}}>
-              {npExp.filter(r=>r.Actual>0).sort((a,b)=>b.Actual-a.Actual).map((r,i)=>(
+              {npFiltered.sort((a,b)=>b.Actual-a.Actual).map((r,i)=>(
                 <div key={i} style={{display:'flex',alignItems:'center',gap:6,marginBottom:5}}>
                   <div style={{width:8,height:8,borderRadius:2,background:CC[(i+6)%CC.length],flexShrink:0}}/>
                   <span style={{fontSize:10,flex:1,color:T.textM,fontWeight:600}}>{r.SubCat}</span>
                   <span style={{fontSize:10,fontWeight:800,color:T.navy}}>₹{Number(r.Actual).toFixed(2)}Cr</span>
+                  <span style={{fontSize:9,color:T.gray,minWidth:28,textAlign:'right'}}>{npTotal>0?(r.Actual/npTotal*100).toFixed(1):0}%</span>
                 </div>
               ))}
+              <div style={{borderTop:'1px solid #e2e8f0',marginTop:6,paddingTop:6,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                <span style={{fontSize:10,fontWeight:800,color:T.navy}}>Total</span>
+                <span style={{fontSize:11,fontWeight:900,color:T.tealD}}>₹{npTotal.toFixed(2)} Cr</span>
+              </div>
             </div>
-          </div>
+          </div>);})()}
         </GC>
       </div>
 
