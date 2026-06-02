@@ -1423,8 +1423,6 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
               <GC style={{padding:12}} cls="kc">
                 <SH title="Total Sales Value (₹Cr)" compact/>
                 {(()=>{
-                  const soldBSP=kpiEx.totalBSPCr||0;
-                  const soldTCV=kpiEx.totalTCVCr||0;
                   // Use dFAll (demand/collection module, project-only filtered) for accurate received amount
                   const totalReceived=+(dFAll.reduce((s,r)=>s+(r.received||0),0)/1e7).toFixed(2);
                   const totalDemand=+(dFAll.reduce((s,r)=>s+(r.demand||0),0)/1e7).toFixed(2);
@@ -1432,7 +1430,6 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                   const dkOv = raw?.dappKpi || {};
                   const installmentTotal=+((dkOv.installmentTotal||0)/1e7).toFixed(2);
                   const outstanding=+((dkOv.upcoming||0)/1e7).toFixed(2);
-                  // soldTCV here means installment total for the donut
                   const soldTCV = installmentTotal;
                   const unsoldBSP = outstanding;
                   const totalPotential = installmentTotal;
