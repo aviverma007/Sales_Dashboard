@@ -1423,19 +1423,22 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
               <GC style={{padding:12}} cls="kc">
                 <SH title="Total Sales Value (₹Cr)" compact/>
                 {(()=>{
-                  // Use dFAll (demand/collection module, project-only filtered) for accurate received amount
-                  const totalReceived=+(dFAll.reduce((s,r)=>s+(r.received||0),0)/1e7).toFixed(2);
-                  const totalDemand=+(dFAll.reduce((s,r)=>s+(r.demand||0),0)/1e7).toFixed(2);
-                  // Sold = Installment Amount (total committed), Unsold = upcoming (not yet received)
+                  const soldTCV=kpiEx.totalTCVCr||0;
+                  // Collection data from dapp_kpi
                   const dkOv = raw?.dappKpi || {};
                   const installmentTotal=+((dkOv.installmentTotal||0)/1e7).toFixed(2);
-                  const outstanding=+((dkOv.upcoming||0)/1e7).toFixed(2);
-                  const soldTCV = installmentTotal;
-                  const unsoldBSP = outstanding;
-                  const totalPotential = installmentTotal;
-                  const soldPct = installmentTotal>0?Math.round(totalReceived/installmentTotal*100):0;
-                  const collectedPct = installmentTotal>0?Math.round(totalReceived/installmentTotal*100):0;
+                  const totalReceived=+(dFAll.reduce((s,r)=>s+(r.received||0),0)/1e7).toFixed(2);
+                  const upcomingAmt=+((dkOv.upcoming||0)/1e7).toFixed(2);
+                  const collectedPct=installmentTotal>0?Math.round(totalReceived/installmentTotal*100):0;
+                  // Unsold = available area × AOP target rate
+                  const availArea=iFAll.filter(r=>r.status==='Available').reduce((s,r)=>s+(r.superArea||0),0);
                   const availUnits=iFAll.filter(r=>r.status==='Available').length;
+                  const allTargets=raw?.monthlyTargets||[];
+                  const futureTargets=allTargets.filter(t=>t.targetRate>0);
+                  const aopRate=futureTargets.length>0?Math.round(futureTargets.reduce((s,t)=>s+t.targetRate,0)/futureTargets.length):kpiEx.avgRatePerSqft||0;
+                  const unsoldBSP=+((availArea>0?availArea*aopRate:0)/1e7).toFixed(2);
+                  const totalPotential=+(soldTCV+unsoldBSP).toFixed(2);
+                  const soldPct=totalPotential>0?Math.round(soldTCV/totalPotential*100):0;
                   return(
                     <div style={{display:'flex',flexDirection:'column',gap:6}}>
                       {/* Row 1: donut + sold/unsold */}
@@ -1443,33 +1446,33 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                         <div style={{width:72,height:72,flexShrink:0,position:'relative'}}>
                           <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
-                              <Pie data={[{name:'Received',value:totalReceived||0.01},{name:'Upcoming',value:unsoldBSP||0.01}]}
+                              <Pie data={[{name:'Sold',value:soldTCV||0.01},{name:'Unsold',value:unsoldBSP||0.01}]}
                                 cx="50%" cy="50%" innerRadius={20} outerRadius={34} paddingAngle={3} dataKey="value" strokeWidth={1.5} stroke="rgba(255,255,255,0.9)" labelLine={false}>
-                                <Cell fill={T.teal}/><Cell fill={'#7c3aed'}/>
+                                <Cell fill={T.teal}/><Cell fill={T.amber}/>
                               </Pie>
                               <Tooltip content={<CTip fmt={v=>'₹'+v.toFixed(2)+' Cr'}/>}/>
                             </PieChart>
                           </ResponsiveContainer>
                           <div style={{position:'absolute',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',pointerEvents:'none'}}>
                             <span style={{fontSize:9,fontWeight:900,color:T.tealD,lineHeight:1}}>{soldPct}%</span>
-                            <span style={{fontSize:5,fontWeight:700,color:T.textM}}>Rcvd</span>
+                            <span style={{fontSize:5,fontWeight:700,color:T.textM}}>Sold</span>
                           </div>
                         </div>
                         <div style={{flex:1,display:'flex',flexDirection:'column',gap:3}}>
                           <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline'}}>
-                            <span style={{fontSize:7,color:T.textM,fontWeight:700}}>TOTAL INSTALLMENT VALUE</span>
+                            <span style={{fontSize:7,color:T.textM,fontWeight:700}}>TOTAL PROJECT SALES VALUE</span>
                             <span style={{fontSize:11,fontWeight:900,color:T.navy}}>₹{totalPotential.toFixed(0)} Cr</span>
                           </div>
                           <div style={{display:'flex',gap:4}}>
                             <div style={{flex:1,background:`${T.teal}0d`,borderRadius:4,padding:'3px 5px'}}>
-                              <p style={{fontSize:6,color:T.textM,fontWeight:700,margin:0}}>RECEIVED</p>
-                              <p style={{fontSize:10,fontWeight:900,color:T.tealD,margin:0}}>₹{totalReceived.toFixed(0)} Cr</p>
-                              <p style={{fontSize:6,color:T.textM,margin:0}}>Instalment received</p>
+                              <p style={{fontSize:6,color:T.textM,fontWeight:700,margin:0}}>SOLD</p>
+                              <p style={{fontSize:10,fontWeight:900,color:T.tealD,margin:0}}>₹{soldTCV.toFixed(0)} Cr</p>
+                              <p style={{fontSize:6,color:T.textM,margin:0}}>Total Unit Cost</p>
                             </div>
-                            <div style={{flex:1,background:'rgba(124,58,237,0.07)',borderRadius:4,padding:'3px 5px'}}>
-                              <p style={{fontSize:6,color:T.textM,fontWeight:700,margin:0}}>UPCOMING</p>
-                              <p style={{fontSize:10,fontWeight:900,color:'#7c3aed',margin:0}}>₹{unsoldBSP.toFixed(0)} Cr</p>
-                              <p style={{fontSize:6,color:T.textM,margin:0}}>Yet to be received</p>
+                            <div style={{flex:1,background:'rgba(245,158,11,0.07)',borderRadius:4,padding:'3px 5px'}}>
+                              <p style={{fontSize:6,color:T.textM,fontWeight:700,margin:0}}>UNSOLD</p>
+                              <p style={{fontSize:10,fontWeight:900,color:T.amber,margin:0}}>₹{unsoldBSP.toFixed(0)} Cr</p>
+                              <p style={{fontSize:6,color:T.textM,margin:0}}>{availUnits} units</p>
                             </div>
                           </div>
                         </div>
@@ -1481,7 +1484,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                           <span style={{fontSize:9,fontWeight:900,color:T.tealD}}>{collectedPct}% collected</span>
                         </div>
                         <div style={{height:6,background:'rgba(0,100,140,0.1)',borderRadius:3,overflow:'hidden',marginBottom:5}}>
-                          <div style={{width:collectedPct+'%',height:'100%',background:`linear-gradient(90deg,${T.teal},${T.tealD})`,borderRadius:3,transition:'width 0.6s ease'}}/>
+                          <div style={{width:Math.min(collectedPct,100)+'%',height:'100%',background:`linear-gradient(90deg,${T.teal},${T.tealD})`,borderRadius:3,transition:'width 0.6s ease'}}/>
                         </div>
                         <div style={{display:'flex',justifyContent:'space-between'}}>
                           <div>
@@ -1490,7 +1493,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                           </div>
                           <div style={{textAlign:'right'}}>
                             <p style={{fontSize:6,color:T.textM,fontWeight:700,margin:0}}>UPCOMING</p>
-                            <p style={{fontSize:11,fontWeight:900,color:'#7c3aed',margin:0}}>₹{outstanding.toFixed(0)} Cr</p>
+                            <p style={{fontSize:11,fontWeight:900,color:'#7c3aed',margin:0}}>₹{upcomingAmt.toFixed(0)} Cr</p>
                           </div>
                         </div>
                       </div>
