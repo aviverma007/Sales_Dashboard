@@ -2921,6 +2921,41 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                         </div>
                       </div>
 
+                      {/* Month-wise bar chart — full width */}
+                      {(()=>{
+                        const monthData = dk.upcomingByMonth || [];
+                        // Filter to future months only (from today)
+                        const todayM = new Date().toISOString().slice(0,7);
+                        const future = monthData.filter(d=>d.month >= todayM);
+                        const maxAmt = Math.max(...future.map(d=>d.amtCr), 1);
+                        return future.length > 0 ? (
+                          <div style={{marginBottom:20}}>
+                            <p style={{fontSize:9,fontWeight:800,color:T.textM,textTransform:'uppercase',letterSpacing:0.6,margin:'0 0 10px'}}>📅 Month-wise Upcoming Collections</p>
+                            <div style={{overflowX:'auto',paddingBottom:4}}>
+                              <div style={{minWidth: Math.max(future.length * 52 + 60, 600) + 'px'}}>
+                                <ResponsiveContainer width="100%" height={200}>
+                                  <BarChart data={future} margin={{top:20,right:12,bottom:28,left:0}} barSize={28}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.07)" vertical={false}/>
+                                    <XAxis dataKey="label" tick={{fill:T.textM,fontSize:8,fontWeight:600}} axisLine={false} tickLine={false} angle={-30} textAnchor="end" height={36}/>
+                                    <YAxis tick={{fill:T.textM,fontSize:8}} axisLine={false} tickLine={false} width={36} tickFormatter={v=>v+'Cr'}/>
+                                    <Tooltip content={<CTip fmt={v=>`₹${v} Cr`}/>}/>
+                                    <Bar dataKey="amtCr" name="Upcoming (₹Cr)" radius={[4,4,0,0]}>
+                                      {future.map((d,i)=><Cell key={i} fill={d.amtCr===maxAmt?'#7c3aed':d.amtCr>50?'#0097a7':d.amtCr>10?'#00bcd4':'#b0bec5'}/>)}
+                                      <LabelList dataKey="amtCr" position="top" style={{fill:T.navy,fontSize:7,fontWeight:800}} formatter={v=>v>5?v+'Cr':''}/>
+                                    </Bar>
+                                  </BarChart>
+                                </ResponsiveContainer>
+                              </div>
+                            </div>
+                            <div style={{display:'flex',gap:14,marginTop:4,justifyContent:'center'}}>
+                              {[['#7c3aed','Highest month'],['#0097a7','>₹50Cr'],['#00bcd4','₹10–50Cr'],['#b0bec5','<₹10Cr']].map(([c,l])=>(
+                                <div key={l} style={{display:'flex',alignItems:'center',gap:5}}><div style={{width:9,height:9,borderRadius:2,background:c}}/><span style={{fontSize:8,color:T.textM,fontWeight:600}}>{l}</span></div>
+                              ))}
+                            </div>
+                          </div>
+                        ) : null;
+                      })()}
+
                       <div style={{display:'grid',gridTemplateColumns:'3fr 1fr',gap:20}}>
 
                         {/* Milestone breakdown — horizontal bars */}
