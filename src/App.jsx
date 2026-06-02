@@ -1453,7 +1453,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                         <div style={{width:72,height:72,flexShrink:0,position:'relative'}}>
                           <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
-                              <Pie data={[{name:'Sold',value:soldTCV||0.01},{name:'Unsold',value:unsoldBSP||0.01}]}
+                              <Pie data={[{name:'Sold',value:bookedTCV||0.01},{name:'Unsold',value:unsoldBSP||0.01}]}
                                 cx="50%" cy="50%" innerRadius={20} outerRadius={34} paddingAngle={3} dataKey="value" strokeWidth={1.5} stroke="rgba(255,255,255,0.9)" labelLine={false}>
                                 <Cell fill={T.teal}/><Cell fill={T.amber}/>
                               </Pie>
