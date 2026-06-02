@@ -3093,7 +3093,6 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     <div style={{position:'absolute',bottom:0,left:0,right:0,height:3,background:`linear-gradient(90deg,${d.c},transparent)`,borderRadius:'0 0 14px 14px'}}/>
                   </GC>))}
                 </div>
-                </div>
                 {/* Tower-wise Ageing */}
                 {(()=>{
                   const ta = dk.towerAgeing || [];
