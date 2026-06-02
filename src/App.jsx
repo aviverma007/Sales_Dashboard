@@ -2896,6 +2896,84 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                   </GC>
 
                 </div>
+                {/* ═══ UPCOMING BIFURCATION ═══ */}
+                {(()=>{
+                  const milestones = dk.upcomingByMilestone || [];
+                  const towers     = dk.upcomingByTower     || [];
+                  const total      = milestones.reduce((s,d)=>s+d.amtCr, 0);
+                  const maxMs      = milestones[0]?.amtCr || 1;
+                  const maxTw      = towers[0]?.amtCr || 1;
+
+                  // Color palette for milestone bars
+                  const MS_COLORS = ['#0097a7','#1565c0','#7c3aed','#2e7d32','#f57c00','#d32f2f','#00838f','#c2185b','#37474f','#6a1b9a','#0277bd','#558b2f','#e65100'];
+                  const TW_COLORS = ['#0097a7','#00bcd4','#4dd0e1','#26c6da','#00838f','#006064'];
+
+                  return (
+                    <GC style={{padding:20}}>
+                      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:16}}>
+                        <div>
+                          <p style={{fontSize:12,fontWeight:900,color:T.tealD,textTransform:'uppercase',letterSpacing:0.5,margin:0}}>Upcoming Collections — Bifurcation</p>
+                          <p style={{fontSize:10,color:T.textL,margin:'3px 0 0'}}>How ₹{total.toFixed(0)} Cr upcoming demand breaks down by milestone &amp; tower</p>
+                        </div>
+                        <div style={{background:'linear-gradient(135deg,#7c3aed,#a855f7)',borderRadius:10,padding:'6px 16px',textAlign:'center'}}>
+                          <p style={{fontSize:8,color:'rgba(255,255,255,0.8)',fontWeight:700,margin:0,textTransform:'uppercase'}}>Total Upcoming</p>
+                          <p style={{fontSize:18,fontWeight:900,color:'#fff',margin:0}}>₹{total.toFixed(0)} Cr</p>
+                        </div>
+                      </div>
+
+                      <div style={{display:'grid',gridTemplateColumns:'3fr 1fr',gap:20}}>
+
+                        {/* Milestone breakdown — horizontal bars */}
+                        <div>
+                          <p style={{fontSize:9,fontWeight:800,color:T.textM,textTransform:'uppercase',letterSpacing:0.6,margin:'0 0 12px'}}>📋 By Milestone / Construction Stage</p>
+                          <div style={{display:'flex',flexDirection:'column',gap:8}}>
+                            {milestones.map((d,i)=>{
+                              const pct = Math.round((d.amtCr / maxMs) * 100);
+                              const sharePct = total > 0 ? ((d.amtCr / total) * 100).toFixed(1) : '0';
+                              const col = MS_COLORS[i % MS_COLORS.length];
+                              return (
+                                <div key={i}>
+                                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:4}}>
+                                    <div style={{display:'flex',alignItems:'center',gap:7}}>
+                                      <div style={{width:9,height:9,borderRadius:2,background:col,flexShrink:0}}/>
+                                      <span style={{fontSize:10,fontWeight:700,color:T.text}}>{d.name}</span>
+                                    </div>
+                                    <div style={{display:'flex',alignItems:'center',gap:10}}>
+                                      <span style={{fontSize:9,color:T.textL,fontWeight:600}}>{sharePct}%</span>
+                                      <span style={{fontSize:11,fontWeight:900,color:col,minWidth:72,textAlign:'right'}}>₹{d.amtCr} Cr</span>
+                                    </div>
+                                  </div>
+                                  <div style={{height:8,background:'rgba(0,100,140,0.08)',borderRadius:4,overflow:'hidden'}}>
+                                    <div style={{width:pct+'%',height:'100%',background:col,borderRadius:4,transition:'width 0.6s ease',opacity:0.85}}/>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Tower breakdown — vertical bars */}
+                        <div>
+                          <p style={{fontSize:9,fontWeight:800,color:T.textM,textTransform:'uppercase',letterSpacing:0.6,margin:'0 0 12px'}}>🏗️ By Tower</p>
+                          <ResponsiveContainer width="100%" height={240}>
+                            <BarChart data={towers} layout="vertical" margin={{top:0,right:55,bottom:0,left:0}}>
+                              <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.08)" horizontal={false}/>
+                              <XAxis type="number" tick={{fill:T.textM,fontSize:8}} axisLine={false} tickLine={false} tickFormatter={v=>v+'Cr'}/>
+                              <YAxis type="category" dataKey="name" tick={{fill:T.navy,fontSize:11,fontWeight:800}} axisLine={false} tickLine={false} width={30}/>
+                              <Tooltip content={<CTip fmt={v=>`₹${v} Cr`}/>}/>
+                              <Bar dataKey="amtCr" name="Upcoming (₹Cr)" radius={[0,4,4,0]}>
+                                {towers.map((_,i)=><Cell key={i} fill={TW_COLORS[i%TW_COLORS.length]}/>)}
+                                <LabelList dataKey="amtCr" position="right" style={{fill:T.navy,fontSize:9,fontWeight:800}} formatter={v=>'₹'+v+'Cr'}/>
+                              </Bar>
+                            </BarChart>
+                          </ResponsiveContainer>
+                        </div>
+
+                      </div>
+                    </GC>
+                  );
+                })()}
+
                 {/* Project comparison bar */}
                 <div style={{display:'grid',gridTemplateColumns:'2fr 1fr',gap:12}}>
                   <GC style={{padding:16}}>

@@ -4,5 +4,85 @@
   "upcoming": 23682564962.0,
   "advanceInReceived": 1726432741.0,
   "stillOutstanding": 116824443.0,
-  "installmentTotal": 35987445625.0
+  "installmentTotal": 35987445625.0,
+  "upcomingByMilestone": [
+    {
+      "name": "Completion - 40th Floor Slab",
+      "amtCr": 911.18
+    },
+    {
+      "name": "Occupation Certificate",
+      "amtCr": 759.41
+    },
+    {
+      "name": "Offer of Possession",
+      "amtCr": 381.52
+    },
+    {
+      "name": "Other",
+      "amtCr": 175.39
+    },
+    {
+      "name": "Start of Finishing Work",
+      "amtCr": 166.27
+    },
+    {
+      "name": "On Allotment",
+      "amtCr": 42.75
+    },
+    {
+      "name": "Completion - 32nd Floor Slab",
+      "amtCr": 34.92
+    },
+    {
+      "name": "Completion - Top Floor",
+      "amtCr": 23.7
+    },
+    {
+      "name": "Excavation",
+      "amtCr": 18.19
+    },
+    {
+      "name": "Completion - 15th Floor",
+      "amtCr": 15.88
+    },
+    {
+      "name": "Completion - Tower Structure",
+      "amtCr": 13.75
+    },
+    {
+      "name": "Booking Amount",
+      "amtCr": 11.87
+    },
+    {
+      "name": "Completion - Super Structure",
+      "amtCr": 8.36
+    }
+  ],
+  "upcomingByTower": [
+    {
+      "name": "T-1",
+      "amtCr": 515.62
+    },
+    {
+      "name": "T-4",
+      "amtCr": 480.21
+    },
+    {
+      "name": "T-6",
+      "amtCr": 469.0
+    },
+    {
+      "name": "T-2",
+      "amtCr": 468.06
+    },
+    {
+      "name": "T-3",
+      "amtCr": 439.29
+    },
+    {
+      "name": "T-5",
+      "amtCr": 191.02
+    }
+  ]
 }
