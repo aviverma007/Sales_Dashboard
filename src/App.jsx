@@ -3093,46 +3093,79 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     <div style={{position:'absolute',bottom:0,left:0,right:0,height:3,background:`linear-gradient(90deg,${d.c},transparent)`,borderRadius:'0 0 14px 14px'}}/>
                   </GC>))}
                 </div>
-                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
-                  <GC style={{padding:16}}>
-                    <SH title="Ageing Buckets — Outstanding"/>
-                    <ResponsiveContainer width="100%" height={190}>
-                      <BarChart data={ageingData} margin={{top:14,right:8,bottom:8,left:0}}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.08)" vertical={false}/>
-                        <XAxis dataKey="name" tick={{fill:T.textM,fontSize:10,fontWeight:700}} axisLine={false} tickLine={false}/>
-                        <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} tickFormatter={v=>v+'Cr'} width={32}/>
-                        <Tooltip content={({active,payload,label})=>{if(!active||!payload?.length)return null;const d=ageingData.find(r=>r.name===label);return(<div style={{background:'#fff',border:'1px solid #e5e7eb',borderRadius:8,padding:'8px 12px',fontSize:10}}><p style={{margin:0,fontWeight:800,color:T.navy}}>{label}</p><p style={{margin:'2px 0',color:T.red}}>₹{d?.val}Cr outstanding</p><p style={{margin:0,color:T.textM}}>{d?.count} records</p></div>);}}/>
-                        <Bar dataKey="val" name="Outstanding ₹Cr" radius={[4,4,0,0]}>
-                          {ageingData.map((d,i)=><Cell key={i} fill={d.color}/>)}
-                          <LabelList dataKey="val" position="top" style={{fontSize:9,fontWeight:800}} formatter={v=>v>0?v+'Cr':''}/>
-                        </Bar>
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </GC>
-                  <GC style={{padding:16}}>
-                    <SH title="Ageing Donut"/>
-                    <div style={{display:'flex',alignItems:'center',gap:16}}>
-                      <div style={{width:150,height:150,flexShrink:0}}>
-                        <ResponsiveContainer width="100%" height="100%">
-                          <PieChart>
-                            <Pie data={ageingData} cx="50%" cy="50%" innerRadius={40} outerRadius={68} paddingAngle={2} dataKey="val" strokeWidth={1.5} stroke="#fff" labelLine={false}>
-                              {ageingData.map((d,i)=><Cell key={i} fill={d.color}/>)}
-                            </Pie>
-                            <Tooltip content={<CTip fmt={v=>`₹${v}Cr`}/>}/>
-                          </PieChart>
-                        </ResponsiveContainer>
-                      </div>
-                      <div style={{flex:1,display:'flex',flexDirection:'column',gap:6}}>
-                        {ageingData.map((d,i)=><div key={i} style={{display:'flex',alignItems:'center',gap:6}}>
-                          <div style={{width:10,height:10,borderRadius:2,background:d.color,flexShrink:0}}/>
-                          <span style={{fontSize:9,color:T.textM,flex:1}}>{d.name}</span>
-                          <span style={{fontSize:10,fontWeight:800,color:d.color}}>₹{d.val}Cr</span>
-                          <span style={{fontSize:8,color:T.textL}}>({d.count})</span>
-                        </div>)}
-                      </div>
-                    </div>
-                  </GC>
                 </div>
+                {/* Tower-wise Ageing */}
+                {(()=>{
+                  const ta = dk.towerAgeing || [];
+                  const BUCKET_COLORS = {'0-30':T.teal,'31-60':T.amber,'61-90':'#f97316','90+':T.red};
+                  const BUCKETS = ['0-30','31-60','61-90','90+'];
+                  const BUCKET_KEYS = ['b0_30','b31_60','b61_90','b90p'];
+                  const maxTotal = Math.max(...ta.map(t=>t.total), 1);
+                  return (
+                    <GC style={{padding:20}}>
+                      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:16}}>
+                        <div>
+                          <p style={{fontSize:12,fontWeight:900,color:T.tealD,textTransform:'uppercase',letterSpacing:0.5,margin:0}}>Tower-wise Ageing — Outstanding</p>
+                          <p style={{fontSize:10,color:T.textL,margin:'3px 0 0'}}>₹{ta.reduce((s,t)=>s+t.total,0).toFixed(1)} Cr total · {ta.reduce((s,t)=>s+t.units,0)} units</p>
+                        </div>
+                        <div style={{display:'flex',gap:12}}>
+                          {BUCKETS.map((b,i)=>(
+                            <div key={b} style={{display:'flex',alignItems:'center',gap:5}}>
+                              <div style={{width:10,height:10,borderRadius:2,background:BUCKET_COLORS[b]}}/>
+                              <span style={{fontSize:9,color:T.textM,fontWeight:700}}>{b} days</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div style={{display:'grid',gridTemplateColumns:'repeat(6,1fr)',gap:10,marginBottom:20}}>
+                        {ta.map((t,i)=>{
+                          const pct = Math.round(t.total/maxTotal*100);
+                          return (
+                            <GC key={i} style={{padding:14,background:'rgba(0,80,120,0.04)'}} cls="kc">
+                              <p style={{fontSize:13,fontWeight:900,color:T.navy,margin:'0 0 2px'}}>{t.tower}</p>
+                              <p style={{fontSize:16,fontWeight:900,color:T.red,margin:'0 0 8px'}}>₹{t.total.toFixed(2)}Cr</p>
+                              <p style={{fontSize:8,color:T.textL,margin:'0 0 8px'}}>{t.units} units pending</p>
+                              {/* Stacked mini bar */}
+                              <div style={{height:8,borderRadius:4,overflow:'hidden',display:'flex',background:'rgba(0,60,100,0.08)'}}>
+                                {BUCKET_KEYS.map((k,bi)=>t[k]>0?(
+                                  <div key={bi} style={{width:`${Math.round(t[k]/t.total*100)}%`,background:BUCKET_COLORS[BUCKETS[bi]],height:'100%'}}/>
+                                ):null)}
+                              </div>
+                              {/* Bucket breakdown */}
+                              <div style={{marginTop:8,display:'flex',flexDirection:'column',gap:3}}>
+                                {BUCKET_KEYS.map((k,bi)=>t[k]>0?(
+                                  <div key={bi} style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                                    <span style={{fontSize:7,color:BUCKET_COLORS[BUCKETS[bi]],fontWeight:800}}>{BUCKETS[bi]}d</span>
+                                    <span style={{fontSize:8,fontWeight:900,color:BUCKET_COLORS[BUCKETS[bi]]}}> ₹{t[k]}Cr</span>
+                                  </div>
+                                ):null)}
+                              </div>
+                              <div style={{position:'absolute',bottom:0,left:0,right:0,height:3,background:`linear-gradient(90deg,${T.red},transparent)`,borderRadius:'0 0 14px 14px'}}/>
+                            </GC>
+                          );
+                        })}
+                      </div>
+
+                      {/* Grouped bar chart */}
+                      <ResponsiveContainer width="100%" height={220}>
+                        <BarChart data={ta.map(t=>({name:t.tower,'0-30':t.b0_30,'31-60':t.b31_60,'61-90':t.b61_90,'90+':t.b90p}))}
+                          margin={{top:14,right:12,bottom:8,left:0}} barGap={2} barCategoryGap="30%">
+                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.07)" vertical={false}/>
+                          <XAxis dataKey="name" tick={{fill:T.navy,fontSize:11,fontWeight:800}} axisLine={false} tickLine={false}/>
+                          <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} tickFormatter={v=>v+'Cr'} width={36}/>
+                          <Tooltip content={<CTip fmt={v=>`₹${v}Cr`}/>}/>
+                          <Legend wrapperStyle={{fontSize:9,fontWeight:700}} iconSize={8}/>
+                          {BUCKETS.map(b=>(
+                            <Bar key={b} dataKey={b} name={`${b} days`} fill={BUCKET_COLORS[b]} radius={[3,3,0,0]} stackId="a">
+                              <LabelList dataKey={b} position="top" style={{fill:BUCKET_COLORS[b],fontSize:7,fontWeight:800}} formatter={v=>v>0?'₹'+v+'Cr':''}/>
+                            </Bar>
+                          ))}
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </GC>
+                  );
+                })()}
                 {/* Unit outstanding table — no customer name */}
                 <GC style={{padding:16}}>
                   <SH title="Unit-wise Outstanding Status"/>
