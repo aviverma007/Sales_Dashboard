@@ -557,5 +557,322 @@
       "label": "Oct'32",
       "amtCr": 4.14
     }
+  ],
+  "monthlyTrend": [
+    {
+      "month": "2023-11",
+      "label": "Nov'23",
+      "demCr": 34.0,
+      "recCr": 36.3,
+      "eff": 107
+    },
+    {
+      "month": "2023-12",
+      "label": "Dec'23",
+      "demCr": 113.2,
+      "recCr": 112.0,
+      "eff": 99
+    },
+    {
+      "month": "2024-01",
+      "label": "Jan'24",
+      "demCr": 136.8,
+      "recCr": 135.1,
+      "eff": 99
+    },
+    {
+      "month": "2024-02",
+      "label": "Feb'24",
+      "demCr": 238.0,
+      "recCr": 231.2,
+      "eff": 97
+    },
+    {
+      "month": "2024-03",
+      "label": "Mar'24",
+      "demCr": 109.9,
+      "recCr": 103.9,
+      "eff": 94
+    },
+    {
+      "month": "2024-04",
+      "label": "Apr'24",
+      "demCr": 92.2,
+      "recCr": 86.8,
+      "eff": 94
+    },
+    {
+      "month": "2024-05",
+      "label": "May'24",
+      "demCr": 56.0,
+      "recCr": 56.6,
+      "eff": 101
+    },
+    {
+      "month": "2024-06",
+      "label": "Jun'24",
+      "demCr": 31.5,
+      "recCr": 31.4,
+      "eff": 100
+    },
+    {
+      "month": "2024-07",
+      "label": "Jul'24",
+      "demCr": 14.7,
+      "recCr": 12.1,
+      "eff": 82
+    },
+    {
+      "month": "2024-08",
+      "label": "Aug'24",
+      "demCr": 9.2,
+      "recCr": 8.8,
+      "eff": 96
+    },
+    {
+      "month": "2024-09",
+      "label": "Sep'24",
+      "demCr": 5.6,
+      "recCr": 4.6,
+      "eff": 83
+    },
+    {
+      "month": "2024-10",
+      "label": "Oct'24",
+      "demCr": 5.6,
+      "recCr": 5.6,
+      "eff": 100
+    },
+    {
+      "month": "2024-11",
+      "label": "Nov'24",
+      "demCr": 3.8,
+      "recCr": 3.8,
+      "eff": 99
+    },
+    {
+      "month": "2024-12",
+      "label": "Dec'24",
+      "demCr": 16.7,
+      "recCr": 153.0,
+      "eff": 917
+    },
+    {
+      "month": "2025-01",
+      "label": "Jan'25",
+      "demCr": 8.2,
+      "recCr": 62.6,
+      "eff": 759
+    },
+    {
+      "month": "2025-02",
+      "label": "Feb'25",
+      "demCr": 31.9,
+      "recCr": 30.5,
+      "eff": 96
+    },
+    {
+      "month": "2025-03",
+      "label": "Mar'25",
+      "demCr": 24.2,
+      "recCr": 23.8,
+      "eff": 98
+    },
+    {
+      "month": "2025-04",
+      "label": "Apr'25",
+      "demCr": 33.1,
+      "recCr": 31.3,
+      "eff": 95
+    },
+    {
+      "month": "2025-05",
+      "label": "May'25",
+      "demCr": 11.7,
+      "recCr": 11.3,
+      "eff": 96
+    },
+    {
+      "month": "2025-06",
+      "label": "Jun'25",
+      "demCr": 15.5,
+      "recCr": 7.8,
+      "eff": 51
+    },
+    {
+      "month": "2025-07",
+      "label": "Jul'25",
+      "demCr": 17.7,
+      "recCr": 14.0,
+      "eff": 79
+    },
+    {
+      "month": "2025-08",
+      "label": "Aug'25",
+      "demCr": 23.6,
+      "recCr": 18.9,
+      "eff": 80
+    },
+    {
+      "month": "2025-09",
+      "label": "Sep'25",
+      "demCr": 24.1,
+      "recCr": 18.9,
+      "eff": 79
+    },
+    {
+      "month": "2025-10",
+      "label": "Oct'25",
+      "demCr": 0.7,
+      "recCr": 5.9,
+      "eff": 806
+    },
+    {
+      "month": "2025-11",
+      "label": "Nov'25",
+      "demCr": 0.0,
+      "recCr": 3.0,
+      "eff": 0
+    },
+    {
+      "month": "2025-12",
+      "label": "Dec'25",
+      "demCr": 0.0,
+      "recCr": 2.7,
+      "eff": 0
+    },
+    {
+      "month": "2026-02",
+      "label": "Feb'26",
+      "demCr": 0.0,
+      "recCr": 0.6,
+      "eff": 0
+    },
+    {
+      "month": "2026-06",
+      "label": "Jun'26",
+      "demCr": 0.0,
+      "recCr": 0.0,
+      "eff": 0
+    },
+    {
+      "month": "2026-09",
+      "label": "Sep'26",
+      "demCr": 0.0,
+      "recCr": 2.3,
+      "eff": 0
+    },
+    {
+      "month": "2026-11",
+      "label": "Nov'26",
+      "demCr": 0.0,
+      "recCr": 0.2,
+      "eff": 0
+    },
+    {
+      "month": "2026-12",
+      "label": "Dec'26",
+      "demCr": 0.0,
+      "recCr": 1.3,
+      "eff": 0
+    },
+    {
+      "month": "2027-03",
+      "label": "Mar'27",
+      "demCr": 0.0,
+      "recCr": 4.9,
+      "eff": 0
+    },
+    {
+      "month": "2027-04",
+      "label": "Apr'27",
+      "demCr": 0.0,
+      "recCr": 1.2,
+      "eff": 0
+    },
+    {
+      "month": "2027-07",
+      "label": "Jul'27",
+      "demCr": 0.0,
+      "recCr": 1.2,
+      "eff": 0
+    },
+    {
+      "month": "2027-08",
+      "label": "Aug'27",
+      "demCr": 0.0,
+      "recCr": 0.0,
+      "eff": 0
+    },
+    {
+      "month": "2027-09",
+      "label": "Sep'27",
+      "demCr": 0.0,
+      "recCr": 2.7,
+      "eff": 0
+    },
+    {
+      "month": "2027-10",
+      "label": "Oct'27",
+      "demCr": 0.0,
+      "recCr": 0.7,
+      "eff": 0
+    },
+    {
+      "month": "2027-12",
+      "label": "Dec'27",
+      "demCr": 0.0,
+      "recCr": 0.1,
+      "eff": 0
+    },
+    {
+      "month": "2028-01",
+      "label": "Jan'28",
+      "demCr": 0.0,
+      "recCr": 1.2,
+      "eff": 0
+    },
+    {
+      "month": "2028-08",
+      "label": "Aug'28",
+      "demCr": 0.0,
+      "recCr": 0.0,
+      "eff": 0
+    },
+    {
+      "month": "2028-09",
+      "label": "Sep'28",
+      "demCr": 0.0,
+      "recCr": 1.1,
+      "eff": 0
+    },
+    {
+      "month": "2028-11",
+      "label": "Nov'28",
+      "demCr": 0.0,
+      "recCr": 0.0,
+      "eff": 0
+    },
+    {
+      "month": "2029-02",
+      "label": "Feb'29",
+      "demCr": 0.0,
+      "recCr": 0.0,
+      "eff": 0
+    },
+    {
+      "month": "2029-06",
+      "label": "Jun'29",
+      "demCr": 0.0,
+      "recCr": 0.0,
+      "eff": 0
+    },
+    {
+      "month": "2029-10",
+      "label": "Oct'29",
+      "demCr": 0.0,
+      "recCr": 0.0,
+      "eff": 0
+    }
   ]
 }

@@ -2800,10 +2800,8 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
               const currMonthDem=dF.filter(r=>r.billMonth===todayM).reduce((s,r)=>s+(r.demand||r.demandWithTax||0),0);
               const currMonthColl=dF.filter(r=>r.billMonth===todayM).reduce((s,r)=>s+(r.received||0),0);
 
-              // ── Monthly trend ─────────────────────────────────────────
-              const byMonth={};
-              dF.forEach(r=>{if(!r.billMonth)return;const m=r.billMonth;if(!byMonth[m])byMonth[m]={label:fmtML(m),month:m,dem:0,out:0};byMonth[m].dem+=(r.demand||r.demandWithTax||0);byMonth[m].rec+=(r.received||0);byMonth[m].out+=(r.outstanding||0);});
-              const monthlyTrend=Object.values(byMonth).filter(v=>v.dem>0||v.rec>0).sort((a,b)=>a.month.localeCompare(b.month)).map(v=>({label:v.label,demCr:+(v.dem/1e7).toFixed(1),recCr:+(v.rec/1e7).toFixed(1),outCr:+(v.out/1e7).toFixed(1),eff:v.dem>0?Math.round(v.rec/v.dem*100):0}));
+              // ── Monthly trend — from dapp_kpi.json (SAP Date, Outstanding Amount, Received Amt in Bank) ──
+              const monthlyTrend = (dk.monthlyTrend || []).filter(v => v.demCr > 0 || v.recCr > 0);
 
               // ── Project-wise ──────────────────────────────────────────
               const byProj={};
