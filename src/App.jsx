@@ -768,6 +768,134 @@ const PnLTab = ({T, GC, SH, filters, sf}) => {
 <PnLChart md={filteredColl}/>
       </GC>
 
+      {/* ── Project Summary Card ── */}
+      {(()=>{
+        // Fetch dapp_kpi values via sessionStorage cache or props — PnLTab doesn't have raw,
+        // so we read from a window-level cache set by AppInner
+        const dk = window.__dappKpi || {};
+        const bookedUnits  = dk.bookedUnits  || 0;
+        const availUnits   = dk.availUnits   || 0;
+        const totalUnits   = dk.totalUnits   || (bookedUnits + availUnits);
+        const bookedArea   = dk.bookedSuperArea ? +(dk.bookedSuperArea/1000).toFixed(0) : 0;
+        const availArea    = dk.availSuperArea  ? +(dk.availSuperArea/1000).toFixed(0)  : 0;
+        const totalArea    = dk.totalSuperArea  ? +(dk.totalSuperArea/1000).toFixed(0)  : bookedArea + availArea;
+        const demandCr     = dk.totalDemandRaised ? +(dk.totalDemandRaised/1e7).toFixed(1) : 0;
+        const receivedCr   = dk.totalReceived     ? +(dk.totalReceived/1e7).toFixed(1)     : 0;
+        const upcomingCr   = dk.upcoming          ? +(dk.upcoming/1e7).toFixed(1)          : 0;
+
+        const barData = [
+          { metric:'Units',      sold: bookedUnits, available: availUnits,   soldLabel: bookedUnits+' units',  availLabel: availUnits+' units',  unit:'' },
+          { metric:'Area (K sqft)', sold: bookedArea, available: availArea,  soldLabel: bookedArea+'K sqft',   availLabel: availArea+'K sqft',   unit:'K' },
+          { metric:'Demand vs Received (₹Cr)', sold: receivedCr, available: Math.max(0, demandCr - receivedCr), soldLabel:'₹'+receivedCr+'Cr received', availLabel:'₹'+Math.max(0,demandCr-receivedCr).toFixed(1)+'Cr outstanding', unit:'Cr' },
+        ];
+
+        const COLORS = { sold: T?.teal||'#0097a7', available: T?.amber||'#f59e0b', outstanding: '#ef4444' };
+
+        return (
+          <GC style={{padding:20,marginTop:4}}>
+            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:20}}>
+              <div>
+                <p style={{fontSize:12,fontWeight:900,color:T?.tealD||'#00697a',textTransform:'uppercase',letterSpacing:0.5,margin:0}}>Project Summary</p>
+                <p style={{fontSize:10,color:T?.gray||'#64748b',margin:'3px 0 0'}}>Units · Area · Demand vs Collection — at a glance</p>
+              </div>
+              <div style={{display:'flex',gap:16}}>
+                {[['#0097a7','Sold / Received'],['#f59e0b','Available / Outstanding']].map(([c,l])=>(
+                  <div key={l} style={{display:'flex',alignItems:'center',gap:6}}>
+                    <div style={{width:10,height:10,borderRadius:2,background:c}}/>
+                    <span style={{fontSize:9,color:T?.textM||'#64748b',fontWeight:700}}>{l}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:16}}>
+              {/* Units */}
+              <div>
+                <p style={{fontSize:9,fontWeight:800,color:T?.textM||'#64748b',textTransform:'uppercase',margin:'0 0 10px',letterSpacing:0.5}}>Units Sold vs Available</p>
+                <div style={{height:220}}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie data={[{name:'Sold',value:bookedUnits},{name:'Available',value:availUnits}]}
+                        cx="50%" cy="45%" innerRadius={55} outerRadius={85} paddingAngle={3} dataKey="value" strokeWidth={2} stroke="#fff">
+                        <Cell fill={COLORS.sold}/><Cell fill={COLORS.available}/>
+                        <LabelList dataKey="value" position="outside" style={{fontSize:10,fontWeight:800,fill:T?.navy||'#0d2137'}} formatter={(v,entry)=>v}/>
+                      </Pie>
+                      <Tooltip formatter={(v,n)=>[v+' units',n]}/>
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+                <div style={{display:'flex',justifyContent:'center',gap:16,marginTop:4}}>
+                  <div style={{textAlign:'center'}}>
+                    <p style={{fontSize:18,fontWeight:900,color:COLORS.sold,margin:0}}>{bookedUnits}</p>
+                    <p style={{fontSize:8,color:T?.textM||'#64748b',margin:0}}>SOLD ({totalUnits>0?Math.round(bookedUnits/totalUnits*100):0}%)</p>
+                  </div>
+                  <div style={{textAlign:'center'}}>
+                    <p style={{fontSize:18,fontWeight:900,color:COLORS.available,margin:0}}>{availUnits}</p>
+                    <p style={{fontSize:8,color:T?.textM||'#64748b',margin:0}}>AVAILABLE</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Area */}
+              <div>
+                <p style={{fontSize:9,fontWeight:800,color:T?.textM||'#64748b',textTransform:'uppercase',margin:'0 0 10px',letterSpacing:0.5}}>Area Sold vs Available (K sqft)</p>
+                <div style={{height:220}}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie data={[{name:'Booked',value:bookedArea},{name:'Available',value:availArea}]}
+                        cx="50%" cy="45%" innerRadius={55} outerRadius={85} paddingAngle={3} dataKey="value" strokeWidth={2} stroke="#fff">
+                        <Cell fill={COLORS.sold}/><Cell fill={COLORS.available}/>
+                      </Pie>
+                      <Tooltip formatter={(v,n)=>[v+'K sqft',n]}/>
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+                <div style={{display:'flex',justifyContent:'center',gap:16,marginTop:4}}>
+                  <div style={{textAlign:'center'}}>
+                    <p style={{fontSize:18,fontWeight:900,color:COLORS.sold,margin:0}}>{bookedArea}K</p>
+                    <p style={{fontSize:8,color:T?.textM||'#64748b',margin:0}}>BOOKED ({totalArea>0?Math.round(bookedArea/totalArea*100):0}%)</p>
+                  </div>
+                  <div style={{textAlign:'center'}}>
+                    <p style={{fontSize:18,fontWeight:900,color:COLORS.available,margin:0}}>{availArea}K</p>
+                    <p style={{fontSize:8,color:T?.textM||'#64748b',margin:0}}>AVAILABLE</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Demand vs Received */}
+              <div>
+                <p style={{fontSize:9,fontWeight:800,color:T?.textM||'#64748b',textTransform:'uppercase',margin:'0 0 10px',letterSpacing:0.5}}>Demand vs Received (₹Cr)</p>
+                <div style={{height:220}}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={[
+                      {name:'Demand Raised', value: demandCr, fill: COLORS.available},
+                      {name:'Received',      value: receivedCr, fill: COLORS.sold},
+                      {name:'Upcoming',      value: upcomingCr, fill: '#7c3aed'},
+                    ]} margin={{top:20,right:10,bottom:10,left:0}} barSize={44}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.07)" vertical={false}/>
+                      <XAxis dataKey="name" tick={{fill:T?.textM||'#64748b',fontSize:8,fontWeight:700}} axisLine={false} tickLine={false}/>
+                      <YAxis tick={{fill:T?.textM||'#64748b',fontSize:8}} axisLine={false} tickLine={false} tickFormatter={v=>v+'Cr'} width={40}/>
+                      <Tooltip formatter={(v)=>['₹'+v+' Cr']}/>
+                      <Bar dataKey="value" radius={[5,5,0,0]}>
+                        {[COLORS.available, COLORS.sold, '#7c3aed'].map((c,i)=><Cell key={i} fill={c}/>)}
+                        <LabelList dataKey="value" position="top" style={{fill:T?.navy||'#0d2137',fontSize:10,fontWeight:900}} formatter={v=>'₹'+v+'Cr'}/>
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+                <div style={{display:'flex',justifyContent:'center',gap:12,marginTop:4}}>
+                  {[['#f59e0b','Demand ₹'+demandCr+'Cr'],['#0097a7','Received ₹'+receivedCr+'Cr'],['#7c3aed','Upcoming ₹'+upcomingCr+'Cr']].map(([c,l])=>(
+                    <div key={l} style={{display:'flex',alignItems:'center',gap:4}}>
+                      <div style={{width:8,height:8,borderRadius:2,background:c}}/>
+                      <span style={{fontSize:7,color:T?.textM||'#64748b',fontWeight:700}}>{l}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </GC>
+        );
+      })()}
 
     </div>
   );
@@ -863,6 +991,7 @@ function AppInner() {
       fetch('/data/dapp_kpi.json').then(r=>r.json()).catch(()=>({})),
     ]).then(([d, kpi])=>{
       d.dappKpi = kpi;
+      window.__dappKpi = kpi;  // make available to PnLTab
       setRaw(d);
       setLoading(false);
       const firstProj=(d.filterOptions?.projects||[])[0]||'SMARTWORLD THE EDITION';
