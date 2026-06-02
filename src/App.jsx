@@ -3195,43 +3195,97 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                   <p style={{fontSize:9,color:T.textL,margin:'6px 0 0',textAlign:'center'}}>Top {unitRows.length} units by outstanding · No customer names shown</p>
                 </GC>
 
-                {/* ═══ SUBHEADING 4: PROJECT DRILLDOWN ═══ */}
-                <SectionHead title="Project Drilldown" icon="🔍"/>
-                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
-                  <GC style={{padding:16}}>
-                    <SH title="Tower-wise Collection"/>
-                    {towerData2.length>0?(<ResponsiveContainer width="100%" height={200}>
-                      <BarChart data={towerData2} margin={{top:14,right:8,bottom:8,left:0}} barCategoryGap="25%">
-                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.08)" vertical={false}/>
-                        <XAxis dataKey="name" tick={{fill:T.textM,fontSize:9,fontWeight:700}} axisLine={false} tickLine={false}/>
-                        <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} tickFormatter={v=>v+'Cr'} width={32}/>
-                        <Tooltip content={<CTip fmt={v=>`₹${v}Cr`}/>}/>
-                        <Legend wrapperStyle={{fontSize:9,fontWeight:700}} iconSize={8}/>
-                        <Bar dataKey="demCr" name="Demand" fill={T.amber} radius={[3,3,0,0]} fillOpacity={0.8}/>
-                        <Bar dataKey="recCr" name="Received" fill={T.teal} radius={[3,3,0,0]}/>
-                        <Bar dataKey="outCr" name="Outstanding" fill={T.red} radius={[3,3,0,0]} fillOpacity={0.7}/>
-                      </BarChart>
-                    </ResponsiveContainer>):<p style={{color:T.textL,fontSize:11,textAlign:'center',padding:40}}>Select a project to see tower breakdown</p>}
-                  </GC>
-                  <GC style={{padding:16}}>
-                    <SH title="Milestone-wise Demand"/>
-                    <div style={{overflowX:'auto'}}>
-                      <div style={{minWidth:Math.max(milestoneData.length*70,400)+'px'}}>
-                        <ResponsiveContainer width="100%" height={200}>
-                          <BarChart data={milestoneData} margin={{top:14,right:8,bottom:52,left:0}} barCategoryGap="30%">
-                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.08)" vertical={false}/>
-                            <XAxis dataKey="name" tick={{fill:T.textM,fontSize:7,fontWeight:600}} axisLine={false} tickLine={false} angle={-35} textAnchor="end" height={56} interval={0}/>
-                            <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} tickFormatter={v=>v+'Cr'} width={32}/>
-                            <Tooltip content={<CTip fmt={v=>`₹${v}Cr`}/>}/>
-                            <Legend wrapperStyle={{fontSize:9,fontWeight:700}} iconSize={8}/>
-                            <Bar dataKey="demCr" name="Demand" fill={T.amber} radius={[3,3,0,0]} fillOpacity={0.85}/>
-                            <Bar dataKey="recCr" name="Received" fill={T.teal} radius={[3,3,0,0]} fillOpacity={0.85}/>
-                          </BarChart>
-                        </ResponsiveContainer>
+                {/* ═══ COLLECTED MONEY BIFURCATION ═══ */}
+                {(()=>{
+                  const cms = dk.collectedByMilestone || [];
+                  const ctw = dk.collectedByTower     || [];
+                  const cmo = dk.collectedByMonth     || [];
+                  const total = ctw.reduce((s,d)=>s+d.amtCr,0);
+                  const maxMs = cms[0]?.amtCr || 1;
+                  const MS_COLORS = ['#0097a7','#1565c0','#7c3aed','#2e7d32','#f57c00','#d32f2f','#00838f','#c2185b','#37474f','#6a1b9a','#0277bd','#558b2f','#e65100'];
+                  const TW_COLORS = ['#0097a7','#00bcd4','#4dd0e1','#26c6da','#00838f','#006064'];
+                  const todayM = new Date().toISOString().slice(0,7);
+                  const maxMo = Math.max(...cmo.map(d=>d.amtCr),1);
+                  return (
+                    <GC style={{padding:20}}>
+                      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:16}}>
+                        <div>
+                          <p style={{fontSize:12,fontWeight:900,color:T.tealD,textTransform:'uppercase',letterSpacing:0.5,margin:0}}>Collections Received — Bifurcation</p>
+                          <p style={{fontSize:10,color:T.textL,margin:'3px 0 0'}}>How ₹{total.toFixed(0)} Cr collected breaks down by milestone, tower &amp; month</p>
+                        </div>
+                        <div style={{background:`linear-gradient(135deg,${T.tealD},${T.teal})`,borderRadius:10,padding:'6px 16px',textAlign:'center'}}>
+                          <p style={{fontSize:8,color:'rgba(255,255,255,0.8)',fontWeight:700,margin:0,textTransform:'uppercase'}}>Total Collected</p>
+                          <p style={{fontSize:18,fontWeight:900,color:'#fff',margin:0}}>₹{total.toFixed(0)} Cr</p>
+                        </div>
                       </div>
-                    </div>
-                  </GC>
-                </div>
+
+                      {/* Month-wise chart */}
+                      <p style={{fontSize:9,fontWeight:800,color:T.textM,textTransform:'uppercase',letterSpacing:0.6,margin:'0 0 10px'}}>📅 Month-wise Collections Received</p>
+                      <div style={{overflowX:'auto',paddingBottom:4,marginBottom:20}}>
+                        <div style={{minWidth:Math.max(cmo.length*52+60,600)+'px'}}>
+                          <ResponsiveContainer width="100%" height={200}>
+                            <BarChart data={cmo} margin={{top:20,right:12,bottom:28,left:0}} barSize={28}>
+                              <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.07)" vertical={false}/>
+                              <XAxis dataKey="label" tick={{fill:T.textM,fontSize:8,fontWeight:600}} axisLine={false} tickLine={false} angle={-30} textAnchor="end" height={36}/>
+                              <YAxis tick={{fill:T.textM,fontSize:8}} axisLine={false} tickLine={false} width={36} tickFormatter={v=>v+'Cr'}/>
+                              <Tooltip content={<CTip fmt={v=>`₹${v} Cr`}/>}/>
+                              <Bar dataKey="amtCr" name="Collected (₹Cr)" radius={[4,4,0,0]}>
+                                {cmo.map((d,i)=><Cell key={i} fill={d.amtCr===maxMo?T.tealD:d.amtCr>50?T.teal:d.amtCr>10?'#4dd0e1':'#b0bec5'}/>)}
+                                <LabelList dataKey="amtCr" position="top" style={{fill:T.navy,fontSize:7,fontWeight:800}} formatter={v=>v>5?v+'Cr':''}/>
+                              </Bar>
+                            </BarChart>
+                          </ResponsiveContainer>
+                        </div>
+                      </div>
+
+                      {/* Milestone + Tower side by side */}
+                      <div style={{display:'grid',gridTemplateColumns:'3fr 1fr',gap:20}}>
+                        {/* Milestone bars */}
+                        <div>
+                          <p style={{fontSize:9,fontWeight:800,color:T.textM,textTransform:'uppercase',letterSpacing:0.6,margin:'0 0 12px'}}>📋 By Milestone / Stage</p>
+                          <div style={{display:'flex',flexDirection:'column',gap:8}}>
+                            {cms.map((d,i)=>{
+                              const pct=Math.round((d.amtCr/maxMs)*100);
+                              const sharePct=total>0?((d.amtCr/total)*100).toFixed(1):'0';
+                              const col=MS_COLORS[i%MS_COLORS.length];
+                              return(<div key={i}>
+                                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:4}}>
+                                  <div style={{display:'flex',alignItems:'center',gap:7}}>
+                                    <div style={{width:9,height:9,borderRadius:2,background:col,flexShrink:0}}/>
+                                    <span style={{fontSize:10,fontWeight:700,color:T.text}}>{d.name}</span>
+                                  </div>
+                                  <div style={{display:'flex',alignItems:'center',gap:10}}>
+                                    <span style={{fontSize:9,color:T.textL,fontWeight:600}}>{sharePct}%</span>
+                                    <span style={{fontSize:11,fontWeight:900,color:col,minWidth:72,textAlign:'right'}}>₹{d.amtCr} Cr</span>
+                                  </div>
+                                </div>
+                                <div style={{height:8,background:'rgba(0,100,140,0.08)',borderRadius:4,overflow:'hidden'}}>
+                                  <div style={{width:pct+'%',height:'100%',background:col,borderRadius:4,opacity:0.85}}/>
+                                </div>
+                              </div>);
+                            })}
+                          </div>
+                        </div>
+                        {/* Tower bar chart */}
+                        <div>
+                          <p style={{fontSize:9,fontWeight:800,color:T.textM,textTransform:'uppercase',letterSpacing:0.6,margin:'0 0 12px'}}>🏗️ By Tower</p>
+                          <ResponsiveContainer width="100%" height={240}>
+                            <BarChart data={ctw} layout="vertical" margin={{top:0,right:55,bottom:0,left:0}}>
+                              <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.08)" horizontal={false}/>
+                              <XAxis type="number" tick={{fill:T.textM,fontSize:8}} axisLine={false} tickLine={false} tickFormatter={v=>v+'Cr'}/>
+                              <YAxis type="category" dataKey="name" tick={{fill:T.navy,fontSize:11,fontWeight:800}} axisLine={false} tickLine={false} width={30}/>
+                              <Tooltip content={<CTip fmt={v=>`₹${v} Cr`}/>}/>
+                              <Bar dataKey="amtCr" name="Collected (₹Cr)" radius={[0,4,4,0]}>
+                                {ctw.map((_,i)=><Cell key={i} fill={TW_COLORS[i%TW_COLORS.length]}/>)}
+                                <LabelList dataKey="amtCr" position="right" style={{fill:T.navy,fontSize:9,fontWeight:800}} formatter={v=>'₹'+v+'Cr'}/>
+                              </Bar>
+                            </BarChart>
+                          </ResponsiveContainer>
+                        </div>
+                      </div>
+                    </GC>
+                  );
+                })()}
 
                 {/* ═══ SUBHEADING 5: FORECASTING ═══ */}
                 <SectionHead title="Forecasting & Upcoming Demand" icon="🔮"/>
