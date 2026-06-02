@@ -1,10 +1,30 @@
 {
+  "totalUnits": 956,
+  "bookedUnits": 613,
+  "availUnits": 284,
+  "soldPct": 64,
+  "bookedSuperArea": 1997660,
+  "availSuperArea": 928125,
+  "totalSuperArea": 3130690,
+  "bookedCarpetArea": 1065877,
+  "bookedTCV": 35987445579.0,
+  "unsoldValue": 16719986348.03,
+  "totalProjectValue": 52707431927.03,
+  "avgRatePerSqft": 18014.8,
+  "soldPctValue": 68,
   "totalDemandRaised": 10578447922.0,
   "totalReceived": 12304880663.0,
+  "outstanding1": 116824443.0,
+  "installmentTotal": 35987445625.0,
   "upcoming": 23682564962.0,
   "advanceInReceived": 1726432741.0,
   "stillOutstanding": 116824443.0,
-  "installmentTotal": 35987445625.0,
+  "totalTax": 503228488.0,
+  "collEff": 116,
+  "collPctInstallment": 34,
+  "unitsOutstanding": 145,
+  "activeBookings": 611,
+  "cancelledBookings": 72,
   "upcomingByMilestone": [
     {
       "name": "Completion - 40th Floor Slab",
@@ -20,7 +40,7 @@
     },
     {
       "name": "Other",
-      "amtCr": 175.39
+      "amtCr": 193.58
     },
     {
       "name": "Start of Finishing Work",
@@ -37,10 +57,6 @@
     {
       "name": "Completion - Top Floor",
       "amtCr": 23.7
-    },
-    {
-      "name": "Excavation",
-      "amtCr": 18.19
     },
     {
       "name": "Completion - 15th Floor",
@@ -541,10 +557,5 @@
       "label": "Oct'32",
       "amtCr": 4.14
     }
-  ],
-  "unsoldValue": 16719986348.03,
-  "unsoldAreaSqft": 928125.0,
-  "avgRatePerSqft": 18014.8,
-  "bookedTCV": 35987445579.0,
-  "totalProjectValue": 52707431927.03
+  ]
 }

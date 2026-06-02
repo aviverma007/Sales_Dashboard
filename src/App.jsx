@@ -963,7 +963,29 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
     return qs;
   },[fo,filters.fy]);
 
-  const kpi=useMemo(()=>{const tS=pA.reduce((s,r)=>s+(r.bsp||0),0),tD=dFAll.reduce((s,r)=>s+(r.demand||0),0),tR=dFAll.reduce((s,r)=>s+(r.received||0),0),tO=dFAll.reduce((s,r)=>s+(r.outstanding||0),0);const ws={APPROVED:0,PENDING:0,REJECTED:0};wF.forEach(r=>{if(ws[r.status]!==undefined)ws[r.status]++;});return{totalUnits:iFAll.length,bookedUnits:iFAll.filter(r=>r.status==='Booked').length,availableUnits:iFAll.filter(r=>r.status==='Available').length,inProgressUnits:iFAll.filter(r=>r.status==='In Progress').length,totalSales:tS,dappDemand:tD,dappReceived:tR,dappOutstanding:tO,activeBookings:pAAll.length,cancelledBookings:pCAll.length,pipelineBookings:wF.filter(r=>r.status==='PENDING').length,wfApproved:ws.APPROVED,wfPending:ws.PENDING,wfRejected:ws.REJECTED};},[pAAll,pCAll,dFAll,iFAll,wF]);
+  const kpi=useMemo(()=>{
+    const dk=raw?.dappKpi||{};
+    const tS=pA.reduce((s,r)=>s+(r.bsp||0),0);
+    const ws={APPROVED:0,PENDING:0,REJECTED:0};
+    wF.forEach(r=>{if(ws[r.status]!==undefined)ws[r.status]++;});
+    return{
+      // Units from dapp_kpi (sourced from invr Excel — most accurate)
+      totalUnits:      dk.totalUnits      || iFAll.length,
+      bookedUnits:     dk.bookedUnits     || iFAll.filter(r=>r.status==='Booked').length,
+      availableUnits:  dk.availUnits      || iFAll.filter(r=>r.status==='Available').length,
+      inProgressUnits: iFAll.filter(r=>r.status==='In Progress').length,
+      totalSales:tS,
+      // Demand/collection from dapp_kpi
+      dappDemand:   dk.totalDemandRaised || dFAll.reduce((s,r)=>s+(r.demand||0),0),
+      dappReceived: dk.totalReceived     || dFAll.reduce((s,r)=>s+(r.received||0),0),
+      dappOutstanding: dk.stillOutstanding || dFAll.reduce((s,r)=>s+(r.outstanding||0),0),
+      // Bookings from pdrn
+      activeBookings:   dk.activeBookings   || pAAll.length,
+      cancelledBookings:dk.cancelledBookings|| pCAll.length,
+      pipelineBookings: wF.filter(r=>r.status==='PENDING').length,
+      wfApproved:ws.APPROVED,wfPending:ws.PENDING,wfRejected:ws.REJECTED,
+    };
+  },[pAAll,pCAll,dFAll,iFAll,wF,raw]);
 
   const monthly=useMemo(()=>{const map={};pA.forEach(r=>{const m=r.bookingMonth;if(!m)return;if(!map[m])map[m]={month:m,label:fmtML(m),units:0,bspCr:0,demCr:0,recCr:0};map[m].units++;map[m].bspCr+=(r.bsp||0)/1e7;map[m].demCr+=(r.demand||0)/1e7;map[m].recCr+=(r.received||0)/1e7;});return Object.values(map).sort((a,b)=>a.month.localeCompare(b.month)).map(r=>({...r,bspCr:+r.bspCr.toFixed(1),demCr:+r.demCr.toFixed(1),recCr:+r.recCr.toFixed(1)}));},[pA]);
   const dappM=useMemo(()=>{const map={};dF.forEach(r=>{const m=r.billMonth;if(!m)return;if(!map[m])map[m]={month:m,label:fmtML(m),demCr:0,recCr:0,outCr:0};map[m].demCr+=(r.demand||0)/1e7;map[m].recCr+=(r.received||0)/1e7;map[m].outCr+=(r.outstanding||0)/1e7;});return Object.values(map).sort((a,b)=>a.month.localeCompare(b.month)).map(r=>({...r,demCr:+r.demCr.toFixed(1),recCr:+r.recCr.toFixed(1),outCr:+r.outCr.toFixed(1)}));},[dF]);
@@ -984,33 +1006,24 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
     });
   },[pA,pC,raw,iF]);
   const kpiEx=useMemo(()=>{
-    // KPI cards always use project-only filtered data (ignore FY/quarter/month/broker/typology)
-    const bookedAreaSqft = iFAll.filter(r=>r.status==='Booked').reduce((s,r)=>s+(r.superArea||0),0)
-                        || pAAll.reduce((s,r)=>s+(r.superArea||0),0);
-    const carpetAreaSqft = iFAll.filter(r=>r.status==='Booked').reduce((s,r)=>s+(r.carpetArea||0),0)
-                        || pAAll.reduce((s,r)=>s+(r.carpet||0),0);
-    const availAreaSqft  = iFAll.filter(r=>r.status==='Available').reduce((s,r)=>s+(r.superArea||0),0);
-    const totalSuperArea = iFAll.reduce((s,r)=>s+(r.superArea||0),0);
+    // Single source of truth: dapp_kpi.json (pre-computed from Excel files)
+    const dk = raw?.dappKpi || {};
+    const bookedAreaSqft = dk.bookedSuperArea || iFAll.filter(r=>r.status==='Booked').reduce((s,r)=>s+(r.superArea||0),0);
+    const carpetAreaSqft = dk.bookedCarpetArea || iFAll.filter(r=>r.status==='Booked').reduce((s,r)=>s+(r.carpetArea||0),0);
+    const availAreaSqft  = dk.availSuperArea   || iFAll.filter(r=>r.status==='Available').reduce((s,r)=>s+(r.superArea||0),0);
+    const totalSuperArea = dk.totalSuperArea   || iFAll.reduce((s,r)=>s+(r.superArea||0),0);
     const totalBSPCr     = +(pAAll.reduce((s,r)=>s+(r.bsp||0),0)/1e7).toFixed(1);
-    const totalTCVCr     = +(pAAll.reduce((s,r)=>s+(r.tcv||0),0)/1e7).toFixed(1);
     const cancelledBSPCr = +(pCAll.reduce((s,r)=>s+(r.bsp||0),0)/1e7).toFixed(1);
     const cancelledAreaSqft = pCAll.reduce((s,r)=>s+(r.superArea||0),0);
-    // Avg rate = Total Unit Cost (TCV) / Total Super Area of booked units
-    const totalTCVRaw = pAAll.reduce((s,r)=>s+(r.tcv||0),0);
-    const avgRatePerSqft = bookedAreaSqft>0
-      ? Math.round(totalTCVRaw/bookedAreaSqft)
-      : 0;
-    const base = raw?.kpiExtra||{};
+    const totalTCVCr     = dk.bookedTCV ? +(dk.bookedTCV/1e7).toFixed(1) : +(pAAll.reduce((s,r)=>s+(r.tcv||0),0)/1e7).toFixed(1);
+    const avgRatePerSqft = Math.round(dk.avgRatePerSqft || (bookedAreaSqft>0 ? (dk.bookedTCV||0)/bookedAreaSqft : 0));
+    const unsoldValueCr  = dk.unsoldValue ? +(dk.unsoldValue/1e7).toFixed(1) : 0;
+    const totalProjCr    = dk.totalProjectValue ? +(dk.totalProjectValue/1e7).toFixed(1) : +(+totalTCVCr+unsoldValueCr).toFixed(1);
+    const soldPctValue   = dk.soldPctValue || (totalProjCr>0?Math.round(+totalTCVCr/totalProjCr*100):0);
     return {
-      bookedAreaSqft:  bookedAreaSqft>0?bookedAreaSqft:base.bookedAreaSqft||0,
-      totalSuperArea:  totalSuperArea>0?totalSuperArea:(base.bookedAreaSqft||0)+(base.availAreaSqft||0),
-      carpetAreaSqft:  carpetAreaSqft>0?carpetAreaSqft:base.carpetAreaSqft||0,
-      availAreaSqft:   availAreaSqft>0?availAreaSqft:base.availAreaSqft||0,
-      totalBSPCr:      totalBSPCr>0?totalBSPCr:base.totalBSPCr||0,
-      totalTCVCr:      totalTCVCr>0?totalTCVCr:base.totalTCVCr||0,
-      cancelledBSPCr:  cancelledBSPCr>0?cancelledBSPCr:base.cancelledBSPCr||0,
-      cancelledAreaSqft: cancelledAreaSqft>0?cancelledAreaSqft:base.cancelledAreaSqft||0,
-      avgRatePerSqft:  avgRatePerSqft>0?avgRatePerSqft:base.avgRatePerSqft||0,
+      bookedAreaSqft, carpetAreaSqft, availAreaSqft, totalSuperArea,
+      totalBSPCr, totalTCVCr, cancelledBSPCr, cancelledAreaSqft,
+      avgRatePerSqft, unsoldValueCr, totalProjCr, soldPctValue,
     };
   },[pAAll,pCAll,iFAll,raw]);
   const salesVsRefund=useMemo(()=>{
@@ -1375,7 +1388,6 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                 {(()=>{
                   const sold=kpiEx.bookedAreaSqft||0;
                   const avail=kpiEx.availAreaSqft||0;
-                  // Use total super area from invr (Total Super Area column) as the denominator
                   const totalSA=kpiEx.totalSuperArea||0;
                   const tot=totalSA>0?totalSA:(sold+avail);
                   const pct=tot>0?Math.round((sold/tot)*100):0;
@@ -1423,19 +1435,17 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
               <GC style={{padding:12}} cls="kc">
                 <SH title="Total Sales Value (₹Cr)" compact/>
                 {(()=>{
-                  const soldTCV=kpiEx.totalTCVCr||0;
-                  // Collection data from dapp_kpi
-                  const dkOv = raw?.dappKpi || {};
-                  const installmentTotal=+((dkOv.installmentTotal||0)/1e7).toFixed(2);
-                  const totalReceived=+(dFAll.reduce((s,r)=>s+(r.received||0),0)/1e7).toFixed(2);
-                  const upcomingAmt=+((dkOv.upcoming||0)/1e7).toFixed(2);
-                  const collectedPct=installmentTotal>0?Math.round(totalReceived/installmentTotal*100):0;
-                  // Unsold = available area × actual avg booked rate (from invr, pre-computed)
-                  const availUnits=iFAll.filter(r=>r.status==='Available').length;
-                  const unsoldBSP=+((dkOv.unsoldValue||0)/1e7).toFixed(2);
-                  const bookedTCV=+((dkOv.bookedTCV||0)/1e7).toFixed(2) || soldTCV;
-                  const totalPotential=+((dkOv.totalProjectValue||0)/1e7).toFixed(2) || +(bookedTCV+unsoldBSP).toFixed(2);
-                  const soldPct=totalPotential>0?Math.round(bookedTCV/totalPotential*100):0;
+                  // All values from kpiEx (sourced from dapp_kpi.json / invr Excel)
+                  const dk2 = raw?.dappKpi || {};
+                  const bookedTCV      = +kpiEx.totalTCVCr;
+                  const unsoldBSP      = +kpiEx.unsoldValueCr;
+                  const totalPotential = +kpiEx.totalProjCr;
+                  const soldPct        = kpiEx.soldPctValue || 0;
+                  const availUnits     = dk2.availUnits || iFAll.filter(r=>r.status==='Available').length;
+                  const installmentTotal = +((dk2.installmentTotal||0)/1e7).toFixed(2);
+                  const totalReceived    = +((dk2.totalReceived||0)/1e7).toFixed(2);
+                  const upcomingAmt      = +((dk2.upcoming||0)/1e7).toFixed(2);
+                  const collectedPct     = installmentTotal>0?Math.round(totalReceived/installmentTotal*100):0;
                   return(
                     <div style={{display:'flex',flexDirection:'column',gap:6}}>
                       {/* Row 1: donut + sold/unsold */}
@@ -1510,7 +1520,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const unitRates=pA.filter(r=>r.bsp>0&&r.superArea>0).map(r=>Math.round(r.bsp/r.superArea));
                     const minR=unitRates.length?Math.min(...unitRates):0;
                     const maxR=unitRates.length?Math.max(...unitRates):0;
-                    const avgR=kpiEx.avgRatePerSqft||0;
+                    const avgR=kpiEx.avgRatePerSqft||0; // Rs18,015/sqft from invr
                     // Range bar: avgR position as % between minR and maxR
                     const range=maxR-minR||1;
                     const avgPct=Math.round(((avgR-minR)/range)*100);
@@ -2769,32 +2779,23 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
               const today=new Date().toISOString().slice(0,10);
               const todayM=today.slice(0,7);
 
-              // ── KPIs from dapp_kpi.json (pre-computed from edition_dapp.XLSX) ──
-              // totalDemandRaised  = "Outstanding Amount" column sum
-              // totalReceived      = "Received Amt (in Bank)" column sum
-              // upcoming           = "Installment Amount" - "Received Amt (in Bank)"
-              // advanceInReceived  = received beyond demand (over-collection)
-              // stillOutstanding   = "Outstanding 1" (unpaid from demand)
+              // ── All KPIs from dapp_kpi.json (single source of truth from Excel) ──
               const dk = raw?.dappKpi || {};
-              const totalDemand    = dk.totalDemandRaised || dF.reduce((s,r)=>s+(r.demand||0),0);
-              const totalReceived  = dk.totalReceived     || dF.reduce((s,r)=>s+(r.received||0),0);
-              const upcomingDem    = dk.upcoming          || 0;
-              const advanceAmt     = dk.advanceInReceived || 0;
-              const stillOutAmt    = dk.stillOutstanding  || 0;
-
-              const totalTax=dF.reduce((s,r)=>s+(r.taxAmt||0),0);
-              const totalTaxDem=totalTax;
-              const totalCollected=totalReceived;
-              const netOutstanding=stillOutAmt;
-              const billedOutstanding=stillOutAmt;
-
-              // Efficiency = Received / Demand × 100
-              const collEff=totalDemand>0?Math.round(totalReceived/totalDemand*100):0;
-
-              // Overdue = records with outstanding > 0
+              // Demand = "Outstanding Amount" col | Received = "Received Amt (in Bank)" col
+              const totalDemand    = dk.totalDemandRaised || 0;
+              const totalReceived  = dk.totalReceived     || 0;
+              const upcomingDem    = dk.upcoming          || 0;   // Installment - Received
+              const advanceAmt     = dk.advanceInReceived || 0;   // over-collection
+              const stillOutAmt    = dk.stillOutstanding  || 0;   // Outstanding 1 col
+              const totalTaxDem    = dk.totalTax          || 0;
+              const totalCollected = totalReceived;
+              const netOutstanding = stillOutAmt;
+              const billedOutstanding = stillOutAmt;
+              // Collection efficiency = Received / Demand
+              const collEff = dk.collEff || (totalDemand>0?Math.round(totalReceived/totalDemand*100):0);
+              // Overdue from live dF (ageing buckets are in dashboard_data.json)
               const overdueRecs=dF.filter(r=>(r.outstanding||0)>0);
               const overdueAmt=overdueRecs.reduce((s,r)=>s+(r.outstanding||0),0);
-
               // Current month
               const currMonthDem=dF.filter(r=>r.billMonth===todayM).reduce((s,r)=>s+(r.demand||r.demandWithTax||0),0);
               const currMonthColl=dF.filter(r=>r.billMonth===todayM).reduce((s,r)=>s+(r.received||0),0);
