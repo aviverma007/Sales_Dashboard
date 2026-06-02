@@ -3105,7 +3105,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                 <SectionHead title="Outstanding & Ageing" icon="⚠️"/>
                 <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10}}>
                   {[
-                    {l:'Total Outstanding',v:fmtC(totalOutstanding),c:T.red},
+                    {l:'Total Outstanding',v:fmtC(stillOutAmt),c:T.red},
                     {l:'Overdue (Past Due Date)',v:fmtC(overdueAmt),c:'#dc2626'},
                     {l:'Overdue Units',v:overdueRecs.length+' units',c:'#dc2626'},
                   ].map((d,i)=>(<GC key={i} style={{padding:12}} cls="kc">
@@ -3226,9 +3226,9 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                 <SectionHead title="Forecasting & Upcoming Demand" icon="🔮"/>
                 <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10}}>
                   {[
-                    {l:'Upcoming Outstanding',v:fmtC(upcomingDem+totalOutstanding),c:'#7c3aed'},
+                    {l:'Upcoming Outstanding',v:fmtC(upcomingDem+stillOutAmt),c:'#7c3aed'},
                     {l:'Overdue Risk',v:fmtC(overdueAmt),c:T.red,sub:`${overdueRecs.length} units at risk`},
-                    {l:'Expected Collection*',v:fmtC(Math.max(0,totalOutstanding*0.7)),c:T.teal,sub:'*at 70% collection rate'},
+                    {l:'Expected Collection*',v:fmtC(Math.max(0,stillOutAmt*0.7)),c:T.teal,sub:'*at 70% collection rate'},
                   ].map((d,i)=>(<GC key={i} style={{padding:12}} cls="kc">
                     <p style={{fontSize:8,color:T.textM,fontWeight:700,textTransform:'uppercase',margin:'0 0 3px'}}>{d.l}</p>
                     <p style={{fontSize:17,fontWeight:900,color:d.c,margin:'0 0 2px'}}>{d.v}</p>
