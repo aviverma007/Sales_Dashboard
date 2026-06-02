@@ -856,7 +856,18 @@ function AppInner() {
   const [cpScroll2,setCpScroll2]=useState(0);
   const [showAllT,setShowAllT]=useState(false);
 
-  useEffect(()=>{fetch('/data/dashboard_data.json').then(r=>r.json()).then(d=>{setRaw(d);setLoading(false);const firstProj=(d.filterOptions?.projects||[])[0]||'SMARTWORLD THE EDITION';setFilters(f=>({...f,project:f.project||firstProj}));}).catch(()=>setLoading(false));}, []);
+  useEffect(()=>{
+    Promise.all([
+      fetch('/data/dashboard_data.json').then(r=>r.json()),
+      fetch('/data/dapp_kpi.json').then(r=>r.json()).catch(()=>({})),
+    ]).then(([d, kpi])=>{
+      d.dappKpi = kpi;
+      setRaw(d);
+      setLoading(false);
+      const firstProj=(d.filterOptions?.projects||[])[0]||'SMARTWORLD THE EDITION';
+      setFilters(f=>({...f,project:f.project||firstProj}));
+    }).catch(()=>setLoading(false));
+  }, []);
 
   const fo=raw?.filterOptions||{};
   const availProj=useMemo(()=>(!raw||!filters.company)?fo.projects||[]:(fo.projects||[]).filter(p=>(fo.projCompany||{})[p]===filters.company),[raw,filters.company,fo]);
@@ -2763,32 +2774,27 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
               const today=new Date().toISOString().slice(0,10);
               const todayM=today.slice(0,7);
 
-              // ── Core KPI calculations ─────────────────────────────────
-              // ── KPIs using correct DAPP columns ──────────────────────
-              // demand = 'Total Demand after adj of Credit'
-              // received = 'Received Amt (in Bank)'
-              // outstanding = 'Outstanding 1'
-              const pdrnRecs=(raw?.pdrn||[]).filter(r=>r.status==='ACTIVE'&&(selProjs.length===0||selProjs.includes(r.project)));
-              const totalTCV=pdrnRecs.reduce((s,r)=>s+(r.tcv||0),0);
+              // ── KPIs from dapp_kpi.json (pre-computed from edition_dapp.XLSX) ──
+              // totalDemandRaised  = "Outstanding Amount" column sum
+              // totalReceived      = "Received Amt (in Bank)" column sum
+              // upcoming           = "Installment Amount" - "Received Amt (in Bank)"
+              // advanceInReceived  = received beyond demand (over-collection)
+              // stillOutstanding   = "Outstanding 1" (unpaid from demand)
+              const dk = raw?.dappKpi || {};
+              const totalDemand    = dk.totalDemandRaised || dF.reduce((s,r)=>s+(r.demand||0),0);
+              const totalReceived  = dk.totalReceived     || dF.reduce((s,r)=>s+(r.received||0),0);
+              const upcomingDem    = dk.upcoming          || 0;
+              const advanceAmt     = dk.advanceInReceived || 0;
+              const stillOutAmt    = dk.stillOutstanding  || 0;
 
-              const totalDemand=dF.reduce((s,r)=>s+(r.demand||r.demandWithTax||0),0);
-              const totalReceived=dF.reduce((s,r)=>s+(r.received||0),0);
-              const totalOutstanding=dF.reduce((s,r)=>s+(r.outstanding||0),0);
               const totalTax=dF.reduce((s,r)=>s+(r.taxAmt||0),0);
               const totalTaxDem=totalTax;
               const totalCollected=totalReceived;
+              const netOutstanding=stillOutAmt;
+              const billedOutstanding=stillOutAmt;
 
               // Efficiency = Received / Demand × 100
               const collEff=totalDemand>0?Math.round(totalReceived/totalDemand*100):0;
-
-              // Net outstanding = Outstanding 1 (billed but not yet paid)
-              const netOutstanding=totalOutstanding;
-
-              // Billed outstanding (same as netOutstanding for display clarity)
-              const billedOutstanding=totalOutstanding;
-
-              // Upcoming = TCV - Demand Raised (not yet billed)
-              const upcomingDem=Math.max(0,totalTCV-totalDemand);
 
               // Overdue = records with outstanding > 0
               const overdueRecs=dF.filter(r=>(r.outstanding||0)>0);
@@ -2850,18 +2856,45 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
 
                 {/* ═══ SUBHEADING 1: EXECUTIVE SUMMARY ═══ */}
                 <SectionHead title="Executive Summary" icon="📊"/>
+                {/* Row 1: 4 main KPI cards */}
                 <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10}}>
-                  {[
-                    {l:'Total Demand Raised',v:fmtC(totalDemand),c:T.amber,sub:`of ₹${(totalTCV/1e7).toFixed(0)}Cr TCV · Tax: ${fmtC(totalTaxDem)}`},
-                    {l:'Total Received',v:fmtC(totalCollected),c:T.tealD,sub:`${collEff}% of TCV collected`},
-                    {l:'Outstanding (Unpaid)',v:fmtC(netOutstanding),c:T.red,sub:`${overdueRecs.length} units pending`},
-                    {l:'Collection Efficiency',v:`${collEff}%`,c:collEff>80?T.teal:collEff>50?T.amber:T.red,sub:`Received ÷ TCV`},
-                  ].map((d,i)=>(<GC key={i} style={{padding:13}} cls="kc">
-                    <p style={{fontSize:8,color:T.textM,fontWeight:700,textTransform:'uppercase',margin:'0 0 4px'}}>{d.l}</p>
-                    <p style={{fontSize:20,fontWeight:900,color:d.c,margin:'0 0 2px',letterSpacing:-0.5}}>{d.v}</p>
-                    <p style={{fontSize:8,color:T.textL,margin:0}}>{d.sub}</p>
-                    <div style={{position:'absolute',bottom:0,left:0,right:0,height:3,background:`linear-gradient(90deg,${d.c},transparent)`,borderRadius:'0 0 14px 14px'}}/>
-                  </GC>))}
+
+                  {/* 1. Total Demand Raised = Outstanding Amount */}
+                  <GC style={{padding:13}} cls="kc">
+                    <p style={{fontSize:8,color:T.textM,fontWeight:700,textTransform:'uppercase',margin:'0 0 4px'}}>Total Demand Raised</p>
+                    <p style={{fontSize:20,fontWeight:900,color:T.amber,margin:'0 0 6px',letterSpacing:-0.5}}>{fmtC(totalDemand)}</p>
+                    <p style={{fontSize:8,color:T.textL,margin:0}}>From "Outstanding Amount" column</p>
+                    <div style={{position:'absolute',bottom:0,left:0,right:0,height:3,background:`linear-gradient(90deg,${T.amber},transparent)`,borderRadius:'0 0 14px 14px'}}/>
+                  </GC>
+
+                  {/* 2. Total Received = Received Amt (in Bank) — with advance + still outstanding sub-breakdown */}
+                  <GC style={{padding:13,gridColumn:'span 2'}} cls="kc">
+                    <p style={{fontSize:8,color:T.textM,fontWeight:700,textTransform:'uppercase',margin:'0 0 4px'}}>Total Received</p>
+                    <p style={{fontSize:20,fontWeight:900,color:T.tealD,margin:'0 0 8px',letterSpacing:-0.5}}>{fmtC(totalReceived)}</p>
+                    {/* Sub-breakdown row */}
+                    <div style={{display:'flex',gap:8}}>
+                      <div style={{flex:1,background:'rgba(0,151,167,0.07)',border:'1px solid rgba(0,151,167,0.18)',borderRadius:8,padding:'6px 10px'}}>
+                        <p style={{fontSize:7,fontWeight:800,color:T.tealD,textTransform:'uppercase',margin:'0 0 2px',letterSpacing:0.5}}>🔼 In Advance</p>
+                        <p style={{fontSize:14,fontWeight:900,color:T.tealD,margin:0}}>{fmtC(advanceAmt)}</p>
+                        <p style={{fontSize:7,color:T.textL,margin:'2px 0 0'}}>Received beyond demand raised</p>
+                      </div>
+                      <div style={{flex:1,background:'rgba(211,47,47,0.06)',border:'1px solid rgba(211,47,47,0.18)',borderRadius:8,padding:'6px 10px'}}>
+                        <p style={{fontSize:7,fontWeight:800,color:T.red,textTransform:'uppercase',margin:'0 0 2px',letterSpacing:0.5}}>⏳ Still Outstanding</p>
+                        <p style={{fontSize:14,fontWeight:900,color:T.red,margin:0}}>{fmtC(stillOutAmt)}</p>
+                        <p style={{fontSize:7,color:T.textL,margin:'2px 0 0'}}>Unpaid from demand (Outstanding 1)</p>
+                      </div>
+                    </div>
+                    <div style={{position:'absolute',bottom:0,left:0,right:0,height:3,background:`linear-gradient(90deg,${T.tealD},${T.teal})`,borderRadius:'0 0 14px 14px'}}/>
+                  </GC>
+
+                  {/* 3. Upcoming = Installment Amount - Received */}
+                  <GC style={{padding:13}} cls="kc">
+                    <p style={{fontSize:8,color:T.textM,fontWeight:700,textTransform:'uppercase',margin:'0 0 4px'}}>Upcoming</p>
+                    <p style={{fontSize:20,fontWeight:900,color:'#7c3aed',margin:'0 0 6px',letterSpacing:-0.5}}>{fmtC(upcomingDem)}</p>
+                    <p style={{fontSize:8,color:T.textL,margin:0}}>Installment Amt − Received</p>
+                    <div style={{position:'absolute',bottom:0,left:0,right:0,height:3,background:'linear-gradient(90deg,#7c3aed,transparent)',borderRadius:'0 0 14px 14px'}}/>
+                  </GC>
+
                 </div>
                 {/* Project comparison bar */}
                 <div style={{display:'grid',gridTemplateColumns:'2fr 1fr',gap:12}}>
