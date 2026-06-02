@@ -1428,8 +1428,12 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                   // Use dFAll (demand/collection module, project-only filtered) for accurate received amount
                   const totalReceived=+(dFAll.reduce((s,r)=>s+(r.received||0),0)/1e7).toFixed(2);
                   const totalDemand=+(dFAll.reduce((s,r)=>s+(r.demand||0),0)/1e7).toFixed(2);
-                  const outstanding=+(Math.max(0,soldTCV-totalReceived)).toFixed(2);
-                  const collectedPct=soldTCV>0?Math.round(totalReceived/soldTCV*100):0;
+                  // Outstanding = upcoming installments not yet received (from dapp_kpi)
+                  const dkOv = raw?.dappKpi || {};
+                  const outstanding=+((dkOv.upcoming||0)/1e7).toFixed(2);
+                  const installmentTotal=+((dkOv.installmentTotal||0)/1e7).toFixed(2);
+                  // Progress = received / installmentTotal
+                  const collectedPct=installmentTotal>0?Math.round(totalReceived/installmentTotal*100):0;
                   // Unsold = (Target Project Sales Value - Sold TCV) derived from AOP targets
                   // AOP unsold rate = implied from monthly targets (tsvCr/areaSqft for future months)
                   const availArea=iFAll.filter(r=>r.status==='Available').reduce((s,r)=>s+(r.superArea||0),0);
@@ -1495,8 +1499,8 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                             <p style={{fontSize:11,fontWeight:900,color:T.tealD,margin:0}}>₹{totalReceived.toFixed(0)} Cr</p>
                           </div>
                           <div style={{textAlign:'right'}}>
-                            <p style={{fontSize:6,color:T.textM,fontWeight:700,margin:0}}>OUTSTANDING</p>
-                            <p style={{fontSize:11,fontWeight:900,color:'#ef4444',margin:0}}>₹{outstanding.toFixed(0)} Cr</p>
+                            <p style={{fontSize:6,color:T.textM,fontWeight:700,margin:0}}>UPCOMING</p>
+                            <p style={{fontSize:11,fontWeight:900,color:'#7c3aed',margin:0}}>₹{outstanding.toFixed(0)} Cr</p>
                           </div>
                         </div>
                       </div>
