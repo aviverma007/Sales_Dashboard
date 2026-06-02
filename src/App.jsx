@@ -3287,42 +3287,6 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                   );
                 })()}
 
-                {/* ═══ SUBHEADING 5: FORECASTING ═══ */}
-                <SectionHead title="Forecasting & Upcoming Demand" icon="🔮"/>
-                <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10}}>
-                  {[
-                    {l:'Upcoming Outstanding',v:fmtC(upcomingDem+stillOutAmt),c:'#7c3aed'},
-                    {l:'Overdue Risk',v:fmtC(overdueAmt),c:T.red,sub:`${overdueRecs.length} units at risk`},
-                    {l:'Expected Collection*',v:fmtC(Math.max(0,stillOutAmt*0.7)),c:T.teal,sub:'*at 70% collection rate'},
-                  ].map((d,i)=>(<GC key={i} style={{padding:12}} cls="kc">
-                    <p style={{fontSize:8,color:T.textM,fontWeight:700,textTransform:'uppercase',margin:'0 0 3px'}}>{d.l}</p>
-                    <p style={{fontSize:17,fontWeight:900,color:d.c,margin:'0 0 2px'}}>{d.v}</p>
-                    {d.sub&&<p style={{fontSize:8,color:T.textL,margin:0}}>{d.sub}</p>}
-                    <div style={{position:'absolute',bottom:0,left:0,right:0,height:3,background:`linear-gradient(90deg,${d.c},transparent)`,borderRadius:'0 0 14px 14px'}}/>
-                  </GC>))}
-                </div>
-                <GC style={{padding:16}}>
-                  <SH title="Outstanding by Due Date — Overdue & Upcoming"/>
-                  {upcomingTrend.length>0?(<div style={{overflowX:'auto'}}>
-                    <div style={{minWidth:Math.max(upcomingTrend.length*70,400)+'px'}}>
-                      <ResponsiveContainer width="100%" height={200}>
-                        <BarChart data={upcomingTrend} margin={{top:14,right:8,bottom:28,left:0}}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.08)" vertical={false}/>
-                          <XAxis dataKey="label" tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false} angle={-25} textAnchor="end" height={32}/>
-                          <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} tickFormatter={v=>v+'Cr'} width={32}/>
-                          <Tooltip content={({active,payload,label})=>{if(!active||!payload?.length)return null;const d=upcomingTrend.find(r=>r.label===label);return(<div style={{background:'#fff',border:'1px solid #e5e7eb',borderRadius:8,padding:'8px 12px',fontSize:10}}><p style={{margin:0,fontWeight:800,color:T.navy}}>{label}</p><p style={{margin:'2px 0',color:d?.isOverdue?T.red:T.teal,fontWeight:700}}>₹{d?.amtCr}Cr {d?.isOverdue?'OVERDUE':'upcoming'}</p><p style={{margin:0,color:T.textM}}>{d?.n} records</p></div>);}}/>
-                          <Bar dataKey="amtCr" name="Outstanding" radius={[4,4,0,0]}>
-                            {upcomingTrend.map((d,i)=><Cell key={i} fill={d.isOverdue?T.red:d.isFuture?'#7c3aed':T.amber}/>)}
-                            <LabelList dataKey="amtCr" position="top" style={{fontSize:8,fontWeight:800}} formatter={v=>v>0?v+'Cr':''}/>
-                          </Bar>
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </div>):<p style={{color:T.textL,fontSize:11,textAlign:'center',padding:20}}>No upcoming demand data available</p>}
-                  <div style={{display:'flex',gap:16,marginTop:8,justifyContent:'center'}}>
-                    {[['#dc2626','Overdue (Past Due)'],[T.amber,'Current Period'],['#7c3aed','Future Due']].map(([c,l])=>(<div key={l} style={{display:'flex',alignItems:'center',gap:5}}><div style={{width:10,height:10,borderRadius:2,background:c}}/><span style={{fontSize:9,color:T.textM,fontWeight:600}}>{l}</span></div>))}
-                  </div>
-                </GC>
 
               </>);
             })()}
