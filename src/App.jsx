@@ -3038,21 +3038,6 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
 
                 {/* ═══ SUBHEADING 2: COLLECTION PERFORMANCE ═══ */}
                 <SectionHead title="Collection Performance" icon="💰"/>
-                <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10}}>
-                  {[
-                    {l:'Total Demand Billed',v:fmtC(totalDemand),c:T.amber,icon:'📋'},
-                    {l:'Billed But Unpaid',v:fmtC(billedOutstanding),c:T.red,icon:'🔴'},
-                    {l:'Upcoming (Unbilled)',v:fmtC(upcomingDem),c:'#7c3aed',icon:'🔮'},
-                    {l:'GST / Tax Component',v:fmtC(totalTaxDem),c:'#0284c7',icon:'🧾'},
-                  ].map((d,i)=>(<GC key={i} style={{padding:12}} cls="kc">
-                    <div style={{display:'flex',gap:6,alignItems:'center',marginBottom:3}}>
-                      <span style={{fontSize:12}}>{d.icon}</span>
-                      <p style={{fontSize:8,color:T.textM,fontWeight:700,textTransform:'uppercase',margin:0}}>{d.l}</p>
-                    </div>
-                    <p style={{fontSize:17,fontWeight:900,color:d.c,margin:0}}>{d.v}</p>
-                    <div style={{position:'absolute',bottom:0,left:0,right:0,height:3,background:`linear-gradient(90deg,${d.c},transparent)`,borderRadius:'0 0 14px 14px'}}/>
-                  </GC>))}
-                </div>
                 <div style={{display:'grid',gridTemplateColumns:'3fr 2fr',gap:12}}>
                   <GC style={{padding:16}}>
                     <SH title="Monthly Demand vs Collection Trend"/>
