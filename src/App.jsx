@@ -1430,15 +1430,12 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                   const totalReceived=+(dFAll.reduce((s,r)=>s+(r.received||0),0)/1e7).toFixed(2);
                   const upcomingAmt=+((dkOv.upcoming||0)/1e7).toFixed(2);
                   const collectedPct=installmentTotal>0?Math.round(totalReceived/installmentTotal*100):0;
-                  // Unsold = available area × AOP target rate
-                  const availArea=iFAll.filter(r=>r.status==='Available').reduce((s,r)=>s+(r.superArea||0),0);
+                  // Unsold = available area × actual avg booked rate (from invr, pre-computed)
                   const availUnits=iFAll.filter(r=>r.status==='Available').length;
-                  const allTargets=raw?.monthlyTargets||[];
-                  const futureTargets=allTargets.filter(t=>t.targetRate>0);
-                  const aopRate=futureTargets.length>0?Math.round(futureTargets.reduce((s,t)=>s+t.targetRate,0)/futureTargets.length):kpiEx.avgRatePerSqft||0;
-                  const unsoldBSP=+((availArea>0?availArea*aopRate:0)/1e7).toFixed(2);
-                  const totalPotential=+(soldTCV+unsoldBSP).toFixed(2);
-                  const soldPct=totalPotential>0?Math.round(soldTCV/totalPotential*100):0;
+                  const unsoldBSP=+((dkOv.unsoldValue||0)/1e7).toFixed(2);
+                  const bookedTCV=+((dkOv.bookedTCV||0)/1e7).toFixed(2) || soldTCV;
+                  const totalPotential=+((dkOv.totalProjectValue||0)/1e7).toFixed(2) || +(bookedTCV+unsoldBSP).toFixed(2);
+                  const soldPct=totalPotential>0?Math.round(bookedTCV/totalPotential*100):0;
                   return(
                     <div style={{display:'flex',flexDirection:'column',gap:6}}>
                       {/* Row 1: donut + sold/unsold */}
@@ -1466,7 +1463,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                           <div style={{display:'flex',gap:4}}>
                             <div style={{flex:1,background:`${T.teal}0d`,borderRadius:4,padding:'3px 5px'}}>
                               <p style={{fontSize:6,color:T.textM,fontWeight:700,margin:0}}>SOLD</p>
-                              <p style={{fontSize:10,fontWeight:900,color:T.tealD,margin:0}}>₹{soldTCV.toFixed(0)} Cr</p>
+                              <p style={{fontSize:10,fontWeight:900,color:T.tealD,margin:0}}>₹{bookedTCV.toFixed(0)} Cr</p>
                               <p style={{fontSize:6,color:T.textM,margin:0}}>Total Unit Cost</p>
                             </div>
                             <div style={{flex:1,background:'rgba(245,158,11,0.07)',borderRadius:4,padding:'3px 5px'}}>

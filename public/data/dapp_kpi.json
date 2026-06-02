@@ -541,5 +541,10 @@
       "label": "Oct'32",
       "amtCr": 4.14
     }
-  ]
+  ],
+  "unsoldValue": 16719986348.03,
+  "unsoldAreaSqft": 928125.0,
+  "avgRatePerSqft": 18014.8,
+  "bookedTCV": 35987445579.0,
+  "totalProjectValue": 52707431927.03
 }
