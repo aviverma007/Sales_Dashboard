@@ -834,6 +834,9 @@ const PnLTab = ({T, GC, SH, filters, sf}) => {
                     <p style={{fontSize:8,color:T?.textM||'#64748b',margin:0}}>AVAILABLE</p>
                   </div>
                 </div>
+                <div style={{textAlign:'center',marginTop:8,paddingTop:8,borderTop:'1px dashed rgba(0,60,100,0.1)'}}>
+                  <p style={{fontSize:14,fontWeight:900,color:T?.navy||'#0d2137',margin:0}}>{totalUnits} <span style={{fontSize:9,fontWeight:700,color:T?.textM||'#64748b'}}>TOTAL UNITS</span></p>
+                </div>
               </div>
 
               {/* Area */}
@@ -859,6 +862,9 @@ const PnLTab = ({T, GC, SH, filters, sf}) => {
                     <p style={{fontSize:18,fontWeight:900,color:COLORS.available,margin:0}}>{availArea}K</p>
                     <p style={{fontSize:8,color:T?.textM||'#64748b',margin:0}}>AVAILABLE</p>
                   </div>
+                </div>
+                <div style={{textAlign:'center',marginTop:8,paddingTop:8,borderTop:'1px dashed rgba(0,60,100,0.1)'}}>
+                  <p style={{fontSize:14,fontWeight:900,color:T?.navy||'#0d2137',margin:0}}>{totalArea}K sqft <span style={{fontSize:9,fontWeight:700,color:T?.textM||'#64748b'}}>TOTAL AREA</span></p>
                 </div>
               </div>
 
