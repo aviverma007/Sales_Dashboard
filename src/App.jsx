@@ -782,6 +782,7 @@ function AppInner() {
   const [raw,setRaw]=useState(null);
   const [loading,setLoading]=useState(true);
   const [tab,setTab]=useState('overview'); // overview | collections | pipeline
+  useEffect(()=>{ window.scrollTo({top:0,behavior:'instant'}); },[tab]);
 
   const [filters,setFilters]=useState({company:'',project:'SMARTWORLD THE EDITION',month:'',quarter:'',broker:'',typology:'',fy:''});
   const sf=useCallback((k,v)=>setFilters(p=>({...p,[k]:v})),[]);
