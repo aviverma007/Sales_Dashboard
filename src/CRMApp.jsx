@@ -116,17 +116,20 @@ export default function CRMApp() {
       .catch(() => setLoading(false));
   }, []);
 
+  // useMemo must be before any early returns (Rules of Hooks)
+  const filteredCases = useMemo(() => {
+    if (!data) return [];
+    return data.recentCases.filter(c =>
+      (filterOwner === 'All' || c.caseOwner === filterOwner) &&
+      (filterArea === 'All' || c.area === filterArea)
+    );
+  }, [data, filterOwner, filterArea]);
+
   if (loading) return <Loading />;
   if (!data) return <div style={{ color: '#fff', padding: 40 }}>Failed to load data.</div>;
 
   const { total, openCount, closedCount, statusCounts, originCounts, caseTypeCounts,
     byOwner, areaSub, ageing, respTime, recentCases, tatStats, owners, areas } = data;
-
-  // Filter recent cases
-  const filteredCases = useMemo(() => recentCases.filter(c =>
-    (filterOwner === 'All' || c.caseOwner === filterOwner) &&
-    (filterArea === 'All' || c.area === filterArea)
-  ), [recentCases, filterOwner, filterArea]);
 
   const closedTotal = (statusCounts['Closed'] || 0) + (statusCounts['Resolved'] || 0) + (statusCounts['Close'] || 0);
   const openTotal = (statusCounts['In Progress'] || 0) + (statusCounts['New'] || 0) + (statusCounts['Pending for Clarification'] || 0) + (statusCounts['Re-Open'] || 0);
