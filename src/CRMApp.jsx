@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import * as XLSX from 'xlsx';
 import {
-  BarChart, Bar, PieChart, Pie, Cell, DonutChart,
-  XAxis, YAxis, CartesianGrid, Tooltip, Legend,
+  BarChart, Bar, PieChart, Pie, Cell,
+  XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, LabelList
 } from 'recharts';
 
