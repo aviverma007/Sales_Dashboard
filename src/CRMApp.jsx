@@ -278,15 +278,99 @@ export default function CRMApp() {
         {/* ── OVERALL TAB ── */}
         {tab==='overall' && (
           <div style={{display:'flex',flexDirection:'column',gap:14}}>
-            <div style={{display:'flex',gap:12,flexWrap:'wrap'}}>
-              <StatCard label="Total Tickets" value={total} icon="🎫" color={T.navy}/>
-              <StatCard label="Open Tickets" value={openCount} icon="🔓" color={T.amber}/>
-              <StatCard label="Closed Tickets" value={closedCount} icon="✅" color={T.green}/>
-              <StatCard label="Beyond TAT" value={tatStats.beyond} icon="⚠️" color={T.red}/>
-              <StatCard label="Within TAT" value={tatStats.within} icon="⏱️" color={T.teal}/>
-              <StatCard label="Within 24 Hrs" value={respTime['Within 24 Hrs']||0} icon="⚡" color={T.teal}/>
-              <StatCard label="Above 24 Hrs" value={respTime['Above 24 Hrs']||0} icon="🕐" color={T.orange}/>
-            </div>
+            {/* ── RICH KPI CARDS ── */}
+            {(()=>{
+              const resolutionRate = total>0 ? ((closedCount/total)*100).toFixed(1) : 0;
+              const escalated = data.filter(r=>String(r['TAT Status']).includes('Escalation')).length;
+              const tatBeyond = tatStats.beyond || 0;
+              const reopened  = (statusCounts['Re-Open']||0);
+              const hni       = data.filter(r=>r['HNI Customer']==='Yes'||r['HNI Customer']===true||String(r['HNI Customer']).toUpperCase()==='YES').length;
+              const legalOpen = data.filter(r=>(r['Active Legal Case']==='Yes'||String(r['Active Legal Case']).toUpperCase()==='YES')&&(r['Status']==='In Progress'||r['Status']==='New'||r['Status']==='Re-Open'||r['Status']==='Pending for Clarification')).length;
+              const pendingClarif = statusCounts['Pending for Clarification']||0;
+
+              const KPIs = [
+                {
+                  label:'Total Tickets', value:total.toLocaleString(),
+                  sub:`${openCount} open · ${closedCount.toLocaleString()} closed`,
+                  color:T.navy, bg:'rgba(13,33,55,0.07)', icon:'🎫',
+                  bar: null,
+                },
+                {
+                  label:'Resolution Rate', value:`${resolutionRate}%`,
+                  sub:`${closedCount.toLocaleString()} resolved of ${total.toLocaleString()}`,
+                  color:T.green, bg:'rgba(46,125,50,0.08)', icon:'✅',
+                  pct: +resolutionRate,
+                },
+                {
+                  label:'Open Tickets', value:openCount.toLocaleString(),
+                  sub:`${(statusCounts['In Progress']||0)} in progress · ${(statusCounts['New']||0)} new`,
+                  color:T.amber, bg:'rgba(245,124,0,0.08)', icon:'🔓',
+                  pct: total>0?+(openCount/total*100).toFixed(1):0,
+                },
+                {
+                  label:'Beyond TAT', value:tatBeyond.toLocaleString(),
+                  sub:`${escalated} in escalation queues`,
+                  color:T.red, bg:'rgba(211,47,47,0.07)', icon:'⚠️',
+                  pct: total>0?+(tatBeyond/total*100).toFixed(1):0,
+                },
+                {
+                  label:'Re-Opened', value:reopened.toLocaleString(),
+                  sub:'Tickets reopened after closure',
+                  color:T.orange, bg:'rgba(230,81,0,0.07)', icon:'🔁',
+                  pct: closedCount>0?+((reopened/closedCount)*100).toFixed(1):0,
+                },
+                {
+                  label:'Pending Clarification', value:pendingClarif.toLocaleString(),
+                  sub:'Awaiting customer response',
+                  color:'#7c3aed', bg:'rgba(124,58,237,0.07)', icon:'❓',
+                  pct: openCount>0?+(pendingClarif/openCount*100).toFixed(1):0,
+                },
+                {
+                  label:'HNI Customers', value:hni.toLocaleString(),
+                  sub:'High-value customer tickets',
+                  color:'#b45309', bg:'rgba(180,83,9,0.07)', icon:'👑',
+                  pct: total>0?+(hni/total*100).toFixed(1):0,
+                },
+                {
+                  label:'Active Legal Cases', value:legalOpen.toLocaleString(),
+                  sub:'Open tickets with legal flag',
+                  color:T.red, bg:'rgba(211,47,47,0.09)', icon:'⚖️',
+                  pct: null,
+                },
+              ];
+
+              return (
+                <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12,marginBottom:4}}>
+                  {KPIs.map((k,i)=>(
+                    <GC key={i} style={{padding:'14px 18px',background:k.bg,border:`1.5px solid ${k.color}22`}}>
+                      <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:6}}>
+                        <span style={{fontSize:22,lineHeight:1}}>{k.icon}</span>
+                        {k.pct!==null&&k.pct!==undefined&&(
+                          <span style={{fontSize:9,fontWeight:800,color:k.color,background:`${k.color}15`,
+                            borderRadius:20,padding:'2px 8px',letterSpacing:0.3}}>
+                            {k.pct}%
+                          </span>
+                        )}
+                      </div>
+                      <div style={{fontSize:26,fontWeight:900,color:k.color,letterSpacing:-1,lineHeight:1,marginBottom:4}}>
+                        {k.value}
+                      </div>
+                      <div style={{fontSize:10,fontWeight:800,color:T.textM,textTransform:'uppercase',letterSpacing:0.5,marginBottom:3}}>
+                        {k.label}
+                      </div>
+                      <div style={{fontSize:9,color:T.gray,fontWeight:500}}>{k.sub}</div>
+                      {k.pct!==null&&k.pct!==undefined&&(
+                        <div style={{marginTop:8,height:4,background:'rgba(0,60,100,0.08)',borderRadius:2,overflow:'hidden'}}>
+                          <div style={{width:`${Math.min(k.pct,100)}%`,height:'100%',background:k.color,borderRadius:2,opacity:0.7}}/>
+                        </div>
+                      )}
+                      <div style={{position:'absolute',bottom:0,left:0,right:0,height:3,
+                        background:`linear-gradient(90deg,${k.color},transparent)`,borderRadius:'0 0 14px 14px'}}/>
+                    </GC>
+                  ))}
+                </div>
+              );
+            })()}
             <div style={{display:'grid',gridTemplateColumns:'240px 1fr 1fr',gap:12}}>
               <GC style={{padding:'14px 16px'}}>
                 <SH title="Case Type"/>
