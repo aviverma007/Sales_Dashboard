@@ -21,8 +21,9 @@ const GC = ({ children, style={} }) => {
   const [h,sH] = useState(false);
   return (
     <div onMouseEnter={()=>sH(true)} onMouseLeave={()=>sH(false)}
-      style={{background:h?'#ffffff':'#f8fafc',border:'1px solid #e2e8f0',borderRadius:14,
-        boxShadow:'0 4px 28px rgba(0,40,80,0.13)',transition:'all 0.2s',position:'relative',overflow:'hidden',...style}}>
+      style={{background:h?T.glassH:T.glass,border:`1px solid ${T.border}`,borderRadius:14,
+        boxShadow:'0 4px 24px rgba(0,80,120,0.10)',transition:'all 0.2s',position:'relative',overflow:'hidden',...style}}>
+      <div style={{position:'absolute',top:0,left:0,right:0,height:1,background:'rgba(255,255,255,0.95)'}}/>
       {children}
     </div>
   );
@@ -59,16 +60,17 @@ const FSelect = ({label,value,onChange,options}) => (
 );
 
 const KpiCard = ({icon,label,value,sub,color,pct}) => (
-  <div style={{background:'#fff',border:`1px solid #e2e8f0`,borderLeft:`4px solid ${color}`,borderRadius:14,
-    boxShadow:'0 4px 20px rgba(0,40,80,0.10)',padding:'16px 18px',position:'relative',overflow:'hidden',transition:'box-shadow 0.2s'}}>
+  <div style={{background:'rgba(255,255,255,0.97)',backdropFilter:'blur(20px)',WebkitBackdropFilter:'blur(20px)',
+    border:`1px solid rgba(255,255,255,0.9)`,borderLeft:`4px solid ${color}`,borderRadius:14,
+    boxShadow:'0 4px 24px rgba(0,40,80,0.15)',padding:'16px 18px',position:'relative',overflow:'hidden'}}>
     <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:8}}>
       <span style={{fontSize:24,lineHeight:1}}>{icon}</span>
       {pct!=null&&<span style={{fontSize:9,fontWeight:800,color:'#fff',background:color,borderRadius:20,padding:'2px 8px'}}>{pct}%</span>}
     </div>
     <div style={{fontSize:28,fontWeight:900,color,letterSpacing:-1,lineHeight:1,marginBottom:4}}>{typeof value==='number'?value.toLocaleString():value}</div>
-    <div style={{fontSize:10,fontWeight:800,color:'#374151',textTransform:'uppercase',letterSpacing:0.5,marginBottom:3}}>{label}</div>
-    <div style={{fontSize:9,color:'#6b7280'}}>{sub}</div>
-    {pct!=null&&<div style={{marginTop:10,height:4,background:'#f3f4f6',borderRadius:2,overflow:'hidden'}}>
+    <div style={{fontSize:10,fontWeight:800,color:'#1a2f45',textTransform:'uppercase',letterSpacing:0.5,marginBottom:3}}>{label}</div>
+    <div style={{fontSize:9,color:'#546e7a'}}>{sub}</div>
+    {pct!=null&&<div style={{marginTop:10,height:4,background:'rgba(0,60,100,0.08)',borderRadius:2,overflow:'hidden'}}>
       <div style={{width:`${Math.min(pct,100)}%`,height:'100%',background:color,borderRadius:2}}/>
     </div>}
   </div>
@@ -323,7 +325,7 @@ export default function CRMApp() {
           </div>
         </div>
 
-        <main style={{maxWidth:1600,margin:'0 auto',padding:'16px 20px 40px',background:'rgba(241,245,249,0.97)',minHeight:'calc(100vh - 110px)'}}>
+        <main style={{maxWidth:1600,margin:'0 auto',padding:'16px 20px 40px'}}>
 
           {/* ══════════════════════════════════════════
               TAB: OVERVIEW
