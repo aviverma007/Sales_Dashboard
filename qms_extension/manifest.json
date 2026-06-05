@@ -2,12 +2,8 @@
   "manifest_version": 3,
   "name": "QMS Data Bridge",
   "version": "1.0",
-  "description": "Automatically fetches QMS data for PRPO Dashboard",
-  "permissions": [
-    "storage",
-    "alarms",
-    "cookies"
-  ],
+  "description": "Auto-fetches QMS data for PRPO Dashboard",
+  "permissions": ["alarms", "storage"],
   "host_permissions": [
     "https://smartworlddevelopersonline.com/*",
     "http://localhost:3001/*"
@@ -16,7 +12,6 @@
     "service_worker": "background.js"
   },
   "action": {
-    "default_popup": "popup.html",
-    "default_icon": "icon.png"
+    "default_popup": "popup.html"
   }
 }

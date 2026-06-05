@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  body { width:280px; font-family:Inter,sans-serif; padding:16px; background:#f8fafc; margin:0; }
+  h2 { color:#006978; font-size:14px; margin:0 0 12px; }
+  .stat { background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:10px 12px; margin-bottom:8px; }
+  .stat-label { font-size:9px; color:#64748b; text-transform:uppercase; font-weight:700; margin:0; }
+  .stat-value { font-size:16px; font-weight:900; color:#0d2137; margin:2px 0 0; }
+  .stat-value.ok { color:#2e7d32; }
+  .stat-value.warn { color:#f57c00; }
+  button { width:100%; background:#006978; color:#fff; border:none; border-radius:8px; padding:10px; font-size:12px; font-weight:700; cursor:pointer; margin-top:4px; }
+  button:hover { background:#0097a7; }
+  .status { font-size:10px; color:#64748b; text-align:center; margin-top:8px; }
+</style>
+</head>
+<body>
+<h2>🔗 QMS Data Bridge</h2>
+<div class="stat">
+  <p class="stat-label">Status</p>
+  <p class="stat-value ok" id="status">Active ✅</p>
+</div>
+<div class="stat">
+  <p class="stat-label">Last Fetch</p>
+  <p class="stat-value" id="lastFetch" style="font-size:12px">—</p>
+</div>
+<div class="stat">
+  <p class="stat-label">Data Counts</p>
+  <p class="stat-value" id="counts" style="font-size:11px">—</p>
+</div>
+<button id="fetchBtn">🔄 Fetch Now</button>
+<p class="status">Auto-fetches every 30 minutes</p>
+
+<script>
+chrome.storage.local.get(['lastFetch','counts'], (data) => {
+  if (data.lastFetch) {
+    document.getElementById('lastFetch').textContent = new Date(data.lastFetch).toLocaleString();
+  }
+  if (data.counts) {
+    document.getElementById('counts').textContent = data.counts;
+  }
+});
+
+document.getElementById('fetchBtn').addEventListener('click', () => {
+  document.getElementById('fetchBtn').textContent = 'Fetching...';
+  chrome.runtime.sendMessage({action:'fetchNow'}, (response) => {
+    document.getElementById('fetchBtn').textContent = '✅ Done!';
+    setTimeout(() => {
+      document.getElementById('fetchBtn').textContent = '🔄 Fetch Now';
+    }, 2000);
+  });
+});
+</script>
+</body>
+</html>
