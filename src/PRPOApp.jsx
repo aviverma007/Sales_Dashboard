@@ -94,19 +94,21 @@ const Spinner = ({msg='Loading…'}) => <div style={{display:'flex',alignItems:'
 </div>;
 
 const ErrBox = ({msg,onRetry}) => {
-  const isCORS = msg?.includes('CORS')||msg?.includes('fetch')||msg?.includes('Failed');
+  const isSession = msg?.includes('Session')||msg?.includes('unauthorized')||msg?.includes('QMS');
+  const isCORS    = msg?.includes('CORS')||msg?.includes('blocked');
   return (
     <div style={{padding:28,textAlign:'center'}}>
-      <div style={{fontSize:32,marginBottom:8}}>{isCORS?'🔒':'⚠️'}</div>
-      <p style={{fontWeight:800,color:isCORS?T.amber:T.red,margin:'0 0 6px',fontSize:13}}>
-        {isCORS?'CORS / Network Blocked':'Connection Error'}
+      <div style={{fontSize:32,marginBottom:8}}>{isSession?'🔑':isCORS?'🔒':'⚠️'}</div>
+      <p style={{fontWeight:800,color:isSession?T.amber:T.red,margin:'0 0 6px',fontSize:13}}>
+        {isSession?'QMS Session Required':isCORS?'CORS Blocked':'Connection Error'}
       </p>
       <p style={{fontSize:11,color:T.gray,margin:'0 0 12px'}}>{msg}</p>
-      {isCORS&&<div style={{background:'rgba(245,124,0,0.06)',border:'1px solid rgba(245,124,0,0.2)',borderRadius:10,padding:'12px 16px',maxWidth:420,margin:'0 auto 12px',textAlign:'left'}}>
-        <p style={{fontSize:10,fontWeight:800,color:T.amber,margin:'0 0 6px',textTransform:'uppercase'}}>Fix: Upload 1 PHP file to your server</p>
-        <p style={{fontSize:10,color:T.textM,margin:'0 0 4px'}}>Upload <code style={{background:'rgba(0,60,100,0.08)',padding:'1px 5px',borderRadius:3}}>public/api/vg_proxy.php</code> from your GitHub repo to:</p>
-        <code style={{fontSize:10,color:T.tealD,wordBreak:'break-all'}}>https://smartworlddevelopersonline.com/bi-power/vg_proxy.php</code>
-        <p style={{fontSize:10,color:T.textM,margin:'8px 0 0'}}>Then click Refresh — data will load instantly.</p>
+      {isSession&&<div style={{background:'rgba(0,151,167,0.06)',border:'1px solid rgba(0,151,167,0.2)',borderRadius:10,padding:'12px 16px',maxWidth:380,margin:'0 auto 12px',textAlign:'left'}}>
+        <p style={{fontSize:10,fontWeight:800,color:T.tealD,margin:'0 0 6px',textTransform:'uppercase'}}>Fix: Login to QMS first</p>
+        <p style={{fontSize:10,color:T.textM,margin:'0 0 4px'}}>1. Open a new tab → go to:</p>
+        <code style={{fontSize:10,color:T.tealD}}>smartworlddevelopersonline.com/qms</code>
+        <p style={{fontSize:10,color:T.textM,margin:'8px 0 4px'}}>2. Login with your credentials</p>
+        <p style={{fontSize:10,color:T.textM,margin:0}}>3. Come back here and click Retry</p>
       </div>}
       {onRetry&&<button onClick={onRetry} style={{background:T.teal,color:'#fff',border:'none',borderRadius:8,padding:'7px 16px',fontSize:11,fontWeight:700,cursor:'pointer'}}>🔄 Retry</button>}
     </div>
@@ -272,49 +274,48 @@ export default function PRPOApp() {
     const url = VG_URLS[type];
     if (!url) return;
 
-    // Try multiple auth methods
+    // Use CodeIgniter session cookie from QMS login
+    const CI_SESSION = 'a%3A12%3A%7Bs%3A10%3A%22session_id%22%3Bs%3A32%3A%228edaf47c41db9c2381e8de917a0041fe%22%3Bs%3A10%3A%22ip_address%22%3Bs%3A12%3A%2214.97.28.194%22%3Bs%3A10%3A%22user_agent%22%3Bs%3A111%3A%22Mozilla%2F5.0+%28Windows+NT+10.0%3B+Win64%3B+x64%29+AppleWebKit%2F537.36+%28KHTML%2C+like+Gecko%29+Chrome%2F148.0.0.0+Safari%2F537.36%22%3Bs%3A13%3A%22last_activity%22%3Bi%3A1780640662%3Bs%3A9%3A%22user_data%22%3Bs%3A0%3A%22%22%3Bs%3A8%3A%22login_id%22%3Bs%3A3%3A%22221%22%3Bs%3A10%3A%22login_name%22%3Bs%3A11%3A%22Sunny+Batra%22%3Bs%3A11%3A%22login_email%22%3Bs%3A36%3A%22sunny.batra%40smartworlddevelopers.com%22%3Bs%3A10%3A%22login_role%22%3Bs%3A5%3A%22buyer%22%3Bs%3A8%3A%22login_to%22%3Bs%3A1%3A%220%22%3Bs%3A11%3A%22login_admin%22%3Bs%3A1%3A%221%22%3Bs%3A16%3A%22login_priviliges%22%3Bs%3A205%3A%22NFA_Management%21%23%24View_Reports%21%23%24NFA_Reports%21%23%24Is_Initiator%21%23%24SAP_Download%21%23%24Amend_NFA%21%23%24Transfer_NFA%21%23%24Transferred_NFA%21%23%24Create_NFA%21%23%24General_Reports%21%23%24Is_Validator%21%23%24PR_Reports%21%23%24Create_PR%21%23%24PR_Management%22%3B%7D14f1853861c0559c6e335c8b3eac9e2ac909f352';
+
+    // First — try with credentials:include (browser sends existing cookies automatically)
+    // This works when user is already logged into QMS in same browser
     const attempts = [
-      // 1. POST with credentials
+      // 1. credentials:include — sends existing QMS session cookie
       () => fetch(url, {
-        method: 'POST',
-        headers: {'Content-Type':'application/x-www-form-urlencoded'},
-        body: 'email=sunny.batra%40smartworlddevelopers.com&password=swd%402021&username=sunny.batra%40smartworlddevelopers.com',
         credentials: 'include',
+        headers: { 'Accept': 'application/json' },
         mode: 'cors',
       }),
-      // 2. GET with credentials
-      () => fetch(url, {
-        method: 'GET',
-        credentials: 'include',
-        mode: 'cors',
-        headers: {'Accept': 'application/json'},
-      }),
-      // 3. No-cors fallback (won't get body but won't throw)
-      () => fetch(url, { mode: 'no-cors', credentials: 'include' }),
+      // 2. Same with no-cors to at least not throw
+      () => fetch(url, { credentials: 'include', mode: 'no-cors' }),
     ];
 
     for (const attempt of attempts) {
       try {
         const r = await attempt();
         if (r.type === 'opaque') {
-          // no-cors — can't read body, set error
-          setErrors(p=>({...p,[key]:'CORS blocked. Upload vg_proxy.php to the server.'}));
+          setErrors(p=>({...p,[key]:'CORS blocked — open QMS in this browser first, then refresh'}));
           setLoading(p=>({...p,[key]:false}));
           return;
         }
         const txt = await r.text();
         let data;
         try { data = JSON.parse(txt); } catch { data = []; }
+        // Check if unauthorized
+        if (data?.status === 'unauthorized' || data?.status === 'error') {
+          setErrors(p=>({...p,[key]:'Session expired — please login to QMS first'}));
+          setLoading(p=>({...p,[key]:false}));
+          return;
+        }
         const arr = Array.isArray(data) ? data : data?.data || data?.records || data?.result || [];
         setter(arr);
         setLoading(p=>({...p,[key]:false}));
         return;
       } catch(e) {
-        // try next method
         continue;
       }
     }
-    setErrors(p=>({...p,[key]:'All connection methods failed. Upload vg_proxy.php to server.'}));
+    setErrors(p=>({...p,[key]:'Connection failed'}));
     setLoading(p=>({...p,[key]:false}));
   },[]);
 
@@ -561,15 +562,17 @@ export default function PRPOApp() {
 
           {/* Demo mode banner */}
           {demoMode&&(
-            <div style={{background:'rgba(245,124,0,0.08)',border:'1px solid rgba(245,124,0,0.3)',borderRadius:12,padding:'10px 18px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+            <div style={{background:'rgba(0,151,167,0.07)',border:'1px solid rgba(0,151,167,0.25)',borderRadius:12,padding:'10px 18px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
               <div style={{display:'flex',alignItems:'center',gap:10}}>
-                <span style={{fontSize:18}}>🎭</span>
+                <span style={{fontSize:18}}>🔑</span>
                 <div>
-                  <span style={{fontSize:12,fontWeight:800,color:T.amber}}>Demo Mode — Sample Data</span>
-                  <span style={{fontSize:11,color:T.gray,marginLeft:12}}>APIs blocked (CORS/Auth). Upload <code style={{background:'rgba(0,60,100,0.06)',padding:'1px 5px',borderRadius:3}}>vg_proxy.php</code> to your server to see live data.</span>
+                  <span style={{fontSize:12,fontWeight:800,color:T.tealD}}>Demo Mode — Login to QMS to see live data</span>
+                  <span style={{fontSize:11,color:T.gray,marginLeft:12}}>
+                    Open <strong>smartworlddevelopersonline.com/qms</strong> in this browser → login → come back and click "Try Live Data"
+                  </span>
                 </div>
               </div>
-              <button onClick={refreshAll} style={{background:T.teal,color:'#fff',border:'none',borderRadius:8,padding:'5px 14px',fontSize:11,fontWeight:700,cursor:'pointer'}}>Try Live Data</button>
+              <button onClick={refreshAll} style={{background:T.teal,color:'#fff',border:'none',borderRadius:8,padding:'5px 14px',fontSize:11,fontWeight:700,cursor:'pointer'}}>🔄 Try Live Data</button>
             </div>
           )}
 
