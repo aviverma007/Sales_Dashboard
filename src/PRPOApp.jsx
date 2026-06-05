@@ -168,6 +168,7 @@ export default function PRPOApp() {
       if(filters.dept   && r.dept!==filters.dept) return false;
       if(filters.plant  && r.plant!==filters.plant) return false;
       if(filters.status && r.stage!==filters.status) return false;
+      if(filters.year   && !r.pr_date?.startsWith(filters.year)) return false;
       if(filters.month  && !r.pr_date?.startsWith(filters.month)) return false;
       return true;
     });
@@ -178,7 +179,8 @@ export default function PRPOApp() {
     dept:  [...new Set(rows.map(r=>r.dept).filter(Boolean))].sort(),
     plant: [...new Set(rows.map(r=>r.plant).filter(Boolean))].sort(),
     status:['Pending at PR','Pending at QMS','Pending at NFA','Pending at PO','Complete'],
-    month: [...new Set(rows.map(r=>r.pr_date?.slice(0,7)).filter(Boolean))].sort().reverse().slice(0,24),
+    month: [...new Set(rows.map(r=>r.pr_date?.slice(0,7)).filter(Boolean))].sort().reverse(),
+    year:  [...new Set(rows.map(r=>r.pr_date?.slice(0,4)).filter(Boolean))].sort().reverse(),
   }),[rows]);
 
   // Filtered KPIs
@@ -306,10 +308,11 @@ export default function PRPOApp() {
 
       {/* FILTER BAR */}
       <div style={{background:'linear-gradient(90deg,#0d2137,#1a3a5c,#006978)',padding:'10px 24px'}}>
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1fr 1fr auto',gap:10,alignItems:'end'}}>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1fr 1fr 1fr auto',gap:10,alignItems:'end'}}>
           <FSelect label="Department" field="dept"   options={opts.dept}/>
           <FSelect label="Plant"      field="plant"  options={opts.plant}/>
           <FSelect label="Status"     field="status" options={opts.status}/>
+          <FSelect label="Year"       field="year"   options={opts.year||[]}/>
           <FSelect label="Month"      field="month"  options={opts.month}/>
           <div>
             <div style={{fontSize:9,fontWeight:800,color:'rgba(255,255,255,0.6)',textTransform:'uppercase',marginBottom:3}}>Showing</div>
