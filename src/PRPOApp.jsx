@@ -196,10 +196,53 @@ const JourneyTimeline = ({pr, nfaMap, poMap}) => {
   );
 };
 
-// ─── MAIN APP ─────────────────────────────────────────────────────────────────
+// ─── MOCK DATA (used when APIs are blocked) ──────────────────────────────────
+const MOCK = {
+  pr: [
+    {id:'PR-2401',pr_number:'10000245',description:'Civil Works - Tower 3 Foundation',material_group:'Civil',requester:'Rahul Sharma',pr_date:'2024-01-15',release_status:'X',FRGZU:'X',wbs_element:'WBS-T3-CIVIL',price:1250000,AFNAM:'Rahul Sharma',BADAT:'2024-01-15',sap_pr_number:'10000245'},
+    {id:'PR-2402',pr_number:'10000246',description:'Electrical Wiring - Tower 1',material_group:'Electrical',requester:'Priya Mehta',pr_date:'2024-01-18',release_status:'',FRGZU:'',wbs_element:'WBS-T1-ELEC',price:890000,AFNAM:'Priya Mehta',BADAT:'2024-01-18',sap_pr_number:'10000246'},
+    {id:'PR-2403',pr_number:'10000247',description:'Plumbing - Common Areas',material_group:'Plumbing',requester:'Anil Kumar',pr_date:'2024-01-20',release_status:'X',FRGZU:'X',wbs_element:'WBS-COMM-PLMB',price:560000,AFNAM:'Anil Kumar',BADAT:'2024-01-20',sap_pr_number:'10000247'},
+    {id:'PR-2404',pr_number:'10000248',description:'Steel Rebar - Tower 4',material_group:'Steel',requester:'Sunita Verma',pr_date:'2024-01-22',release_status:'X',FRGZU:'X',wbs_element:'WBS-T4-STEEL',price:3200000,AFNAM:'Sunita Verma',BADAT:'2024-01-22',sap_pr_number:'10000248'},
+    {id:'PR-2405',pr_number:'10000249',description:'HVAC Equipment - Basement',material_group:'HVAC',requester:'Deepak Joshi',pr_date:'2024-01-25',release_status:'X',FRGZU:'X',wbs_element:'WBS-BSMT-HVAC',price:4100000,AFNAM:'Deepak Joshi',BADAT:'2024-01-25',sap_pr_number:'10000249'},
+    {id:'PR-2406',pr_number:'10000250',description:'Tiles - Floor Finishing T2',material_group:'Finishing',requester:'Kavya Reddy',pr_date:'2024-02-01',release_status:'',FRGZU:'',wbs_element:'WBS-T2-FINISH',price:720000,AFNAM:'Kavya Reddy',BADAT:'2024-02-01',sap_pr_number:'10000250'},
+    {id:'PR-2407',pr_number:'10000251',description:'Fire Safety System',material_group:'Safety',requester:'Vikram Singh',pr_date:'2024-02-05',release_status:'X',FRGZU:'X',wbs_element:'WBS-FIRE-SAFE',price:1800000,AFNAM:'Vikram Singh',BADAT:'2024-02-05',sap_pr_number:'10000251'},
+    {id:'PR-2408',pr_number:'10000252',description:'Lift Installation - Tower 5',material_group:'Elevators',requester:'Meena Pillai',pr_date:'2024-02-08',release_status:'X',FRGZU:'X',wbs_element:'WBS-T5-LIFT',price:6500000,AFNAM:'Meena Pillai',BADAT:'2024-02-08',sap_pr_number:'10000252'},
+  ],
+  nfa: [
+    {id:'NFA-001',sap_pr_number:'10000245',pr_number:'10000245',nfa_number:'NFA-2401',status:'Approved',approval_status:'Approved',vendor:'M/s ABC Constructions',vendor_name:'ABC Constructions',created_at:'2024-01-20',amount:1225000},
+    {id:'NFA-002',sap_pr_number:'10000247',pr_number:'10000247',nfa_number:'NFA-2402',status:'Pending',approval_status:'Pending',vendor:'M/s XYZ Plumbers',vendor_name:'XYZ Plumbers',created_at:'2024-01-25',amount:550000},
+    {id:'NFA-003',sap_pr_number:'10000248',pr_number:'10000248',nfa_number:'NFA-2403',status:'Approved',approval_status:'Approved',vendor:'M/s Steel Corp Ltd',vendor_name:'Steel Corp Ltd',created_at:'2024-01-28',amount:3150000},
+    {id:'NFA-004',sap_pr_number:'10000249',pr_number:'10000249',nfa_number:'NFA-2404',status:'Approved',approval_status:'Approved',vendor:'M/s CoolTech HVAC',vendor_name:'CoolTech HVAC',created_at:'2024-02-01',amount:4050000},
+    {id:'NFA-005',sap_pr_number:'10000251',pr_number:'10000251',nfa_number:'NFA-2405',status:'Pending',approval_status:'Pending',vendor:'',vendor_name:'',created_at:'2024-02-10',amount:1780000},
+    {id:'NFA-006',sap_pr_number:'10000252',pr_number:'10000252',nfa_number:'NFA-2406',status:'Approved',approval_status:'Approved',vendor:'M/s Otis Elevators',vendor_name:'Otis Elevators',created_at:'2024-02-15',amount:6400000},
+  ],
+  sapPO: [
+    {po_number:'4500012301',EBELN:'4500012301',po_date:'2024-02-01',BEDAT:'2024-02-01',vendor:'ABC Constructions',LIFNR:'V001',net_value:1225000,NETWR:1225000,po_type:'NB',BSART:'NB',purchasing_group:'PG01',EKGRP:'PG01',company_code:'SWD1',BUKRS:'SWD1',plant:'P001',WERKS:'P001',release_status:'X',FRGKE:'X',currency:'INR',WAERS:'INR',pr_number:'10000245'},
+    {po_number:'4500012302',EBELN:'4500012302',po_date:'2024-02-05',BEDAT:'2024-02-05',vendor:'Steel Corp Ltd',LIFNR:'V003',net_value:3150000,NETWR:3150000,po_type:'NB',BSART:'NB',purchasing_group:'PG02',EKGRP:'PG02',company_code:'SWD1',BUKRS:'SWD1',plant:'P001',WERKS:'P001',release_status:'X',FRGKE:'X',currency:'INR',WAERS:'INR',pr_number:'10000248'},
+    {po_number:'4500012303',EBELN:'4500012303',po_date:'2024-02-10',BEDAT:'2024-02-10',vendor:'CoolTech HVAC',LIFNR:'V004',net_value:4050000,NETWR:4050000,po_type:'NB',BSART:'NB',purchasing_group:'PG01',EKGRP:'PG01',company_code:'SWD1',BUKRS:'SWD1',plant:'P002',WERKS:'P002',release_status:'',FRGKE:'',currency:'INR',WAERS:'INR',pr_number:'10000249'},
+    {po_number:'4500012304',EBELN:'4500012304',po_date:'2024-02-20',BEDAT:'2024-02-20',vendor:'Otis Elevators',LIFNR:'V005',net_value:6400000,NETWR:6400000,po_type:'NB',BSART:'NB',purchasing_group:'PG03',EKGRP:'PG03',company_code:'SWD1',BUKRS:'SWD1',plant:'P001',WERKS:'P001',release_status:'X',FRGKE:'X',currency:'INR',WAERS:'INR',pr_number:'10000252'},
+  ],
+  sapPR2PO: [
+    {pr_number:'10000245',BANFN:'10000245',po_number:'4500012301',EBELN:'4500012301',vendor:'ABC Constructions',LIFNR:'V001',net_value:1225000,NETWR:1225000},
+    {pr_number:'10000248',BANFN:'10000248',po_number:'4500012302',EBELN:'4500012302',vendor:'Steel Corp Ltd',LIFNR:'V003',net_value:3150000,NETWR:3150000},
+    {pr_number:'10000249',BANFN:'10000249',po_number:'4500012303',EBELN:'4500012303',vendor:'CoolTech HVAC',LIFNR:'V004',net_value:4050000,NETWR:4050000},
+    {pr_number:'10000252',BANFN:'10000252',po_number:'4500012304',EBELN:'4500012304',vendor:'Otis Elevators',LIFNR:'V005',net_value:6400000,NETWR:6400000},
+  ],
+  market: [
+    {id:'MKT-001',item:'Cement OPC 53 Grade',category:'Building Materials',vendor:'UltraTech',quantity:5000,unit:'Bags',rate:380,amount:1900000,status:'Open'},
+    {id:'MKT-002',item:'TMT Steel 500D',category:'Steel',vendor:'TATA Steel',quantity:200,unit:'MT',rate:58000,amount:11600000,status:'Closed'},
+    {id:'MKT-003',item:'Electrical Cables 4 Core',category:'Electrical',vendor:'Havells',quantity:1000,unit:'Meters',rate:450,amount:450000,status:'Open'},
+  ],
+  eot: [
+    {id:'EOT-001',pr_number:'10000245',vendor:'ABC Constructions',original_date:'2024-03-01',extended_date:'2024-04-15',reason:'Material shortage',status:'Approved',days_extended:45},
+    {id:'EOT-002',pr_number:'10000248',vendor:'Steel Corp Ltd',original_date:'2024-02-28',extended_date:'2024-03-31',reason:'Delivery delay',status:'Pending',days_extended:31},
+  ],
+};
+
 export default function PRPOApp() {
   const [tab, setTab] = useState('overview');
   const [selectedPR, setSelectedPR] = useState(null);
+  const [demoMode, setDemoMode] = useState(false);
 
   // Raw data from APIs
   const [prData,  setPR]  = useState([]);
@@ -305,7 +348,25 @@ export default function PRPOApp() {
     setLR(new Date());
   },[fetchVG,fetchSAP]);
 
+  const loadDemo = () => {
+    setPR(MOCK.pr); setNFA(MOCK.nfa); setMkt(MOCK.market); setEOT(MOCK.eot);
+    setSapPR(MOCK.pr); setSapPO(MOCK.sapPO); setSapLink(MOCK.sapPR2PO);
+    setLoading({pr:false,nfa:false,mkt:false,eot:false,sapPR:false,sapPO:false});
+    setErrors({});
+    setDemoMode(true);
+    setLR(new Date());
+  };
+
   useEffect(()=>{ refreshAll(); },[]);
+
+  // Auto-switch to demo mode if all VG APIs fail after 6 seconds
+  useEffect(()=>{
+    const t = setTimeout(()=>{
+      const allFailed = ['pr','nfa','mkt','eot'].every(k=>errors[k]||(!loading[k]&&!{pr:prData,nfa:nfaData,mkt:mktData,eot:eotData}[k]?.length));
+      if(allFailed && !demoMode) loadDemo();
+    }, 6000);
+    return ()=>clearTimeout(t);
+  },[errors,loading,prData,nfaData,mktData,eotData,demoMode]);
 
   // ── Merge PR journey: SAP PR + VG PR + NFA + SAP PO ─────────────────────────
   const nfaMap = useMemo(()=>{
@@ -461,6 +522,11 @@ export default function PRPOApp() {
           <div style={{display:'flex',alignItems:'center',gap:10}}>
             {isLoading&&<div style={{width:16,height:16,border:'2px solid rgba(255,255,255,0.3)',borderTop:'2px solid #fff',borderRadius:'50%',animation:'spin 0.8s linear infinite'}}/>}
             {lastRefresh&&<span style={{fontSize:9,color:'rgba(255,255,255,0.5)'}}>{lastRefresh.toLocaleTimeString()}</span>}
+            {demoMode&&<span style={{fontSize:9,fontWeight:800,color:'#ffd740',background:'rgba(255,215,64,0.15)',borderRadius:20,padding:'2px 8px'}}>DEMO DATA</span>}
+            <button onClick={demoMode?refreshAll:loadDemo}
+              style={{background:demoMode?'rgba(46,125,50,0.7)':'rgba(245,124,0,0.8)',color:'#fff',border:'none',borderRadius:8,padding:'5px 12px',fontSize:11,fontWeight:700,cursor:'pointer'}}>
+              {demoMode?'🔴 Load Live':'🎭 Demo Mode'}
+            </button>
             <button onClick={refreshAll} style={{background:'rgba(0,151,167,0.7)',color:'#fff',border:'none',borderRadius:8,padding:'5px 12px',fontSize:11,fontWeight:700,cursor:'pointer'}}>🔄</button>
             <button onClick={logout}     style={{background:'rgba(211,47,47,0.7)', color:'#fff',border:'none',borderRadius:8,padding:'5px 12px',fontSize:11,fontWeight:700,cursor:'pointer'}}>🚪</button>
           </div>
@@ -492,6 +558,20 @@ export default function PRPOApp() {
         </div>
 
         <main style={{maxWidth:1600,margin:'0 auto',padding:'16px 20px 40px',display:'flex',flexDirection:'column',gap:14}}>
+
+          {/* Demo mode banner */}
+          {demoMode&&(
+            <div style={{background:'rgba(245,124,0,0.08)',border:'1px solid rgba(245,124,0,0.3)',borderRadius:12,padding:'10px 18px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+              <div style={{display:'flex',alignItems:'center',gap:10}}>
+                <span style={{fontSize:18}}>🎭</span>
+                <div>
+                  <span style={{fontSize:12,fontWeight:800,color:T.amber}}>Demo Mode — Sample Data</span>
+                  <span style={{fontSize:11,color:T.gray,marginLeft:12}}>APIs blocked (CORS/Auth). Upload <code style={{background:'rgba(0,60,100,0.06)',padding:'1px 5px',borderRadius:3}}>vg_proxy.php</code> to your server to see live data.</span>
+                </div>
+              </div>
+              <button onClick={refreshAll} style={{background:T.teal,color:'#fff',border:'none',borderRadius:8,padding:'5px 14px',fontSize:11,fontWeight:700,cursor:'pointer'}}>Try Live Data</button>
+            </div>
+          )}
 
           {/* ══ OVERVIEW ══ */}
           {tab==='overview'&&(<>
