@@ -16,8 +16,8 @@ const VG_URLS = {
   sap_po: `${LOCAL_SERVER}/api/sap_po`,
 };
 
-// SAP proxy still needs PHP file on server — skip until deployed
-const SAP_PROXY = `${VG_BASE}/sap_proxy.php`;
+// SAP proxy — not needed, using local server instead
+const SAP_PROXY = `${LOCAL_SERVER}/api/sap_pr`;
 
 const T = {
   navy:'#0d2137', tealD:'#006978', teal:'#0097a7', tealL:'#00bcd4',
