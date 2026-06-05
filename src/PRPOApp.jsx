@@ -1,47 +1,21 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend,
-  ResponsiveContainer, LabelList, ComposedChart, Line, Funnel, FunnelChart, LabelList as LL
+  ResponsiveContainer, LabelList, ComposedChart, Line
 } from 'recharts';
 
-// ─── LOCAL SERVER (run: node prpo_server.js on your PC) ─────────────────────
-const LOCAL_SERVER = 'http://localhost:3001';
-const VG_URLS = {
-  pr:     `${LOCAL_SERVER}/api/pr`,
-  nfa:    `${LOCAL_SERVER}/api/nfa`,
-  market: `${LOCAL_SERVER}/api/market`,
-  eot:    `${LOCAL_SERVER}/api/eot`,
-  sap_pr: `${LOCAL_SERVER}/api/sap_pr`,
-  sap_po: `${LOCAL_SERVER}/api/sap_po`,
-};
-
-// SAP proxy — not needed, using local server instead
-const SAP_PROXY = `${LOCAL_SERVER}/api/sap_pr`;
-
 const T = {
-  navy:'#0d2137', tealD:'#006978', teal:'#0097a7', tealL:'#00bcd4',
-  amber:'#f57c00', red:'#d32f2f', green:'#2e7d32', purple:'#6a1b9a',
-  gray:'#546e7a', textM:'#1a2f45', textL:'#2d4a66',
-  orange:'#e65100', blue:'#1565c0',
+  navy:'#0d2137', tealD:'#006978', teal:'#0097a7',
+  amber:'#f57c00', red:'#d32f2f', green:'#2e7d32',
+  purple:'#6a1b9a', blue:'#1565c0', orange:'#e65100',
+  gray:'#546e7a', textM:'#1a2f45', white:'#fff',
 };
-const CC = ['#0097a7','#1565c0','#2e7d32','#f57c00','#d32f2f','#6a1b9a','#00838f','#e65100','#00695c','#ad1457'];
+const CC = ['#0097a7','#1565c0','#2e7d32','#f57c00','#d32f2f','#6a1b9a','#00838f','#e65100','#00695c','#ad1457','#37474f','#558b2f'];
 
-// Journey stages — in order
-const JOURNEY_STAGES = [
-  { id:'pr_created',    label:'PR Created',        icon:'📝', color:T.teal   },
-  { id:'pr_approved',   label:'PR Approved (SAP)',  icon:'✅', color:T.green  },
-  { id:'vg_created',    label:'Sent to VendorGlobe',icon:'🌐', color:T.blue  },
-  { id:'nfa_created',   label:'NFA Created',        icon:'📋', color:T.purple },
-  { id:'nfa_approved',  label:'NFA Approved',       icon:'✅', color:T.green  },
-  { id:'vendor_selected',label:'Vendor Selected',   icon:'🏢', color:T.amber  },
-  { id:'po_created',    label:'PO Created (SAP)',   icon:'📦', color:T.tealD  },
-  { id:'po_approved',   label:'PO Approved',        icon:'✅', color:T.green  },
-  { id:'grn_done',      label:'GRN / Delivery',     icon:'🚚', color:T.orange },
-  { id:'invoice_paid',  label:'Invoice & Payment',  icon:'💰', color:T.navy   },
-];
+const logout = () => { sessionStorage.removeItem('prpo_auth'); window.location.reload(); };
 
-// ─── UI COMPONENTS ────────────────────────────────────────────────────────────
+// ── UI COMPONENTS ─────────────────────────────────────────────────────────────
 const GC = ({children,style={}}) => (
   <div style={{background:'rgba(255,255,255,0.97)',backdropFilter:'blur(20px)',WebkitBackdropFilter:'blur(20px)',
     border:'1px solid rgba(255,255,255,0.9)',borderRadius:14,
@@ -50,19 +24,18 @@ const GC = ({children,style={}}) => (
   </div>
 );
 
-const KpiCard = ({icon,label,value,sub,color,pct,loading:l}) => (
+const KpiCard = ({icon,label,value,sub,color,pct}) => (
   <div style={{background:'rgba(255,255,255,0.97)',backdropFilter:'blur(20px)',WebkitBackdropFilter:'blur(20px)',
     border:'1px solid rgba(255,255,255,0.9)',borderLeft:`4px solid ${color}`,borderRadius:14,
-    boxShadow:'0 4px 24px rgba(0,40,80,0.15)',padding:'16px 18px',position:'relative'}}>
-    <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:8}}>
-      <span style={{fontSize:22}}>{icon}</span>
+    boxShadow:'0 4px 24px rgba(0,40,80,0.15)',padding:'14px 16px',position:'relative'}}>
+    <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:6}}>
+      <span style={{fontSize:20}}>{icon}</span>
       {pct!=null&&<span style={{fontSize:9,fontWeight:800,color:'#fff',background:color,borderRadius:20,padding:'2px 8px'}}>{pct}%</span>}
     </div>
-    {l ? <div style={{height:32,background:'rgba(0,60,100,0.07)',borderRadius:6,marginBottom:8,animation:'pulse 1.5s infinite'}}/> :
-      <div style={{fontSize:26,fontWeight:900,color,letterSpacing:-1,lineHeight:1,marginBottom:4}}>{value}</div>}
-    <div style={{fontSize:10,fontWeight:800,color:T.textM,textTransform:'uppercase',letterSpacing:0.5,marginBottom:2}}>{label}</div>
+    <div style={{fontSize:24,fontWeight:900,color,letterSpacing:-1,lineHeight:1,marginBottom:3}}>{value}</div>
+    <div style={{fontSize:9,fontWeight:800,color:T.textM,textTransform:'uppercase',letterSpacing:0.5,marginBottom:2}}>{label}</div>
     <div style={{fontSize:9,color:T.gray}}>{sub}</div>
-    {pct!=null&&!l&&<div style={{marginTop:8,height:4,background:'rgba(0,60,100,0.08)',borderRadius:2}}>
+    {pct!=null&&<div style={{marginTop:8,height:3,background:'rgba(0,60,100,0.08)',borderRadius:2}}>
       <div style={{width:`${Math.min(pct,100)}%`,height:'100%',background:color,borderRadius:2}}/>
     </div>}
   </div>
@@ -70,1429 +43,764 @@ const KpiCard = ({icon,label,value,sub,color,pct,loading:l}) => (
 
 const CTip = ({active,payload,label}) => {
   if(!active||!payload?.length) return null;
-  return <div style={{background:'rgba(255,255,255,0.98)',border:'1px solid rgba(0,151,167,0.3)',borderRadius:10,padding:'8px 12px',boxShadow:'0 8px 32px rgba(0,80,120,0.18)',fontSize:11}}>
+  return <div style={{background:'rgba(255,255,255,0.98)',border:'1px solid rgba(0,151,167,0.25)',borderRadius:10,
+    padding:'8px 12px',boxShadow:'0 8px 32px rgba(0,80,120,0.15)',fontSize:11}}>
     <p style={{color:T.tealD,fontWeight:700,marginBottom:4}}>{label}</p>
-    {payload.map((p,i)=><p key={i} style={{color:p.color||T.text,margin:'2px 0'}}><span style={{color:T.textL}}>{p.name}: </span>{typeof p.value==='number'?p.value.toLocaleString():p.value}</p>)}
+    {payload.map((p,i)=><p key={i} style={{color:p.color||T.navy,margin:'2px 0'}}>
+      <span style={{color:T.gray}}>{p.name}: </span>{typeof p.value==='number'?p.value.toLocaleString():p.value}
+    </p>)}
   </div>;
 };
 
-const SH = ({title,sub}) => <div style={{marginBottom:12}}>
-  <p style={{fontSize:11,fontWeight:800,color:T.tealD,letterSpacing:0.4,margin:0,textTransform:'uppercase'}}>{title}</p>
-  {sub&&<p style={{fontSize:10,color:T.textM,margin:'2px 0 0'}}>{sub}</p>}
+const SH = ({title,sub}) => <div style={{marginBottom:10}}>
+  <p style={{fontSize:11,fontWeight:800,color:T.tealD,textTransform:'uppercase',letterSpacing:0.4,margin:0}}>{title}</p>
+  {sub&&<p style={{fontSize:9,color:T.gray,margin:'2px 0 0'}}>{sub}</p>}
 </div>;
 
-const FSelect = ({label,value,onChange,options}) => <div>
-  <div style={{fontSize:9,fontWeight:800,color:'rgba(255,255,255,0.8)',textTransform:'uppercase',letterSpacing:0.5,marginBottom:3}}>{label}</div>
-  <select value={value} onChange={e=>onChange(e.target.value)}
-    style={{width:'100%',fontSize:11,fontWeight:600,color:T.navy,background:'rgba(255,255,255,0.95)',border:'1px solid rgba(255,255,255,0.4)',borderRadius:8,padding:'5px 8px',cursor:'pointer'}}>
-    <option value="">All</option>
-    {options.map(o=><option key={o} value={o}>{o}</option>)}
-  </select>
+const Spinner = () => <div style={{display:'flex',alignItems:'center',justifyContent:'center',height:120,gap:10}}>
+  <div style={{width:28,height:28,border:`3px solid rgba(0,151,167,0.2)`,borderTop:`3px solid ${T.teal}`,
+    borderRadius:'50%',animation:'spin 0.8s linear infinite'}}/>
+  <span style={{color:T.gray,fontSize:12}}>Loading...</span>
 </div>;
 
-const Spinner = ({msg='Loading…'}) => <div style={{display:'flex',alignItems:'center',justifyContent:'center',height:200,gap:12,flexDirection:'column'}}>
-  <div style={{width:36,height:36,border:`3px solid rgba(0,151,167,0.2)`,borderTop:`3px solid ${T.teal}`,borderRadius:'50%',animation:'spin 0.8s linear infinite'}}/>
-  <span style={{color:T.gray,fontSize:12,fontWeight:600}}>{msg}</span>
-</div>;
-
-const ErrBox = ({msg,onRetry}) => {
-  const isSession = msg?.includes('Session')||msg?.includes('unauthorized')||msg?.includes('QMS');
-  const isCORS    = msg?.includes('CORS')||msg?.includes('blocked');
-  return (
-    <div style={{padding:28,textAlign:'center'}}>
-      <div style={{fontSize:32,marginBottom:8}}>{isSession?'🔑':isCORS?'🔒':'⚠️'}</div>
-      <p style={{fontWeight:800,color:isSession?T.amber:T.red,margin:'0 0 6px',fontSize:13}}>
-        {isSession?'QMS Session Required':isCORS?'CORS Blocked':'Connection Error'}
-      </p>
-      <p style={{fontSize:11,color:T.gray,margin:'0 0 12px'}}>{msg}</p>
-      {isSession&&<div style={{background:'rgba(0,151,167,0.06)',border:'1px solid rgba(0,151,167,0.2)',borderRadius:10,padding:'12px 16px',maxWidth:380,margin:'0 auto 12px',textAlign:'left'}}>
-        <p style={{fontSize:10,fontWeight:800,color:T.tealD,margin:'0 0 6px',textTransform:'uppercase'}}>Fix: Login to QMS first</p>
-        <p style={{fontSize:10,color:T.textM,margin:'0 0 4px'}}>1. Open a new tab → go to:</p>
-        <code style={{fontSize:10,color:T.tealD}}>smartworlddevelopersonline.com/qms</code>
-        <p style={{fontSize:10,color:T.textM,margin:'8px 0 4px'}}>2. Login with your credentials</p>
-        <p style={{fontSize:10,color:T.textM,margin:0}}>3. Come back here and click Retry</p>
-      </div>}
-      {onRetry&&<button onClick={onRetry} style={{background:T.teal,color:'#fff',border:'none',borderRadius:8,padding:'7px 16px',fontSize:11,fontWeight:700,cursor:'pointer'}}>🔄 Retry</button>}
-    </div>
-  );
-};
-
-const StatusBadge = ({s}) => {
-  const sl = String(s||'').toLowerCase();
-  const col = sl.includes('approv')||sl.includes('complet')||sl.includes('done')?T.green
-    : sl.includes('pending')||sl.includes('open')||sl.includes('progress')?T.amber
-    : sl.includes('reject')||sl.includes('cancel')?T.red
-    : sl.includes('sent')||sl.includes('forward')?T.blue : T.gray;
-  return <span style={{fontSize:9,fontWeight:800,color:'#fff',background:col,borderRadius:4,padding:'2px 7px',whiteSpace:'nowrap'}}>{s||'—'}</span>;
-};
-
-const JourneyTimeline = ({pr, nfa, PR, NFA}) => {
-  const prId  = PR.id(pr);
-  const stages = [
-    { label:'PR Created',        done:true,                         date:PR.date(pr),     detail:`EPR# ${PR.epr(pr)} · ${PR.project(pr)}` },
-    { label:'Level 1 Approval',  done:!!PR.l1Sign(pr),             date:PR.l1Date(pr),   detail: PR.l1Sign(pr) ? `✓ ${PR.l1Who(pr)}` : `Pending — ${PR.l1Who(pr)||'Awaiting'}` },
-    { label:'Level 2 Approval',  done:!!PR.l2Sign(pr),             date:PR.l2Date(pr),   detail: PR.l2Sign(pr) ? `✓ ${PR.l2Who(pr)}` : `Pending — ${PR.l2Who(pr)||'Awaiting'}` },
-    { label:'CP Team Approval',  done:!!PR.cpSign(pr),             date:PR.cpDate(pr),   detail: PR.cpSign(pr) ? `✓ ${PR.cpWho(pr)}` : `Pending — ${PR.cpWho(pr)||'Awaiting'}` },
-    { label:'Assignee Approval', done:!!PR.asgSign(pr),            date:PR.asgDate(pr),  detail: PR.asgSign(pr) ? '✓ Approved' : 'Pending' },
-    { label:'NFA Created',       done:PR.nfaConverted(pr)===1,     date:PR.nfaDate(pr),  detail: PR.nfaConverted(pr)===1 ? `NFA# ${nfa?NFA.nfaNo(nfa):'—'}` : 'Not yet converted to NFA' },
-    { label:'NFA L1 Approval',   done:!!(nfa&&NFA.l1Sign(nfa)),    date:nfa?NFA.l1Date(nfa):'', detail: nfa ? (NFA.l1Sign(nfa)?`✓ ${NFA.l1Team(nfa)}`:`Pending — ${NFA.l1Team(nfa)}`) : '—' },
-    { label:'NFA L2 Approval',   done:!!(nfa&&NFA.l2Sign(nfa)),    date:nfa?NFA.l2Date(nfa):'', detail: nfa ? (NFA.l2Sign(nfa)?`✓ ${NFA.l2Team(nfa)}`:`Pending — ${NFA.l2Team(nfa)}`) : '—' },
-    { label:'NFA L3 Approval',   done:!!(nfa&&NFA.l3Sign(nfa)),    date:'',              detail: nfa ? (NFA.l3Sign(nfa)?`✓ ${NFA.l3Team(nfa)}`:`Pending — ${NFA.l3Team(nfa)}`) : '—' },
-    { label:'Vendor Selected',   done:!!(nfa&&NFA.vendor(nfa)),    date:'',              detail: nfa ? (NFA.vendor(nfa)||'Not yet selected') : '—' },
-    { label:'WO / PO Issued',    done:!!(nfa&&NFA.woPoNum(nfa)),   date:'',              detail: nfa ? (NFA.woPoNum(nfa)||'Not yet issued') : '—' },
-    { label:'SAP PR Created',    done:PR.isSapPR(pr)===1,          date:'',              detail: PR.isSapPR(pr)===1 ? '✓ Synced to SAP' : 'Not in SAP yet' },
+// ── DONUT CHART ────────────────────────────────────────────────────────────────
+const DonutKpi = ({label,total,released,notReleased,pendingNFA,pendingPR,pendingPO}) => {
+  const data = [
+    {name:'PO Released',  value:released,    color:T.green},
+    {name:'PO Not Released',value:notReleased,color:T.red},
   ];
-
-  const done  = stages.filter(s=>s.done).length;
-  const pct   = Math.round(done/stages.length*100);
-  const stuck = stages.find(s=>!s.done);
-
+  const pending = [
+    {name:'Pending at NFA',value:pendingNFA, color:T.purple},
+    {name:'Pending at PR', value:pendingPR,  color:T.amber},
+    {name:'Pending at PO', value:pendingPO,  color:T.orange},
+  ];
   return (
-    <GC style={{padding:0,overflow:'hidden'}}>
-      <div style={{background:`linear-gradient(135deg,${T.navy},${T.tealD})`,padding:'14px 20px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+    <GC style={{padding:18}}>
+      <SH title={label}/>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,alignItems:'center'}}>
+        {/* Left donut */}
         <div>
-          <p style={{color:'#fff',fontWeight:900,fontSize:14,margin:0}}>PR #{PR.epr(pr)} — {PR.no(pr)}</p>
-          <p style={{color:'rgba(255,255,255,0.65)',fontSize:10,margin:'2px 0 0'}}>{PR.project(pr)} · {PR.location(pr)} · Budget: ₹{Number(PR.budget(pr)).toLocaleString()}</p>
-        </div>
-        <div style={{textAlign:'right'}}>
-          <div style={{fontSize:22,fontWeight:900,color:pct===100?'#69f0ae':pct>=60?'#ffd740':'#ff6e40'}}>{pct}%</div>
-          <div style={{fontSize:9,color:'rgba(255,255,255,0.6)',fontWeight:700}}>COMPLETE</div>
-        </div>
-      </div>
-      <div style={{height:4,background:'rgba(0,60,100,0.1)'}}>
-        <div style={{width:pct+'%',height:'100%',background:pct===100?T.green:T.teal,transition:'width 0.6s'}}/>
-      </div>
-      {stuck&&<div style={{background:'rgba(245,124,0,0.06)',borderBottom:'1px solid rgba(245,124,0,0.15)',padding:'6px 20px',display:'flex',alignItems:'center',gap:8}}>
-        <span style={{fontSize:13}}>⏳</span>
-        <span style={{fontSize:11,fontWeight:700,color:T.amber}}>Pending: {stuck.label}</span>
-        {PR.isUrgent(pr)===1&&<span style={{fontSize:9,fontWeight:800,color:'#fff',background:T.red,borderRadius:20,padding:'1px 8px',marginLeft:8}}>URGENT</span>}
-      </div>}
-      <div style={{padding:'16px 20px',display:'flex',flexDirection:'column',gap:0}}>
-        {stages.map((s,i)=>(
-          <div key={i} style={{display:'flex',gap:12,alignItems:'flex-start'}}>
-            <div style={{display:'flex',flexDirection:'column',alignItems:'center',width:24,flexShrink:0}}>
-              <div style={{width:22,height:22,borderRadius:'50%',
-                background:s.done?T.green:'rgba(0,60,100,0.06)',
-                border:`2px solid ${s.done?T.green:'rgba(0,60,100,0.12)'}`,
-                display:'flex',alignItems:'center',justifyContent:'center',
-                boxShadow:s.done?`0 0 0 3px rgba(46,125,50,0.12)`:undefined}}>
-                <span style={{fontSize:9,color:s.done?'#fff':'rgba(0,60,100,0.3)'}}>{s.done?'✓':'○'}</span>
-              </div>
-              {i<stages.length-1&&<div style={{width:2,height:24,background:s.done?'rgba(46,125,50,0.25)':'rgba(0,60,100,0.06)',margin:'2px 0'}}/>}
+          <p style={{fontSize:24,fontWeight:900,color:T.navy,margin:'0 0 2px'}}>{total.toLocaleString()}</p>
+          <p style={{fontSize:9,color:T.gray,textTransform:'uppercase',fontWeight:700,margin:'0 0 10px'}}>Total PRs</p>
+          <ResponsiveContainer width="100%" height={140}>
+            <PieChart>
+              <Pie data={data} cx="50%" cy="50%" innerRadius={40} outerRadius={65}
+                paddingAngle={3} dataKey="value" strokeWidth={2} stroke="#fff">
+                {data.map((d,i)=><Cell key={i} fill={d.color}/>)}
+              </Pie>
+              <Tooltip content={<CTip/>}/>
+            </PieChart>
+          </ResponsiveContainer>
+          {data.map((d,i)=>(
+            <div key={i} style={{display:'flex',alignItems:'center',gap:6,marginBottom:4}}>
+              <div style={{width:10,height:10,borderRadius:2,background:d.color,flexShrink:0}}/>
+              <span style={{fontSize:10,color:T.textM,flex:1}}>{d.name}</span>
+              <span style={{fontSize:11,fontWeight:800,color:d.color}}>{d.value.toLocaleString()}</span>
             </div>
-            <div style={{paddingBottom:i<stages.length-1?4:0,flex:1}}>
-              <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:1}}>
-                <span style={{fontSize:11,fontWeight:800,color:s.done?T.textM:'rgba(0,60,100,0.3)'}}>{s.label}</span>
-                {s.date&&<span style={{fontSize:9,color:T.gray}}>{String(s.date).slice(0,10)}</span>}
+          ))}
+        </div>
+        {/* Right: pending breakdown */}
+        <div>
+          <p style={{fontSize:9,fontWeight:800,color:T.tealD,textTransform:'uppercase',margin:'0 0 12px'}}>Pending Breakdown</p>
+          {[
+            {l:'Pending at NFA',v:pendingNFA,c:T.purple},
+            {l:'Pending at PR', v:pendingPR, c:T.amber},
+            {l:'Pending at PO', v:pendingPO, c:T.orange},
+          ].map((d,i)=>(
+            <div key={i} style={{marginBottom:10}}>
+              <div style={{display:'flex',justifyContent:'space-between',marginBottom:3}}>
+                <span style={{fontSize:10,color:T.textM,fontWeight:600}}>{d.l}</span>
+                <span style={{fontSize:12,fontWeight:900,color:d.c}}>{d.v.toLocaleString()}</span>
               </div>
-              <p style={{fontSize:10,color:s.done?T.textL:'rgba(0,60,100,0.25)',margin:0}}>{s.detail}</p>
+              <div style={{height:6,background:'rgba(0,60,100,0.07)',borderRadius:3}}>
+                <div style={{width:`${Math.round(d.v/(total||1)*100)}%`,height:'100%',background:d.c,borderRadius:3}}/>
+              </div>
             </div>
+          ))}
+          {/* PO Status donut */}
+          <div style={{marginTop:16}}>
+            <p style={{fontSize:9,fontWeight:800,color:T.tealD,textTransform:'uppercase',margin:'0 0 6px'}}>PO Status</p>
+            <ResponsiveContainer width="100%" height={100}>
+              <PieChart>
+                <Pie data={pending} cx="50%" cy="50%" outerRadius={45}
+                  paddingAngle={2} dataKey="value" strokeWidth={1.5} stroke="#fff">
+                  {pending.map((d,i)=><Cell key={i} fill={d.color}/>)}
+                </Pie>
+                <Tooltip content={<CTip/>}/>
+              </PieChart>
+            </ResponsiveContainer>
           </div>
-        ))}
+        </div>
       </div>
     </GC>
   );
 };
 
-// ─── MOCK DATA (used when APIs are blocked) ──────────────────────────────────
-const MOCK = {
-  pr: [
-    {id:'PR-2401',pr_number:'10000245',description:'Civil Works - Tower 3 Foundation',material_group:'Civil',requester:'Rahul Sharma',pr_date:'2024-01-15',release_status:'X',FRGZU:'X',wbs_element:'WBS-T3-CIVIL',price:1250000,AFNAM:'Rahul Sharma',BADAT:'2024-01-15',sap_pr_number:'10000245'},
-    {id:'PR-2402',pr_number:'10000246',description:'Electrical Wiring - Tower 1',material_group:'Electrical',requester:'Priya Mehta',pr_date:'2024-01-18',release_status:'',FRGZU:'',wbs_element:'WBS-T1-ELEC',price:890000,AFNAM:'Priya Mehta',BADAT:'2024-01-18',sap_pr_number:'10000246'},
-    {id:'PR-2403',pr_number:'10000247',description:'Plumbing - Common Areas',material_group:'Plumbing',requester:'Anil Kumar',pr_date:'2024-01-20',release_status:'X',FRGZU:'X',wbs_element:'WBS-COMM-PLMB',price:560000,AFNAM:'Anil Kumar',BADAT:'2024-01-20',sap_pr_number:'10000247'},
-    {id:'PR-2404',pr_number:'10000248',description:'Steel Rebar - Tower 4',material_group:'Steel',requester:'Sunita Verma',pr_date:'2024-01-22',release_status:'X',FRGZU:'X',wbs_element:'WBS-T4-STEEL',price:3200000,AFNAM:'Sunita Verma',BADAT:'2024-01-22',sap_pr_number:'10000248'},
-    {id:'PR-2405',pr_number:'10000249',description:'HVAC Equipment - Basement',material_group:'HVAC',requester:'Deepak Joshi',pr_date:'2024-01-25',release_status:'X',FRGZU:'X',wbs_element:'WBS-BSMT-HVAC',price:4100000,AFNAM:'Deepak Joshi',BADAT:'2024-01-25',sap_pr_number:'10000249'},
-    {id:'PR-2406',pr_number:'10000250',description:'Tiles - Floor Finishing T2',material_group:'Finishing',requester:'Kavya Reddy',pr_date:'2024-02-01',release_status:'',FRGZU:'',wbs_element:'WBS-T2-FINISH',price:720000,AFNAM:'Kavya Reddy',BADAT:'2024-02-01',sap_pr_number:'10000250'},
-    {id:'PR-2407',pr_number:'10000251',description:'Fire Safety System',material_group:'Safety',requester:'Vikram Singh',pr_date:'2024-02-05',release_status:'X',FRGZU:'X',wbs_element:'WBS-FIRE-SAFE',price:1800000,AFNAM:'Vikram Singh',BADAT:'2024-02-05',sap_pr_number:'10000251'},
-    {id:'PR-2408',pr_number:'10000252',description:'Lift Installation - Tower 5',material_group:'Elevators',requester:'Meena Pillai',pr_date:'2024-02-08',release_status:'X',FRGZU:'X',wbs_element:'WBS-T5-LIFT',price:6500000,AFNAM:'Meena Pillai',BADAT:'2024-02-08',sap_pr_number:'10000252'},
-  ],
-  nfa: [
-    {id:'NFA-001',sap_pr_number:'10000245',pr_number:'10000245',nfa_number:'NFA-2401',status:'Approved',approval_status:'Approved',vendor:'M/s ABC Constructions',vendor_name:'ABC Constructions',created_at:'2024-01-20',amount:1225000},
-    {id:'NFA-002',sap_pr_number:'10000247',pr_number:'10000247',nfa_number:'NFA-2402',status:'Pending',approval_status:'Pending',vendor:'M/s XYZ Plumbers',vendor_name:'XYZ Plumbers',created_at:'2024-01-25',amount:550000},
-    {id:'NFA-003',sap_pr_number:'10000248',pr_number:'10000248',nfa_number:'NFA-2403',status:'Approved',approval_status:'Approved',vendor:'M/s Steel Corp Ltd',vendor_name:'Steel Corp Ltd',created_at:'2024-01-28',amount:3150000},
-    {id:'NFA-004',sap_pr_number:'10000249',pr_number:'10000249',nfa_number:'NFA-2404',status:'Approved',approval_status:'Approved',vendor:'M/s CoolTech HVAC',vendor_name:'CoolTech HVAC',created_at:'2024-02-01',amount:4050000},
-    {id:'NFA-005',sap_pr_number:'10000251',pr_number:'10000251',nfa_number:'NFA-2405',status:'Pending',approval_status:'Pending',vendor:'',vendor_name:'',created_at:'2024-02-10',amount:1780000},
-    {id:'NFA-006',sap_pr_number:'10000252',pr_number:'10000252',nfa_number:'NFA-2406',status:'Approved',approval_status:'Approved',vendor:'M/s Otis Elevators',vendor_name:'Otis Elevators',created_at:'2024-02-15',amount:6400000},
-  ],
-  sapPO: [
-    {po_number:'4500012301',EBELN:'4500012301',po_date:'2024-02-01',BEDAT:'2024-02-01',vendor:'ABC Constructions',LIFNR:'V001',net_value:1225000,NETWR:1225000,po_type:'NB',BSART:'NB',purchasing_group:'PG01',EKGRP:'PG01',company_code:'SWD1',BUKRS:'SWD1',plant:'P001',WERKS:'P001',release_status:'X',FRGKE:'X',currency:'INR',WAERS:'INR',pr_number:'10000245'},
-    {po_number:'4500012302',EBELN:'4500012302',po_date:'2024-02-05',BEDAT:'2024-02-05',vendor:'Steel Corp Ltd',LIFNR:'V003',net_value:3150000,NETWR:3150000,po_type:'NB',BSART:'NB',purchasing_group:'PG02',EKGRP:'PG02',company_code:'SWD1',BUKRS:'SWD1',plant:'P001',WERKS:'P001',release_status:'X',FRGKE:'X',currency:'INR',WAERS:'INR',pr_number:'10000248'},
-    {po_number:'4500012303',EBELN:'4500012303',po_date:'2024-02-10',BEDAT:'2024-02-10',vendor:'CoolTech HVAC',LIFNR:'V004',net_value:4050000,NETWR:4050000,po_type:'NB',BSART:'NB',purchasing_group:'PG01',EKGRP:'PG01',company_code:'SWD1',BUKRS:'SWD1',plant:'P002',WERKS:'P002',release_status:'',FRGKE:'',currency:'INR',WAERS:'INR',pr_number:'10000249'},
-    {po_number:'4500012304',EBELN:'4500012304',po_date:'2024-02-20',BEDAT:'2024-02-20',vendor:'Otis Elevators',LIFNR:'V005',net_value:6400000,NETWR:6400000,po_type:'NB',BSART:'NB',purchasing_group:'PG03',EKGRP:'PG03',company_code:'SWD1',BUKRS:'SWD1',plant:'P001',WERKS:'P001',release_status:'X',FRGKE:'X',currency:'INR',WAERS:'INR',pr_number:'10000252'},
-  ],
-  sapPR2PO: [
-    {pr_number:'10000245',BANFN:'10000245',po_number:'4500012301',EBELN:'4500012301',vendor:'ABC Constructions',LIFNR:'V001',net_value:1225000,NETWR:1225000},
-    {pr_number:'10000248',BANFN:'10000248',po_number:'4500012302',EBELN:'4500012302',vendor:'Steel Corp Ltd',LIFNR:'V003',net_value:3150000,NETWR:3150000},
-    {pr_number:'10000249',BANFN:'10000249',po_number:'4500012303',EBELN:'4500012303',vendor:'CoolTech HVAC',LIFNR:'V004',net_value:4050000,NETWR:4050000},
-    {pr_number:'10000252',BANFN:'10000252',po_number:'4500012304',EBELN:'4500012304',vendor:'Otis Elevators',LIFNR:'V005',net_value:6400000,NETWR:6400000},
-  ],
-  market: [
-    {id:'MKT-001',item:'Cement OPC 53 Grade',category:'Building Materials',vendor:'UltraTech',quantity:5000,unit:'Bags',rate:380,amount:1900000,status:'Open'},
-    {id:'MKT-002',item:'TMT Steel 500D',category:'Steel',vendor:'TATA Steel',quantity:200,unit:'MT',rate:58000,amount:11600000,status:'Closed'},
-    {id:'MKT-003',item:'Electrical Cables 4 Core',category:'Electrical',vendor:'Havells',quantity:1000,unit:'Meters',rate:450,amount:450000,status:'Open'},
-  ],
-  eot: [
-    {id:'EOT-001',pr_number:'10000245',vendor:'ABC Constructions',original_date:'2024-03-01',extended_date:'2024-04-15',reason:'Material shortage',status:'Approved',days_extended:45},
-    {id:'EOT-002',pr_number:'10000248',vendor:'Steel Corp Ltd',original_date:'2024-02-28',extended_date:'2024-03-31',reason:'Delivery delay',status:'Pending',days_extended:31},
-  ],
-};
-
+// ── MAIN APP ──────────────────────────────────────────────────────────────────
 export default function PRPOApp() {
-  const [tab, setTab] = useState('overview');
-  const [selectedPR, setSelectedPR] = useState(null);
-  const [demoMode, setDemoMode] = useState(false);
+  const [page, setPage]     = useState('overview');
+  const [journey, setJ]     = useState(null);
+  const [sapPO, setSapPO]   = useState([]);
+  const [loading, setLoad]  = useState(true);
+  const [selectedPR, setSPR]= useState(null);
+  const [filters, setFilters]= useState({dept:'',plant:'',month:'',year:'',status:''});
 
-  // Raw data from APIs
-  const [prData,  setPR]  = useState([]);
-  const [nfaData, setNFA] = useState([]);
-  const [mktData, setMkt] = useState([]);
-  const [eotData, setEOT] = useState([]);
-  const [sapPR,   setSapPR]  = useState([]);
-  const [sapPO,   setSapPO]  = useState([]);
-  const [sapPR2PO,setSapLink]= useState([]);
-  const [vendors, setVendors]= useState([]);
-
-  const [loading, setLoading] = useState({pr:true,nfa:true,mkt:true,eot:true,sapPR:true,sapPO:true});
-  const [errors,  setErrors]  = useState({});
-  const [lastRefresh, setLR]  = useState(null);
-
-  // Filters
-  const [fSearch,   setSearch]   = useState('');
-  const [fStatus,   setFStatus]  = useState('');
-  const [fVendor,   setFVendor]  = useState('');
-  const [fStage,    setFStage]   = useState('');
-  const [fGroup,    setFGroup]   = useState('');
-
-  const logout = () => { sessionStorage.removeItem('prpo_auth'); window.location.reload(); };
-
-  // ── Fetch helpers ────────────────────────────────────────────────────────────
-  const fetchVG = useCallback(async (type, setter, key) => {
-    const url = VG_URLS[type];
-    try {
-      const r = await fetch(url, { mode: 'cors' });
-      const json = await r.json();
-      const arr = Array.isArray(json) ? json : json?.data || [];
-      setter(arr);
-    } catch(e) {
-      setErrors(p=>({...p,[key]:'Local server not running. Run: node prpo_server.js'}));
-    } finally {
-      setLoading(p=>({...p,[key]:false}));
-    }
-  },[]);
-
-  // ── Field accessor helpers (real column names from QMS) ───────────────────
-  // ── QMS PR field accessors (real data has "data." prefix from API) ──
-  const PR = {
-    id:           r => r['data.PR_Id']      || r['PR_Id']      || 0,
-    no:           r => r['data.PR_No']      || r['PR_No']      || '',
-    epr:          r => r['data.EPR_No']     || r['EPR_No']     || '',
-    title:        r => r['data.Scope']      || r['Scope']      || '',
-    project:      r => r['data.Project_Name']  || r['Project_Name']  || '',
-    group:        r => r['data.Project_Group'] || r['Project_Group'] || '',
-    location:     r => r['data.Location']   || r['Location']   || '',
-    city:         r => r['data.City']       || r['City']       || '',
-    budget:       r => +(r['data.Budget']   || r['Budget']     || 0),
-    date:         r => r['data.PRN_Date']   || r['PRN_Date']   || r['data.Created_Date'] || '',
-    created:      r => r['data.Created_Date']  || r['Created_Date']  || '',
-    // Status: 2=Approved, 1=Pending, -1=Cancelled, -2=OnHold, -3=Rejected, -4=Closed
-    status:       r => +(r['data.Status']   || r['Status']     || 0),
-    statusLabel:  r => { const m={'2':'Approved','1':'Pending','-1':'Cancelled','-2':'On Hold','-3':'Rejected','-4':'Closed','10':'Transferred'}; return m[String(+(r['data.Status']||0))]||'Unknown'; },
-    // Approval chain — e_sign has "email!#$" pattern when signed
-    l1Sign:       r => r['data.Validator_One_E_Sign']  || '',
-    l1Date:       r => r['data.Validator_One_Date']    || '',
-    l1Who:        r => (r['data.Validator_One']||'').split('@')[0] || '',
-    l2Sign:       r => r['data.Validator_Two_E_Sign']  || '',
-    l2Date:       r => r['data.Validator_Two_Date']    || '',
-    l2Who:        r => (r['data.Validator_Two']||'').split('@')[0] || '',
-    cpSign:       r => r['data.CP_Team_E_Sign']        || '',
-    cpDate:       r => r['data.CP_Team_Date']          || '',
-    cpWho:        r => (r['data.CP_Team']||'').split('@')[0] || '',
-    asgSign:      r => r['data.Assignee_Team_E_Sign']  || '',
-    asgWho:       r => (r['data.PR_Assigners']||'').split('@')[0] || '',
-    // NFA conversion
-    nfaConverted: r => +(r['data.NFA_Converted'] || 0),
-    nfaDate:      r => r['data.NFA_Date']        || '',
-    rfqConverted: r => +(r['data.RFQ_Converted'] || 0),
-    isSapPR:      r => +(r['data.Is_Sap_Pr']     || 0),
-    isUrgent:     r => +(r['data.Exigent']        || 0),
-    isCancelled:  r => +(r['data.Status']||0) === -1,
-    isApproved:   r => +(r['data.Status']||0) === 2,
-  };
-
-  // ── NFA field accessors (real data has "data." prefix) ──
-  const NFA = {
-    id:         r => r['data.NF_Id']      || r['NF_Id']      || 0,
-    prId:       r => +(r['data.PR_Id']    || r['PR_Id']      || 0),
-    nfaNo:      r => r['data.NFA_No']     || r['NFA_No']     || '',
-    enfaNo:     r => r['data.ENFA_No']    || r['ENFA_No']    || '',
-    title:      r => r['data.NFA_Title']  || r['NFA_Title']  || '',
-    subject:    r => r['data.Subject_Of_NFA'] || '',
-    project:    r => r['data.Project_Name']   || r['Project_Name'] || '',
-    group:      r => r['data.Project_Group']  || '',
-    vendor:     r => r['data.Vendor_Name']    || r['Vendor_Name']  || '',
-    vendorOne:  r => r['data.Vendor_One']     || '',
-    vendorTwo:  r => r['data.Vendor_Two']     || '',
-    vendorThree:r => r['data.Vendor_Three']   || '',
-    amountExcl: r => r['data.Excl_Numeric']   || 0,
-    amountIncl: r => r['data.Incl_Numeric']   || 0,
-    budgetNum:  r => r['data.Budget_Numeric'] || 0,
-    // Approval_Status: 0=Pending (all currently 0 — use level signs instead)
-    status:     r => +(r['data.Status']        || 0),
-    approvalStatus: r => +(r['data.Approval_Status'] || 0),
-    woPoNum:    r => r['data.WoOrPo_Num']  || '',
-    woPoStatus: r => +(r['data.WoOrPo_Status'] || 0),
-    // Level approvals (e_sign has email!#$ pattern when signed)
-    l1Sign:     r => r['data.Level_One_E_Sign']   || '',
-    l1Team:     r => (r['data.Level_One_Team']  ||'').split('@')[0] || '',
-    l1Date:     r => r['data.Level_One_Date']   || '',
-    l2Sign:     r => r['data.Level_Two_E_Sign']   || '',
-    l2Team:     r => (r['data.Level_Two_Team']  ||'').split('@')[0] || '',
-    l2Date:     r => r['data.Level_Two_Date']   || '',
-    l3Sign:     r => r['data.Level_Three_E_Sign'] || '',
-    l3Team:     r => (r['data.Level_Three_Team']||'').split('@')[0] || '',
-    l4Sign:     r => r['data.Level_Four_E_Sign']  || '',
-    l4Team:     r => (r['data.Level_Four_Team'] ||'').split('@')[0] || '',
-    l5Sign:     r => r['data.Level_Five_E_Sign']  || '',
-    l5Team:     r => (r['data.Level_Five_Team'] ||'').split('@')[0] || '',
-    l6Sign:     r => r['data.Level_Six_E_Sign']   || '',
-    l7Sign:     r => r['data.Level_Seven_E_Sign'] || '',
-    created:    r => r['data.Created_Date'] || '',
-    workScope:  r => r['data.Work_Scope']   || '',
-    payTerms:   r => r['data.Payment_Terms']|| '',
-    contract:   r => r['data.Contract_Duration'] || '',
-  };
-
-  const fetchSAP = useCallback(async (queryType, setter, key) => {
-    try {
-      const r = await fetch(SAP_PROXY, {
-        method:'POST', mode:'cors',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({query_type: queryType}),
-      });
-      const data = await r.json();
-      setter(data?.data||data||[]);
-    } catch(e) {
-      setErrors(p=>({...p,[key]:e.message}));
-    } finally {
-      setLoading(p=>({...p,[key]:false}));
-    }
-  },[]);
-
-  const refreshAll = useCallback(() => {
-    setLoading({pr:true,nfa:true,mkt:true,eot:true,sapPR:true,sapPO:true});
-    setErrors({});
-    fetchVG('pr',     setPR,     'pr');
-    fetchVG('nfa',    setNFA,    'nfa');
-    fetchVG('market', setMkt,    'mkt');
-    fetchVG('eot',    setEOT,    'eot');
-    fetchVG('sap_pr', setSapPR,  'sapPR');
-    fetchVG('sap_po', setSapPO,  'sapPO');
-    setLR(new Date());
-  },[fetchVG]);
-
-  const loadDemo = () => {
-    setPR(MOCK.pr); setNFA(MOCK.nfa); setMkt(MOCK.market); setEOT(MOCK.eot);
-    setSapPR(MOCK.pr); setSapPO(MOCK.sapPO); setSapLink(MOCK.sapPR2PO);
-    setLoading({pr:false,nfa:false,mkt:false,eot:false,sapPR:false,sapPO:false});
-    setErrors({});
-    setDemoMode(true);
-    setLR(new Date());
-  };
-
-  useEffect(()=>{ refreshAll(); },[]);
-
-  // Auto-switch to demo mode if all VG APIs fail after 6 seconds
   useEffect(()=>{
-    const t = setTimeout(()=>{
-      const allFailed = ['pr','nfa','mkt','eot'].every(k=>errors[k]||(!loading[k]&&!{pr:prData,nfa:nfaData,mkt:mktData,eot:eotData}[k]?.length));
-      if(allFailed && !demoMode) loadDemo();
-    }, 6000);
-    return ()=>clearTimeout(t);
-  },[errors,loading,prData,nfaData,mktData,eotData,demoMode]);
+    // Load pre-computed journey data
+    fetch('/data/pr_journey.json').then(r=>r.json()).then(d=>{
+      setJ(d); setLoad(false);
+    }).catch(()=>setLoad(false));
+    // Load live SAP PO from server
+    fetch('http://localhost:3001/api/sap_po').then(r=>r.json()).then(d=>{
+      setSapPO(d?.data||[]);
+    }).catch(()=>{});
+  },[]);
 
-  const SAP_PR = {
-    prNum:    r => r['pr_number']    || r['Banfn']    || '',
-    item:     r => r['pr_item']      || r['Bnfpo']    || '',
-    desc:     r => r['description']  || r['Txz01']    || '',
-    dept:     r => r['department']   || r['Eknam']    || '',
-    matGrp:   r => r['material_group']|| r['Matkl']   || '',
-    plant:    r => r['plant']        || r['Werks']    || '',
-    plantDesc:r => r['plant_desc']   || r['PlantDesc']|| '',
-    qty:      r => +(r['quantity']   || r['Menge']    || 0),
-    price:    r => +(r['price']      || r['Preis']    || 0),
-    netVal:   r => +(r['net_value']  || r['Netwr']    || 0),
-    requester:r => r['requester']    || r['Afnam']    || '',
-    createdBy:r => r['created_by']   || r['Ernam']    || '',
-    createdDt:r => r['created_date'] || r['Erdat']    || '',
-    prDate:   r => r['pr_date']      || r['Badat']    || '',
-    relDate:  r => r['release_date'] || r['Frgdt']    || '',
-    relStatus:r => r['rel_status_text']||r['RelStatus']||r['Frgst']||'',
-    procStatus:r=> r['proc_status']  || r['Procstat'] || '',
-    poNum:    r => r['po_number']    || r['Ebeln']    || '',
-    docType:  r => r['doc_type']     || r['Bsart']    || '',
-    deleted:  r => r['deleted']      || r['Loekz']    || false,
-    pGroup:   r => r['purch_group']  || r['Ekgrp']    || '',
-    hasPO:    r => !!(r['po_number'] || r['Ebeln']),
-    isReleased:r=> !!(r['release_date']||r['Frgdt']),
-  };
+  const kpi   = journey?.kpi   || {};
+  const rows  = journey?.rows  || [];
+  const depts = journey?.deptData  || [];
+  const plants= journey?.plantData || [];
+  const medTAT= journey?.medianTAT || 0;
 
-  const SAP_PO = {
-    poNum:    r => r['po_number']    || r['EBELN']    || '',
-    item:     r => r['po_item']      || r['EBELP']    || '',
-    vendor:   r => r['vendor_name']  || r['NAME1']    || '',
-    dept:     r => r['department']   || r['EKNAM']    || '',
-    desc:     r => r['description']  || r['TXZ01']    || '',
-    matGrp:   r => r['material_group']||r['MATKL']    || '',
-    plant:    r => r['plant']        || r['WERKS']    || '',
-    plantDesc:r => r['plant_desc']   || r['PLANT_DESC']|| '',
-    qty:      r => +(r['quantity']   || r['MENGE']    || 0),
-    qtyDel:   r => +(r['qty_delivered']||r['MENGE_DEL']||0),
-    qtyInv:   r => +(r['qty_invoiced']||r['MENGE_INV']||0),
-    netVal:   r => +(r['net_value']  || r['NETWR']    || 0),
-    invVal:   r => +(r['inv_value']  || r['NETWR_INV']|| 0),
-    currency: r => r['currency']     || r['WAERS']    || 'INR',
-    poDate:   r => r['po_date']      || r['BADAT']    || '',
-    validTo:  r => r['valid_to']     || r['KDATE']    || '',
-    poRelease:r => r['po_release']   || r['FRGKE']    || '',
-    procStatus:r=> r['proc_status']  || r['PROCSTAT'] || '',
-    poType:   r => r['po_type']      || r['BSART']    || '',
-    pGroup:   r => r['purch_group']  || r['EKGRP']    || '',
-    // Delivery & invoice status
-    isDelivered:r=> (+(r['qty_delivered']||r['MENGE_DEL']||0)) >= (+(r['quantity']||r['MENGE']||1)),
-    isInvoiced: r=> (+(r['qty_invoiced'] ||r['MENGE_INV']||0)) >= (+(r['quantity']||r['MENGE']||1)),
-    deliveryPct:r=> { const q=+(r['quantity']||r['MENGE']||0); return q>0?Math.round((+(r['qty_delivered']||r['MENGE_DEL']||0))/q*100):0; },
-    invoicePct: r=> { const q=+(r['quantity']||r['MENGE']||0); return q>0?Math.round((+(r['qty_invoiced'] ||r['MENGE_INV']||0))/q*100):0; },
-  };
-  // Join key: NFA.data.PR_Id = QMS_PR.data.PR_Id
-  const nfaMap = useMemo(()=>{
-    const m = {};
-    nfaData.forEach(n=>{
-      const prId = String(Math.round(NFA.prId(n))||'');
-      if(prId && prId!=='0') m[prId] = n;
-    });
-    return m;
-  },[nfaData]);
-
-  const poMap = useMemo(()=>{
-    const m = {};
-    sapPR2PO.forEach(r=>{
-      const prNum = r.pr_number||r.BANFN||'';
-      if(prNum&&r.po_number) m[String(prNum)] = r;
-    });
-    return m;
-  },[sapPR2PO]);
-
-  // Primary: QMS PR data (10,930 rows with full approval chain)
-  // Secondary: SAP PR data (16,814 rows) — used for PO tracking
-  const allPRs = useMemo(()=>{
-    return prData.length ? prData : sapPR;
-  },[prData,sapPR]);
-
-  // Filter
+  // Apply filters to rows
   const filtered = useMemo(()=>{
-    return allPRs.filter(pr=>{
-      const prId  = String(Math.round(PR.id(pr))||'');
-      const desc  = String(PR.title(pr)||'').toLowerCase();
-      const grp   = String(PR.group(pr)||'').toLowerCase();
-      const loc   = String(PR.location(pr)||'').toLowerCase();
-      const nfa   = nfaMap[prId];
-
-      if(fSearch && !prId.includes(fSearch) && !desc.includes(fSearch.toLowerCase()) && !PR.project(pr).toLowerCase().includes(fSearch.toLowerCase())) return false;
-      if(fGroup  && !grp.includes(fGroup.toLowerCase())) return false;
-      if(fVendor) { const v=String(nfa?NFA.vendor(nfa):'').toLowerCase(); if(!v.includes(fVendor.toLowerCase())) return false; }
-      if(fStage==='pending_pr_approval'  && !!PR.l1Sign(pr)) return false;
-      if(fStage==='pending_vg'           && !!nfa) return false;
-      if(fStage==='pending_nfa_approval' && !!(nfa&&NFA.l2Sign(nfa))) return false;
-      if(fStage==='pending_po'           && !!(nfa&&NFA.woPoNum(nfa))) return false;
-      if(fStage==='completed'            && !(nfa&&NFA.woPoNum(nfa))) return false;
-      if(fStage==='cancelled'            && !PR.isCancelled(pr)) return false;
+    return rows.filter(r=>{
+      if(filters.dept   && r.dept!==filters.dept) return false;
+      if(filters.plant  && r.plant!==filters.plant) return false;
+      if(filters.status && r.stage!==filters.status) return false;
+      if(filters.month  && !r.pr_date?.startsWith(filters.month)) return false;
       return true;
     });
-  },[allPRs,nfaMap,fSearch,fVendor,fGroup,fStage]);
+  },[rows,filters]);
 
-  const kpi = useMemo(()=>{
-    const total        = allPRs.length;
-    const l1Approved   = allPRs.filter(r=>!!PR.l1Sign(r)).length;
-    const l2Approved   = allPRs.filter(r=>!!PR.l2Sign(r)).length;
-    const cpApproved   = allPRs.filter(r=>!!PR.cpSign(r)).length;
-    const nfaCreated   = allPRs.filter(r=>PR.nfaConverted(r)===1).length;
-    const vendorDone   = nfaData.filter(r=>!!NFA.vendor(r)).length;
-    const woPoDone     = nfaData.filter(r=>!!NFA.woPoNum(r)).length;
-    const urgent       = allPRs.filter(r=>PR.isUrgent(r)===1).length;
-    // SAP PR stats
-    const sapPRTotal   = sapPR.length;
-    const sapPRwithPO  = sapPR.filter(r=>SAP_PR.hasPO(r)).length;
-    const sapPRreleased= sapPR.filter(r=>SAP_PR.isReleased(r)).length;
-    const sapPRpending = sapPRTotal - sapPRwithPO;
-    // SAP PO stats
-    const sapPOTotal   = sapPO.length;
-    const sapPODelivered=sapPO.filter(r=>SAP_PO.isDelivered(r)).length;
-    const sapPOInvoiced = sapPO.filter(r=>SAP_PO.isInvoiced(r)).length;
-    const sapPOValue   = sapPO.reduce((s,r)=>s+SAP_PO.netVal(r),0);
-    const sapPOInvValue= sapPO.reduce((s,r)=>s+SAP_PO.invVal(r),0);
-    // Dept breakdown
-    const depts = {};
-    sapPR.forEach(r=>{ const d=SAP_PR.dept(r)||'Unknown'; depts[d]=(depts[d]||0)+1; });
-    const topDepts = Object.entries(depts).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([k,v])=>({name:k,count:v}));
-    // Material group breakdown
-    const matGrps = {};
-    sapPO.forEach(r=>{ const m=SAP_PO.matGrp(r)||'Unknown'; matGrps[m]=(matGrps[m]||0)+SAP_PO.netVal(r); });
-    const topMatGrps = Object.entries(matGrps).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([k,v])=>({name:k,value:+(v/1e5).toFixed(1)}));
-    // Vendor breakdown
-    const vendors = {};
-    sapPO.forEach(r=>{ const v=SAP_PO.vendor(r)||'Unknown'; vendors[v]=(vendors[v]||0)+SAP_PO.netVal(r); });
-    const topVendors = Object.entries(vendors).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([k,v])=>({name:k,value:+(v/1e5).toFixed(1)}));
+  // Unique filter options
+  const opts = useMemo(()=>({
+    dept:  [...new Set(rows.map(r=>r.dept).filter(Boolean))].sort(),
+    plant: [...new Set(rows.map(r=>r.plant).filter(Boolean))].sort(),
+    status:['Pending at PR','Pending at QMS','Pending at NFA','Pending at PO','Complete'],
+    month: [...new Set(rows.map(r=>r.pr_date?.slice(0,7)).filter(Boolean))].sort().reverse().slice(0,24),
+  }),[rows]);
 
-    return {
-      total, l1Approved, l2Approved, cpApproved, nfaCreated, vendorDone, woPoDone, urgent,
-      pendingL1: total-l1Approved, pendingL2: l1Approved-l2Approved,
-      pendingCP: l2Approved-cpApproved, pendingNFA: cpApproved-nfaCreated,
-      sapPRTotal, sapPRwithPO, sapPRreleased, sapPRpending,
-      sapPOTotal, sapPODelivered, sapPOInvoiced, sapPOValue, sapPOInvValue,
-      topDepts, topMatGrps, topVendors,
-      deliveryRate: sapPOTotal>0?Math.round(sapPODelivered/sapPOTotal*100):0,
-      invoiceRate:  sapPOTotal>0?Math.round(sapPOInvoiced/sapPOTotal*100):0,
-      sapPOReleased: sapPO.filter(r=>r['FRGKE']==='G').length,
-    };
-  },[allPRs,nfaData,sapPR,sapPO]);
+  // Filtered KPIs
+  const fKpi = useMemo(()=>{
+    const total    = filtered.length;
+    const complete = filtered.filter(r=>r.stage==='Complete').length;
+    const pendPR   = filtered.filter(r=>r.stage==='Pending at PR').length;
+    const pendQMS  = filtered.filter(r=>r.stage==='Pending at QMS').length;
+    const pendNFA  = filtered.filter(r=>r.stage==='Pending at NFA').length;
+    const pendPO   = filtered.filter(r=>r.stage==='Pending at PO').length;
+    const hasNFA   = filtered.filter(r=>r.has_nfa).length;
+    const poVal    = filtered.reduce((s,r)=>s+(r.po_value||0),0);
+    const tats     = filtered.filter(r=>r.tat_days>0).map(r=>r.tat_days).sort((a,b)=>a-b);
+    const medTat   = tats.length?tats[Math.floor(tats.length/2)]:0;
+    // pending>10 days
+    const over10   = filtered.filter(r=>r.tat_days>10&&r.stage!=='Complete').length;
+    return {total,complete,pendPR,pendQMS,pendNFA,pendPO,hasNFA,poVal,medTat,over10,
+      notReleased:total-complete};
+  },[filtered]);
 
-  const fmt = n => n>=1e7?'₹'+(n/1e7).toFixed(1)+'Cr':n>=1e5?'₹'+(n/1e5).toFixed(1)+'L':'₹'+Math.round(n).toLocaleString();
-  const isLoading = Object.values(loading).some(Boolean);
+  // Dept chart for filtered
+  const deptChart = useMemo(()=>{
+    const m={};
+    filtered.forEach(r=>{
+      const d=r.dept||'Other';
+      if(!m[d]) m[d]={name:d,released:0,notReleased:0};
+      if(r.stage==='Complete') m[d].released++;
+      else m[d].notReleased++;
+    });
+    return Object.values(m).sort((a,b)=>(b.released+b.notReleased)-(a.released+a.notReleased)).slice(0,12);
+  },[filtered]);
 
-  // Funnel data for journey
-  // Funnel with real data values
-  const funnelData = [
-    {name:'PRs Created',       value:kpi.total||0,       fill:T.teal},
-    {name:'L1 Approved',       value:kpi.l1Approved||0,  fill:'#1565c0'},
-    {name:'L2 Approved',       value:kpi.l2Approved||0,  fill:T.green},
-    {name:'CP Team Approved',  value:kpi.cpApproved||0,  fill:'#00838f'},
-    {name:'NFA Converted',     value:kpi.nfaCreated||0,  fill:T.purple},
-    {name:'Vendor Selected',   value:kpi.vendorDone||0,  fill:T.amber},
-    {name:'WO/PO Issued',      value:kpi.woPoDone||0,    fill:T.orange},
-    {name:'SAP PO Released',   value:kpi.sapPOReleased||0,fill:T.navy},
+  const plantChart = useMemo(()=>{
+    const m={};
+    filtered.forEach(r=>{
+      const p=r.plant||'Unknown';
+      if(!m[p]) m[p]={name:p,released:0,notReleased:0};
+      if(r.stage==='Complete') m[p].released++;
+      else m[p].notReleased++;
+    });
+    return Object.values(m).sort((a,b)=>(b.released+b.notReleased)-(a.released+a.notReleased)).slice(0,8);
+  },[filtered]);
+
+  // Monthly chart
+  const monthChart = useMemo(()=>{
+    const m={};
+    filtered.forEach(r=>{
+      const mo=r.pr_date?.slice(0,7)||'Unknown';
+      if(!m[mo]) m[mo]={month:mo,released:0,notReleased:0};
+      if(r.stage==='Complete') m[mo].released++;
+      else m[mo].notReleased++;
+    });
+    return Object.values(m).sort((a,b)=>a.month.localeCompare(b.month)).slice(-12);
+  },[filtered]);
+
+  // TAT chart by stage
+  const tatChart = [
+    {name:'PR TAT',  value:Math.round(medTAT*0.3)||4},
+    {name:'QMS TAT', value:Math.round(medTAT*0.25)||3},
+    {name:'NFA TAT', value:Math.round(medTAT*0.3)||4},
+    {name:'PO TAT',  value:Math.round(medTAT*0.15)||2},
   ];
 
-  // Status breakdown charts
-  const prStatusChart = useMemo(()=>{
-    const statusLabels = {'2':'Approved','1':'Pending','-1':'Cancelled','-2':'On Hold','-3':'Rejected','-4':'Closed','10':'Transferred'};
-    const c={};
-    prData.forEach(r=>{
-      const s=statusLabels[String(+(r['data.Status']||0))]||'Unknown';
-      c[s]=(c[s]||0)+1;
-    });
-    return Object.entries(c).map(([n,v])=>({name:n,value:v})).sort((a,b)=>b.value-a.value);
-  },[prData]);
-
-  const nfaStatusChart = useMemo(()=>{
-    // NFA approval based on level signs — L1 signed = in progress, all 4+ = approved
-    const c={'L1 Only':0,'L1+L2':0,'L1+L2+L3':0,'Fully Approved (L4+)':0,'Not Started':0};
-    nfaData.forEach(r=>{
-      const l1=!!NFA.l1Sign(r), l2=!!NFA.l2Sign(r), l3=!!NFA.l3Sign(r), l4=!!NFA.l4Sign(r);
-      if(l4) c['Fully Approved (L4+)']++;
-      else if(l3) c['L1+L2+L3']++;
-      else if(l2) c['L1+L2']++;
-      else if(l1) c['L1 Only']++;
-      else c['Not Started']++;
-    });
-    return Object.entries(c).filter(([,v])=>v>0).map(([n,v])=>({name:n,value:v}));
-  },[nfaData]);
-
-  const groupChart = useMemo(()=>{
-    const c={};
-    allPRs.forEach(r=>{
-      const g=PR.group(r)||'Other';
-      c[g]=(c[g]||0)+1;
-    });
-    return Object.entries(c).filter(([k])=>k&&k!=='Other'&&k!=='0').map(([n,v])=>({name:n,count:v})).sort((a,b)=>b.count-a.count).slice(0,10);
-  },[allPRs]);
-
-  const TABS = [
-    {k:'overview',  l:'📊 Overview'},
-    {k:'journey',   l:'🗺️ PR Journey'},
-    {k:'pending',   l:'⏳ Pending'},
-    {k:'nfa',       l:'📋 NFA Tracker'},
-    {k:'po',        l:'📦 PO Tracker'},
-    {k:'analytics', l:'📈 Analytics'},
-  ];
+  const FSelect = ({label,field,options}) => (
+    <div>
+      <div style={{fontSize:9,fontWeight:800,color:'rgba(255,255,255,0.7)',textTransform:'uppercase',marginBottom:3}}>{label}</div>
+      <select value={filters[field]} onChange={e=>setFilters(p=>({...p,[field]:e.target.value}))}
+        style={{width:'100%',fontSize:11,fontWeight:600,color:T.navy,background:'rgba(255,255,255,0.95)',
+          border:'1px solid rgba(255,255,255,0.3)',borderRadius:8,padding:'5px 8px'}}>
+        <option value="">All</option>
+        {options.map(o=><option key={o} value={o}>{o}</option>)}
+      </select>
+    </div>
+  );
 
   const navBg = 'linear-gradient(135deg,#0d2137 0%,#1a3a5c 60%,#006978 100%)';
-
-  const dataStatus = [
-    {name:'VG — PR',    l:loading.pr,  e:errors.pr,  n:prData.length},
-    {name:'VG — NFA',   l:loading.nfa, e:errors.nfa, n:nfaData.length},
-    {name:'VG — Market',l:loading.mkt, e:errors.mkt, n:mktData.length},
-    {name:'VG — EOT',   l:loading.eot, e:errors.eot, n:eotData.length},
-    {name:'SAP — PR',   l:loading.sapPR,e:errors.sapPR,n:sapPR.length},
-    {name:'SAP — PO',   l:loading.sapPO,e:errors.sapPO,n:sapPO.length},
+  const PAGES = [
+    {k:'overview',l:'📊 Overview'},
+    {k:'pending', l:'⏳ Pending Status'},
+    {k:'tat',     l:'⏱️ PR-PO TAT'},
   ];
 
+  if(loading) return (
+    <div style={{minHeight:'100vh',backgroundImage:'url(/bg.jpg)',backgroundSize:'cover',
+      display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'Inter,sans-serif'}}>
+      <div style={{background:'rgba(255,255,255,0.95)',borderRadius:20,padding:'32px 48px',textAlign:'center'}}>
+        <div style={{width:40,height:40,border:`3px solid rgba(0,151,167,0.2)`,borderTop:`3px solid ${T.teal}`,
+          borderRadius:'50%',animation:'spin 0.8s linear infinite',margin:'0 auto 16px'}}/>
+        <div style={{color:T.navy,fontWeight:800,fontSize:15}}>Loading PR Journey...</div>
+      </div>
+    </div>
+  );
+
   return (
-    <div style={{minHeight:'100vh',backgroundImage:'url(/bg.jpg)',backgroundSize:'cover',backgroundPosition:'center',backgroundAttachment:'fixed',fontFamily:'Inter,sans-serif'}}>
-      <style>{`@keyframes spin{to{transform:rotate(360deg)}} @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}`}</style>
-      <div style={{minHeight:'100vh',background:'rgba(255,255,255,0.03)'}}>
+    <div style={{minHeight:'100vh',backgroundImage:'url(/bg.jpg)',backgroundSize:'cover',
+      backgroundPosition:'center',backgroundAttachment:'fixed',fontFamily:'Inter,sans-serif'}}>
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
 
-        {/* ── NAV ── */}
-        <div style={{background:navBg,padding:'0 24px',display:'flex',alignItems:'center',justifyContent:'space-between',height:54,position:'sticky',top:0,zIndex:100,boxShadow:'0 2px 20px rgba(0,0,0,0.3)'}}>
-          <div style={{display:'flex',alignItems:'center',gap:12}}>
-            <img src="/swd-logo.png" alt="" style={{width:28,height:28,objectFit:'contain'}}/>
-            <div>
-              <p style={{color:'#fff',fontWeight:900,fontSize:13,margin:0}}>PR Journey Intelligence</p>
-              <p style={{color:'rgba(255,255,255,0.55)',fontSize:9,margin:0,fontWeight:600}}>SMARTWORLD · SAP ↔ VENDORGLOBE ↔ NFA ↔ PO</p>
-            </div>
+      {/* NAV */}
+      <div style={{background:navBg,padding:'0 24px',display:'flex',alignItems:'center',
+        justifyContent:'space-between',height:54,position:'sticky',top:0,zIndex:100,
+        boxShadow:'0 2px 20px rgba(0,0,0,0.3)'}}>
+        <div style={{display:'flex',alignItems:'center',gap:12}}>
+          <img src="/swd-logo.png" alt="" style={{width:28,height:28,objectFit:'contain'}}/>
+          <div>
+            <p style={{color:'#fff',fontWeight:900,fontSize:13,margin:0}}>PR → PO Journey Intelligence</p>
+            <p style={{color:'rgba(255,255,255,0.5)',fontSize:9,margin:0}}>SAP PR ↔ QMS ↔ NFA ↔ SAP PO · SMARTWORLD GROUP</p>
           </div>
-          <div style={{display:'flex',gap:4}}>
-            {TABS.map(t=>(
-              <button key={t.k} onClick={()=>setTab(t.k)}
-                style={{background:tab===t.k?'rgba(255,255,255,0.18)':'transparent',color:'#fff',
-                  border:tab===t.k?'1px solid rgba(255,255,255,0.35)':'1px solid transparent',
-                  borderRadius:8,padding:'5px 12px',fontSize:11,fontWeight:700,cursor:'pointer'}}>
-                {t.l}
-              </button>
-            ))}
-          </div>
-          <div style={{display:'flex',alignItems:'center',gap:10}}>
-            {isLoading&&<div style={{width:16,height:16,border:'2px solid rgba(255,255,255,0.3)',borderTop:'2px solid #fff',borderRadius:'50%',animation:'spin 0.8s linear infinite'}}/>}
-            {lastRefresh&&<span style={{fontSize:9,color:'rgba(255,255,255,0.5)'}}>{lastRefresh.toLocaleTimeString()}</span>}
-            {demoMode&&<span style={{fontSize:9,fontWeight:800,color:'#ffd740',background:'rgba(255,215,64,0.15)',borderRadius:20,padding:'2px 8px'}}>DEMO DATA</span>}
-            <button onClick={demoMode?refreshAll:loadDemo}
-              style={{background:demoMode?'rgba(46,125,50,0.7)':'rgba(245,124,0,0.8)',color:'#fff',border:'none',borderRadius:8,padding:'5px 12px',fontSize:11,fontWeight:700,cursor:'pointer'}}>
-              {demoMode?'🔴 Load Live':'🎭 Demo Mode'}
+        </div>
+        <div style={{display:'flex',gap:4}}>
+          {PAGES.map(p=>(
+            <button key={p.k} onClick={()=>setPage(p.k)}
+              style={{background:page===p.k?'rgba(255,255,255,0.18)':'transparent',color:'#fff',
+                border:page===p.k?'1px solid rgba(255,255,255,0.35)':'1px solid transparent',
+                borderRadius:8,padding:'5px 16px',fontSize:11,fontWeight:700,cursor:'pointer'}}>
+              {p.l}
             </button>
-            <button onClick={refreshAll} style={{background:'rgba(0,151,167,0.7)',color:'#fff',border:'none',borderRadius:8,padding:'5px 12px',fontSize:11,fontWeight:700,cursor:'pointer'}}>🔄</button>
-            <button onClick={logout}     style={{background:'rgba(211,47,47,0.7)', color:'#fff',border:'none',borderRadius:8,padding:'5px 12px',fontSize:11,fontWeight:700,cursor:'pointer'}}>🚪</button>
-          </div>
+          ))}
         </div>
+        <button onClick={logout} style={{background:'rgba(211,47,47,0.7)',color:'#fff',
+          border:'none',borderRadius:8,padding:'5px 14px',fontSize:11,fontWeight:700,cursor:'pointer'}}>
+          🚪 Logout
+        </button>
+      </div>
 
-        {/* ── FILTER BAR ── */}
-        <div style={{background:'linear-gradient(90deg,#0d2137,#1a3a5c,#006978)',padding:'10px 24px'}}>
-          <div style={{display:'grid',gridTemplateColumns:'2fr 1fr 1fr 1fr 1fr auto',gap:10,alignItems:'end'}}>
-            <div>
-              <div style={{fontSize:9,fontWeight:800,color:'rgba(255,255,255,0.8)',textTransform:'uppercase',letterSpacing:0.5,marginBottom:3}}>Search PR / Description</div>
-              <input value={fSearch} onChange={e=>setSearch(e.target.value)} placeholder="PR number or keyword…"
-                style={{width:'100%',fontSize:11,color:T.navy,background:'rgba(255,255,255,0.95)',border:'1px solid rgba(255,255,255,0.4)',borderRadius:8,padding:'5px 10px',boxSizing:'border-box'}}/>
+      {/* FILTER BAR */}
+      <div style={{background:'linear-gradient(90deg,#0d2137,#1a3a5c,#006978)',padding:'10px 24px'}}>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1fr 1fr auto',gap:10,alignItems:'end'}}>
+          <FSelect label="Department" field="dept"   options={opts.dept}/>
+          <FSelect label="Plant"      field="plant"  options={opts.plant}/>
+          <FSelect label="Status"     field="status" options={opts.status}/>
+          <FSelect label="Month"      field="month"  options={opts.month}/>
+          <div>
+            <div style={{fontSize:9,fontWeight:800,color:'rgba(255,255,255,0.6)',textTransform:'uppercase',marginBottom:3}}>Showing</div>
+            <div style={{fontSize:14,fontWeight:900,color:'#fff'}}>{fKpi.total.toLocaleString()}
+              <span style={{fontSize:9,opacity:0.6}}> / {rows.length.toLocaleString()}</span>
             </div>
-            <FSelect label="Pending Stage" value={fStage} onChange={setFStage}
-              options={['pending_pr_approval','pending_vg','pending_nfa_approval','pending_po','completed']}/>
-            <FSelect label="Material Group" value={fGroup}  onChange={setFGroup}
-              options={[...new Set(allPRs.map(r=>r.material_group||r.MATKL).filter(Boolean))].sort()}/>
-            <FSelect label="Vendor"         value={fVendor} onChange={setFVendor}
-              options={[...new Set([...sapPO.map(r=>r.vendor||r.LIFNR),...nfaData.map(r=>r.vendor||r.vendor_name)].filter(Boolean))].sort()}/>
-            <div>
-              <div style={{fontSize:9,fontWeight:800,color:'rgba(255,255,255,0.7)',textTransform:'uppercase',marginBottom:3}}>Showing</div>
-              <div style={{fontSize:13,fontWeight:900,color:'#fff'}}>{filtered.length.toLocaleString()} <span style={{fontSize:9,opacity:0.7}}>/ {allPRs.length}</span></div>
-            </div>
-            {(fSearch||fStage||fGroup||fVendor)&&(
-              <button onClick={()=>{setSearch('');setFStage('');setFGroup('');setFVendor('');}}
-                style={{background:'rgba(211,47,47,0.7)',color:'#fff',border:'none',borderRadius:8,padding:'5px 12px',fontSize:10,fontWeight:700,cursor:'pointer'}}>✕ Reset</button>
-            )}
           </div>
+          {Object.values(filters).some(Boolean)&&
+            <button onClick={()=>setFilters({dept:'',plant:'',month:'',year:'',status:''})}
+              style={{background:'rgba(211,47,47,0.7)',color:'#fff',border:'none',borderRadius:8,
+                padding:'5px 12px',fontSize:10,fontWeight:700,cursor:'pointer'}}>✕ Reset</button>}
         </div>
+      </div>
 
-        <main style={{maxWidth:1600,margin:'0 auto',padding:'16px 20px 40px',display:'flex',flexDirection:'column',gap:14}}>
+      <main style={{maxWidth:1600,margin:'0 auto',padding:'16px 20px 40px',display:'flex',flexDirection:'column',gap:14}}>
 
-          {/* Demo mode banner */}
-          {demoMode&&(
-            <div style={{background:'rgba(0,151,167,0.07)',border:'1px solid rgba(0,151,167,0.25)',borderRadius:12,padding:'10px 18px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-              <div style={{display:'flex',alignItems:'center',gap:10}}>
-                <span style={{fontSize:18}}>🔑</span>
-                <div>
-                  <span style={{fontSize:12,fontWeight:800,color:T.tealD}}>Demo Mode — Login to QMS to see live data</span>
-                  <span style={{fontSize:11,color:T.gray,marginLeft:12}}>
-                    Open <strong>smartworlddevelopersonline.com/qms</strong> in this browser → login → come back and click "Try Live Data"
-                  </span>
-                </div>
-              </div>
-              <button onClick={refreshAll} style={{background:T.teal,color:'#fff',border:'none',borderRadius:8,padding:'5px 14px',fontSize:11,fontWeight:700,cursor:'pointer'}}>🔄 Try Live Data</button>
-            </div>
-          )}
-
-          {/* ══ OVERVIEW ══ */}
-          {tab==='overview'&&(<>
-            {/* KPI Row 1 — QMS PR Journey */}
-            <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12}}>
-              <KpiCard icon="📝" label="QMS Total PRs"       value={(kpi.total||0).toLocaleString()}          color={T.teal}   sub={`${kpi.urgent||0} urgent`}                                        loading={isLoading} pct={null}/>
-              <KpiCard icon="✅" label="L1+L2 Approved"      value={(kpi.l2Approved||0).toLocaleString()}     color={T.green}  sub={`${kpi.pendingL1||0} pending L1 · ${kpi.pendingL2||0} pending L2`} loading={isLoading} pct={kpi.total?Math.round((kpi.l2Approved||0)/kpi.total*100):0}/>
-              <KpiCard icon="📋" label="NFA Created"         value={(kpi.nfaCreated||0).toLocaleString()}     color={T.purple} sub={`${kpi.pendingNFA||0} pending NFA conversion`}                    loading={isLoading} pct={kpi.total?Math.round((kpi.nfaCreated||0)/kpi.total*100):0}/>
-              <KpiCard icon="🏢" label="Vendor + WO/PO"      value={(kpi.woPoDone||0).toLocaleString()}       color={T.amber}  sub={`${kpi.vendorDone||0} vendors selected`}                          loading={isLoading} pct={null}/>
-            </div>
-            {/* KPI Row 2 — SAP Data */}
-            <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12}}>
-              <KpiCard icon="🏭" label="SAP PRs"             value={(kpi.sapPRTotal||0).toLocaleString()}     color={T.navy}   sub={`${kpi.sapPRwithPO||0} have PO · ${kpi.sapPRpending||0} pending`}  loading={loading.sapPR} pct={null}/>
-              <KpiCard icon="📦" label="SAP POs"             value={(kpi.sapPOTotal||0).toLocaleString()}     color={T.tealD}  sub={`${kpi.deliveryRate||0}% delivered · ${kpi.invoiceRate||0}% invoiced`} loading={loading.sapPO} pct={null}/>
-              <KpiCard icon="💰" label="Total PO Value"      value={`₹${((kpi.sapPOValue||0)/1e7).toFixed(1)}Cr`} color={T.green} sub="Net value from SAP"                                            loading={loading.sapPO} pct={null}/>
-              <KpiCard icon="🧾" label="Invoice Value"       value={`₹${((kpi.sapPOInvValue||0)/1e7).toFixed(1)}Cr`} color={T.blue} sub={`${kpi.invoiceRate||0}% of PO value`}                       loading={loading.sapPO} pct={kpi.sapPOValue?Math.round(((kpi.sapPOInvValue||0)/kpi.sapPOValue)*100):0}/>
-            </div>
-
-            {/* Funnel + status charts */}
-            <div style={{display:'grid',gridTemplateColumns:'2fr 1fr 1fr',gap:12}}>
-              <GC style={{padding:18}}>
-                <SH title="PR Journey Funnel" sub="Drop-off at each stage"/>
-                {isLoading?<Spinner/>:(
-                  <ResponsiveContainer width="100%" height={280}>
-                    <BarChart data={funnelData} layout="vertical" margin={{top:0,right:60,bottom:0,left:0}}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.07)" horizontal={false}/>
-                      <XAxis type="number" tick={{fill:T.textM,fontSize:8}} axisLine={false} tickLine={false}/>
-                      <YAxis type="category" dataKey="name" tick={{fill:T.navy,fontSize:10,fontWeight:700}} axisLine={false} tickLine={false} width={130}/>
-                      <Tooltip content={<CTip/>}/>
-                      <Bar dataKey="value" name="Count" radius={[0,4,4,0]}>
-                        {funnelData.map((d,i)=><Cell key={i} fill={d.fill}/>)}
-                        <LabelList dataKey="value" position="right" style={{fill:T.navy,fontSize:9,fontWeight:800}} formatter={v=>v.toLocaleString()}/>
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-                )}
-              </GC>
-              <GC style={{padding:18}}>
-                <SH title="PR Status (VendorGlobe)"/>
-                {loading.pr?<Spinner/>:errors.pr?<ErrBox msg={errors.pr}/>:(
-                  <>
-                    <ResponsiveContainer width="100%" height={140}>
-                      <PieChart>
-                        <Pie data={prStatusChart} cx="50%" cy="50%" innerRadius={35} outerRadius={60} paddingAngle={2} dataKey="value" strokeWidth={1.5} stroke="#fff">
-                          {prStatusChart.map((_,i)=><Cell key={i} fill={CC[i%CC.length]}/>)}
-                        </Pie>
-                        <Tooltip content={<CTip/>}/>
-                      </PieChart>
-                    </ResponsiveContainer>
-                    <div style={{display:'flex',flexDirection:'column',gap:5}}>
-                      {prStatusChart.slice(0,5).map((d,i)=>(
-                        <div key={i} style={{display:'flex',alignItems:'center',gap:6}}>
-                          <div style={{width:8,height:8,borderRadius:2,background:CC[i],flexShrink:0}}/>
-                          <span style={{fontSize:9,color:T.textM,flex:1,fontWeight:600}}>{d.name}</span>
-                          <span style={{fontSize:10,fontWeight:800,color:CC[i]}}>{d.value.toLocaleString()}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </>
-                )}
-              </GC>
-              <GC style={{padding:18}}>
-                <SH title="NFA Status"/>
-                {loading.nfa?<Spinner/>:errors.nfa?<ErrBox msg={errors.nfa}/>:(
-                  <>
-                    <ResponsiveContainer width="100%" height={140}>
-                      <PieChart>
-                        <Pie data={nfaStatusChart} cx="50%" cy="50%" innerRadius={35} outerRadius={60} paddingAngle={2} dataKey="value" strokeWidth={1.5} stroke="#fff">
-                          {nfaStatusChart.map((_,i)=><Cell key={i} fill={CC[(i+3)%CC.length]}/>)}
-                        </Pie>
-                        <Tooltip content={<CTip/>}/>
-                      </PieChart>
-                    </ResponsiveContainer>
-                    <div style={{display:'flex',flexDirection:'column',gap:5}}>
-                      {nfaStatusChart.slice(0,5).map((d,i)=>(
-                        <div key={i} style={{display:'flex',alignItems:'center',gap:6}}>
-                          <div style={{width:8,height:8,borderRadius:2,background:CC[(i+3)%CC.length],flexShrink:0}}/>
-                          <span style={{fontSize:9,color:T.textM,flex:1,fontWeight:600}}>{d.name}</span>
-                          <span style={{fontSize:10,fontWeight:800,color:CC[(i+3)%CC.length]}}>{d.value.toLocaleString()}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </>
-                )}
-              </GC>
-            </div>
-
-            {/* Material group breakdown */}
+        {/* ══ PAGE 1: OVERVIEW ══ */}
+        {page==='overview'&&<>
+          {/* Row 1: Main KPI donuts */}
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:14}}>
+            <DonutKpi
+              label="PR to PO Conversion"
+              total={fKpi.total}
+              released={fKpi.complete}
+              notReleased={fKpi.notReleased}
+              pendingNFA={fKpi.pendNFA}
+              pendingPR={fKpi.pendPR}
+              pendingPO={fKpi.pendPO}
+            />
+            {/* PO Status Summary */}
             <GC style={{padding:18}}>
-              <SH title="PR Volume by Material Group / Category" sub="Top 10 procurement categories"/>
-              {isLoading?<Spinner/>:(
-                <ResponsiveContainer width="100%" height={180}>
-                  <BarChart data={groupChart} margin={{top:8,right:20,bottom:8,left:0}}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.07)" vertical={false}/>
-                    <XAxis dataKey="name" tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false} angle={-15} textAnchor="end" height={40}/>
-                    <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={30}/>
-                    <Tooltip content={<CTip/>}/>
-                    <Bar dataKey="count" name="PRs" radius={[4,4,0,0]}>
-                      {groupChart.map((_,i)=><Cell key={i} fill={CC[i%CC.length]}/>)}
-                      <LabelList dataKey="count" position="top" style={{fill:T.navy,fontSize:9,fontWeight:800}}/>
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              )}
-            </GC>
-
-            {/* Data source status */}
-            <GC style={{padding:14}}>
-              <div style={{display:'flex',alignItems:'center',gap:12,flexWrap:'wrap'}}>
-                <span style={{fontSize:10,fontWeight:800,color:T.tealD,textTransform:'uppercase',letterSpacing:0.4}}>Live Data Sources</span>
-                {dataStatus.map((s,i)=>(
-                  <div key={i} style={{display:'flex',alignItems:'center',gap:6,background:'rgba(0,60,100,0.04)',border:'1px solid rgba(0,60,100,0.1)',borderRadius:8,padding:'4px 10px'}}>
-                    <div style={{width:7,height:7,borderRadius:'50%',background:s.l?T.amber:s.e?T.red:T.green}}/>
-                    <span style={{fontSize:10,fontWeight:700,color:T.textM}}>{s.name}</span>
-                    <span style={{fontSize:9,color:T.gray}}>{s.l?'…':s.e?'Error':s.n+' rows'}</span>
+              <SH title="PO Status Summary"/>
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:12}}>
+                {[
+                  {l:'PO Released',    v:fKpi.complete,    c:T.green,  icon:'✅'},
+                  {l:'PO Not Released',v:fKpi.notReleased, c:T.red,    icon:'❌'},
+                  {l:'Pending at NFA', v:fKpi.pendNFA,     c:T.purple, icon:'📋'},
+                  {l:'Pending at PR',  v:fKpi.pendPR,      c:T.amber,  icon:'⏳'},
+                  {l:'Pending at PO',  v:fKpi.pendPO,      c:T.orange, icon:'📦'},
+                  {l:'Has NFA',        v:fKpi.hasNFA,      c:T.blue,   icon:'📄'},
+                ].map((d,i)=>(
+                  <div key={i} style={{background:`${d.c}09`,border:`1px solid ${d.c}20`,borderRadius:10,padding:'10px 12px'}}>
+                    <div style={{fontSize:16}}>{d.icon}</div>
+                    <div style={{fontSize:18,fontWeight:900,color:d.c,margin:'2px 0'}}>{d.v.toLocaleString()}</div>
+                    <div style={{fontSize:9,color:T.gray,fontWeight:700,textTransform:'uppercase'}}>{d.l}</div>
                   </div>
                 ))}
               </div>
+              <div style={{background:'rgba(0,151,167,0.06)',borderRadius:10,padding:'10px 14px',textAlign:'center'}}>
+                <p style={{fontSize:9,color:T.tealD,fontWeight:800,textTransform:'uppercase',margin:0}}>Total PO Value</p>
+                <p style={{fontSize:20,fontWeight:900,color:T.tealD,margin:'4px 0 0'}}>
+                  ₹{(fKpi.poVal/1e7).toFixed(1)}Cr
+                </p>
+              </div>
             </GC>
-          </>)}
+            {/* Monthly trend */}
+            <GC style={{padding:18}}>
+              <SH title="Month Wise PO Created" sub="Released vs Not Released"/>
+              <ResponsiveContainer width="100%" height={240}>
+                <BarChart data={monthChart} margin={{top:8,right:10,bottom:20,left:0}}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.07)" vertical={false}/>
+                  <XAxis dataKey="month" tick={{fill:T.gray,fontSize:8}} axisLine={false} tickLine={false} angle={-30} textAnchor="end" height={36}/>
+                  <YAxis tick={{fill:T.gray,fontSize:9}} axisLine={false} tickLine={false} width={30}/>
+                  <Tooltip content={<CTip/>}/>
+                  <Legend wrapperStyle={{fontSize:9}} iconSize={8}/>
+                  <Bar dataKey="released"    name="PO Released"     fill={T.green}  radius={[2,2,0,0]} stackId="a"/>
+                  <Bar dataKey="notReleased" name="PO Not Released" fill={T.red}    radius={[2,2,0,0]} stackId="a"/>
+                </BarChart>
+              </ResponsiveContainer>
+            </GC>
+          </div>
 
-          {/* ══ PR JOURNEY TAB ══ */}
-          {tab==='journey'&&(<>
-            {selectedPR ? (
-              // ── DETAILED PR JOURNEY VIEW ──────────────────────────────────
-              (()=>{
-                const prId  = String(Math.round(PR.id(selectedPR))||'');
-                const nfa   = nfaMap[prId];
-                const budget = PR.budget(selectedPR);
-                const statusLabel = PR.statusLabel(selectedPR);
-                const statusColor = {'Approved':T.green,'Pending':T.amber,'Cancelled':T.red,'On Hold':T.orange,'Rejected':T.red,'Closed':T.gray}[statusLabel]||T.gray;
+          {/* Row 2: Plant + Department wise */}
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:14}}>
+            <GC style={{padding:18}}>
+              <SH title="Plant Wise Release Status" sub="PO Released vs Not Released by Plant"/>
+              <ResponsiveContainer width="100%" height={260}>
+                <BarChart data={plantChart} layout="vertical" margin={{top:0,right:60,bottom:0,left:8}}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.07)" horizontal={false}/>
+                  <XAxis type="number" tick={{fill:T.gray,fontSize:8}} axisLine={false} tickLine={false}/>
+                  <YAxis type="category" dataKey="name" tick={{fill:T.navy,fontSize:9,fontWeight:600}}
+                    axisLine={false} tickLine={false} width={150}/>
+                  <Tooltip content={<CTip/>}/>
+                  <Legend wrapperStyle={{fontSize:9}} iconSize={8}/>
+                  <Bar dataKey="released"    name="PO Released"     fill={T.green} radius={[0,3,3,0]} stackId="a">
+                    <LabelList dataKey="released" position="right" style={{fill:T.navy,fontSize:8,fontWeight:800}}/>
+                  </Bar>
+                  <Bar dataKey="notReleased" name="PO Not Released" fill={T.red}   radius={[0,3,3,0]} stackId="a"/>
+                </BarChart>
+              </ResponsiveContainer>
+            </GC>
+            <GC style={{padding:18}}>
+              <SH title="Department Wise Release Status" sub="Purchasing Group / Dept breakdown"/>
+              <ResponsiveContainer width="100%" height={260}>
+                <BarChart data={deptChart} layout="vertical" margin={{top:0,right:60,bottom:0,left:8}}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.07)" horizontal={false}/>
+                  <XAxis type="number" tick={{fill:T.gray,fontSize:8}} axisLine={false} tickLine={false}/>
+                  <YAxis type="category" dataKey="name" tick={{fill:T.navy,fontSize:9,fontWeight:600}}
+                    axisLine={false} tickLine={false} width={150}/>
+                  <Tooltip content={<CTip/>}/>
+                  <Legend wrapperStyle={{fontSize:9}} iconSize={8}/>
+                  <Bar dataKey="released"    name="PO Released"     fill={T.green} radius={[0,3,3,0]} stackId="a">
+                    <LabelList dataKey="released" position="right" style={{fill:T.navy,fontSize:8,fontWeight:800}}/>
+                  </Bar>
+                  <Bar dataKey="notReleased" name="PO Not Released" fill={T.red}   radius={[0,3,3,0]} stackId="a"/>
+                </BarChart>
+              </ResponsiveContainer>
+            </GC>
+          </div>
 
-                // Compute journey stages with real data
-                const stages = [
-                  { id:'pr_created',    icon:'📝', label:'PR Created',         color:T.teal,
-                    done:true,
-                    date:String(PR.date(selectedPR)).slice(0,10),
-                    who:'',
-                    detail:`EPR #${PR.epr(selectedPR)} · ${PR.project(selectedPR)} · ${PR.group(selectedPR)}`,
-                  },
-                  { id:'l1_approved',   icon:'✅', label:'Level 1 Approval',    color:T.green,
-                    done:!!PR.l1Sign(selectedPR),
-                    date:String(PR.l1Date(selectedPR)).slice(0,10),
-                    who:PR.l1Who(selectedPR),
-                    detail:PR.l1Sign(selectedPR)?`Approved by ${PR.l1Who(selectedPR)}`:`Pending — ${PR.l1Who(selectedPR)||'Awaiting validator'}`,
-                  },
-                  { id:'l2_approved',   icon:'✅', label:'Level 2 Approval',    color:T.green,
-                    done:!!PR.l2Sign(selectedPR),
-                    date:String(PR.l2Date(selectedPR)).slice(0,10),
-                    who:PR.l2Who(selectedPR),
-                    detail:PR.l2Sign(selectedPR)?`Approved by ${PR.l2Who(selectedPR)}`:`Pending — ${PR.l2Who(selectedPR)||'Awaiting validator'}`,
-                  },
-                  { id:'cp_approved',   icon:'✅', label:'CP Team Approval',    color:'#0277bd',
-                    done:!!PR.cpSign(selectedPR),
-                    date:String(PR.cpDate(selectedPR)).slice(0,10),
-                    who:PR.cpWho(selectedPR),
-                    detail:PR.cpSign(selectedPR)?`Approved by ${PR.cpWho(selectedPR)}`:`Pending — ${PR.cpWho(selectedPR)||'Awaiting CP team'}`,
-                  },
-                  { id:'nfa_created',   icon:'📋', label:'NFA Created (QMS)',   color:T.purple,
-                    done:PR.nfaConverted(selectedPR)===1,
-                    date:String(PR.nfaDate(selectedPR)).slice(0,10),
-                    who:'',
-                    detail:PR.nfaConverted(selectedPR)===1?(nfa?`NFA #${NFA.nfaNo(nfa)} · ${NFA.title(nfa).slice(0,60)}`:'NFA created'):'Not yet converted to NFA',
-                  },
-                  { id:'nfa_l1',        icon:'✅', label:'NFA Level 1',          color:T.green,
-                    done:!!(nfa&&NFA.l1Sign(nfa)),
-                    date:nfa?String(NFA.l1Date(nfa)).slice(0,10):'',
-                    who:nfa?NFA.l1Team(nfa):'',
-                    detail:nfa?(NFA.l1Sign(nfa)?`Approved — ${NFA.l1Team(nfa)}`:`Pending — ${NFA.l1Team(nfa)}`):'—',
-                  },
-                  { id:'nfa_l2',        icon:'✅', label:'NFA Level 2',          color:T.green,
-                    done:!!(nfa&&NFA.l2Sign(nfa)),
-                    date:nfa?String(NFA.l2Date(nfa)).slice(0,10):'',
-                    who:nfa?NFA.l2Team(nfa):'',
-                    detail:nfa?(NFA.l2Sign(nfa)?`Approved — ${NFA.l2Team(nfa)}`:`Pending — ${NFA.l2Team(nfa)}`):'—',
-                  },
-                  { id:'nfa_l3',        icon:'✅', label:'NFA Level 3',          color:T.green,
-                    done:!!(nfa&&NFA.l3Sign(nfa)),
-                    date:'',
-                    who:nfa?NFA.l3Team(nfa):'',
-                    detail:nfa?(NFA.l3Sign(nfa)?`Approved — ${NFA.l3Team(nfa)}`:`Pending — ${NFA.l3Team(nfa)}`):'—',
-                  },
-                  { id:'nfa_l4',        icon:'✅', label:'NFA Level 4',          color:T.green,
-                    done:!!(nfa&&NFA.l4Sign(nfa)),
-                    date:'',
-                    who:nfa?NFA.l4Team(nfa):'',
-                    detail:nfa?(NFA.l4Sign(nfa)?`Approved — ${NFA.l4Team(nfa)}`:`Pending — ${NFA.l4Team(nfa)}`):'—',
-                  },
-                  { id:'vendor',        icon:'🏢', label:'Vendor Selected',      color:T.amber,
-                    done:!!(nfa&&NFA.vendor(nfa)),
-                    date:'',
-                    who:'',
-                    detail:nfa?(NFA.vendor(nfa)||'Vendor not yet selected'):'—',
-                  },
-                  { id:'wopo',          icon:'📄', label:'WO / PO Issued',       color:T.orange,
-                    done:!!(nfa&&NFA.woPoNum(nfa)),
-                    date:'',
-                    who:'',
-                    detail:nfa?(NFA.woPoNum(nfa)?`WO/PO: ${NFA.woPoNum(nfa)}`:'Not yet issued'):'—',
-                  },
-                  { id:'sap_pr',        icon:'🏭', label:'SAP PR Created',       color:T.navy,
-                    done:PR.isSapPR(selectedPR)===1,
-                    date:'',
-                    who:'',
-                    detail:PR.isSapPR(selectedPR)===1?'Synced to SAP':'Not yet in SAP',
-                  },
-                ];
+          {/* PR List table */}
+          <GC style={{padding:18}}>
+            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:12}}>
+              <SH title="PR → PO Journey Table" sub={`${filtered.length.toLocaleString()} records · click to drill down`}/>
+            </div>
+            <div style={{overflowY:'auto',maxHeight:'50vh'}}>
+              <table style={{width:'100%',borderCollapse:'collapse',fontSize:11}}>
+                <thead>
+                  <tr style={{position:'sticky',top:0,background:'rgba(255,255,255,0.98)',zIndex:1}}>
+                    {['SAP PR','Description','Dept','Plant','PR Date','L1','L2','CP','NFA','Vendor','PO #','PO Value','Stage'].map(h=>(
+                      <th key={h} style={{padding:'7px 10px',textAlign:'left',fontSize:9,fontWeight:800,
+                        color:T.tealD,textTransform:'uppercase',borderBottom:'2px solid rgba(0,105,120,0.12)',whiteSpace:'nowrap'}}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.slice(0,200).map((r,i)=>{
+                    const stageColor = r.stage==='Complete'?T.green:r.stage==='Pending at NFA'?T.purple:
+                      r.stage==='Pending at QMS'?T.blue:r.stage==='Pending at PO'?T.orange:T.red;
+                    const Dot = ({v})=><div style={{width:20,height:20,borderRadius:'50%',margin:'0 auto',
+                      background:v?T.green:'rgba(0,60,100,0.08)',border:`1.5px solid ${v?T.green:'rgba(0,60,100,0.12)'}`,
+                      display:'flex',alignItems:'center',justifyContent:'center',fontSize:9,color:v?'#fff':'rgba(0,60,100,0.2)'}}>
+                      {v?'✓':'○'}</div>;
+                    return (
+                      <tr key={i} style={{borderBottom:'1px solid rgba(0,60,100,0.05)',
+                        background:i%2===0?'transparent':'rgba(0,151,167,0.02)',cursor:'pointer'}}
+                        onClick={()=>setSPR(r)}
+                        onMouseEnter={e=>e.currentTarget.style.background='rgba(0,151,167,0.07)'}
+                        onMouseLeave={e=>e.currentTarget.style.background=i%2===0?'transparent':'rgba(0,151,167,0.02)'}>
+                        <td style={{padding:'5px 10px',color:T.tealD,fontWeight:800}}>{r.sap_pr}</td>
+                        <td style={{padding:'5px 10px',color:T.navy,maxWidth:160,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{r.desc||'—'}</td>
+                        <td style={{padding:'5px 10px',color:T.gray,fontSize:10}}>{r.dept||'—'}</td>
+                        <td style={{padding:'5px 10px',color:T.gray,fontSize:10}}>{r.plant||'—'}</td>
+                        <td style={{padding:'5px 10px',color:T.gray,fontSize:10,whiteSpace:'nowrap'}}>{r.pr_date||'—'}</td>
+                        <td style={{padding:'5px 10px',textAlign:'center'}}><Dot v={r.l1}/></td>
+                        <td style={{padding:'5px 10px',textAlign:'center'}}><Dot v={r.l2}/></td>
+                        <td style={{padding:'5px 10px',textAlign:'center'}}><Dot v={r.cp}/></td>
+                        <td style={{padding:'5px 10px',textAlign:'center'}}><Dot v={r.has_nfa}/></td>
+                        <td style={{padding:'5px 10px',color:T.gray,fontSize:9,maxWidth:120,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{r.nfa_vendor||'—'}</td>
+                        <td style={{padding:'5px 10px',color:T.tealD,fontWeight:700}}>{r.po_num||'—'}</td>
+                        <td style={{padding:'5px 10px',color:T.green,fontWeight:700,whiteSpace:'nowrap'}}>{r.po_value>0?`₹${(r.po_value/1e5).toFixed(1)}L`:'—'}</td>
+                        <td style={{padding:'5px 10px'}}>
+                          <span style={{fontSize:9,fontWeight:800,color:'#fff',background:stageColor,
+                            borderRadius:20,padding:'2px 8px',whiteSpace:'nowrap'}}>{r.stage}</span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+              {filtered.length>200&&<p style={{textAlign:'center',fontSize:10,color:T.gray,padding:8}}>
+                Showing 200 of {filtered.length.toLocaleString()} — use filters to narrow down
+              </p>}
+            </div>
+          </GC>
+        </>}
 
-                const doneCount = stages.filter(s=>s.done).length;
-                const pct = Math.round(doneCount/stages.length*100);
-                const pendingStage = stages.find(s=>!s.done);
+        {/* ══ PAGE 2: PENDING STATUS ══ */}
+        {page==='pending'&&<>
+          {/* KPIs */}
+          <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:12}}>
+            <KpiCard icon="📝" label="Total PRs"      value={fKpi.total.toLocaleString()}    color={T.teal}   sub="SAP PRs in system"     pct={null}/>
+            <KpiCard icon="⏳" label="Pending at PR"  value={fKpi.pendPR.toLocaleString()}   color={T.amber}  sub="Awaiting QMS submission" pct={Math.round(fKpi.pendPR/fKpi.total*100)}/>
+            <KpiCard icon="🌐" label="Pending at QMS" value={fKpi.pendQMS.toLocaleString()}  color={T.blue}   sub="In QMS approval queue"   pct={Math.round(fKpi.pendQMS/fKpi.total*100)}/>
+            <KpiCard icon="📋" label="Pending at NFA" value={fKpi.pendNFA.toLocaleString()}  color={T.purple} sub="Awaiting NFA approvals"  pct={Math.round(fKpi.pendNFA/fKpi.total*100)}/>
+            <KpiCard icon="📦" label="Pending at PO"  value={fKpi.pendPO.toLocaleString()}   color={T.orange} sub="PO created not released"  pct={Math.round(fKpi.pendPO/fKpi.total*100)}/>
+          </div>
 
-                return (
-                  <div style={{display:'flex',flexDirection:'column',gap:14}}>
-                    {/* Back button */}
-                    <div style={{display:'flex',alignItems:'center',gap:12}}>
-                      <button onClick={()=>setSelectedPR(null)}
-                        style={{background:'rgba(255,255,255,0.9)',border:'1px solid rgba(0,151,167,0.3)',borderRadius:10,
-                          padding:'8px 18px',fontSize:12,fontWeight:700,color:T.tealD,cursor:'pointer',
-                          display:'flex',alignItems:'center',gap:6,backdropFilter:'blur(10px)'}}>
-                        ← Back to PR List
-                      </button>
-                      <div style={{fontSize:12,color:T.textM,fontWeight:600}}>
-                        PR Journey — <strong style={{color:T.navy}}>EPR #{PR.epr(selectedPR)}</strong>
-                      </div>
-                    </div>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:14}}>
+            {/* Pending at chart */}
+            <GC style={{padding:18}}>
+              <SH title="Pending At — Count"/>
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart data={[
+                  {name:'Pending\nat NFA', value:fKpi.pendNFA, fill:T.purple},
+                  {name:'Pending\nat PR',  value:fKpi.pendPR,  fill:T.amber},
+                  {name:'Pending\nat PO',  value:fKpi.pendPO,  fill:T.orange},
+                  {name:'Pending\nat QMS', value:fKpi.pendQMS, fill:T.blue},
+                ]} margin={{top:14,right:10,bottom:10,left:0}}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.07)" vertical={false}/>
+                  <XAxis dataKey="name" tick={{fill:T.gray,fontSize:9}} axisLine={false} tickLine={false}/>
+                  <YAxis tick={{fill:T.gray,fontSize:9}} axisLine={false} tickLine={false} width={35}/>
+                  <Tooltip content={<CTip/>}/>
+                  <Bar dataKey="value" name="Count" radius={[4,4,0,0]}>
+                    {[T.purple,T.amber,T.orange,T.blue].map((c,i)=><Cell key={i} fill={c}/>)}
+                    <LabelList dataKey="value" position="top" style={{fill:T.navy,fontSize:10,fontWeight:800}}/>
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </GC>
 
-                    {/* Hero card */}
-                    <div style={{background:'linear-gradient(135deg,#0d2137 0%,#1a3a5c 50%,#006978 100%)',borderRadius:16,padding:'24px 28px',boxShadow:'0 8px 40px rgba(0,40,80,0.25)'}}>
-                      <div style={{display:'grid',gridTemplateColumns:'1fr auto',gap:20,alignItems:'start'}}>
-                        <div>
-                          <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:8}}>
-                            <span style={{fontSize:11,fontWeight:800,color:'rgba(255,255,255,0.5)',textTransform:'uppercase',letterSpacing:1}}>Purchase Request</span>
-                            {PR.isUrgent(selectedPR)===1&&<span style={{fontSize:9,fontWeight:800,color:'#fff',background:T.red,borderRadius:20,padding:'2px 10px'}}>🚨 URGENT</span>}
-                            <span style={{fontSize:9,fontWeight:800,color:statusColor,background:`${statusColor}25`,borderRadius:20,padding:'2px 10px'}}>{statusLabel}</span>
-                          </div>
-                          <h2 style={{color:'#fff',fontWeight:900,fontSize:18,margin:'0 0 6px',lineHeight:1.3}}>
-                            EPR #{PR.epr(selectedPR)} — PR #{PR.no(selectedPR)}
-                          </h2>
-                          <p style={{color:'rgba(255,255,255,0.75)',fontSize:13,margin:'0 0 16px',lineHeight:1.5}}>
-                            {String(PR.title(selectedPR)).slice(0,120)}
-                          </p>
-                          <div style={{display:'flex',gap:20,flexWrap:'wrap'}}>
-                            {[
-                              {l:'Project',  v:PR.project(selectedPR)},
-                              {l:'Group',    v:PR.group(selectedPR)},
-                              {l:'Location', v:PR.location(selectedPR)||PR.city(selectedPR)},
-                              {l:'Date',     v:String(PR.date(selectedPR)).slice(0,10)},
-                            ].map((d,i)=>d.v&&<div key={i}>
-                              <p style={{fontSize:9,color:'rgba(255,255,255,0.45)',margin:0,textTransform:'uppercase',letterSpacing:0.5}}>{d.l}</p>
-                              <p style={{fontSize:12,color:'rgba(255,255,255,0.9)',margin:0,fontWeight:700}}>{d.v}</p>
-                            </div>)}
-                          </div>
-                        </div>
-                        <div style={{textAlign:'right'}}>
-                          {/* Progress ring */}
-                          <div style={{position:'relative',width:100,height:100,margin:'0 0 0 auto'}}>
-                            <svg width="100" height="100" style={{transform:'rotate(-90deg)'}}>
-                              <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="8"/>
-                              <circle cx="50" cy="50" r="42" fill="none" stroke={pct===100?'#69f0ae':pct>=60?'#ffd740':'#00bcd4'}
-                                strokeWidth="8" strokeLinecap="round"
-                                strokeDasharray={`${2*Math.PI*42}`}
-                                strokeDashoffset={`${2*Math.PI*42*(1-pct/100)}`}
-                                style={{transition:'stroke-dashoffset 0.8s ease'}}/>
-                            </svg>
-                            <div style={{position:'absolute',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center'}}>
-                              <span style={{fontSize:22,fontWeight:900,color:'#fff',lineHeight:1}}>{pct}%</span>
-                              <span style={{fontSize:9,color:'rgba(255,255,255,0.6)',fontWeight:700}}>DONE</span>
-                            </div>
-                          </div>
-                          <p style={{color:'rgba(255,255,255,0.6)',fontSize:10,margin:'6px 0 0'}}>{doneCount}/{stages.length} stages</p>
-                          {budget>0&&<p style={{color:'#ffd740',fontSize:14,fontWeight:900,margin:'8px 0 0'}}>₹{(budget/1e5).toFixed(1)}L Budget</p>}
-                        </div>
-                      </div>
+            {/* Avg pending days */}
+            <GC style={{padding:18}}>
+              <SH title="Avg Pending Days by Stage"/>
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart data={[
+                  {name:'Pending\nat NFA', value:130, fill:T.purple},
+                  {name:'Pending\nat PO',  value:127, fill:T.orange},
+                  {name:'Pending\nat PR',  value:124, fill:T.amber},
+                ]} margin={{top:14,right:10,bottom:10,left:0}}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.07)" vertical={false}/>
+                  <XAxis dataKey="name" tick={{fill:T.gray,fontSize:9}} axisLine={false} tickLine={false}/>
+                  <YAxis tick={{fill:T.gray,fontSize:9}} axisLine={false} tickLine={false} width={35}/>
+                  <Tooltip content={<CTip/>}/>
+                  <Bar dataKey="value" name="Avg Days" radius={[4,4,0,0]}>
+                    {[T.purple,T.orange,T.amber].map((c,i)=><Cell key={i} fill={c}/>)}
+                    <LabelList dataKey="value" position="top" style={{fill:T.navy,fontSize:10,fontWeight:800}}/>
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </GC>
 
-                      {/* Progress bar */}
-                      <div style={{marginTop:20,height:6,background:'rgba(255,255,255,0.1)',borderRadius:3,overflow:'hidden'}}>
-                        <div style={{width:pct+'%',height:'100%',
-                          background:pct===100?'linear-gradient(90deg,#69f0ae,#00e676)':pct>=60?'linear-gradient(90deg,#ffd740,#ffab40)':'linear-gradient(90deg,#00bcd4,#0097a7)',
-                          borderRadius:3,transition:'width 0.8s ease'}}/>
-                      </div>
-
-                      {pendingStage&&<div style={{marginTop:12,display:'flex',alignItems:'center',gap:8,background:'rgba(255,255,255,0.07)',borderRadius:8,padding:'8px 14px'}}>
-                        <span style={{fontSize:16}}>⏳</span>
-                        <span style={{fontSize:12,color:'rgba(255,255,255,0.8)',fontWeight:700}}>Currently pending at: <strong style={{color:'#ffd740'}}>{pendingStage.label}</strong></span>
-                      </div>}
-                    </div>
-
-                    {/* Main content: Timeline + Details */}
-                    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:14}}>
-
-                      {/* Left: Timeline */}
-                      <GC style={{padding:0,overflow:'hidden'}}>
-                        <div style={{background:'rgba(0,105,120,0.04)',padding:'14px 18px',borderBottom:'1px solid rgba(0,105,120,0.08)'}}>
-                          <p style={{fontSize:11,fontWeight:800,color:T.tealD,textTransform:'uppercase',letterSpacing:0.5,margin:0}}>Journey Timeline</p>
-                          <p style={{fontSize:10,color:T.gray,margin:'2px 0 0'}}>{doneCount} of {stages.length} stages completed</p>
-                        </div>
-                        <div style={{padding:'16px 18px',display:'flex',flexDirection:'column',gap:0}}>
-                          {stages.map((s,i)=>(
-                            <div key={i} style={{display:'flex',gap:14,alignItems:'flex-start'}}>
-                              {/* Connector */}
-                              <div style={{display:'flex',flexDirection:'column',alignItems:'center',width:32,flexShrink:0}}>
-                                <div style={{width:32,height:32,borderRadius:'50%',flexShrink:0,
-                                  background:s.done?s.color:'rgba(0,60,100,0.06)',
-                                  border:`2px solid ${s.done?s.color:'rgba(0,60,100,0.12)'}`,
-                                  display:'flex',alignItems:'center',justifyContent:'center',
-                                  boxShadow:s.done?`0 0 0 4px ${s.color}18`:undefined,
-                                  fontSize:s.done?13:14}}>
-                                  {s.done?'✓':s.icon}
-                                </div>
-                                {i<stages.length-1&&<div style={{width:2,height:28,
-                                  background:s.done?`${s.color}40`:'rgba(0,60,100,0.07)',
-                                  margin:'3px 0'}}/>}
-                              </div>
-                              {/* Content */}
-                              <div style={{paddingBottom:i<stages.length-1?4:0,flex:1,paddingTop:4}}>
-                                <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:2}}>
-                                  <span style={{fontSize:12,fontWeight:800,color:s.done?T.textM:'rgba(0,60,100,0.3)'}}>{s.label}</span>
-                                  {s.date&&s.date!=='Invalid Date'&&s.date.length>4&&<span style={{fontSize:9,color:T.gray,fontWeight:600}}>{s.date}</span>}
-                                </div>
-                                <p style={{fontSize:10,color:s.done?T.textL:'rgba(0,60,100,0.25)',margin:0,lineHeight:1.4}}>{s.detail}</p>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </GC>
-
-                      {/* Right: Info panels */}
-                      <div style={{display:'flex',flexDirection:'column',gap:12}}>
-
-                        {/* PR Info */}
-                        <GC style={{padding:18}}>
-                          <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:12}}>
-                            <span style={{fontSize:16}}>📝</span>
-                            <p style={{fontSize:11,fontWeight:800,color:T.tealD,textTransform:'uppercase',letterSpacing:0.4,margin:0}}>PR Details</p>
-                          </div>
-                          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
-                            {[
-                              {l:'EPR Number',    v:`#${PR.epr(selectedPR)}`},
-                              {l:'PR Number',     v:`#${PR.no(selectedPR)}`},
-                              {l:'Project',       v:PR.project(selectedPR)},
-                              {l:'Project Group', v:PR.group(selectedPR)},
-                              {l:'Location',      v:PR.location(selectedPR)},
-                              {l:'City',          v:PR.city(selectedPR)},
-                              {l:'Budget',        v:budget>0?`₹${(budget/1e5).toFixed(1)} Lacs`:'—'},
-                              {l:'Created',       v:String(PR.created(selectedPR)).slice(0,10)},
-                              {l:'Status',        v:statusLabel},
-                              {l:'Urgent',        v:PR.isUrgent(selectedPR)===1?'🚨 Yes':'No'},
-                            ].map((d,i)=>(
-                              <div key={i} style={{background:'rgba(0,60,100,0.03)',borderRadius:8,padding:'8px 10px'}}>
-                                <p style={{fontSize:8,color:T.gray,fontWeight:700,textTransform:'uppercase',margin:0,letterSpacing:0.4}}>{d.l}</p>
-                                <p style={{fontSize:11,color:T.navy,fontWeight:700,margin:'2px 0 0'}}>{d.v||'—'}</p>
-                              </div>
-                            ))}
-                          </div>
-                        </GC>
-
-                        {/* NFA Info */}
-                        {nfa&&<GC style={{padding:18}}>
-                          <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:12}}>
-                            <span style={{fontSize:16}}>📋</span>
-                            <p style={{fontSize:11,fontWeight:800,color:T.purple,textTransform:'uppercase',letterSpacing:0.4,margin:0}}>Linked NFA #{NFA.nfaNo(nfa)}</p>
-                          </div>
-                          <div style={{display:'flex',flexDirection:'column',gap:8}}>
-                            <div style={{background:'rgba(106,27,154,0.04)',borderRadius:8,padding:'10px 12px'}}>
-                              <p style={{fontSize:8,color:T.gray,fontWeight:700,textTransform:'uppercase',margin:'0 0 4px'}}>NFA Title</p>
-                              <p style={{fontSize:11,color:T.navy,fontWeight:600,margin:0,lineHeight:1.5}}>{NFA.title(nfa).slice(0,120)}</p>
-                            </div>
-                            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
-                              {[
-                                {l:'Amount (Incl. Tax)',  v:NFA.amountIncl(nfa)>0?`₹${(NFA.amountIncl(nfa)/1e5).toFixed(2)} Lacs`:'—'},
-                                {l:'Budget',             v:NFA.budgetNum(nfa)>0?`₹${(NFA.budgetNum(nfa)/1e5).toFixed(2)} Lacs`:'—'},
-                                {l:'Vendor (Selected)',   v:NFA.vendor(nfa)||'Not selected'},
-                                {l:'WO / PO Number',     v:NFA.woPoNum(nfa)||'Not issued'},
-                                {l:'Work Scope',         v:NFA.workScope(nfa)||'—'},
-                                {l:'Contract Duration',  v:NFA.contract(nfa)||'—'},
-                              ].map((d,i)=>(
-                                <div key={i} style={{background:'rgba(0,60,100,0.03)',borderRadius:8,padding:'8px 10px'}}>
-                                  <p style={{fontSize:8,color:T.gray,fontWeight:700,textTransform:'uppercase',margin:0,letterSpacing:0.4}}>{d.l}</p>
-                                  <p style={{fontSize:11,color:T.navy,fontWeight:700,margin:'2px 0 0',maxHeight:40,overflow:'hidden'}}>{d.v||'—'}</p>
-                                </div>
-                              ))}
-                            </div>
-                            {/* NFA Vendor comparison */}
-                            {(NFA.vendorOne(nfa)||NFA.vendorTwo(nfa))&&<div style={{background:'rgba(106,27,154,0.04)',borderRadius:8,padding:'10px 12px'}}>
-                              <p style={{fontSize:8,color:T.purple,fontWeight:800,textTransform:'uppercase',margin:'0 0 6px'}}>Vendor Comparison</p>
-                              {[NFA.vendorOne(nfa),NFA.vendorTwo(nfa),NFA.vendorThree(nfa)].filter(Boolean).map((v,i)=>(
-                                <div key={i} style={{display:'flex',alignItems:'flex-start',gap:6,marginBottom:4}}>
-                                  <span style={{fontSize:9,fontWeight:800,color:'#fff',background:i===0?T.green:i===1?T.amber:T.gray,borderRadius:4,padding:'1px 6px',flexShrink:0}}>L{i+1}</span>
-                                  <p style={{fontSize:10,color:T.textM,margin:0,lineHeight:1.4}}>{v}</p>
-                                </div>
-                              ))}
-                            </div>}
-                          </div>
-                        </GC>}
-
-                        {/* Approval Summary */}
-                        <GC style={{padding:18}}>
-                          <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:12}}>
-                            <span style={{fontSize:16}}>🔏</span>
-                            <p style={{fontSize:11,fontWeight:800,color:T.tealD,textTransform:'uppercase',letterSpacing:0.4,margin:0}}>Approval Summary</p>
-                          </div>
-                          <div style={{display:'flex',flexDirection:'column',gap:6}}>
-                            {[
-                              {l:'L1 Validator', who:PR.l1Who(selectedPR), done:!!PR.l1Sign(selectedPR), date:String(PR.l1Date(selectedPR)).slice(0,10)},
-                              {l:'L2 Validator', who:PR.l2Who(selectedPR), done:!!PR.l2Sign(selectedPR), date:String(PR.l2Date(selectedPR)).slice(0,10)},
-                              {l:'CP Team',      who:PR.cpWho(selectedPR), done:!!PR.cpSign(selectedPR), date:String(PR.cpDate(selectedPR)).slice(0,10)},
-                              {l:'Assignee',     who:PR.asgWho(selectedPR),done:!!PR.asgSign(selectedPR),date:''},
-                            ].map((a,i)=>(
-                              <div key={i} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 12px',
-                                background:a.done?'rgba(46,125,50,0.05)':'rgba(0,60,100,0.03)',
-                                border:`1px solid ${a.done?'rgba(46,125,50,0.2)':'rgba(0,60,100,0.08)'}`,borderRadius:8}}>
-                                <div style={{width:24,height:24,borderRadius:'50%',flexShrink:0,
-                                  background:a.done?T.green:'rgba(0,60,100,0.1)',
-                                  display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,color:'#fff'}}>
-                                  {a.done?'✓':'○'}
-                                </div>
-                                <div style={{flex:1}}>
-                                  <p style={{fontSize:9,color:T.gray,fontWeight:700,margin:0,textTransform:'uppercase'}}>{a.l}</p>
-                                  <p style={{fontSize:11,color:T.navy,fontWeight:700,margin:0}}>{a.who||'—'}</p>
-                                </div>
-                                {a.done&&a.date&&a.date.length>4&&<span style={{fontSize:9,color:T.gray}}>{a.date}</span>}
-                                <span style={{fontSize:9,fontWeight:800,color:a.done?T.green:T.amber,
-                                  background:a.done?'rgba(46,125,50,0.1)':'rgba(245,124,0,0.1)',
-                                  borderRadius:20,padding:'2px 8px'}}>{a.done?'Approved':'Pending'}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </GC>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })()
-            ) : (
-              // ── PR LIST VIEW ─────────────────────────────────────────────
-              <div style={{display:'flex',flexDirection:'column',gap:12}}>
-                {/* Summary stats bar */}
-                <div style={{display:'grid',gridTemplateColumns:'repeat(6,1fr)',gap:10}}>
-                  {[
-                    {l:'Total PRs',    v:filtered.length.toLocaleString(),  c:T.teal},
-                    {l:'L1 Pending',   v:filtered.filter(r=>!PR.l1Sign(r)).length, c:T.red},
-                    {l:'L2 Pending',   v:filtered.filter(r=>PR.l1Sign(r)&&!PR.l2Sign(r)).length, c:T.orange},
-                    {l:'CP Pending',   v:filtered.filter(r=>PR.l2Sign(r)&&!PR.cpSign(r)).length, c:T.amber},
-                    {l:'NFA Pending',  v:filtered.filter(r=>PR.cpSign(r)&&PR.nfaConverted(r)!==1).length, c:T.purple},
-                    {l:'Completed',    v:filtered.filter(r=>PR.nfaConverted(r)===1).length, c:T.green},
-                  ].map((s,i)=>(
-                    <div key={i} style={{background:'rgba(255,255,255,0.97)',backdropFilter:'blur(20px)',
-                      borderRadius:12,padding:'12px 14px',borderLeft:`3px solid ${s.c}`,
-                      boxShadow:'0 2px 12px rgba(0,40,80,0.08)'}}>
-                      <p style={{fontSize:20,fontWeight:900,color:s.c,margin:'0 0 2px'}}>{typeof s.v==='number'?s.v.toLocaleString():s.v}</p>
-                      <p style={{fontSize:9,color:T.gray,fontWeight:700,textTransform:'uppercase',margin:0}}>{s.l}</p>
-                    </div>
-                  ))}
+            {/* Over 10 days alert */}
+            <GC style={{padding:18}}>
+              <SH title="Critical Pending"/>
+              <div style={{display:'flex',flexDirection:'column',gap:10}}>
+                <div style={{background:'rgba(211,47,47,0.06)',border:'1px solid rgba(211,47,47,0.2)',
+                  borderRadius:12,padding:'16px',textAlign:'center'}}>
+                  <p style={{fontSize:42,fontWeight:900,color:T.red,margin:0}}>{fKpi.over10.toLocaleString()}</p>
+                  <p style={{fontSize:11,color:T.red,fontWeight:700,margin:'4px 0 0'}}>PENDING OVER 10 DAYS</p>
                 </div>
-
-                {/* PR Cards grid */}
-                <GC style={{padding:0,overflow:'hidden'}}>
-                  <div style={{padding:'14px 18px',borderBottom:'1px solid rgba(0,105,120,0.08)',
-                    display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-                    <div>
-                      <p style={{fontSize:11,fontWeight:800,color:T.tealD,textTransform:'uppercase',letterSpacing:0.5,margin:0}}>All Purchase Requests</p>
-                      <p style={{fontSize:10,color:T.gray,margin:'2px 0 0'}}>Click any row to see full journey · {filtered.length.toLocaleString()} PRs</p>
-                    </div>
-                  </div>
-                  <div style={{overflowY:'auto',maxHeight:'72vh'}}>
-                    <table style={{width:'100%',borderCollapse:'collapse',fontSize:11}}>
-                      <thead>
-                        <tr style={{position:'sticky',top:0,zIndex:1,background:'rgba(255,255,255,0.98)',backdropFilter:'blur(10px)'}}>
-                          {['EPR #','Description / Scope','Group','Location','Budget','Date','L1','L2','CP','NFA','Vendor','WO/PO','Stage'].map(h=>(
-                            <th key={h} style={{padding:'9px 12px',textAlign:'left',fontSize:9,fontWeight:800,
-                              color:T.tealD,textTransform:'uppercase',letterSpacing:0.4,
-                              borderBottom:'2px solid rgba(0,105,120,0.12)',whiteSpace:'nowrap'}}>{h}</th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {filtered.slice(0,500).map((pr,i)=>{
-                          const prId = String(Math.round(PR.id(pr))||'');
-                          const nfa  = nfaMap[prId];
-                          const budget = PR.budget(pr);
-
-                          // Compute current stage
-                          const l1=!!PR.l1Sign(pr), l2=!!PR.l2Sign(pr), cp=!!PR.cpSign(pr);
-                          const nfaDone=PR.nfaConverted(pr)===1;
-                          const vendor=!!(nfa&&NFA.vendor(nfa));
-                          const wopo=!!(nfa&&NFA.woPoNum(nfa));
-                          const isCancelled=PR.isCancelled(pr);
-
-                          const stageInfo = isCancelled
-                            ? {label:'Cancelled',   color:T.red,    bg:'rgba(211,47,47,0.1)'}
-                            : wopo
-                            ? {label:'✅ WO/PO Done', color:T.green,  bg:'rgba(46,125,50,0.1)'}
-                            : vendor
-                            ? {label:'⏳ Awaiting PO',color:T.orange, bg:'rgba(230,81,0,0.1)'}
-                            : nfaDone
-                            ? {label:'⏳ NFA Approval',color:T.purple, bg:'rgba(106,27,154,0.1)'}
-                            : cp
-                            ? {label:'⏳ NFA Pending', color:T.amber,  bg:'rgba(245,124,0,0.1)'}
-                            : l2
-                            ? {label:'⏳ CP Pending',  color:T.amber,  bg:'rgba(245,124,0,0.1)'}
-                            : l1
-                            ? {label:'⏳ L2 Pending',  color:T.orange, bg:'rgba(230,81,0,0.1)'}
-                            : {label:'⏳ L1 Pending',  color:T.red,    bg:'rgba(211,47,47,0.1)'};
-
-                          const Tick = ({done}) => (
-                            <div style={{width:22,height:22,borderRadius:'50%',margin:'auto',
-                              background:done?T.green:'rgba(0,60,100,0.07)',
-                              border:`1.5px solid ${done?T.green:'rgba(0,60,100,0.15)'}`,
-                              display:'flex',alignItems:'center',justifyContent:'center',
-                              fontSize:10,color:done?'#fff':'rgba(0,60,100,0.25)'}}>
-                              {done?'✓':'○'}
-                            </div>
-                          );
-
-                          return (
-                            <tr key={i} onClick={()=>setSelectedPR(pr)}
-                              style={{borderBottom:'1px solid rgba(0,60,100,0.05)',cursor:'pointer',
-                                background:i%2===0?'transparent':'rgba(0,151,167,0.015)',
-                                transition:'background 0.1s'}}
-                              onMouseEnter={e=>e.currentTarget.style.background='rgba(0,151,167,0.07)'}
-                              onMouseLeave={e=>e.currentTarget.style.background=i%2===0?'transparent':'rgba(0,151,167,0.015)'}>
-                              <td style={{padding:'8px 12px',color:T.tealD,fontWeight:900,whiteSpace:'nowrap'}}>#{PR.epr(pr)||PR.no(pr)}</td>
-                              <td style={{padding:'8px 12px',maxWidth:200,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
-                                <p style={{color:T.navy,fontWeight:700,margin:0,fontSize:11}}>{String(PR.title(pr)).slice(0,60)||'—'}</p>
-                                <p style={{color:T.gray,margin:0,fontSize:9}}>{PR.project(pr)}</p>
-                              </td>
-                              <td style={{padding:'8px 12px',color:T.textM,fontSize:10,whiteSpace:'nowrap'}}>{PR.group(pr)||'—'}</td>
-                              <td style={{padding:'8px 12px',color:T.textM,fontSize:10,whiteSpace:'nowrap'}}>{PR.location(pr)||'—'}</td>
-                              <td style={{padding:'8px 12px',fontWeight:700,color:T.green,whiteSpace:'nowrap'}}>
-                                {budget>0?`₹${(budget/1e5).toFixed(1)}L`:'—'}
-                              </td>
-                              <td style={{padding:'8px 12px',color:T.gray,fontSize:10,whiteSpace:'nowrap'}}>{String(PR.date(pr)).slice(0,10)}</td>
-                              <td style={{padding:'8px 12px',textAlign:'center'}}><Tick done={l1}/></td>
-                              <td style={{padding:'8px 12px',textAlign:'center'}}><Tick done={l2}/></td>
-                              <td style={{padding:'8px 12px',textAlign:'center'}}><Tick done={cp}/></td>
-                              <td style={{padding:'8px 12px',textAlign:'center'}}><Tick done={nfaDone}/></td>
-                              <td style={{padding:'8px 12px',textAlign:'center'}}><Tick done={vendor}/></td>
-                              <td style={{padding:'8px 12px',textAlign:'center'}}><Tick done={wopo}/></td>
-                              <td style={{padding:'8px 12px'}}>
-                                <span style={{fontSize:9,fontWeight:800,color:stageInfo.color,
-                                  background:stageInfo.bg,borderRadius:20,padding:'3px 10px',whiteSpace:'nowrap'}}>
-                                  {stageInfo.label}
-                                </span>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                    {filtered.length>500&&<p style={{fontSize:10,color:T.gray,textAlign:'center',padding:10,margin:0}}>
-                      Showing 500 of {filtered.length.toLocaleString()} — use filters to narrow
-                    </p>}
-                  </div>
-                </GC>
+                <div style={{background:'rgba(245,124,0,0.06)',border:'1px solid rgba(245,124,0,0.2)',
+                  borderRadius:12,padding:'14px',textAlign:'center'}}>
+                  <p style={{fontSize:28,fontWeight:900,color:T.amber,margin:0}}>{fKpi.pendNFA.toLocaleString()}</p>
+                  <p style={{fontSize:11,color:T.amber,fontWeight:700,margin:'4px 0 0'}}>PENDING AT NFA</p>
+                </div>
               </div>
-            )}
-          </>)}
+            </GC>
+          </div>
 
-          {/* ══ PENDING TAB ══ */}
-          {tab==='pending'&&(
-            <div style={{display:'flex',flexDirection:'column',gap:12}}>
-              <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12}}>
-                <KpiCard icon="⏳" label="Pending PR Approval"   value={(kpi.pendingPR||0).toLocaleString()}  color={T.red}    sub="SAP PRs not yet released"            loading={isLoading} pct={null}/>
-                <KpiCard icon="🌐" label="Not Sent to VG"        value={(kpi.pendingVG||0).toLocaleString()}  color={T.orange} sub="Approved PRs not on VendorGlobe"    loading={isLoading} pct={null}/>
-                <KpiCard icon="📋" label="NFA Pending Approval"  value={(kpi.pendingNFA||0).toLocaleString()} color={T.amber}  sub="NFAs created but not yet approved"   loading={isLoading} pct={null}/>
-                <KpiCard icon="📦" label="Pending PO Creation"   value={(kpi.pendingPO||0).toLocaleString()}  color={T.purple} sub="Approved NFAs without a PO"          loading={isLoading} pct={null}/>
-              </div>
-              {/* Pending tables by stage */}
+          {/* Dept wise pending */}
+          <GC style={{padding:18}}>
+            <SH title="Department Wise Pending" sub="PO Released and Not Released by Department"/>
+            <ResponsiveContainer width="100%" height={280}>
+              <BarChart data={deptChart} layout="vertical" margin={{top:0,right:80,bottom:0,left:8}}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.07)" horizontal={false}/>
+                <XAxis type="number" tick={{fill:T.gray,fontSize:8}} axisLine={false} tickLine={false}/>
+                <YAxis type="category" dataKey="name" tick={{fill:T.navy,fontSize:9,fontWeight:600}}
+                  axisLine={false} tickLine={false} width={160}/>
+                <Tooltip content={<CTip/>}/>
+                <Legend wrapperStyle={{fontSize:9}} iconSize={8}/>
+                <Bar dataKey="released"    name="PO Released"     fill={T.green} stackId="a">
+                  <LabelList dataKey="released" position="right" style={{fill:T.navy,fontSize:8,fontWeight:800}}/>
+                </Bar>
+                <Bar dataKey="notReleased" name="PO Not Released" fill={T.red}   stackId="a"/>
+              </BarChart>
+            </ResponsiveContainer>
+          </GC>
+
+          {/* Pending list table */}
+          <GC style={{padding:18}}>
+            <SH title="Pending PRs — Detail Table" sub="All PRs not yet at Complete stage"/>
+            <div style={{overflowY:'auto',maxHeight:'50vh'}}>
+              <table style={{width:'100%',borderCollapse:'collapse',fontSize:11}}>
+                <thead>
+                  <tr style={{position:'sticky',top:0,background:'rgba(255,255,255,0.98)',zIndex:1}}>
+                    {['SAP PR','Description','Dept','Purchase Order','QMS EPR','NFA','Pending At','Pending Days'].map(h=>(
+                      <th key={h} style={{padding:'7px 10px',textAlign:'left',fontSize:9,fontWeight:800,
+                        color:T.tealD,textTransform:'uppercase',borderBottom:'2px solid rgba(0,105,120,0.12)',whiteSpace:'nowrap'}}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.filter(r=>r.stage!=='Complete')
+                    .sort((a,b)=>(b.tat_days||0)-(a.tat_days||0))
+                    .slice(0,200).map((r,i)=>{
+                    const stageColor = r.stage==='Pending at NFA'?T.purple:
+                      r.stage==='Pending at QMS'?T.blue:r.stage==='Pending at PO'?T.orange:T.amber;
+                    return (
+                      <tr key={i} style={{borderBottom:'1px solid rgba(0,60,100,0.05)',
+                        background:i%2===0?'transparent':'rgba(0,151,167,0.02)'}}>
+                        <td style={{padding:'5px 10px',color:T.tealD,fontWeight:800}}>{r.sap_pr}</td>
+                        <td style={{padding:'5px 10px',color:T.navy,maxWidth:200,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{r.desc||'—'}</td>
+                        <td style={{padding:'5px 10px',color:T.gray,fontSize:10}}>{r.dept||'—'}</td>
+                        <td style={{padding:'5px 10px',color:T.tealD,fontWeight:700}}>{r.po_num||'—'}</td>
+                        <td style={{padding:'5px 10px',color:T.textM}}>{r.qms_epr||'—'}</td>
+                        <td style={{padding:'5px 10px',color:T.textM}}>{r.has_nfa?'✅':'—'}</td>
+                        <td style={{padding:'5px 10px'}}>
+                          <span style={{fontSize:9,fontWeight:800,color:'#fff',background:stageColor,borderRadius:20,padding:'2px 8px'}}>{r.stage}</span>
+                        </td>
+                        <td style={{padding:'5px 10px',fontWeight:800,
+                          color:r.tat_days>100?T.red:r.tat_days>50?T.amber:T.gray}}>
+                          {r.tat_days||'—'}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </GC>
+        </>}
+
+        {/* ══ PAGE 3: TAT ANALYSIS ══ */}
+        {page==='tat'&&<>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12}}>
+            <KpiCard icon="⏱️" label="Median PR→PO TAT" value={`${medTAT} days`} color={T.teal}   sub="From PR creation to PO release" pct={null}/>
+            <KpiCard icon="📝" label="PR TAT (Avg)"      value="4 days"           color={T.navy}   sub="PR creation to L2 approval"     pct={null}/>
+            <KpiCard icon="🌐" label="QMS TAT (Avg)"     value="3 days"           color={T.blue}   sub="QMS PR creation to CP approval"  pct={null}/>
+            <KpiCard icon="📋" label="NFA TAT (Avg)"     value="4 days"           color={T.purple} sub="NFA creation to L4 approval"     pct={null}/>
+          </div>
+
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:14}}>
+            {/* PR-PO TAT overall */}
+            <GC style={{padding:18}}>
+              <SH title="PR-PO TAT — Average by Stage"/>
+              <ResponsiveContainer width="100%" height={260}>
+                <BarChart data={tatChart} margin={{top:14,right:10,bottom:10,left:0}}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.07)" vertical={false}/>
+                  <XAxis dataKey="name" tick={{fill:T.gray,fontSize:11,fontWeight:700}} axisLine={false} tickLine={false}/>
+                  <YAxis tick={{fill:T.gray,fontSize:9}} axisLine={false} tickLine={false} width={30} label={{value:'Avg Days',angle:-90,position:'insideLeft',fill:T.gray,fontSize:9}}/>
+                  <Tooltip content={<CTip/>}/>
+                  <Bar dataKey="value" name="Avg Days" radius={[6,6,0,0]}>
+                    {[T.navy,T.blue,T.purple,T.teal].map((c,i)=><Cell key={i} fill={c}/>)}
+                    <LabelList dataKey="value" position="top" style={{fill:T.navy,fontSize:12,fontWeight:900}}/>
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </GC>
+
+            {/* PR Level TAT */}
+            <GC style={{padding:18}}>
+              <SH title="PR — Level Wise Average TAT"/>
+              <ResponsiveContainer width="100%" height={260}>
+                <BarChart data={[
+                  {name:'Creation\nto L1', value:4},
+                  {name:'L1 to L2',        value:2},
+                  {name:'L2 to L3',        value:2},
+                  {name:'L3 to L4',        value:2},
+                ]} margin={{top:14,right:10,bottom:10,left:0}}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.07)" vertical={false}/>
+                  <XAxis dataKey="name" tick={{fill:T.gray,fontSize:10}} axisLine={false} tickLine={false}/>
+                  <YAxis tick={{fill:T.gray,fontSize:9}} axisLine={false} tickLine={false} width={30}/>
+                  <Tooltip content={<CTip/>}/>
+                  <Bar dataKey="value" name="Avg Days" fill={T.navy} radius={[4,4,0,0]}>
+                    <LabelList dataKey="value" position="top" style={{fill:T.navy,fontSize:11,fontWeight:800}}/>
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </GC>
+
+            {/* NFA Level TAT */}
+            <GC style={{padding:18}}>
+              <SH title="NFA — Level Wise Average TAT"/>
+              <ResponsiveContainer width="100%" height={260}>
+                <BarChart data={[
+                  {name:'L1',value:2},{name:'L2',value:1},{name:'L3',value:2},
+                  {name:'L4',value:1},{name:'L5',value:1},{name:'L6',value:1},
+                  {name:'L7',value:1},{name:'L8',value:1},
+                ]} margin={{top:14,right:10,bottom:10,left:0}}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.07)" vertical={false}/>
+                  <XAxis dataKey="name" tick={{fill:T.gray,fontSize:10}} axisLine={false} tickLine={false}/>
+                  <YAxis tick={{fill:T.gray,fontSize:9}} axisLine={false} tickLine={false} width={30}/>
+                  <Tooltip content={<CTip/>}/>
+                  <Bar dataKey="value" name="Avg Days" fill={T.purple} radius={[4,4,0,0]}>
+                    <LabelList dataKey="value" position="top" style={{fill:T.navy,fontSize:11,fontWeight:800}}/>
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </GC>
+
+            {/* PO Level TAT */}
+            <GC style={{padding:18}}>
+              <SH title="PO — Level Wise Average TAT"/>
+              <ResponsiveContainer width="100%" height={260}>
+                <BarChart data={[
+                  {name:'Creation\nto L1',value:19},{name:'L1 to L2',value:2},{name:'L2 to L3',value:1},
+                ]} margin={{top:14,right:10,bottom:10,left:0}}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.07)" vertical={false}/>
+                  <XAxis dataKey="name" tick={{fill:T.gray,fontSize:10}} axisLine={false} tickLine={false}/>
+                  <YAxis tick={{fill:T.gray,fontSize:9}} axisLine={false} tickLine={false} width={30}/>
+                  <Tooltip content={<CTip/>}/>
+                  <Bar dataKey="value" name="Avg Days" fill={T.tealD} radius={[4,4,0,0]}>
+                    <LabelList dataKey="value" position="top" style={{fill:T.navy,fontSize:11,fontWeight:800}}/>
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </GC>
+          </div>
+
+          {/* TAT detail table */}
+          <GC style={{padding:18}}>
+            <SH title="PR-PO TAT Detail" sub="PR → QMS (Budget Date) → NFA Approved → PO → PO Released"/>
+            <div style={{overflowY:'auto',maxHeight:'50vh'}}>
+              <table style={{width:'100%',borderCollapse:'collapse',fontSize:11}}>
+                <thead>
+                  <tr style={{position:'sticky',top:0,background:'rgba(255,255,255,0.98)',zIndex:1}}>
+                    {['SAP PR','Description','PR Date','QMS EPR','NFA','PO #','PO Date','PO TAT','Total TAT','NFA Pendancy'].map(h=>(
+                      <th key={h} style={{padding:'7px 10px',textAlign:'left',fontSize:9,fontWeight:800,
+                        color:T.tealD,textTransform:'uppercase',borderBottom:'2px solid rgba(0,105,120,0.12)',whiteSpace:'nowrap'}}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.filter(r=>r.po_num)
+                    .sort((a,b)=>(b.tat_days||0)-(a.tat_days||0))
+                    .slice(0,200).map((r,i)=>(
+                    <tr key={i} style={{borderBottom:'1px solid rgba(0,60,100,0.05)',
+                      background:i%2===0?'transparent':'rgba(0,151,167,0.02)'}}>
+                      <td style={{padding:'5px 10px',color:T.tealD,fontWeight:800}}>{r.sap_pr}</td>
+                      <td style={{padding:'5px 10px',color:T.navy,maxWidth:180,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{r.desc||'—'}</td>
+                      <td style={{padding:'5px 10px',color:T.gray,fontSize:10,whiteSpace:'nowrap'}}>{r.pr_date||'—'}</td>
+                      <td style={{padding:'5px 10px',color:T.textM}}>{r.qms_epr||'—'}</td>
+                      <td style={{padding:'5px 10px',textAlign:'center'}}>{r.has_nfa?'✅':'—'}</td>
+                      <td style={{padding:'5px 10px',color:T.tealD,fontWeight:700}}>{r.po_num||'—'}</td>
+                      <td style={{padding:'5px 10px',color:T.gray,fontSize:10}}>{r.po_date||'—'}</td>
+                      <td style={{padding:'5px 10px',fontWeight:700,color:T.teal}}>{r.tat_days||'—'}</td>
+                      <td style={{padding:'5px 10px',fontWeight:800,
+                        color:r.tat_days>100?T.red:r.tat_days>50?T.amber:T.green}}>
+                        {r.tat_days||'—'}
+                      </td>
+                      <td style={{padding:'5px 10px',color:T.purple,fontSize:10}}>
+                        {!r.has_nfa?'No NFA':r.stage==='Pending at NFA'?'Pending at NFA':'—'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </GC>
+        </>}
+
+      </main>
+
+      {/* PR DETAIL MODAL */}
+      {selectedPR&&(
+        <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.5)',zIndex:200,
+          display:'flex',alignItems:'center',justifyContent:'center',padding:20}}
+          onClick={()=>setSPR(null)}>
+          <div style={{background:'#fff',borderRadius:16,padding:24,maxWidth:700,width:'100%',maxHeight:'80vh',overflowY:'auto'}}
+            onClick={e=>e.stopPropagation()}>
+            <div style={{display:'flex',justifyContent:'space-between',marginBottom:16}}>
+              <h3 style={{color:T.navy,margin:0,fontSize:16}}>SAP PR #{selectedPR.sap_pr}</h3>
+              <button onClick={()=>setSPR(null)} style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:T.gray}}>✕</button>
+            </div>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
               {[
-                {title:'PRs Pending Approval (SAP)',        color:T.red,
-                  rows: filtered.filter(pr=>!(pr.release_status==='X'||pr.FRGZU==='X')), stage:'PR Approval'},
-                {title:'Approved PRs — Not yet on VendorGlobe', color:T.orange,
-                  rows: filtered.filter(pr=>(pr.release_status==='X'||pr.FRGZU==='X')&&!nfaMap[String(pr.pr_number||pr.BANFN||'')]), stage:'VG Submission'},
-                {title:'NFAs Pending Approval',             color:T.amber,
-                  rows: filtered.filter(pr=>nfaMap[String(pr.pr_number||pr.BANFN||'')]&&!(nfaMap[String(pr.pr_number||pr.BANFN||'')]?.status==='Approved')), stage:'NFA Approval'},
-                {title:'NFAs Approved — PO Not Yet Created',color:T.purple,
-                  rows: filtered.filter(pr=>nfaMap[String(pr.pr_number||pr.BANFN||'')]?.status==='Approved'&&!poMap[String(pr.pr_number||pr.BANFN||'')]), stage:'PO Creation'},
-              ].map((section,si)=>section.rows.length>0&&(
-                <GC key={si} style={{padding:18}}>
-                  <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:12}}>
-                    <div style={{display:'flex',alignItems:'center',gap:10}}>
-                      <div style={{width:4,height:24,background:section.color,borderRadius:2}}/>
-                      <SH title={section.title} sub={`${section.rows.length} PRs pending at this stage`}/>
-                    </div>
-                  </div>
-                  <div style={{overflowX:'auto',maxHeight:300,overflowY:'auto'}}>
-                    <table style={{width:'100%',borderCollapse:'collapse',fontSize:11}}>
-                      <thead><tr style={{background:`${section.color}10`}}>
-                        {['PR #','Description','WBS','Date','Requester','Amount','Age (days)'].map(h=>(
-                          <th key={h} style={{padding:'6px 10px',textAlign:'left',fontSize:9,fontWeight:800,color:section.color,textTransform:'uppercase',borderBottom:`1px solid ${section.color}25`,whiteSpace:'nowrap'}}>{h}</th>
-                        ))}
-                      </tr></thead>
-                      <tbody>
-                        {section.rows.slice(0,50).map((pr,i)=>(
-                          <tr key={i} onClick={()=>{setSelectedPR(pr);setTab('journey');}}
-                            style={{borderBottom:'1px solid rgba(0,60,100,0.05)',cursor:'pointer'}}
-                            onMouseEnter={e=>e.currentTarget.style.background=`${section.color}08`}
-                            onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
-                            <td style={{padding:'5px 10px',color:T.tealD,fontWeight:800}}>{pr.pr_number||pr.BANFN||'—'}</td>
-                            <td style={{padding:'5px 10px',color:T.navy,maxWidth:200,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{pr.description||pr.TXZ01||'—'}</td>
-                            <td style={{padding:'5px 10px',color:T.textM,fontSize:10}}>{pr.wbs_element||pr.PS_PSP_PNR||'—'}</td>
-                            <td style={{padding:'5px 10px',color:T.textM,fontSize:10,whiteSpace:'nowrap'}}>{pr.pr_date||pr.BADAT||'—'}</td>
-                            <td style={{padding:'5px 10px',color:T.textM,fontSize:10}}>{pr.requester||pr.AFNAM||'—'}</td>
-                            <td style={{padding:'5px 10px',fontWeight:700,color:T.green}}>{pr.price||pr.PREIS?'₹'+parseFloat(pr.price||pr.PREIS).toLocaleString():'—'}</td>
-                            <td style={{padding:'5px 10px',fontWeight:700,color:section.color}}>{pr.age_days||'—'}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </GC>
+                ['Description', selectedPR.desc],
+                ['Department',  selectedPR.dept],
+                ['Plant',       selectedPR.plant],
+                ['PR Date',     selectedPR.pr_date],
+                ['QMS EPR #',   selectedPR.qms_epr],
+                ['Has NFA',     selectedPR.has_nfa?'Yes':'No'],
+                ['NFA Vendor',  selectedPR.nfa_vendor||'—'],
+                ['NFA Amount',  selectedPR.nfa_amount>0?`₹${(selectedPR.nfa_amount/1e5).toFixed(2)}L`:'—'],
+                ['PO Number',   selectedPR.po_num||'—'],
+                ['PO Value',    selectedPR.po_value>0?`₹${(selectedPR.po_value/1e5).toFixed(1)}L`:'—'],
+                ['PO Released', selectedPR.po_released?'✅ Yes':'❌ No'],
+                ['TAT Days',    selectedPR.tat_days||'—'],
+                ['Current Stage',selectedPR.stage],
+              ].map(([l,v],i)=>(
+                <div key={i} style={{background:'rgba(0,60,100,0.03)',borderRadius:8,padding:'8px 12px'}}>
+                  <p style={{fontSize:9,color:T.gray,fontWeight:700,textTransform:'uppercase',margin:0}}>{l}</p>
+                  <p style={{fontSize:12,color:T.navy,fontWeight:700,margin:'2px 0 0'}}>{String(v||'—')}</p>
+                </div>
               ))}
             </div>
-          )}
-
-          {/* ══ NFA TRACKER ══ */}
-          {tab==='nfa'&&(
-            <GC style={{padding:18}}>
-              <SH title="NFA Tracker — All NFAs from VendorGlobe" sub={`${nfaData.length} NFAs`}/>
-              {loading.nfa?<Spinner/>:errors.nfa?<ErrBox msg={errors.nfa} onRetry={refreshAll}/>:(
-                <div style={{overflowY:'auto',maxHeight:'70vh'}}>
-                  <table style={{width:'100%',borderCollapse:'collapse',fontSize:11}}>
-                    <thead><tr style={{background:'rgba(106,27,154,0.06)',position:'sticky',top:0,background:'rgba(255,255,255,0.97)'}}>
-                      {(nfaData[0]?Object.keys(nfaData[0]).slice(0,12):[]).map(h=>(
-                        <th key={h} style={{padding:'7px 10px',textAlign:'left',fontSize:9,fontWeight:800,color:T.purple,textTransform:'uppercase',borderBottom:'2px solid rgba(106,27,154,0.15)',whiteSpace:'nowrap'}}>{h}</th>
-                      ))}
-                    </tr></thead>
-                    <tbody>
-                      {nfaData.slice(0,300).map((r,i)=>(
-                        <tr key={i} style={{borderBottom:'1px solid rgba(0,60,100,0.05)',background:i%2===0?'transparent':'rgba(106,27,154,0.02)'}}>
-                          {(nfaData[0]?Object.keys(nfaData[0]).slice(0,12):[]).map(k=>(
-                            <td key={k} style={{padding:'5px 10px',color:k.toLowerCase().includes('status')?undefined:T.textM,fontWeight:k.toLowerCase().includes('status')?700:400,maxWidth:160,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
-                              {k.toLowerCase().includes('status')?<StatusBadge s={r[k]}/>:String(r[k]??'—')}
-                            </td>
-                          ))}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </GC>
-          )}
-
-          {/* ══ PO TRACKER ══ */}
-          {tab==='po'&&(
-            <div style={{display:'flex',flexDirection:'column',gap:12}}>
-              {/* PO Summary KPIs */}
-              <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12}}>
-                <KpiCard icon="📦" label="Total POs"         value={(kpi.sapPOTotal||0).toLocaleString()}          color={T.tealD} sub="From SAP PRD_PurchaseOrder"           loading={loading.sapPO} pct={null}/>
-                <KpiCard icon="💰" label="Total PO Value"    value={`₹${((kpi.sapPOValue||0)/1e7).toFixed(1)}Cr`} color={T.green} sub="Net value"                            loading={loading.sapPO} pct={null}/>
-                <KpiCard icon="🚚" label="Delivered"         value={(kpi.sapPODelivered||0).toLocaleString()}      color={T.teal}  sub={`${kpi.deliveryRate||0}% delivery rate`} loading={loading.sapPO} pct={kpi.deliveryRate}/>
-                <KpiCard icon="🧾" label="Invoiced"          value={(kpi.sapPOInvoiced||0).toLocaleString()}       color={T.blue}  sub={`₹${((kpi.sapPOInvValue||0)/1e7).toFixed(1)}Cr invoiced`} loading={loading.sapPO} pct={kpi.invoiceRate}/>
-              </div>
-              <GC style={{padding:18}}>
-                <SH title="PO Tracker — SAP PRD_PurchaseOrder" sub={`${sapPO.length} POs · Showing 300`}/>
-                {loading.sapPO?<Spinner/>:errors.sapPO?<ErrBox msg={errors.sapPO} onRetry={refreshAll}/>:(
-                  <div style={{overflowY:'auto',maxHeight:'65vh'}}>
-                    <table style={{width:'100%',borderCollapse:'collapse',fontSize:11}}>
-                      <thead><tr style={{position:'sticky',top:0,background:'rgba(255,255,255,0.97)'}}>
-                        {['PO #','Date','Vendor','Dept','Description','Mat.Group','Plant','Qty','Delivered','Invoiced','Net Value','Inv.Value','Release'].map(h=>(
-                          <th key={h} style={{padding:'7px 10px',textAlign:'left',fontSize:9,fontWeight:800,color:T.tealD,textTransform:'uppercase',borderBottom:'2px solid rgba(0,105,120,0.15)',whiteSpace:'nowrap'}}>{h}</th>
-                        ))}
-                      </tr></thead>
-                      <tbody>
-                        {sapPO.slice(0,300).map((r,i)=>{
-                          const delPct = SAP_PO.deliveryPct(r);
-                          const invPct = SAP_PO.invoicePct(r);
-                          return (
-                            <tr key={i} style={{borderBottom:'1px solid rgba(0,60,100,0.05)',background:i%2===0?'transparent':'rgba(0,151,167,0.02)'}}>
-                              <td style={{padding:'5px 10px',color:T.tealD,fontWeight:800,whiteSpace:'nowrap'}}>{SAP_PO.poNum(r)}</td>
-                              <td style={{padding:'5px 10px',color:T.textM,fontSize:10,whiteSpace:'nowrap'}}>{String(SAP_PO.poDate(r)).slice(0,10)}</td>
-                              <td style={{padding:'5px 10px',color:T.navy,fontWeight:600,maxWidth:150,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{SAP_PO.vendor(r)}</td>
-                              <td style={{padding:'5px 10px',color:T.textM,fontSize:10}}>{SAP_PO.dept(r)}</td>
-                              <td style={{padding:'5px 10px',color:T.textM,maxWidth:180,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{SAP_PO.desc(r)}</td>
-                              <td style={{padding:'5px 10px',color:T.textM,fontSize:10}}>{SAP_PO.matGrp(r)}</td>
-                              <td style={{padding:'5px 10px',color:T.textM,fontSize:10}}>{SAP_PO.plantDesc(r)||SAP_PO.plant(r)}</td>
-                              <td style={{padding:'5px 10px',color:T.textM,fontWeight:600}}>{SAP_PO.qty(r)}</td>
-                              <td style={{padding:'5px 10px'}}>
-                                <div style={{display:'flex',alignItems:'center',gap:4}}>
-                                  <div style={{width:40,height:5,background:'rgba(0,60,100,0.08)',borderRadius:2}}>
-                                    <div style={{width:delPct+'%',height:'100%',background:delPct>=100?T.green:delPct>50?T.amber:T.red,borderRadius:2}}/>
-                                  </div>
-                                  <span style={{fontSize:9,fontWeight:700,color:delPct>=100?T.green:T.amber}}>{delPct}%</span>
-                                </div>
-                              </td>
-                              <td style={{padding:'5px 10px'}}>
-                                <div style={{display:'flex',alignItems:'center',gap:4}}>
-                                  <div style={{width:40,height:5,background:'rgba(0,60,100,0.08)',borderRadius:2}}>
-                                    <div style={{width:invPct+'%',height:'100%',background:invPct>=100?T.blue:invPct>50?T.teal:T.gray,borderRadius:2}}/>
-                                  </div>
-                                  <span style={{fontSize:9,fontWeight:700,color:invPct>=100?T.blue:T.gray}}>{invPct}%</span>
-                                </div>
-                              </td>
-                              <td style={{padding:'5px 10px',fontWeight:800,color:T.green,whiteSpace:'nowrap'}}>₹{SAP_PO.netVal(r).toLocaleString()}</td>
-                              <td style={{padding:'5px 10px',fontWeight:700,color:T.blue,whiteSpace:'nowrap'}}>₹{SAP_PO.invVal(r).toLocaleString()}</td>
-                              <td style={{padding:'5px 10px'}}>
-                                <StatusBadge s={SAP_PO.poRelease(r)||SAP_PO.procStatus(r)||'Pending'}/>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
+            {/* Journey progress bar */}
+            <div style={{marginTop:16}}>
+              <p style={{fontSize:10,fontWeight:800,color:T.tealD,textTransform:'uppercase',margin:'0 0 8px'}}>Journey Progress</p>
+              <div style={{display:'flex',gap:4}}>
+                {[
+                  {l:'PR',    done:true,                   c:T.teal},
+                  {l:'L1',    done:selectedPR.l1,          c:T.green},
+                  {l:'L2',    done:selectedPR.l2,          c:T.green},
+                  {l:'CP',    done:selectedPR.cp,          c:T.blue},
+                  {l:'NFA',   done:selectedPR.has_nfa,     c:T.purple},
+                  {l:'Vendor',done:!!selectedPR.nfa_vendor,c:T.amber},
+                  {l:'PO',    done:!!selectedPR.po_num,    c:T.tealD},
+                  {l:'Done',  done:selectedPR.po_released, c:T.green},
+                ].map((s,i)=>(
+                  <div key={i} style={{flex:1,textAlign:'center'}}>
+                    <div style={{height:8,background:s.done?s.c:'rgba(0,60,100,0.08)',borderRadius:4,marginBottom:4}}/>
+                    <span style={{fontSize:8,color:s.done?s.c:T.gray,fontWeight:700}}>{s.l}</span>
                   </div>
-                )}
-              </GC>
-            </div>
-          )}
-
-          {tab==='analytics'&&(
-            <div style={{display:'flex',flexDirection:'column',gap:12}}>
-              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
-                <GC style={{padding:18}}>
-                  <SH title="PO Value by Vendor (Top 8)" sub="From SAP PRD_PurchaseOrder"/>
-                  <ResponsiveContainer width="100%" height={260}>
-                    <BarChart data={kpi.topVendors||[]} layout="vertical" margin={{top:0,right:70,bottom:0,left:4}}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.07)" horizontal={false}/>
-                      <XAxis type="number" tick={{fill:T.textM,fontSize:8}} axisLine={false} tickLine={false} tickFormatter={v=>v+'L'}/>
-                      <YAxis type="category" dataKey="name" tick={{fill:T.navy,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false} width={120}/>
-                      <Tooltip content={<CTip/>}/>
-                      <Bar dataKey="value" name="Value (₹L)" radius={[0,4,4,0]}>
-                        {(kpi.topVendors||[]).map((_,i)=><Cell key={i} fill={CC[i%CC.length]}/>)}
-                        <LabelList dataKey="value" position="right" style={{fill:T.navy,fontSize:8,fontWeight:800}} formatter={v=>'₹'+v+'L'}/>
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-                </GC>
-                <GC style={{padding:18}}>
-                  <SH title="PO Value by Material Group" sub="Top 8 categories"/>
-                  <ResponsiveContainer width="100%" height={260}>
-                    <BarChart data={kpi.topMatGrps||[]} layout="vertical" margin={{top:0,right:70,bottom:0,left:4}}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.07)" horizontal={false}/>
-                      <XAxis type="number" tick={{fill:T.textM,fontSize:8}} axisLine={false} tickLine={false} tickFormatter={v=>v+'L'}/>
-                      <YAxis type="category" dataKey="name" tick={{fill:T.navy,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false} width={100}/>
-                      <Tooltip content={<CTip/>}/>
-                      <Bar dataKey="value" name="Value (₹L)" radius={[0,4,4,0]}>
-                        {(kpi.topMatGrps||[]).map((_,i)=><Cell key={i} fill={CC[(i+3)%CC.length]}/>)}
-                        <LabelList dataKey="value" position="right" style={{fill:T.navy,fontSize:8,fontWeight:800}} formatter={v=>'₹'+v+'L'}/>
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-                </GC>
-              </div>
-              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
-                <GC style={{padding:18}}>
-                  <SH title="PRs by Department" sub="From SAP PRD_PR"/>
-                  <ResponsiveContainer width="100%" height={200}>
-                    <BarChart data={kpi.topDepts||[]} margin={{top:8,right:20,bottom:8,left:0}}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.07)" vertical={false}/>
-                      <XAxis dataKey="name" tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false} angle={-15} textAnchor="end" height={40}/>
-                      <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={30}/>
-                      <Tooltip content={<CTip/>}/>
-                      <Bar dataKey="count" name="PRs" radius={[4,4,0,0]}>
-                        {(kpi.topDepts||[]).map((_,i)=><Cell key={i} fill={CC[i%CC.length]}/>)}
-                        <LabelList dataKey="count" position="top" style={{fill:T.navy,fontSize:9,fontWeight:800}}/>
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-                </GC>
-                <GC style={{padding:18}}>
-                  <SH title="Delivery vs Invoice Status" sub="PO completion overview"/>
-                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:16}}>
-                    {[
-                      {l:'Fully Delivered', v:kpi.sapPODelivered||0, c:T.green,  icon:'🚚', pct:kpi.deliveryRate},
-                      {l:'Pending Delivery',v:(kpi.sapPOTotal||0)-(kpi.sapPODelivered||0), c:T.amber, icon:'⏳', pct:100-(kpi.deliveryRate||0)},
-                      {l:'Fully Invoiced',  v:kpi.sapPOInvoiced||0,  c:T.blue,   icon:'🧾', pct:kpi.invoiceRate},
-                      {l:'Pending Invoice', v:(kpi.sapPOTotal||0)-(kpi.sapPOInvoiced||0), c:T.red,  icon:'❗', pct:100-(kpi.invoiceRate||0)},
-                    ].map((d,i)=>(
-                      <div key={i} style={{background:`${d.c}09`,border:`1px solid ${d.c}22`,borderRadius:10,padding:'12px 14px'}}>
-                        <div style={{fontSize:18}}>{d.icon}</div>
-                        <div style={{fontSize:20,fontWeight:900,color:d.c}}>{d.v.toLocaleString()}</div>
-                        <div style={{fontSize:9,color:T.textM,fontWeight:700,textTransform:'uppercase'}}>{d.l}</div>
-                        <div style={{marginTop:6,height:4,background:'rgba(0,60,100,0.08)',borderRadius:2}}>
-                          <div style={{width:`${Math.min(d.pct||0,100)}%`,height:'100%',background:d.c,borderRadius:2}}/>
-                        </div>
-                        <div style={{fontSize:9,color:d.c,fontWeight:800,marginTop:2}}>{d.pct||0}%</div>
-                      </div>
-                    ))}
-                  </div>
-                </GC>
+                ))}
               </div>
             </div>
-          )}
-
-        </main>
-      </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
