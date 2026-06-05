@@ -4,6 +4,7 @@ import App from './App';
 import CostApp from './CostApp';
 import Cost2App from './Cost2App';
 import CRMApp from './CRMApp';
+import PRPOApp from './PRPOApp';
 import './index.css';
 
 // ─── CREDENTIALS MAP ────────────────────────────────────────────────────────
@@ -12,6 +13,7 @@ const USERS = {
   'Cost':  { password: 'Smart@2026', profile: 'cost',   sessionKey: 'cost_auth' },
   'Cost2': { password: 'Smart@2026', profile: 'cost2',  sessionKey: 'cost2_auth' },
   'CRM':   { password: 'Smart@2026', profile: 'crm',    sessionKey: 'crm_auth' },
+  'PRPO':  { password: 'Smart@2026', profile: 'prpo',   sessionKey: 'prpo_auth' },
 };
 
 function Portal() {
@@ -20,6 +22,7 @@ function Portal() {
     if (sessionStorage.getItem('cost_auth') === '1') return 'cost';
     if (sessionStorage.getItem('cost2_auth') === '1') return 'cost2';
     if (sessionStorage.getItem('crm_auth')  === '1') return 'crm';
+    if (sessionStorage.getItem('prpo_auth') === '1') return 'prpo';
     return null;
   });
 
@@ -43,6 +46,7 @@ function Portal() {
   if (profile === 'cost')  return <CostApp />;
   if (profile === 'cost2') return <Cost2App />;
   if (profile === 'crm')   return <CRMApp />;
+  if (profile === 'prpo')  return <PRPOApp />;
 
   return (
     <div style={{minHeight:'100vh',backgroundImage:'url(/bg.jpg)',backgroundSize:'cover',backgroundPosition:'center',display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'Inter,sans-serif'}}>
