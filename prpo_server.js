@@ -247,13 +247,32 @@ async function fetchAll() {
 // ── HTTP SERVER ───────────────────────────────────────────────────────────────
 const server = http.createServer(async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', '*');
   res.setHeader('Content-Type', 'application/json');
   if (req.method === 'OPTIONS') { res.end(); return; }
 
   const parsed = url.parse(req.url, true);
   const pathname = parsed.pathname;
 
-  // Special: save cookie sent from browser
+  // GET version — cookie passed as query param (bypasses CORS preflight)
+  if (pathname === '/api/set-cookie' && req.method === 'GET') {
+    const cookie = parsed.query.c;
+    if (cookie) {
+      const dir = path.join(__dirname, 'data');
+      if (!fs.existsSync(dir)) fs.mkdirSync(dir, {recursive:true});
+      fs.writeFileSync(path.join(dir, 'qms_cookie.txt'), decodeURIComponent(cookie));
+      console.log('✅ Cookie saved from browser (GET)');
+      fetchAll().then(()=>{
+        res.end(JSON.stringify({ok:true, counts:{pr:cache.pr.length, nfa:cache.nfa.length}}));
+      });
+    } else {
+      res.end(JSON.stringify({error:'No cookie. Use ?c=YOUR_COOKIE'}));
+    }
+    return;
+  }
+
+  // POST version — cookie in body
   if (pathname === '/api/set-cookie' && req.method === 'POST') {
     let body = '';
     req.on('data', d => body += d);
