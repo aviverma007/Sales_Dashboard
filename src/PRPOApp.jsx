@@ -5,13 +5,13 @@ import {
   ResponsiveContainer, LabelList, ComposedChart, Line, Funnel, FunnelChart, LabelList as LL
 } from 'recharts';
 
-// ─── API ENDPOINTS — called directly from browser (same network) ────────────
-const VG_BASE = 'https://smartworlddevelopersonline.com/bi-power';
+// ─── LOCAL SERVER (run: node prpo_server.js on your PC) ─────────────────────
+const LOCAL_SERVER = 'http://localhost:3001';
 const VG_URLS = {
-  pr:     `${VG_BASE}/bi_prs.php`,
-  nfa:    `${VG_BASE}/bi_nfas.php`,
-  market: `${VG_BASE}/bi_market_place.php`,
-  eot:    `${VG_BASE}/bi_eot.php`,
+  pr:     `${LOCAL_SERVER}/api/pr`,
+  nfa:    `${LOCAL_SERVER}/api/nfa`,
+  market: `${LOCAL_SERVER}/api/market`,
+  eot:    `${LOCAL_SERVER}/api/eot`,
 };
 
 // SAP proxy still needs PHP file on server — skip until deployed
@@ -124,70 +124,64 @@ const StatusBadge = ({s}) => {
   return <span style={{fontSize:9,fontWeight:800,color:'#fff',background:col,borderRadius:4,padding:'2px 7px',whiteSpace:'nowrap'}}>{s||'—'}</span>;
 };
 
-// ─── PR JOURNEY TIMELINE ──────────────────────────────────────────────────────
-const JourneyTimeline = ({pr, nfaMap, poMap}) => {
-  const prNum = pr.pr_number || pr.BANFN || pr.banfn || pr.id || '—';
-  const nfa   = nfaMap[prNum] || null;
-  const po    = poMap[prNum]  || null;
-
+const JourneyTimeline = ({pr, nfa, PR, NFA}) => {
+  const prId  = PR.id(pr);
   const stages = [
-    { id:'pr_created',     done:true,                         date:pr.pr_date||pr.BADAT||'',  label:'PR Created',         detail:`By ${pr.requester||pr.AFNAM||'—'} · ${pr.description||pr.TXZ01||'—'}` },
-    { id:'pr_approved',    done:pr.release_status==='X'||pr.FRGZU==='X'||pr.pr_approved===true, date:'',label:'PR Approved (SAP)',detail:`Release status: ${pr.release_status||pr.FRGZU||'Pending'}` },
-    { id:'vg_sent',        done:!!nfa,                        date:'',                         label:'Sent to VendorGlobe',detail:nfa?'QMS PR created':'Not yet sent to VG' },
-    { id:'nfa_created',    done:!!nfa,                        date:nfa?.created_at||'',        label:'NFA Created',        detail:nfa?`NFA #${nfa.id||nfa.nfa_number||'—'}`:'—' },
-    { id:'nfa_approved',   done:nfa?.status==='Approved'||nfa?.approval_status==='Approved', date:'',label:'NFA Approved',  detail:`Status: ${nfa?.status||nfa?.approval_status||'—'}` },
-    { id:'vendor_selected',done:!!(nfa?.vendor||nfa?.vendor_name||po?.vendor||po?.LIFNR),   date:'',label:'Vendor Selected',detail:`Vendor: ${nfa?.vendor||nfa?.vendor_name||po?.vendor||po?.LIFNR||'—'}` },
-    { id:'po_created',     done:!!po,                         date:po?.po_date||po?.BEDAT||'', label:'PO Created (SAP)',   detail:po?`PO #${po.po_number||po.EBELN||'—'} · ₹${parseFloat(po.net_value||po.NETWR||0).toLocaleString()}`:'—' },
-    { id:'po_approved',    done:po?.release_status==='X'||po?.FRGKE==='X',                  date:'',label:'PO Approved',   detail:`Release: ${po?.release_status||po?.FRGKE||'Pending'}` },
-    { id:'grn_done',       done:!!(po?.grn_qty||po?.grn_done),                              date:'',label:'GRN / Delivery',detail:'Goods receipt note' },
-    { id:'invoice_paid',   done:!!(po?.invoice_paid),                                       date:'',label:'Invoice & Payment',detail:'Final settlement' },
+    { label:'PR Created',        done:true,                         date:PR.date(pr),     detail:`EPR# ${PR.epr(pr)} · ${PR.project(pr)}` },
+    { label:'Level 1 Approval',  done:!!PR.l1Sign(pr),             date:PR.l1Date(pr),   detail: PR.l1Sign(pr) ? `✓ ${PR.l1Who(pr)}` : `Pending — ${PR.l1Who(pr)||'Awaiting'}` },
+    { label:'Level 2 Approval',  done:!!PR.l2Sign(pr),             date:PR.l2Date(pr),   detail: PR.l2Sign(pr) ? `✓ ${PR.l2Who(pr)}` : `Pending — ${PR.l2Who(pr)||'Awaiting'}` },
+    { label:'CP Team Approval',  done:!!PR.cpSign(pr),             date:PR.cpDate(pr),   detail: PR.cpSign(pr) ? `✓ ${PR.cpWho(pr)}` : `Pending — ${PR.cpWho(pr)||'Awaiting'}` },
+    { label:'Assignee Approval', done:!!PR.asgSign(pr),            date:PR.asgDate(pr),  detail: PR.asgSign(pr) ? '✓ Approved' : 'Pending' },
+    { label:'NFA Created',       done:PR.nfaConverted(pr)===1,     date:PR.nfaDate(pr),  detail: PR.nfaConverted(pr)===1 ? `NFA# ${nfa?NFA.nfaNo(nfa):'—'}` : 'Not yet converted to NFA' },
+    { label:'NFA L1 Approval',   done:!!(nfa&&NFA.l1Sign(nfa)),    date:nfa?NFA.l1Date(nfa):'', detail: nfa ? (NFA.l1Sign(nfa)?`✓ ${NFA.l1Team(nfa)}`:`Pending — ${NFA.l1Team(nfa)}`) : '—' },
+    { label:'NFA L2 Approval',   done:!!(nfa&&NFA.l2Sign(nfa)),    date:nfa?NFA.l2Date(nfa):'', detail: nfa ? (NFA.l2Sign(nfa)?`✓ ${NFA.l2Team(nfa)}`:`Pending — ${NFA.l2Team(nfa)}`) : '—' },
+    { label:'NFA L3 Approval',   done:!!(nfa&&NFA.l3Sign(nfa)),    date:'',              detail: nfa ? (NFA.l3Sign(nfa)?`✓ ${NFA.l3Team(nfa)}`:`Pending — ${NFA.l3Team(nfa)}`) : '—' },
+    { label:'Vendor Selected',   done:!!(nfa&&NFA.vendor(nfa)),    date:'',              detail: nfa ? (NFA.vendor(nfa)||'Not yet selected') : '—' },
+    { label:'WO / PO Issued',    done:!!(nfa&&NFA.woPoNum(nfa)),   date:'',              detail: nfa ? (NFA.woPoNum(nfa)||'Not yet issued') : '—' },
+    { label:'SAP PR Created',    done:PR.isSapPR(pr)===1,          date:'',              detail: PR.isSapPR(pr)===1 ? '✓ Synced to SAP' : 'Not in SAP yet' },
   ];
 
-  const completedCount = stages.filter(s=>s.done).length;
-  const pct = Math.round(completedCount/stages.length*100);
-  const pendingStage = stages.find(s=>!s.done);
+  const done  = stages.filter(s=>s.done).length;
+  const pct   = Math.round(done/stages.length*100);
+  const stuck = stages.find(s=>!s.done);
 
   return (
     <GC style={{padding:0,overflow:'hidden'}}>
-      {/* Header */}
       <div style={{background:`linear-gradient(135deg,${T.navy},${T.tealD})`,padding:'14px 20px',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
         <div>
-          <p style={{color:'#fff',fontWeight:900,fontSize:14,margin:0}}>PR #{prNum}</p>
-          <p style={{color:'rgba(255,255,255,0.65)',fontSize:10,margin:'2px 0 0'}}>{pr.description||pr.TXZ01||pr.material_group||'—'} · {pr.wbs_element||pr.PS_PSP_PNR||''}</p>
+          <p style={{color:'#fff',fontWeight:900,fontSize:14,margin:0}}>PR #{PR.epr(pr)} — {PR.no(pr)}</p>
+          <p style={{color:'rgba(255,255,255,0.65)',fontSize:10,margin:'2px 0 0'}}>{PR.project(pr)} · {PR.location(pr)} · Budget: ₹{Number(PR.budget(pr)).toLocaleString()}</p>
         </div>
         <div style={{textAlign:'right'}}>
           <div style={{fontSize:22,fontWeight:900,color:pct===100?'#69f0ae':pct>=60?'#ffd740':'#ff6e40'}}>{pct}%</div>
-          <div style={{fontSize:9,color:'rgba(255,255,255,0.6)',fontWeight:700}}>JOURNEY COMPLETE</div>
+          <div style={{fontSize:9,color:'rgba(255,255,255,0.6)',fontWeight:700}}>COMPLETE</div>
         </div>
       </div>
-      {/* Progress bar */}
-      <div style={{height:5,background:'rgba(0,60,100,0.1)'}}>
-        <div style={{width:pct+'%',height:'100%',background:pct===100?T.green:pct>=60?T.amber:T.teal,transition:'width 0.6s'}}/>
+      <div style={{height:4,background:'rgba(0,60,100,0.1)'}}>
+        <div style={{width:pct+'%',height:'100%',background:pct===100?T.green:T.teal,transition:'width 0.6s'}}/>
       </div>
-      {/* Pending alert */}
-      {pendingStage&&<div style={{background:'rgba(245,124,0,0.06)',borderBottom:'1px solid rgba(245,124,0,0.15)',padding:'7px 20px',display:'flex',alignItems:'center',gap:8}}>
-        <span style={{fontSize:14}}>⏳</span>
-        <span style={{fontSize:11,fontWeight:700,color:T.amber}}>Pending at: {pendingStage.label}</span>
+      {stuck&&<div style={{background:'rgba(245,124,0,0.06)',borderBottom:'1px solid rgba(245,124,0,0.15)',padding:'6px 20px',display:'flex',alignItems:'center',gap:8}}>
+        <span style={{fontSize:13}}>⏳</span>
+        <span style={{fontSize:11,fontWeight:700,color:T.amber}}>Pending: {stuck.label}</span>
+        {PR.isUrgent(pr)===1&&<span style={{fontSize:9,fontWeight:800,color:'#fff',background:T.red,borderRadius:20,padding:'1px 8px',marginLeft:8}}>URGENT</span>}
       </div>}
-      {/* Timeline */}
       <div style={{padding:'16px 20px',display:'flex',flexDirection:'column',gap:0}}>
         {stages.map((s,i)=>(
           <div key={i} style={{display:'flex',gap:12,alignItems:'flex-start'}}>
-            {/* Dot + line */}
             <div style={{display:'flex',flexDirection:'column',alignItems:'center',width:24,flexShrink:0}}>
-              <div style={{width:24,height:24,borderRadius:'50%',background:s.done?T.green:'rgba(0,60,100,0.08)',
-                border:`2px solid ${s.done?T.green:'rgba(0,60,100,0.15)'}`,
-                display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,
-                boxShadow:s.done?`0 0 0 4px rgba(46,125,50,0.12)`:undefined}}>
-                <span style={{fontSize:10}}>{s.done?'✓':'○'}</span>
+              <div style={{width:22,height:22,borderRadius:'50%',
+                background:s.done?T.green:'rgba(0,60,100,0.06)',
+                border:`2px solid ${s.done?T.green:'rgba(0,60,100,0.12)'}`,
+                display:'flex',alignItems:'center',justifyContent:'center',
+                boxShadow:s.done?`0 0 0 3px rgba(46,125,50,0.12)`:undefined}}>
+                <span style={{fontSize:9,color:s.done?'#fff':'rgba(0,60,100,0.3)'}}>{s.done?'✓':'○'}</span>
               </div>
-              {i<stages.length-1&&<div style={{width:2,height:28,background:s.done?'rgba(46,125,50,0.3)':'rgba(0,60,100,0.08)',margin:'2px 0'}}/>}
+              {i<stages.length-1&&<div style={{width:2,height:24,background:s.done?'rgba(46,125,50,0.25)':'rgba(0,60,100,0.06)',margin:'2px 0'}}/>}
             </div>
-            {/* Content */}
-            <div style={{paddingBottom:i<stages.length-1?6:0,flex:1}}>
-              <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:2}}>
-                <span style={{fontSize:11,fontWeight:800,color:s.done?T.textM:'rgba(0,60,100,0.35)'}}>{s.label}</span>
-                {s.date&&<span style={{fontSize:9,color:T.gray}}>{s.date}</span>}
+            <div style={{paddingBottom:i<stages.length-1?4:0,flex:1}}>
+              <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:1}}>
+                <span style={{fontSize:11,fontWeight:800,color:s.done?T.textM:'rgba(0,60,100,0.3)'}}>{s.label}</span>
+                {s.date&&<span style={{fontSize:9,color:T.gray}}>{String(s.date).slice(0,10)}</span>}
               </div>
               <p style={{fontSize:10,color:s.done?T.textL:'rgba(0,60,100,0.25)',margin:0}}>{s.detail}</p>
             </div>
@@ -272,52 +266,81 @@ export default function PRPOApp() {
   // ── Fetch helpers ────────────────────────────────────────────────────────────
   const fetchVG = useCallback(async (type, setter, key) => {
     const url = VG_URLS[type];
-    if (!url) return;
-
-    // Use CodeIgniter session cookie from QMS login
-    const CI_SESSION = 'a%3A12%3A%7Bs%3A10%3A%22session_id%22%3Bs%3A32%3A%228edaf47c41db9c2381e8de917a0041fe%22%3Bs%3A10%3A%22ip_address%22%3Bs%3A12%3A%2214.97.28.194%22%3Bs%3A10%3A%22user_agent%22%3Bs%3A111%3A%22Mozilla%2F5.0+%28Windows+NT+10.0%3B+Win64%3B+x64%29+AppleWebKit%2F537.36+%28KHTML%2C+like+Gecko%29+Chrome%2F148.0.0.0+Safari%2F537.36%22%3Bs%3A13%3A%22last_activity%22%3Bi%3A1780640662%3Bs%3A9%3A%22user_data%22%3Bs%3A0%3A%22%22%3Bs%3A8%3A%22login_id%22%3Bs%3A3%3A%22221%22%3Bs%3A10%3A%22login_name%22%3Bs%3A11%3A%22Sunny+Batra%22%3Bs%3A11%3A%22login_email%22%3Bs%3A36%3A%22sunny.batra%40smartworlddevelopers.com%22%3Bs%3A10%3A%22login_role%22%3Bs%3A5%3A%22buyer%22%3Bs%3A8%3A%22login_to%22%3Bs%3A1%3A%220%22%3Bs%3A11%3A%22login_admin%22%3Bs%3A1%3A%221%22%3Bs%3A16%3A%22login_priviliges%22%3Bs%3A205%3A%22NFA_Management%21%23%24View_Reports%21%23%24NFA_Reports%21%23%24Is_Initiator%21%23%24SAP_Download%21%23%24Amend_NFA%21%23%24Transfer_NFA%21%23%24Transferred_NFA%21%23%24Create_NFA%21%23%24General_Reports%21%23%24Is_Validator%21%23%24PR_Reports%21%23%24Create_PR%21%23%24PR_Management%22%3B%7D14f1853861c0559c6e335c8b3eac9e2ac909f352';
-
-    // First — try with credentials:include (browser sends existing cookies automatically)
-    // This works when user is already logged into QMS in same browser
-    const attempts = [
-      // 1. credentials:include — sends existing QMS session cookie
-      () => fetch(url, {
-        credentials: 'include',
-        headers: { 'Accept': 'application/json' },
-        mode: 'cors',
-      }),
-      // 2. Same with no-cors to at least not throw
-      () => fetch(url, { credentials: 'include', mode: 'no-cors' }),
-    ];
-
-    for (const attempt of attempts) {
-      try {
-        const r = await attempt();
-        if (r.type === 'opaque') {
-          setErrors(p=>({...p,[key]:'CORS blocked — open QMS in this browser first, then refresh'}));
-          setLoading(p=>({...p,[key]:false}));
-          return;
-        }
-        const txt = await r.text();
-        let data;
-        try { data = JSON.parse(txt); } catch { data = []; }
-        // Check if unauthorized
-        if (data?.status === 'unauthorized' || data?.status === 'error') {
-          setErrors(p=>({...p,[key]:'Session expired — please login to QMS first'}));
-          setLoading(p=>({...p,[key]:false}));
-          return;
-        }
-        const arr = Array.isArray(data) ? data : data?.data || data?.records || data?.result || [];
-        setter(arr);
-        setLoading(p=>({...p,[key]:false}));
-        return;
-      } catch(e) {
-        continue;
-      }
+    try {
+      const r = await fetch(url, { mode: 'cors' });
+      const json = await r.json();
+      const arr = Array.isArray(json) ? json : json?.data || [];
+      setter(arr);
+    } catch(e) {
+      setErrors(p=>({...p,[key]:'Local server not running. Run: node prpo_server.js'}));
+    } finally {
+      setLoading(p=>({...p,[key]:false}));
     }
-    setErrors(p=>({...p,[key]:'Connection failed'}));
-    setLoading(p=>({...p,[key]:false}));
   },[]);
+
+  // ── Field accessor helpers (real column names from QMS) ───────────────────
+  const PR = {
+    id:           r => r['PR_Id']      || r['data.PR_Id']      || r.pr_id,
+    no:           r => r['PR_No']      || r['data.PR_No']      || r.pr_no,
+    epr:          r => r['EPR_No']     || r['data.EPR_No']     || r.epr_no,
+    enfa:         r => r['ENFA_No']    || r['data.ENFA_No']    || r.enfa_no,
+    title:        r => r['Scope']      || r['data.Scope']      || r.scope || r.description || '',
+    project:      r => r['Project_Name']   || r['data.Project_Name']   || r.project_name || '',
+    group:        r => r['Project_Group']  || r['data.Project_Group']  || r.project_group || '',
+    budget:       r => r['Budget']     || r['data.Budget']     || 0,
+    date:         r => r['PRN_Date']   || r['data.PRN_Date']   || r['Created_Date'] || r['data.Created_Date'] || '',
+    created:      r => r['Created_Date']   || r['data.Created_Date']   || '',
+    status:       r => r['Status']     || r['data.Status']     || 0,
+    l1Sign:       r => r['Validator_One_E_Sign']  || r['data.Validator_One_E_Sign']  || '',
+    l1Date:       r => r['Validator_One_Date']    || r['data.Validator_One_Date']    || '',
+    l1Who:        r => r['Validator_One']         || r['data.Validator_One']         || '',
+    l1Msg:        r => r['Level_One_Status_Msg']  || r['data.Level_One_Status_Msg']  || '',
+    l2Sign:       r => r['Validator_Two_E_Sign']  || r['data.Validator_Two_E_Sign']  || '',
+    l2Date:       r => r['Validator_Two_Date']    || r['data.Validator_Two_Date']    || '',
+    l2Who:        r => r['Validator_Two']         || r['data.Validator_Two']         || '',
+    cpSign:       r => r['CP_Team_E_Sign']        || r['data.CP_Team_E_Sign']        || '',
+    cpDate:       r => r['CP_Team_Date']          || r['data.CP_Team_Date']          || '',
+    cpWho:        r => r['CP_Team']               || r['data.CP_Team']               || '',
+    asgSign:      r => r['Assignee_Team_E_Sign']  || r['data.Assignee_Team_E_Sign']  || '',
+    asgDate:      r => r['Assignee_Team_Date']    || r['data.Assignee_Team_Date']    || '',
+    nfaConverted: r => +( r['NFA_Converted']  || r['data.NFA_Converted']  || 0),
+    rfqConverted: r => +( r['RFQ_Converted']  || r['data.RFQ_Converted']  || 0),
+    isSapPR:      r => +( r['Is_Sap_Pr']      || r['data.Is_Sap_Pr']      || 0),
+    isUrgent:     r => +( r['Exigent']         || r['data.Exigent']         || 0),
+    nfaDate:      r => r['NFA_Date']          || r['data.NFA_Date']          || '',
+    location:     r => r['Location']          || r['data.Location']          || '',
+    city:         r => r['City']              || r['data.City']              || '',
+  };
+
+  const NFA = {
+    id:       r => r['NF_Id']      || r['data.NF_Id']      || r.nf_id,
+    prId:     r => r['PR_Id']      || r['data.PR_Id']      || r.pr_id,
+    nfaNo:    r => r['NFA_No']     || r['data.NFA_No']     || '',
+    enfaNo:   r => r['ENFA_No']    || r['data.ENFA_No']    || '',
+    title:    r => r['NFA_Title']  || r['data.NFA_Title']  || '',
+    project:  r => r['Project_Name']  || r['data.Project_Name']  || '',
+    vendor:   r => r['Vendor_Name']   || r['data.Vendor_Name']   || '',
+    amount:   r => r['ENFA_Amount']   || r['data.ENFA_Amount']   || 0,
+    budget:   r => r['Budget']        || r['data.Budget']        || '',
+    status:   r => r['Approval_Status']|| r['data.Approval_Status']|| 0,
+    woPoNum:  r => r['WoOrPo_Num']    || r['data.WoOrPo_Num']    || '',
+    woPoStatus: r => r['WoOrPo_Status']|| r['data.WoOrPo_Status']|| 0,
+    l1Sign:   r => r['Level_One_E_Sign']   || r['data.Level_One_E_Sign']   || '',
+    l1Team:   r => r['Level_One_Team']     || r['data.Level_One_Team']     || '',
+    l1Date:   r => r['Level_One_Date']     || r['data.Level_One_Date']     || '',
+    l2Sign:   r => r['Level_Two_E_Sign']   || r['data.Level_Two_E_Sign']   || '',
+    l2Team:   r => r['Level_Two_Team']     || r['data.Level_Two_Team']     || '',
+    l3Sign:   r => r['Level_Three_E_Sign'] || r['data.Level_Three_E_Sign'] || '',
+    l3Team:   r => r['Level_Three_Team']   || r['data.Level_Three_Team']   || '',
+    l4Sign:   r => r['Level_Four_E_Sign']  || r['data.Level_Four_E_Sign']  || '',
+    l5Sign:   r => r['Level_Five_E_Sign']  || r['data.Level_Five_E_Sign']  || '',
+    l6Sign:   r => r['Level_Six_E_Sign']   || r['data.Level_Six_E_Sign']   || '',
+    l7Sign:   r => r['Level_Seven_E_Sign'] || r['data.Level_Seven_E_Sign'] || '',
+    created:  r => r['Created_Date']  || r['data.Created_Date']  || '',
+    vendorOne:r => r['Vendor_One']    || r['data.Vendor_One']    || '',
+    vendorTwo:r => r['Vendor_Two']    || r['data.Vendor_Two']    || '',
+    vendorThree:r=>r['Vendor_Three']  || r['data.Vendor_Three']  || '',
+  };
 
   const fetchSAP = useCallback(async (queryType, setter, key) => {
     try {
@@ -369,13 +392,12 @@ export default function PRPOApp() {
     return ()=>clearTimeout(t);
   },[errors,loading,prData,nfaData,mktData,eotData,demoMode]);
 
-  // ── Merge PR journey: SAP PR + VG PR + NFA + SAP PO ─────────────────────────
+  // ── Merge data using real field names ───────────────────────────────────────
   const nfaMap = useMemo(()=>{
     const m = {};
-    // Key by SAP PR number if available, else by VG PR id
     nfaData.forEach(n=>{
-      const key = n.sap_pr_number||n.pr_number||n.pr_id||n.id||'';
-      if(key) m[String(key)] = n;
+      const prId = String(NFA.prId(n)||'');
+      if(prId) m[prId] = n;
     });
     return m;
   },[nfaData]);
@@ -384,26 +406,15 @@ export default function PRPOApp() {
     const m = {};
     sapPR2PO.forEach(r=>{
       const prNum = r.pr_number||r.BANFN||'';
-      if(prNum && r.po_number && r.po_number!=='') m[String(prNum)] = r;
+      if(prNum&&r.po_number) m[String(prNum)] = r;
     });
     return m;
   },[sapPR2PO]);
 
-  // Merge all PRs (SAP + VG, deduplicated by PR number)
   const allPRs = useMemo(()=>{
-    const combined = {};
-    // SAP PRs (ground truth)
-    sapPR.forEach(r=>{
-      const k = String(r.pr_number||r.BANFN||r.banfn||'');
-      if(k) combined[k] = {...r, _source:'sap'};
-    });
-    // VG PRs — merge or add
-    prData.forEach(r=>{
-      const k = String(r.sap_pr_number||r.pr_number||r.id||'');
-      if(k) combined[k] = {...(combined[k]||{}), ...r, _source:combined[k]?'both':'vg'};
-    });
-    return Object.values(combined);
-  },[sapPR, prData]);
+    if(prData.length) return prData;
+    return sapPR;
+  },[prData,sapPR]);
 
   // Filter
   const filtered = useMemo(()=>{
@@ -429,22 +440,30 @@ export default function PRPOApp() {
     });
   },[allPRs,nfaMap,poMap,fSearch,fVendor,fGroup,fStage]);
 
-  // ── KPIs ────────────────────────────────────────────────────────────────────
   const kpi = useMemo(()=>{
-    const total     = allPRs.length;
-    const prApproved= allPRs.filter(r=>r.release_status==='X'||r.FRGZU==='X').length;
-    const sentToVG  = allPRs.filter(r=>nfaMap[String(r.pr_number||r.BANFN||'')]).length;
-    const nfaApproved=nfaData.filter(r=>r.status==='Approved'||r.approval_status==='Approved').length;
-    const hasVendor = allPRs.filter(r=>{const n=nfaMap[String(r.pr_number||r.BANFN||'')];return n&&(n.vendor||n.vendor_name);}).length;
-    const hasPO     = allPRs.filter(r=>poMap[String(r.pr_number||r.BANFN||'')]).length;
-    const poApproved= sapPO.filter(r=>r.release_status==='X'||r.FRGKE==='X').length;
-    const pendingPR = total - prApproved;
-    const pendingVG = prApproved - sentToVG;
-    const pendingNFA= sentToVG - nfaApproved;
-    const pendingPO = nfaApproved - hasPO;
-    const totalPOVal= sapPO.reduce((s,r)=>s+(parseFloat(r.net_value||r.NETWR)||0),0);
-    return {total,prApproved,sentToVG,nfaApproved,hasVendor,hasPO,poApproved,pendingPR,pendingVG,pendingNFA,pendingPO,totalPOVal};
-  },[allPRs,nfaMap,nfaData,poMap,sapPO]);
+    const total      = allPRs.length;
+    const l1Approved = allPRs.filter(r=>!!PR.l1Sign(r)).length;
+    const l2Approved = allPRs.filter(r=>!!PR.l2Sign(r)).length;
+    const cpApproved = allPRs.filter(r=>!!PR.cpSign(r)).length;
+    const asgApproved= allPRs.filter(r=>!!PR.asgSign(r)).length;
+    const nfaCreated = allPRs.filter(r=>PR.nfaConverted(r)===1).length;
+    const rfqCreated = allPRs.filter(r=>PR.rfqConverted(r)===1).length;
+    const sapPRCount = allPRs.filter(r=>PR.isSapPR(r)===1).length;
+    const urgent     = allPRs.filter(r=>PR.isUrgent(r)===1).length;
+    const nfaApproved= nfaData.filter(r=>NFA.l1Sign(r)&&NFA.l2Sign(r)).length;
+    const vendorDone = nfaData.filter(r=>!!NFA.vendor(r)).length;
+    const woPoDone   = nfaData.filter(r=>!!NFA.woPoNum(r)).length;
+    const totalBudget= allPRs.reduce((s,r)=>s+(Number(PR.budget(r))||0),0);
+    const totalNFAVal= nfaData.reduce((s,r)=>s+(Number(NFA.amount(r))||0),0);
+    return {total,l1Approved,l2Approved,cpApproved,asgApproved,nfaCreated,rfqCreated,
+            sapPRCount,urgent,nfaApproved,vendorDone,woPoDone,totalBudget,totalNFAVal,
+            pendingL1: total-l1Approved,
+            pendingL2: l1Approved-l2Approved,
+            pendingCP: l2Approved-cpApproved,
+            pendingNFA: cpApproved-nfaCreated,
+            pendingWOPO: nfaCreated-woPoDone,
+    };
+  },[allPRs,nfaData]);
 
   const fmt = n => n>=1e7?'₹'+(n/1e7).toFixed(1)+'Cr':n>=1e5?'₹'+(n/1e5).toFixed(1)+'L':'₹'+Math.round(n).toLocaleString();
   const isLoading = Object.values(loading).some(Boolean);
