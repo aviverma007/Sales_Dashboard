@@ -281,67 +281,85 @@ export default function PRPOApp() {
   },[]);
 
   // ── Field accessor helpers (real column names from QMS) ───────────────────
+  // ── QMS PR field accessors (real data has "data." prefix from API) ──
   const PR = {
-    id:           r => r['PR_Id']      || r['data.PR_Id']      || r.pr_id,
-    no:           r => r['PR_No']      || r['data.PR_No']      || r.pr_no,
-    epr:          r => r['EPR_No']     || r['data.EPR_No']     || r.epr_no,
-    enfa:         r => r['ENFA_No']    || r['data.ENFA_No']    || r.enfa_no,
-    title:        r => r['Scope']      || r['data.Scope']      || r.scope || r.description || '',
-    project:      r => r['Project_Name']   || r['data.Project_Name']   || r.project_name || '',
-    group:        r => r['Project_Group']  || r['data.Project_Group']  || r.project_group || '',
-    budget:       r => r['Budget']     || r['data.Budget']     || 0,
-    date:         r => r['PRN_Date']   || r['data.PRN_Date']   || r['Created_Date'] || r['data.Created_Date'] || '',
-    created:      r => r['Created_Date']   || r['data.Created_Date']   || '',
-    status:       r => r['Status']     || r['data.Status']     || 0,
-    l1Sign:       r => r['Validator_One_E_Sign']  || r['data.Validator_One_E_Sign']  || '',
-    l1Date:       r => r['Validator_One_Date']    || r['data.Validator_One_Date']    || '',
-    l1Who:        r => r['Validator_One']         || r['data.Validator_One']         || '',
-    l1Msg:        r => r['Level_One_Status_Msg']  || r['data.Level_One_Status_Msg']  || '',
-    l2Sign:       r => r['Validator_Two_E_Sign']  || r['data.Validator_Two_E_Sign']  || '',
-    l2Date:       r => r['Validator_Two_Date']    || r['data.Validator_Two_Date']    || '',
-    l2Who:        r => r['Validator_Two']         || r['data.Validator_Two']         || '',
-    cpSign:       r => r['CP_Team_E_Sign']        || r['data.CP_Team_E_Sign']        || '',
-    cpDate:       r => r['CP_Team_Date']          || r['data.CP_Team_Date']          || '',
-    cpWho:        r => r['CP_Team']               || r['data.CP_Team']               || '',
-    asgSign:      r => r['Assignee_Team_E_Sign']  || r['data.Assignee_Team_E_Sign']  || '',
-    asgDate:      r => r['Assignee_Team_Date']    || r['data.Assignee_Team_Date']    || '',
-    nfaConverted: r => +( r['NFA_Converted']  || r['data.NFA_Converted']  || 0),
-    rfqConverted: r => +( r['RFQ_Converted']  || r['data.RFQ_Converted']  || 0),
-    isSapPR:      r => +( r['Is_Sap_Pr']      || r['data.Is_Sap_Pr']      || 0),
-    isUrgent:     r => +( r['Exigent']         || r['data.Exigent']         || 0),
-    nfaDate:      r => r['NFA_Date']          || r['data.NFA_Date']          || '',
-    location:     r => r['Location']          || r['data.Location']          || '',
-    city:         r => r['City']              || r['data.City']              || '',
+    id:           r => r['data.PR_Id']      || r['PR_Id']      || 0,
+    no:           r => r['data.PR_No']      || r['PR_No']      || '',
+    epr:          r => r['data.EPR_No']     || r['EPR_No']     || '',
+    title:        r => r['data.Scope']      || r['Scope']      || '',
+    project:      r => r['data.Project_Name']  || r['Project_Name']  || '',
+    group:        r => r['data.Project_Group'] || r['Project_Group'] || '',
+    location:     r => r['data.Location']   || r['Location']   || '',
+    city:         r => r['data.City']       || r['City']       || '',
+    budget:       r => +(r['data.Budget']   || r['Budget']     || 0),
+    date:         r => r['data.PRN_Date']   || r['PRN_Date']   || r['data.Created_Date'] || '',
+    created:      r => r['data.Created_Date']  || r['Created_Date']  || '',
+    // Status: 2=Approved, 1=Pending, -1=Cancelled, -2=OnHold, -3=Rejected, -4=Closed
+    status:       r => +(r['data.Status']   || r['Status']     || 0),
+    statusLabel:  r => { const m={'2':'Approved','1':'Pending','-1':'Cancelled','-2':'On Hold','-3':'Rejected','-4':'Closed','10':'Transferred'}; return m[String(+(r['data.Status']||0))]||'Unknown'; },
+    // Approval chain — e_sign has "email!#$" pattern when signed
+    l1Sign:       r => r['data.Validator_One_E_Sign']  || '',
+    l1Date:       r => r['data.Validator_One_Date']    || '',
+    l1Who:        r => (r['data.Validator_One']||'').split('@')[0] || '',
+    l2Sign:       r => r['data.Validator_Two_E_Sign']  || '',
+    l2Date:       r => r['data.Validator_Two_Date']    || '',
+    l2Who:        r => (r['data.Validator_Two']||'').split('@')[0] || '',
+    cpSign:       r => r['data.CP_Team_E_Sign']        || '',
+    cpDate:       r => r['data.CP_Team_Date']          || '',
+    cpWho:        r => (r['data.CP_Team']||'').split('@')[0] || '',
+    asgSign:      r => r['data.Assignee_Team_E_Sign']  || '',
+    asgWho:       r => (r['data.PR_Assigners']||'').split('@')[0] || '',
+    // NFA conversion
+    nfaConverted: r => +(r['data.NFA_Converted'] || 0),
+    nfaDate:      r => r['data.NFA_Date']        || '',
+    rfqConverted: r => +(r['data.RFQ_Converted'] || 0),
+    isSapPR:      r => +(r['data.Is_Sap_Pr']     || 0),
+    isUrgent:     r => +(r['data.Exigent']        || 0),
+    isCancelled:  r => +(r['data.Status']||0) === -1,
+    isApproved:   r => +(r['data.Status']||0) === 2,
   };
 
+  // ── NFA field accessors (real data has "data." prefix) ──
   const NFA = {
-    id:       r => r['NF_Id']      || r['data.NF_Id']      || r.nf_id,
-    prId:     r => r['PR_Id']      || r['data.PR_Id']      || r.pr_id,
-    nfaNo:    r => r['NFA_No']     || r['data.NFA_No']     || '',
-    enfaNo:   r => r['ENFA_No']    || r['data.ENFA_No']    || '',
-    title:    r => r['NFA_Title']  || r['data.NFA_Title']  || '',
-    project:  r => r['Project_Name']  || r['data.Project_Name']  || '',
-    vendor:   r => r['Vendor_Name']   || r['data.Vendor_Name']   || '',
-    amount:   r => r['ENFA_Amount']   || r['data.ENFA_Amount']   || 0,
-    budget:   r => r['Budget']        || r['data.Budget']        || '',
-    status:   r => r['Approval_Status']|| r['data.Approval_Status']|| 0,
-    woPoNum:  r => r['WoOrPo_Num']    || r['data.WoOrPo_Num']    || '',
-    woPoStatus: r => r['WoOrPo_Status']|| r['data.WoOrPo_Status']|| 0,
-    l1Sign:   r => r['Level_One_E_Sign']   || r['data.Level_One_E_Sign']   || '',
-    l1Team:   r => r['Level_One_Team']     || r['data.Level_One_Team']     || '',
-    l1Date:   r => r['Level_One_Date']     || r['data.Level_One_Date']     || '',
-    l2Sign:   r => r['Level_Two_E_Sign']   || r['data.Level_Two_E_Sign']   || '',
-    l2Team:   r => r['Level_Two_Team']     || r['data.Level_Two_Team']     || '',
-    l3Sign:   r => r['Level_Three_E_Sign'] || r['data.Level_Three_E_Sign'] || '',
-    l3Team:   r => r['Level_Three_Team']   || r['data.Level_Three_Team']   || '',
-    l4Sign:   r => r['Level_Four_E_Sign']  || r['data.Level_Four_E_Sign']  || '',
-    l5Sign:   r => r['Level_Five_E_Sign']  || r['data.Level_Five_E_Sign']  || '',
-    l6Sign:   r => r['Level_Six_E_Sign']   || r['data.Level_Six_E_Sign']   || '',
-    l7Sign:   r => r['Level_Seven_E_Sign'] || r['data.Level_Seven_E_Sign'] || '',
-    created:  r => r['Created_Date']  || r['data.Created_Date']  || '',
-    vendorOne:r => r['Vendor_One']    || r['data.Vendor_One']    || '',
-    vendorTwo:r => r['Vendor_Two']    || r['data.Vendor_Two']    || '',
-    vendorThree:r=>r['Vendor_Three']  || r['data.Vendor_Three']  || '',
+    id:         r => r['data.NF_Id']      || r['NF_Id']      || 0,
+    prId:       r => +(r['data.PR_Id']    || r['PR_Id']      || 0),
+    nfaNo:      r => r['data.NFA_No']     || r['NFA_No']     || '',
+    enfaNo:     r => r['data.ENFA_No']    || r['ENFA_No']    || '',
+    title:      r => r['data.NFA_Title']  || r['NFA_Title']  || '',
+    subject:    r => r['data.Subject_Of_NFA'] || '',
+    project:    r => r['data.Project_Name']   || r['Project_Name'] || '',
+    group:      r => r['data.Project_Group']  || '',
+    vendor:     r => r['data.Vendor_Name']    || r['Vendor_Name']  || '',
+    vendorOne:  r => r['data.Vendor_One']     || '',
+    vendorTwo:  r => r['data.Vendor_Two']     || '',
+    vendorThree:r => r['data.Vendor_Three']   || '',
+    amountExcl: r => r['data.Excl_Numeric']   || 0,
+    amountIncl: r => r['data.Incl_Numeric']   || 0,
+    budgetNum:  r => r['data.Budget_Numeric'] || 0,
+    // Approval_Status: 0=Pending (all currently 0 — use level signs instead)
+    status:     r => +(r['data.Status']        || 0),
+    approvalStatus: r => +(r['data.Approval_Status'] || 0),
+    woPoNum:    r => r['data.WoOrPo_Num']  || '',
+    woPoStatus: r => +(r['data.WoOrPo_Status'] || 0),
+    // Level approvals (e_sign has email!#$ pattern when signed)
+    l1Sign:     r => r['data.Level_One_E_Sign']   || '',
+    l1Team:     r => (r['data.Level_One_Team']  ||'').split('@')[0] || '',
+    l1Date:     r => r['data.Level_One_Date']   || '',
+    l2Sign:     r => r['data.Level_Two_E_Sign']   || '',
+    l2Team:     r => (r['data.Level_Two_Team']  ||'').split('@')[0] || '',
+    l2Date:     r => r['data.Level_Two_Date']   || '',
+    l3Sign:     r => r['data.Level_Three_E_Sign'] || '',
+    l3Team:     r => (r['data.Level_Three_Team']||'').split('@')[0] || '',
+    l4Sign:     r => r['data.Level_Four_E_Sign']  || '',
+    l4Team:     r => (r['data.Level_Four_Team'] ||'').split('@')[0] || '',
+    l5Sign:     r => r['data.Level_Five_E_Sign']  || '',
+    l5Team:     r => (r['data.Level_Five_Team'] ||'').split('@')[0] || '',
+    l6Sign:     r => r['data.Level_Six_E_Sign']   || '',
+    l7Sign:     r => r['data.Level_Seven_E_Sign'] || '',
+    created:    r => r['data.Created_Date'] || '',
+    workScope:  r => r['data.Work_Scope']   || '',
+    payTerms:   r => r['data.Payment_Terms']|| '',
+    contract:   r => r['data.Contract_Duration'] || '',
   };
 
   const fetchSAP = useCallback(async (queryType, setter, key) => {
@@ -445,11 +463,12 @@ export default function PRPOApp() {
     deliveryPct:r=> { const q=+(r['quantity']||r['MENGE']||0); return q>0?Math.round((+(r['qty_delivered']||r['MENGE_DEL']||0))/q*100):0; },
     invoicePct: r=> { const q=+(r['quantity']||r['MENGE']||0); return q>0?Math.round((+(r['qty_invoiced'] ||r['MENGE_INV']||0))/q*100):0; },
   };
+  // Join key: NFA.data.PR_Id = QMS_PR.data.PR_Id
   const nfaMap = useMemo(()=>{
     const m = {};
     nfaData.forEach(n=>{
-      const prId = String(NFA.prId(n)||'');
-      if(prId) m[prId] = n;
+      const prId = String(Math.round(NFA.prId(n))||'');
+      if(prId && prId!=='0') m[prId] = n;
     });
     return m;
   },[nfaData]);
@@ -463,34 +482,33 @@ export default function PRPOApp() {
     return m;
   },[sapPR2PO]);
 
+  // Primary: QMS PR data (10,930 rows with full approval chain)
+  // Secondary: SAP PR data (16,814 rows) — used for PO tracking
   const allPRs = useMemo(()=>{
-    if(prData.length) return prData;
-    return sapPR;
+    return prData.length ? prData : sapPR;
   },[prData,sapPR]);
 
   // Filter
   const filtered = useMemo(()=>{
     return allPRs.filter(pr=>{
-      const prNum = String(pr.pr_number||pr.BANFN||pr.id||'');
-      const desc  = String(pr.description||pr.TXZ01||pr.subject||'').toLowerCase();
-      const vendor= String(pr.vendor||pr.LIFNR||pr.vendor_name||'').toLowerCase();
-      const group = String(pr.material_group||pr.MATKL||pr.category||'').toLowerCase();
-      const nfa   = nfaMap[prNum];
-      const po    = poMap[prNum];
+      const prId  = String(Math.round(PR.id(pr))||'');
+      const desc  = String(PR.title(pr)||'').toLowerCase();
+      const grp   = String(PR.group(pr)||'').toLowerCase();
+      const loc   = String(PR.location(pr)||'').toLowerCase();
+      const nfa   = nfaMap[prId];
 
-      if(fSearch && !prNum.includes(fSearch) && !desc.includes(fSearch.toLowerCase())) return false;
-      if(fVendor && !vendor.includes(fVendor.toLowerCase())) return false;
-      if(fGroup  && !group.includes(fGroup.toLowerCase())) return false;
-      if(fStage) {
-        if(fStage==='pending_pr_approval'  && (pr.release_status==='X'||pr.FRGZU==='X')) return false;
-        if(fStage==='pending_vg'           && !!nfa) return false;
-        if(fStage==='pending_nfa_approval' && (nfa?.status==='Approved')) return false;
-        if(fStage==='pending_po'           && !!po) return false;
-        if(fStage==='completed'            && !po) return false;
-      }
+      if(fSearch && !prId.includes(fSearch) && !desc.includes(fSearch.toLowerCase()) && !PR.project(pr).toLowerCase().includes(fSearch.toLowerCase())) return false;
+      if(fGroup  && !grp.includes(fGroup.toLowerCase())) return false;
+      if(fVendor) { const v=String(nfa?NFA.vendor(nfa):'').toLowerCase(); if(!v.includes(fVendor.toLowerCase())) return false; }
+      if(fStage==='pending_pr_approval'  && !!PR.l1Sign(pr)) return false;
+      if(fStage==='pending_vg'           && !!nfa) return false;
+      if(fStage==='pending_nfa_approval' && !!(nfa&&NFA.l2Sign(nfa))) return false;
+      if(fStage==='pending_po'           && !!(nfa&&NFA.woPoNum(nfa))) return false;
+      if(fStage==='completed'            && !(nfa&&NFA.woPoNum(nfa))) return false;
+      if(fStage==='cancelled'            && !PR.isCancelled(pr)) return false;
       return true;
     });
-  },[allPRs,nfaMap,poMap,fSearch,fVendor,fGroup,fStage]);
+  },[allPRs,nfaMap,fSearch,fVendor,fGroup,fStage]);
 
   const kpi = useMemo(()=>{
     const total        = allPRs.length;
@@ -534,6 +552,7 @@ export default function PRPOApp() {
       topDepts, topMatGrps, topVendors,
       deliveryRate: sapPOTotal>0?Math.round(sapPODelivered/sapPOTotal*100):0,
       invoiceRate:  sapPOTotal>0?Math.round(sapPOInvoiced/sapPOTotal*100):0,
+      sapPOReleased: sapPO.filter(r=>r['FRGKE']==='G').length,
     };
   },[allPRs,nfaData,sapPR,sapPO]);
 
@@ -541,30 +560,50 @@ export default function PRPOApp() {
   const isLoading = Object.values(loading).some(Boolean);
 
   // Funnel data for journey
+  // Funnel with real data values
   const funnelData = [
-    {name:'PR Created',    value:kpi.total,      fill:T.teal},
-    {name:'PR Approved',   value:kpi.prApproved, fill:T.green},
-    {name:'Sent to VG',    value:kpi.sentToVG,   fill:T.blue},
-    {name:'NFA Approved',  value:kpi.nfaApproved,fill:T.purple},
-    {name:'Vendor Selected',value:kpi.hasVendor, fill:T.amber},
-    {name:'PO Created',    value:kpi.hasPO,      fill:T.tealD},
-    {name:'PO Approved',   value:kpi.poApproved, fill:T.green},
+    {name:'PRs Created',       value:kpi.total||0,       fill:T.teal},
+    {name:'L1 Approved',       value:kpi.l1Approved||0,  fill:'#1565c0'},
+    {name:'L2 Approved',       value:kpi.l2Approved||0,  fill:T.green},
+    {name:'CP Team Approved',  value:kpi.cpApproved||0,  fill:'#00838f'},
+    {name:'NFA Converted',     value:kpi.nfaCreated||0,  fill:T.purple},
+    {name:'Vendor Selected',   value:kpi.vendorDone||0,  fill:T.amber},
+    {name:'WO/PO Issued',      value:kpi.woPoDone||0,    fill:T.orange},
+    {name:'SAP PO Released',   value:kpi.sapPOReleased||0,fill:T.navy},
   ];
 
   // Status breakdown charts
   const prStatusChart = useMemo(()=>{
-    const c={};prData.forEach(r=>{const s=r.status||r.Status||'Unknown';c[s]=(c[s]||0)+1;});
+    const statusLabels = {'2':'Approved','1':'Pending','-1':'Cancelled','-2':'On Hold','-3':'Rejected','-4':'Closed','10':'Transferred'};
+    const c={};
+    prData.forEach(r=>{
+      const s=statusLabels[String(+(r['data.Status']||0))]||'Unknown';
+      c[s]=(c[s]||0)+1;
+    });
     return Object.entries(c).map(([n,v])=>({name:n,value:v})).sort((a,b)=>b.value-a.value);
   },[prData]);
 
   const nfaStatusChart = useMemo(()=>{
-    const c={};nfaData.forEach(r=>{const s=r.status||r.Status||'Unknown';c[s]=(c[s]||0)+1;});
-    return Object.entries(c).map(([n,v])=>({name:n,value:v})).sort((a,b)=>b.value-a.value);
+    // NFA approval based on level signs — L1 signed = in progress, all 4+ = approved
+    const c={'L1 Only':0,'L1+L2':0,'L1+L2+L3':0,'Fully Approved (L4+)':0,'Not Started':0};
+    nfaData.forEach(r=>{
+      const l1=!!NFA.l1Sign(r), l2=!!NFA.l2Sign(r), l3=!!NFA.l3Sign(r), l4=!!NFA.l4Sign(r);
+      if(l4) c['Fully Approved (L4+)']++;
+      else if(l3) c['L1+L2+L3']++;
+      else if(l2) c['L1+L2']++;
+      else if(l1) c['L1 Only']++;
+      else c['Not Started']++;
+    });
+    return Object.entries(c).filter(([,v])=>v>0).map(([n,v])=>({name:n,value:v}));
   },[nfaData]);
 
   const groupChart = useMemo(()=>{
-    const c={};allPRs.forEach(r=>{const g=r.material_group||r.MATKL||r.category||'Other';c[g]=(c[g]||0)+1;});
-    return Object.entries(c).filter(([k])=>k&&k!=='Other').map(([n,v])=>({name:n,count:v})).sort((a,b)=>b.count-a.count).slice(0,10);
+    const c={};
+    allPRs.forEach(r=>{
+      const g=PR.group(r)||'Other';
+      c[g]=(c[g]||0)+1;
+    });
+    return Object.entries(c).filter(([k])=>k&&k!=='Other'&&k!=='0').map(([n,v])=>({name:n,count:v})).sort((a,b)=>b.count-a.count).slice(0,10);
   },[allPRs]);
 
   const TABS = [
