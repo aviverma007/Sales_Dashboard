@@ -829,115 +829,438 @@ export default function PRPOApp() {
           {/* ══ PR JOURNEY TAB ══ */}
           {tab==='journey'&&(<>
             {selectedPR ? (
-              <>
-                <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:4}}>
-                  <button onClick={()=>setSelectedPR(null)}
-                    style={{background:'rgba(0,151,167,0.1)',border:'1px solid rgba(0,151,167,0.3)',borderRadius:8,padding:'6px 14px',fontSize:11,fontWeight:700,color:T.tealD,cursor:'pointer'}}>
-                    ← Back to all PRs
-                  </button>
-                  <span style={{fontSize:12,fontWeight:700,color:T.textM}}>PR Journey — #{selectedPR.pr_number||selectedPR.BANFN}</span>
-                </div>
-                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:14}}>
-                  <JourneyTimeline pr={selectedPR} nfaMap={nfaMap} poMap={poMap}/>
-                  {/* PR Details */}
-                  <div style={{display:'flex',flexDirection:'column',gap:12}}>
-                    <GC style={{padding:18}}>
-                      <SH title="PR Details"/>
-                      <table style={{width:'100%',borderCollapse:'collapse',fontSize:11}}>
-                        <tbody>
-                          {Object.entries(selectedPR).filter(([k])=>!k.startsWith('_')).slice(0,20).map(([k,v],i)=>(
-                            <tr key={i} style={{borderBottom:'1px solid rgba(0,60,100,0.05)'}}>
-                              <td style={{padding:'5px 8px',fontWeight:700,color:T.textL,fontSize:10,textTransform:'uppercase',width:'40%'}}>{k}</td>
-                              <td style={{padding:'5px 8px',color:T.navy,fontWeight:600}}>{String(v??'—')}</td>
-                            </tr>
+              // ── DETAILED PR JOURNEY VIEW ──────────────────────────────────
+              (()=>{
+                const prId  = String(Math.round(PR.id(selectedPR))||'');
+                const nfa   = nfaMap[prId];
+                const budget = PR.budget(selectedPR);
+                const statusLabel = PR.statusLabel(selectedPR);
+                const statusColor = {'Approved':T.green,'Pending':T.amber,'Cancelled':T.red,'On Hold':T.orange,'Rejected':T.red,'Closed':T.gray}[statusLabel]||T.gray;
+
+                // Compute journey stages with real data
+                const stages = [
+                  { id:'pr_created',    icon:'📝', label:'PR Created',         color:T.teal,
+                    done:true,
+                    date:String(PR.date(selectedPR)).slice(0,10),
+                    who:'',
+                    detail:`EPR #${PR.epr(selectedPR)} · ${PR.project(selectedPR)} · ${PR.group(selectedPR)}`,
+                  },
+                  { id:'l1_approved',   icon:'✅', label:'Level 1 Approval',    color:T.green,
+                    done:!!PR.l1Sign(selectedPR),
+                    date:String(PR.l1Date(selectedPR)).slice(0,10),
+                    who:PR.l1Who(selectedPR),
+                    detail:PR.l1Sign(selectedPR)?`Approved by ${PR.l1Who(selectedPR)}`:`Pending — ${PR.l1Who(selectedPR)||'Awaiting validator'}`,
+                  },
+                  { id:'l2_approved',   icon:'✅', label:'Level 2 Approval',    color:T.green,
+                    done:!!PR.l2Sign(selectedPR),
+                    date:String(PR.l2Date(selectedPR)).slice(0,10),
+                    who:PR.l2Who(selectedPR),
+                    detail:PR.l2Sign(selectedPR)?`Approved by ${PR.l2Who(selectedPR)}`:`Pending — ${PR.l2Who(selectedPR)||'Awaiting validator'}`,
+                  },
+                  { id:'cp_approved',   icon:'✅', label:'CP Team Approval',    color:'#0277bd',
+                    done:!!PR.cpSign(selectedPR),
+                    date:String(PR.cpDate(selectedPR)).slice(0,10),
+                    who:PR.cpWho(selectedPR),
+                    detail:PR.cpSign(selectedPR)?`Approved by ${PR.cpWho(selectedPR)}`:`Pending — ${PR.cpWho(selectedPR)||'Awaiting CP team'}`,
+                  },
+                  { id:'nfa_created',   icon:'📋', label:'NFA Created (QMS)',   color:T.purple,
+                    done:PR.nfaConverted(selectedPR)===1,
+                    date:String(PR.nfaDate(selectedPR)).slice(0,10),
+                    who:'',
+                    detail:PR.nfaConverted(selectedPR)===1?(nfa?`NFA #${NFA.nfaNo(nfa)} · ${NFA.title(nfa).slice(0,60)}`:'NFA created'):'Not yet converted to NFA',
+                  },
+                  { id:'nfa_l1',        icon:'✅', label:'NFA Level 1',          color:T.green,
+                    done:!!(nfa&&NFA.l1Sign(nfa)),
+                    date:nfa?String(NFA.l1Date(nfa)).slice(0,10):'',
+                    who:nfa?NFA.l1Team(nfa):'',
+                    detail:nfa?(NFA.l1Sign(nfa)?`Approved — ${NFA.l1Team(nfa)}`:`Pending — ${NFA.l1Team(nfa)}`):'—',
+                  },
+                  { id:'nfa_l2',        icon:'✅', label:'NFA Level 2',          color:T.green,
+                    done:!!(nfa&&NFA.l2Sign(nfa)),
+                    date:nfa?String(NFA.l2Date(nfa)).slice(0,10):'',
+                    who:nfa?NFA.l2Team(nfa):'',
+                    detail:nfa?(NFA.l2Sign(nfa)?`Approved — ${NFA.l2Team(nfa)}`:`Pending — ${NFA.l2Team(nfa)}`):'—',
+                  },
+                  { id:'nfa_l3',        icon:'✅', label:'NFA Level 3',          color:T.green,
+                    done:!!(nfa&&NFA.l3Sign(nfa)),
+                    date:'',
+                    who:nfa?NFA.l3Team(nfa):'',
+                    detail:nfa?(NFA.l3Sign(nfa)?`Approved — ${NFA.l3Team(nfa)}`:`Pending — ${NFA.l3Team(nfa)}`):'—',
+                  },
+                  { id:'nfa_l4',        icon:'✅', label:'NFA Level 4',          color:T.green,
+                    done:!!(nfa&&NFA.l4Sign(nfa)),
+                    date:'',
+                    who:nfa?NFA.l4Team(nfa):'',
+                    detail:nfa?(NFA.l4Sign(nfa)?`Approved — ${NFA.l4Team(nfa)}`:`Pending — ${NFA.l4Team(nfa)}`):'—',
+                  },
+                  { id:'vendor',        icon:'🏢', label:'Vendor Selected',      color:T.amber,
+                    done:!!(nfa&&NFA.vendor(nfa)),
+                    date:'',
+                    who:'',
+                    detail:nfa?(NFA.vendor(nfa)||'Vendor not yet selected'):'—',
+                  },
+                  { id:'wopo',          icon:'📄', label:'WO / PO Issued',       color:T.orange,
+                    done:!!(nfa&&NFA.woPoNum(nfa)),
+                    date:'',
+                    who:'',
+                    detail:nfa?(NFA.woPoNum(nfa)?`WO/PO: ${NFA.woPoNum(nfa)}`:'Not yet issued'):'—',
+                  },
+                  { id:'sap_pr',        icon:'🏭', label:'SAP PR Created',       color:T.navy,
+                    done:PR.isSapPR(selectedPR)===1,
+                    date:'',
+                    who:'',
+                    detail:PR.isSapPR(selectedPR)===1?'Synced to SAP':'Not yet in SAP',
+                  },
+                ];
+
+                const doneCount = stages.filter(s=>s.done).length;
+                const pct = Math.round(doneCount/stages.length*100);
+                const pendingStage = stages.find(s=>!s.done);
+
+                return (
+                  <div style={{display:'flex',flexDirection:'column',gap:14}}>
+                    {/* Back button */}
+                    <div style={{display:'flex',alignItems:'center',gap:12}}>
+                      <button onClick={()=>setSelectedPR(null)}
+                        style={{background:'rgba(255,255,255,0.9)',border:'1px solid rgba(0,151,167,0.3)',borderRadius:10,
+                          padding:'8px 18px',fontSize:12,fontWeight:700,color:T.tealD,cursor:'pointer',
+                          display:'flex',alignItems:'center',gap:6,backdropFilter:'blur(10px)'}}>
+                        ← Back to PR List
+                      </button>
+                      <div style={{fontSize:12,color:T.textM,fontWeight:600}}>
+                        PR Journey — <strong style={{color:T.navy}}>EPR #{PR.epr(selectedPR)}</strong>
+                      </div>
+                    </div>
+
+                    {/* Hero card */}
+                    <div style={{background:'linear-gradient(135deg,#0d2137 0%,#1a3a5c 50%,#006978 100%)',borderRadius:16,padding:'24px 28px',boxShadow:'0 8px 40px rgba(0,40,80,0.25)'}}>
+                      <div style={{display:'grid',gridTemplateColumns:'1fr auto',gap:20,alignItems:'start'}}>
+                        <div>
+                          <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:8}}>
+                            <span style={{fontSize:11,fontWeight:800,color:'rgba(255,255,255,0.5)',textTransform:'uppercase',letterSpacing:1}}>Purchase Request</span>
+                            {PR.isUrgent(selectedPR)===1&&<span style={{fontSize:9,fontWeight:800,color:'#fff',background:T.red,borderRadius:20,padding:'2px 10px'}}>🚨 URGENT</span>}
+                            <span style={{fontSize:9,fontWeight:800,color:statusColor,background:`${statusColor}25`,borderRadius:20,padding:'2px 10px'}}>{statusLabel}</span>
+                          </div>
+                          <h2 style={{color:'#fff',fontWeight:900,fontSize:18,margin:'0 0 6px',lineHeight:1.3}}>
+                            EPR #{PR.epr(selectedPR)} — PR #{PR.no(selectedPR)}
+                          </h2>
+                          <p style={{color:'rgba(255,255,255,0.75)',fontSize:13,margin:'0 0 16px',lineHeight:1.5}}>
+                            {String(PR.title(selectedPR)).slice(0,120)}
+                          </p>
+                          <div style={{display:'flex',gap:20,flexWrap:'wrap'}}>
+                            {[
+                              {l:'Project',  v:PR.project(selectedPR)},
+                              {l:'Group',    v:PR.group(selectedPR)},
+                              {l:'Location', v:PR.location(selectedPR)||PR.city(selectedPR)},
+                              {l:'Date',     v:String(PR.date(selectedPR)).slice(0,10)},
+                            ].map((d,i)=>d.v&&<div key={i}>
+                              <p style={{fontSize:9,color:'rgba(255,255,255,0.45)',margin:0,textTransform:'uppercase',letterSpacing:0.5}}>{d.l}</p>
+                              <p style={{fontSize:12,color:'rgba(255,255,255,0.9)',margin:0,fontWeight:700}}>{d.v}</p>
+                            </div>)}
+                          </div>
+                        </div>
+                        <div style={{textAlign:'right'}}>
+                          {/* Progress ring */}
+                          <div style={{position:'relative',width:100,height:100,margin:'0 0 0 auto'}}>
+                            <svg width="100" height="100" style={{transform:'rotate(-90deg)'}}>
+                              <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="8"/>
+                              <circle cx="50" cy="50" r="42" fill="none" stroke={pct===100?'#69f0ae':pct>=60?'#ffd740':'#00bcd4'}
+                                strokeWidth="8" strokeLinecap="round"
+                                strokeDasharray={`${2*Math.PI*42}`}
+                                strokeDashoffset={`${2*Math.PI*42*(1-pct/100)}`}
+                                style={{transition:'stroke-dashoffset 0.8s ease'}}/>
+                            </svg>
+                            <div style={{position:'absolute',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center'}}>
+                              <span style={{fontSize:22,fontWeight:900,color:'#fff',lineHeight:1}}>{pct}%</span>
+                              <span style={{fontSize:9,color:'rgba(255,255,255,0.6)',fontWeight:700}}>DONE</span>
+                            </div>
+                          </div>
+                          <p style={{color:'rgba(255,255,255,0.6)',fontSize:10,margin:'6px 0 0'}}>{doneCount}/{stages.length} stages</p>
+                          {budget>0&&<p style={{color:'#ffd740',fontSize:14,fontWeight:900,margin:'8px 0 0'}}>₹{(budget/1e5).toFixed(1)}L Budget</p>}
+                        </div>
+                      </div>
+
+                      {/* Progress bar */}
+                      <div style={{marginTop:20,height:6,background:'rgba(255,255,255,0.1)',borderRadius:3,overflow:'hidden'}}>
+                        <div style={{width:pct+'%',height:'100%',
+                          background:pct===100?'linear-gradient(90deg,#69f0ae,#00e676)':pct>=60?'linear-gradient(90deg,#ffd740,#ffab40)':'linear-gradient(90deg,#00bcd4,#0097a7)',
+                          borderRadius:3,transition:'width 0.8s ease'}}/>
+                      </div>
+
+                      {pendingStage&&<div style={{marginTop:12,display:'flex',alignItems:'center',gap:8,background:'rgba(255,255,255,0.07)',borderRadius:8,padding:'8px 14px'}}>
+                        <span style={{fontSize:16}}>⏳</span>
+                        <span style={{fontSize:12,color:'rgba(255,255,255,0.8)',fontWeight:700}}>Currently pending at: <strong style={{color:'#ffd740'}}>{pendingStage.label}</strong></span>
+                      </div>}
+                    </div>
+
+                    {/* Main content: Timeline + Details */}
+                    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:14}}>
+
+                      {/* Left: Timeline */}
+                      <GC style={{padding:0,overflow:'hidden'}}>
+                        <div style={{background:'rgba(0,105,120,0.04)',padding:'14px 18px',borderBottom:'1px solid rgba(0,105,120,0.08)'}}>
+                          <p style={{fontSize:11,fontWeight:800,color:T.tealD,textTransform:'uppercase',letterSpacing:0.5,margin:0}}>Journey Timeline</p>
+                          <p style={{fontSize:10,color:T.gray,margin:'2px 0 0'}}>{doneCount} of {stages.length} stages completed</p>
+                        </div>
+                        <div style={{padding:'16px 18px',display:'flex',flexDirection:'column',gap:0}}>
+                          {stages.map((s,i)=>(
+                            <div key={i} style={{display:'flex',gap:14,alignItems:'flex-start'}}>
+                              {/* Connector */}
+                              <div style={{display:'flex',flexDirection:'column',alignItems:'center',width:32,flexShrink:0}}>
+                                <div style={{width:32,height:32,borderRadius:'50%',flexShrink:0,
+                                  background:s.done?s.color:'rgba(0,60,100,0.06)',
+                                  border:`2px solid ${s.done?s.color:'rgba(0,60,100,0.12)'}`,
+                                  display:'flex',alignItems:'center',justifyContent:'center',
+                                  boxShadow:s.done?`0 0 0 4px ${s.color}18`:undefined,
+                                  fontSize:s.done?13:14}}>
+                                  {s.done?'✓':s.icon}
+                                </div>
+                                {i<stages.length-1&&<div style={{width:2,height:28,
+                                  background:s.done?`${s.color}40`:'rgba(0,60,100,0.07)',
+                                  margin:'3px 0'}}/>}
+                              </div>
+                              {/* Content */}
+                              <div style={{paddingBottom:i<stages.length-1?4:0,flex:1,paddingTop:4}}>
+                                <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:2}}>
+                                  <span style={{fontSize:12,fontWeight:800,color:s.done?T.textM:'rgba(0,60,100,0.3)'}}>{s.label}</span>
+                                  {s.date&&s.date!=='Invalid Date'&&s.date.length>4&&<span style={{fontSize:9,color:T.gray,fontWeight:600}}>{s.date}</span>}
+                                </div>
+                                <p style={{fontSize:10,color:s.done?T.textL:'rgba(0,60,100,0.25)',margin:0,lineHeight:1.4}}>{s.detail}</p>
+                              </div>
+                            </div>
                           ))}
-                        </tbody>
-                      </table>
-                    </GC>
-                    {nfaMap[String(selectedPR.pr_number||selectedPR.BANFN||'')] && (
-                      <GC style={{padding:18}}>
-                        <SH title="Linked NFA"/>
-                        <table style={{width:'100%',borderCollapse:'collapse',fontSize:11}}>
-                          <tbody>
-                            {Object.entries(nfaMap[String(selectedPR.pr_number||selectedPR.BANFN||'')]).slice(0,15).map(([k,v],i)=>(
-                              <tr key={i} style={{borderBottom:'1px solid rgba(0,60,100,0.05)'}}>
-                                <td style={{padding:'5px 8px',fontWeight:700,color:T.textL,fontSize:10,textTransform:'uppercase',width:'40%'}}>{k}</td>
-                                <td style={{padding:'5px 8px',color:T.navy}}>{String(v??'—')}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
+                        </div>
                       </GC>
-                    )}
-                    {poMap[String(selectedPR.pr_number||selectedPR.BANFN||'')] && (
-                      <GC style={{padding:18}}>
-                        <SH title="Linked PO (SAP)"/>
-                        <table style={{width:'100%',borderCollapse:'collapse',fontSize:11}}>
-                          <tbody>
-                            {Object.entries(poMap[String(selectedPR.pr_number||selectedPR.BANFN||'')]).slice(0,15).map(([k,v],i)=>(
-                              <tr key={i} style={{borderBottom:'1px solid rgba(0,60,100,0.05)'}}>
-                                <td style={{padding:'5px 8px',fontWeight:700,color:T.textL,fontSize:10,textTransform:'uppercase',width:'40%'}}>{k}</td>
-                                <td style={{padding:'5px 8px',color:T.navy}}>{String(v??'—')}</td>
-                              </tr>
+
+                      {/* Right: Info panels */}
+                      <div style={{display:'flex',flexDirection:'column',gap:12}}>
+
+                        {/* PR Info */}
+                        <GC style={{padding:18}}>
+                          <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:12}}>
+                            <span style={{fontSize:16}}>📝</span>
+                            <p style={{fontSize:11,fontWeight:800,color:T.tealD,textTransform:'uppercase',letterSpacing:0.4,margin:0}}>PR Details</p>
+                          </div>
+                          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+                            {[
+                              {l:'EPR Number',    v:`#${PR.epr(selectedPR)}`},
+                              {l:'PR Number',     v:`#${PR.no(selectedPR)}`},
+                              {l:'Project',       v:PR.project(selectedPR)},
+                              {l:'Project Group', v:PR.group(selectedPR)},
+                              {l:'Location',      v:PR.location(selectedPR)},
+                              {l:'City',          v:PR.city(selectedPR)},
+                              {l:'Budget',        v:budget>0?`₹${(budget/1e5).toFixed(1)} Lacs`:'—'},
+                              {l:'Created',       v:String(PR.created(selectedPR)).slice(0,10)},
+                              {l:'Status',        v:statusLabel},
+                              {l:'Urgent',        v:PR.isUrgent(selectedPR)===1?'🚨 Yes':'No'},
+                            ].map((d,i)=>(
+                              <div key={i} style={{background:'rgba(0,60,100,0.03)',borderRadius:8,padding:'8px 10px'}}>
+                                <p style={{fontSize:8,color:T.gray,fontWeight:700,textTransform:'uppercase',margin:0,letterSpacing:0.4}}>{d.l}</p>
+                                <p style={{fontSize:11,color:T.navy,fontWeight:700,margin:'2px 0 0'}}>{d.v||'—'}</p>
+                              </div>
                             ))}
-                          </tbody>
-                        </table>
-                      </GC>
-                    )}
+                          </div>
+                        </GC>
+
+                        {/* NFA Info */}
+                        {nfa&&<GC style={{padding:18}}>
+                          <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:12}}>
+                            <span style={{fontSize:16}}>📋</span>
+                            <p style={{fontSize:11,fontWeight:800,color:T.purple,textTransform:'uppercase',letterSpacing:0.4,margin:0}}>Linked NFA #{NFA.nfaNo(nfa)}</p>
+                          </div>
+                          <div style={{display:'flex',flexDirection:'column',gap:8}}>
+                            <div style={{background:'rgba(106,27,154,0.04)',borderRadius:8,padding:'10px 12px'}}>
+                              <p style={{fontSize:8,color:T.gray,fontWeight:700,textTransform:'uppercase',margin:'0 0 4px'}}>NFA Title</p>
+                              <p style={{fontSize:11,color:T.navy,fontWeight:600,margin:0,lineHeight:1.5}}>{NFA.title(nfa).slice(0,120)}</p>
+                            </div>
+                            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+                              {[
+                                {l:'Amount (Incl. Tax)',  v:NFA.amountIncl(nfa)>0?`₹${(NFA.amountIncl(nfa)/1e5).toFixed(2)} Lacs`:'—'},
+                                {l:'Budget',             v:NFA.budgetNum(nfa)>0?`₹${(NFA.budgetNum(nfa)/1e5).toFixed(2)} Lacs`:'—'},
+                                {l:'Vendor (Selected)',   v:NFA.vendor(nfa)||'Not selected'},
+                                {l:'WO / PO Number',     v:NFA.woPoNum(nfa)||'Not issued'},
+                                {l:'Work Scope',         v:NFA.workScope(nfa)||'—'},
+                                {l:'Contract Duration',  v:NFA.contract(nfa)||'—'},
+                              ].map((d,i)=>(
+                                <div key={i} style={{background:'rgba(0,60,100,0.03)',borderRadius:8,padding:'8px 10px'}}>
+                                  <p style={{fontSize:8,color:T.gray,fontWeight:700,textTransform:'uppercase',margin:0,letterSpacing:0.4}}>{d.l}</p>
+                                  <p style={{fontSize:11,color:T.navy,fontWeight:700,margin:'2px 0 0',maxHeight:40,overflow:'hidden'}}>{d.v||'—'}</p>
+                                </div>
+                              ))}
+                            </div>
+                            {/* NFA Vendor comparison */}
+                            {(NFA.vendorOne(nfa)||NFA.vendorTwo(nfa))&&<div style={{background:'rgba(106,27,154,0.04)',borderRadius:8,padding:'10px 12px'}}>
+                              <p style={{fontSize:8,color:T.purple,fontWeight:800,textTransform:'uppercase',margin:'0 0 6px'}}>Vendor Comparison</p>
+                              {[NFA.vendorOne(nfa),NFA.vendorTwo(nfa),NFA.vendorThree(nfa)].filter(Boolean).map((v,i)=>(
+                                <div key={i} style={{display:'flex',alignItems:'flex-start',gap:6,marginBottom:4}}>
+                                  <span style={{fontSize:9,fontWeight:800,color:'#fff',background:i===0?T.green:i===1?T.amber:T.gray,borderRadius:4,padding:'1px 6px',flexShrink:0}}>L{i+1}</span>
+                                  <p style={{fontSize:10,color:T.textM,margin:0,lineHeight:1.4}}>{v}</p>
+                                </div>
+                              ))}
+                            </div>}
+                          </div>
+                        </GC>}
+
+                        {/* Approval Summary */}
+                        <GC style={{padding:18}}>
+                          <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:12}}>
+                            <span style={{fontSize:16}}>🔏</span>
+                            <p style={{fontSize:11,fontWeight:800,color:T.tealD,textTransform:'uppercase',letterSpacing:0.4,margin:0}}>Approval Summary</p>
+                          </div>
+                          <div style={{display:'flex',flexDirection:'column',gap:6}}>
+                            {[
+                              {l:'L1 Validator', who:PR.l1Who(selectedPR), done:!!PR.l1Sign(selectedPR), date:String(PR.l1Date(selectedPR)).slice(0,10)},
+                              {l:'L2 Validator', who:PR.l2Who(selectedPR), done:!!PR.l2Sign(selectedPR), date:String(PR.l2Date(selectedPR)).slice(0,10)},
+                              {l:'CP Team',      who:PR.cpWho(selectedPR), done:!!PR.cpSign(selectedPR), date:String(PR.cpDate(selectedPR)).slice(0,10)},
+                              {l:'Assignee',     who:PR.asgWho(selectedPR),done:!!PR.asgSign(selectedPR),date:''},
+                            ].map((a,i)=>(
+                              <div key={i} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 12px',
+                                background:a.done?'rgba(46,125,50,0.05)':'rgba(0,60,100,0.03)',
+                                border:`1px solid ${a.done?'rgba(46,125,50,0.2)':'rgba(0,60,100,0.08)'}`,borderRadius:8}}>
+                                <div style={{width:24,height:24,borderRadius:'50%',flexShrink:0,
+                                  background:a.done?T.green:'rgba(0,60,100,0.1)',
+                                  display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,color:'#fff'}}>
+                                  {a.done?'✓':'○'}
+                                </div>
+                                <div style={{flex:1}}>
+                                  <p style={{fontSize:9,color:T.gray,fontWeight:700,margin:0,textTransform:'uppercase'}}>{a.l}</p>
+                                  <p style={{fontSize:11,color:T.navy,fontWeight:700,margin:0}}>{a.who||'—'}</p>
+                                </div>
+                                {a.done&&a.date&&a.date.length>4&&<span style={{fontSize:9,color:T.gray}}>{a.date}</span>}
+                                <span style={{fontSize:9,fontWeight:800,color:a.done?T.green:T.amber,
+                                  background:a.done?'rgba(46,125,50,0.1)':'rgba(245,124,0,0.1)',
+                                  borderRadius:20,padding:'2px 8px'}}>{a.done?'Approved':'Pending'}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </GC>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </>
+                );
+              })()
             ) : (
-              <GC style={{padding:18}}>
-                <SH title="All PRs — Click to see full journey" sub={`${filtered.length} PRs shown · Click any row to drill into its journey`}/>
-                <div style={{overflowY:'auto',maxHeight:'70vh'}}>
-                  <table style={{width:'100%',borderCollapse:'collapse',fontSize:11}}>
-                    <thead>
-                      <tr style={{background:'rgba(0,105,120,0.07)',position:'sticky',top:0,zIndex:1}}>
-                        {['PR Number','Description','WBS / Project','Date','Release','VG PR','NFA','Vendor','PO Number','PO Value','Stage'].map(h=>(
-                          <th key={h} style={{padding:'7px 10px',textAlign:'left',fontSize:9,fontWeight:800,color:T.tealD,
-                            textTransform:'uppercase',borderBottom:`2px solid rgba(0,105,120,0.15)`,whiteSpace:'nowrap',
-                            background:'rgba(255,255,255,0.97)'}}>{h}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filtered.slice(0,300).map((pr,i)=>{
-                        const prNum  = String(pr.pr_number||pr.BANFN||'');
-                        const nfa    = nfaMap[prNum];
-                        const po     = poMap[prNum];
-                        const appr   = pr.release_status==='X'||pr.FRGZU==='X';
-                        // Compute current stage
-                        const stage  = !appr?'⏳ PR Approval':!nfa?'⏳ VendorGlobe':
-                          !(nfa?.status==='Approved'||nfa?.approval_status==='Approved')?'⏳ NFA Approval':
-                          !po?'⏳ PO Creation':
-                          !(po.release_status==='X'||po.FRGKE==='X')?'⏳ PO Approval':'✅ Complete';
-                        const stageColor = stage.includes('✅')?T.green:T.amber;
-                        return (
-                          <tr key={i} onClick={()=>setSelectedPR(pr)}
-                            style={{borderBottom:'1px solid rgba(0,60,100,0.05)',cursor:'pointer',
-                              background:i%2===0?'transparent':'rgba(0,151,167,0.02)'}}
-                            onMouseEnter={e=>e.currentTarget.style.background='rgba(0,151,167,0.07)'}
-                            onMouseLeave={e=>e.currentTarget.style.background=i%2===0?'transparent':'rgba(0,151,167,0.02)'}>
-                            <td style={{padding:'6px 10px',color:T.tealD,fontWeight:800}}>{prNum||'—'}</td>
-                            <td style={{padding:'6px 10px',color:T.navy,maxWidth:180,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{pr.description||pr.TXZ01||pr.subject||'—'}</td>
-                            <td style={{padding:'6px 10px',color:T.textM,fontSize:10}}>{pr.wbs_element||pr.PS_PSP_PNR||pr.project||'—'}</td>
-                            <td style={{padding:'6px 10px',color:T.textM,fontSize:10,whiteSpace:'nowrap'}}>{pr.pr_date||pr.BADAT||pr.created_at||'—'}</td>
-                            <td style={{padding:'6px 10px',textAlign:'center'}}>{appr?'✅':'⏳'}</td>
-                            <td style={{padding:'6px 10px',textAlign:'center'}}>{nfa?'✅':'—'}</td>
-                            <td style={{padding:'6px 10px',textAlign:'center'}}>{nfa?<StatusBadge s={nfa.status||nfa.approval_status}/>:'—'}</td>
-                            <td style={{padding:'6px 10px',color:T.textM,fontSize:10,whiteSpace:'nowrap',maxWidth:120,overflow:'hidden',textOverflow:'ellipsis'}}>{nfa?.vendor||nfa?.vendor_name||po?.vendor||po?.LIFNR||'—'}</td>
-                            <td style={{padding:'6px 10px',color:T.tealD,fontWeight:700}}>{po?.po_number||po?.EBELN||'—'}</td>
-                            <td style={{padding:'6px 10px',fontWeight:700,color:T.green}}>{po?.net_value||po?.NETWR?'₹'+parseFloat(po.net_value||po.NETWR).toLocaleString():'—'}</td>
-                            <td style={{padding:'6px 10px'}}><span style={{fontSize:9,fontWeight:800,color:'#fff',background:stageColor,borderRadius:4,padding:'2px 7px',whiteSpace:'nowrap'}}>{stage}</span></td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                  {filtered.length>300&&<p style={{fontSize:10,color:T.gray,textAlign:'center',padding:8}}>Showing 300 of {filtered.length} — use filters to narrow down</p>}
+              // ── PR LIST VIEW ─────────────────────────────────────────────
+              <div style={{display:'flex',flexDirection:'column',gap:12}}>
+                {/* Summary stats bar */}
+                <div style={{display:'grid',gridTemplateColumns:'repeat(6,1fr)',gap:10}}>
+                  {[
+                    {l:'Total PRs',    v:filtered.length.toLocaleString(),  c:T.teal},
+                    {l:'L1 Pending',   v:filtered.filter(r=>!PR.l1Sign(r)).length, c:T.red},
+                    {l:'L2 Pending',   v:filtered.filter(r=>PR.l1Sign(r)&&!PR.l2Sign(r)).length, c:T.orange},
+                    {l:'CP Pending',   v:filtered.filter(r=>PR.l2Sign(r)&&!PR.cpSign(r)).length, c:T.amber},
+                    {l:'NFA Pending',  v:filtered.filter(r=>PR.cpSign(r)&&PR.nfaConverted(r)!==1).length, c:T.purple},
+                    {l:'Completed',    v:filtered.filter(r=>PR.nfaConverted(r)===1).length, c:T.green},
+                  ].map((s,i)=>(
+                    <div key={i} style={{background:'rgba(255,255,255,0.97)',backdropFilter:'blur(20px)',
+                      borderRadius:12,padding:'12px 14px',borderLeft:`3px solid ${s.c}`,
+                      boxShadow:'0 2px 12px rgba(0,40,80,0.08)'}}>
+                      <p style={{fontSize:20,fontWeight:900,color:s.c,margin:'0 0 2px'}}>{typeof s.v==='number'?s.v.toLocaleString():s.v}</p>
+                      <p style={{fontSize:9,color:T.gray,fontWeight:700,textTransform:'uppercase',margin:0}}>{s.l}</p>
+                    </div>
+                  ))}
                 </div>
-              </GC>
+
+                {/* PR Cards grid */}
+                <GC style={{padding:0,overflow:'hidden'}}>
+                  <div style={{padding:'14px 18px',borderBottom:'1px solid rgba(0,105,120,0.08)',
+                    display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+                    <div>
+                      <p style={{fontSize:11,fontWeight:800,color:T.tealD,textTransform:'uppercase',letterSpacing:0.5,margin:0}}>All Purchase Requests</p>
+                      <p style={{fontSize:10,color:T.gray,margin:'2px 0 0'}}>Click any row to see full journey · {filtered.length.toLocaleString()} PRs</p>
+                    </div>
+                  </div>
+                  <div style={{overflowY:'auto',maxHeight:'72vh'}}>
+                    <table style={{width:'100%',borderCollapse:'collapse',fontSize:11}}>
+                      <thead>
+                        <tr style={{position:'sticky',top:0,zIndex:1,background:'rgba(255,255,255,0.98)',backdropFilter:'blur(10px)'}}>
+                          {['EPR #','Description / Scope','Group','Location','Budget','Date','L1','L2','CP','NFA','Vendor','WO/PO','Stage'].map(h=>(
+                            <th key={h} style={{padding:'9px 12px',textAlign:'left',fontSize:9,fontWeight:800,
+                              color:T.tealD,textTransform:'uppercase',letterSpacing:0.4,
+                              borderBottom:'2px solid rgba(0,105,120,0.12)',whiteSpace:'nowrap'}}>{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filtered.slice(0,500).map((pr,i)=>{
+                          const prId = String(Math.round(PR.id(pr))||'');
+                          const nfa  = nfaMap[prId];
+                          const budget = PR.budget(pr);
+
+                          // Compute current stage
+                          const l1=!!PR.l1Sign(pr), l2=!!PR.l2Sign(pr), cp=!!PR.cpSign(pr);
+                          const nfaDone=PR.nfaConverted(pr)===1;
+                          const vendor=!!(nfa&&NFA.vendor(nfa));
+                          const wopo=!!(nfa&&NFA.woPoNum(nfa));
+                          const isCancelled=PR.isCancelled(pr);
+
+                          const stageInfo = isCancelled
+                            ? {label:'Cancelled',   color:T.red,    bg:'rgba(211,47,47,0.1)'}
+                            : wopo
+                            ? {label:'✅ WO/PO Done', color:T.green,  bg:'rgba(46,125,50,0.1)'}
+                            : vendor
+                            ? {label:'⏳ Awaiting PO',color:T.orange, bg:'rgba(230,81,0,0.1)'}
+                            : nfaDone
+                            ? {label:'⏳ NFA Approval',color:T.purple, bg:'rgba(106,27,154,0.1)'}
+                            : cp
+                            ? {label:'⏳ NFA Pending', color:T.amber,  bg:'rgba(245,124,0,0.1)'}
+                            : l2
+                            ? {label:'⏳ CP Pending',  color:T.amber,  bg:'rgba(245,124,0,0.1)'}
+                            : l1
+                            ? {label:'⏳ L2 Pending',  color:T.orange, bg:'rgba(230,81,0,0.1)'}
+                            : {label:'⏳ L1 Pending',  color:T.red,    bg:'rgba(211,47,47,0.1)'};
+
+                          const Tick = ({done}) => (
+                            <div style={{width:22,height:22,borderRadius:'50%',margin:'auto',
+                              background:done?T.green:'rgba(0,60,100,0.07)',
+                              border:`1.5px solid ${done?T.green:'rgba(0,60,100,0.15)'}`,
+                              display:'flex',alignItems:'center',justifyContent:'center',
+                              fontSize:10,color:done?'#fff':'rgba(0,60,100,0.25)'}}>
+                              {done?'✓':'○'}
+                            </div>
+                          );
+
+                          return (
+                            <tr key={i} onClick={()=>setSelectedPR(pr)}
+                              style={{borderBottom:'1px solid rgba(0,60,100,0.05)',cursor:'pointer',
+                                background:i%2===0?'transparent':'rgba(0,151,167,0.015)',
+                                transition:'background 0.1s'}}
+                              onMouseEnter={e=>e.currentTarget.style.background='rgba(0,151,167,0.07)'}
+                              onMouseLeave={e=>e.currentTarget.style.background=i%2===0?'transparent':'rgba(0,151,167,0.015)'}>
+                              <td style={{padding:'8px 12px',color:T.tealD,fontWeight:900,whiteSpace:'nowrap'}}>#{PR.epr(pr)||PR.no(pr)}</td>
+                              <td style={{padding:'8px 12px',maxWidth:200,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
+                                <p style={{color:T.navy,fontWeight:700,margin:0,fontSize:11}}>{String(PR.title(pr)).slice(0,60)||'—'}</p>
+                                <p style={{color:T.gray,margin:0,fontSize:9}}>{PR.project(pr)}</p>
+                              </td>
+                              <td style={{padding:'8px 12px',color:T.textM,fontSize:10,whiteSpace:'nowrap'}}>{PR.group(pr)||'—'}</td>
+                              <td style={{padding:'8px 12px',color:T.textM,fontSize:10,whiteSpace:'nowrap'}}>{PR.location(pr)||'—'}</td>
+                              <td style={{padding:'8px 12px',fontWeight:700,color:T.green,whiteSpace:'nowrap'}}>
+                                {budget>0?`₹${(budget/1e5).toFixed(1)}L`:'—'}
+                              </td>
+                              <td style={{padding:'8px 12px',color:T.gray,fontSize:10,whiteSpace:'nowrap'}}>{String(PR.date(pr)).slice(0,10)}</td>
+                              <td style={{padding:'8px 12px',textAlign:'center'}}><Tick done={l1}/></td>
+                              <td style={{padding:'8px 12px',textAlign:'center'}}><Tick done={l2}/></td>
+                              <td style={{padding:'8px 12px',textAlign:'center'}}><Tick done={cp}/></td>
+                              <td style={{padding:'8px 12px',textAlign:'center'}}><Tick done={nfaDone}/></td>
+                              <td style={{padding:'8px 12px',textAlign:'center'}}><Tick done={vendor}/></td>
+                              <td style={{padding:'8px 12px',textAlign:'center'}}><Tick done={wopo}/></td>
+                              <td style={{padding:'8px 12px'}}>
+                                <span style={{fontSize:9,fontWeight:800,color:stageInfo.color,
+                                  background:stageInfo.bg,borderRadius:20,padding:'3px 10px',whiteSpace:'nowrap'}}>
+                                  {stageInfo.label}
+                                </span>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                    {filtered.length>500&&<p style={{fontSize:10,color:T.gray,textAlign:'center',padding:10,margin:0}}>
+                      Showing 500 of {filtered.length.toLocaleString()} — use filters to narrow
+                    </p>}
+                  </div>
+                </GC>
+              </div>
             )}
           </>)}
 
