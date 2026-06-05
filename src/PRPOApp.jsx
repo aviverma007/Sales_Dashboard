@@ -5,9 +5,17 @@ import {
   ResponsiveContainer, LabelList, ComposedChart, Line, Funnel, FunnelChart, LabelList as LL
 } from 'recharts';
 
-// ─── PROXY ENDPOINTS (deploy PHP files to your server) ──────────────────────
-const VG_PROXY  = 'https://smartworlddevelopersonline.com/bi-power/vg_proxy.php';
-const SAP_PROXY = 'https://smartworlddevelopersonline.com/bi-power/sap_proxy.php';
+// ─── API ENDPOINTS — called directly from browser (same network) ────────────
+const VG_BASE = 'https://smartworlddevelopersonline.com/bi-power';
+const VG_URLS = {
+  pr:     `${VG_BASE}/bi_prs.php`,
+  nfa:    `${VG_BASE}/bi_nfas.php`,
+  market: `${VG_BASE}/bi_market_place.php`,
+  eot:    `${VG_BASE}/bi_eot.php`,
+};
+
+// SAP proxy still needs PHP file on server — skip until deployed
+const SAP_PROXY = `${VG_BASE}/sap_proxy.php`;
 
 const T = {
   navy:'#0d2137', tealD:'#006978', teal:'#0097a7', tealL:'#00bcd4',
@@ -85,18 +93,25 @@ const Spinner = ({msg='Loading…'}) => <div style={{display:'flex',alignItems:'
   <span style={{color:T.gray,fontSize:12,fontWeight:600}}>{msg}</span>
 </div>;
 
-const ErrBox = ({msg,onRetry}) => <div style={{padding:32,textAlign:'center',color:T.red}}>
-  <div style={{fontSize:36,marginBottom:8}}>⚠️</div>
-  <p style={{fontWeight:700,margin:'0 0 4px'}}>Connection Error</p>
-  <p style={{fontSize:11,color:T.gray,margin:'0 0 12px'}}>{msg}</p>
-  <p style={{fontSize:10,color:T.textL,margin:'0 0 12px',maxWidth:400,marginLeft:'auto',marginRight:'auto',lineHeight:1.6}}>
-    Upload <strong>vg_proxy.php</strong> and <strong>sap_proxy.php</strong> to your server at<br/>
-    <code style={{background:'rgba(0,60,100,0.08)',padding:'2px 6px',borderRadius:4,fontSize:11}}>
-      https://smartworlddevelopersonline.com/bi-power/
-    </code>
-  </p>
-  {onRetry&&<button onClick={onRetry} style={{background:T.teal,color:'#fff',border:'none',borderRadius:8,padding:'7px 16px',fontSize:11,fontWeight:700,cursor:'pointer'}}>Retry</button>}
-</div>;
+const ErrBox = ({msg,onRetry}) => {
+  const isCORS = msg?.includes('CORS')||msg?.includes('fetch')||msg?.includes('Failed');
+  return (
+    <div style={{padding:28,textAlign:'center'}}>
+      <div style={{fontSize:32,marginBottom:8}}>{isCORS?'🔒':'⚠️'}</div>
+      <p style={{fontWeight:800,color:isCORS?T.amber:T.red,margin:'0 0 6px',fontSize:13}}>
+        {isCORS?'CORS / Network Blocked':'Connection Error'}
+      </p>
+      <p style={{fontSize:11,color:T.gray,margin:'0 0 12px'}}>{msg}</p>
+      {isCORS&&<div style={{background:'rgba(245,124,0,0.06)',border:'1px solid rgba(245,124,0,0.2)',borderRadius:10,padding:'12px 16px',maxWidth:420,margin:'0 auto 12px',textAlign:'left'}}>
+        <p style={{fontSize:10,fontWeight:800,color:T.amber,margin:'0 0 6px',textTransform:'uppercase'}}>Fix: Upload 1 PHP file to your server</p>
+        <p style={{fontSize:10,color:T.textM,margin:'0 0 4px'}}>Upload <code style={{background:'rgba(0,60,100,0.08)',padding:'1px 5px',borderRadius:3}}>public/api/vg_proxy.php</code> from your GitHub repo to:</p>
+        <code style={{fontSize:10,color:T.tealD,wordBreak:'break-all'}}>https://smartworlddevelopersonline.com/bi-power/vg_proxy.php</code>
+        <p style={{fontSize:10,color:T.textM,margin:'8px 0 0'}}>Then click Refresh — data will load instantly.</p>
+      </div>}
+      {onRetry&&<button onClick={onRetry} style={{background:T.teal,color:'#fff',border:'none',borderRadius:8,padding:'7px 16px',fontSize:11,fontWeight:700,cursor:'pointer'}}>🔄 Retry</button>}
+    </div>
+  );
+};
 
 const StatusBadge = ({s}) => {
   const sl = String(s||'').toLowerCase();
@@ -211,17 +226,53 @@ export default function PRPOApp() {
 
   // ── Fetch helpers ────────────────────────────────────────────────────────────
   const fetchVG = useCallback(async (type, setter, key) => {
-    try {
-      const r = await fetch(`${VG_PROXY}?type=${type}`, {mode:'cors'});
-      const txt = await r.text();
-      let data;
-      try { data = JSON.parse(txt); } catch { data = []; }
-      setter(Array.isArray(data)?data:data?.data||data?.records||[]);
-    } catch(e) {
-      setErrors(p=>({...p,[key]:e.message}));
-    } finally {
-      setLoading(p=>({...p,[key]:false}));
+    const url = VG_URLS[type];
+    if (!url) return;
+
+    // Try multiple auth methods
+    const attempts = [
+      // 1. POST with credentials
+      () => fetch(url, {
+        method: 'POST',
+        headers: {'Content-Type':'application/x-www-form-urlencoded'},
+        body: 'email=sunny.batra%40smartworlddevelopers.com&password=swd%402021&username=sunny.batra%40smartworlddevelopers.com',
+        credentials: 'include',
+        mode: 'cors',
+      }),
+      // 2. GET with credentials
+      () => fetch(url, {
+        method: 'GET',
+        credentials: 'include',
+        mode: 'cors',
+        headers: {'Accept': 'application/json'},
+      }),
+      // 3. No-cors fallback (won't get body but won't throw)
+      () => fetch(url, { mode: 'no-cors', credentials: 'include' }),
+    ];
+
+    for (const attempt of attempts) {
+      try {
+        const r = await attempt();
+        if (r.type === 'opaque') {
+          // no-cors — can't read body, set error
+          setErrors(p=>({...p,[key]:'CORS blocked. Upload vg_proxy.php to the server.'}));
+          setLoading(p=>({...p,[key]:false}));
+          return;
+        }
+        const txt = await r.text();
+        let data;
+        try { data = JSON.parse(txt); } catch { data = []; }
+        const arr = Array.isArray(data) ? data : data?.data || data?.records || data?.result || [];
+        setter(arr);
+        setLoading(p=>({...p,[key]:false}));
+        return;
+      } catch(e) {
+        // try next method
+        continue;
+      }
     }
+    setErrors(p=>({...p,[key]:'All connection methods failed. Upload vg_proxy.php to server.'}));
+    setLoading(p=>({...p,[key]:false}));
   },[]);
 
   const fetchSAP = useCallback(async (queryType, setter, key) => {
