@@ -253,3 +253,21 @@ const server = http.createServer(async (req, res) => {
   // Auto-refresh SAP every 30 minutes
   setInterval(refreshSAP, 30 * 60 * 1000);
 })();
+
+// ── WATCH data/ folder for CSV changes and auto-rebuild ──────────────────────
+const { exec } = require('child_process');
+const DATA_WATCH = path.join(__dirname, 'data');
+
+if (fs.existsSync(DATA_WATCH)) {
+  fs.watch(DATA_WATCH, (event, filename) => {
+    if (filename && (filename.endsWith('.csv') || filename.endsWith('.xlsx'))) {
+      console.log(`\n📂 File changed: ${filename} — rebuilding journey data...`);
+      exec('node build_journey.js', { cwd: __dirname }, (err, stdout, stderr) => {
+        if (err) { console.log('❌ Build error:', err.message); return; }
+        console.log(stdout);
+        console.log('✅ pr_journey.json rebuilt — refresh your dashboard!');
+      });
+    }
+  });
+  console.log(`👀 Watching data/ folder for CSV changes...`);
+}
