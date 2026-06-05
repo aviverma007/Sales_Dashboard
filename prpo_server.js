@@ -41,25 +41,73 @@ let QMS_COOKIE = '';
 // ── SAP SQL QUERIES ───────────────────────────────────────────────────────────
 const SAP_QUERIES = {
   sap_pr: `
-    SELECT TOP 5000
-      Eknam, ValSdate, Procstat, ValEdate,
-      Banfn, Bnfpo, Ernam,
-      Matnr, Txz01, Menge, Meins,
-      Werks, Kostl, Sakto,
-      Frgkz, Frgzu, Badat,
-      Preis, Waers, Afnam,
-      PS_PSP_PNR, Matkl, Ebeln, Ebelp
+    SELECT
+      Banfn    AS pr_number,
+      Bnfpo    AS pr_item,
+      Eknam    AS department,
+      Txz01    AS description,
+      Matnr    AS material,
+      Matkl    AS material_group,
+      Menge    AS quantity,
+      Meins    AS unit,
+      Preis    AS price,
+      Netwr    AS net_value,
+      Werks    AS plant,
+      PlantDesc AS plant_desc,
+      Ekgrp    AS purch_group,
+      Afnam    AS requester,
+      Ernam    AS created_by,
+      Erdat    AS created_date,
+      Badat    AS pr_date,
+      Frgdt    AS release_date,
+      Frgst    AS release_status,
+      Frgkz    AS rel_indicator,
+      RelStatus AS rel_status_text,
+      Procstat AS proc_status,
+      Ebeln    AS po_number,
+      Bsart    AS doc_type,
+      Statu    AS status,
+      Loekz    AS deleted,
+      Bedat    AS po_date,
+      Monat    AS month_num,
+      Gjahr    AS year_num
     FROM dbo.PRD_PR
+    WHERE (Loekz = 0 OR Loekz IS NULL)
     ORDER BY Badat DESC`,
 
   sap_po: `
-    SELECT TOP 5000
-      EBELN, KDATB, KDATE, LOEKZ,
-      BADAT, NAME1, EBELP,
-      NETWR, WAERS, LIFNR,
-      BSART, EKGRP, BUKRS, WERKS,
-      FRGKE, BEDAT
+    SELECT
+      EBELN    AS po_number,
+      EBELP    AS po_item,
+      EKNAM    AS department,
+      TXZ01    AS description,
+      NAME1    AS vendor_name,
+      MATNR    AS material,
+      MATKL    AS material_group,
+      MENGE    AS quantity,
+      MEINS    AS unit,
+      NETPR    AS net_price,
+      NETWR    AS net_value,
+      WAERS    AS currency,
+      MENGE_DEL AS qty_delivered,
+      MENGE_INV AS qty_invoiced,
+      NETWR_INV AS inv_value,
+      WERKS    AS plant,
+      PLANT_DESC AS plant_desc,
+      EKGRP    AS purch_group,
+      BSART    AS po_type,
+      BADAT    AS po_date,
+      KDATB    AS valid_from,
+      KDATE    AS valid_to,
+      FRGZU    AS pr_release,
+      FRGKE    AS po_release,
+      PROCSTAT AS proc_status,
+      LOEKZ    AS deleted,
+      AEDAT    AS changed_date,
+      MONAT    AS month_num,
+      GJAHR    AS year_num
     FROM dbo.PRD_PurchaseOrder
+    WHERE (LOEKZ IS NULL OR LOEKZ = '')
     ORDER BY BADAT DESC`,
 };
 

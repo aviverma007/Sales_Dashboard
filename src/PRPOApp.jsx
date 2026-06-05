@@ -393,36 +393,57 @@ export default function PRPOApp() {
   },[errors,loading,prData,nfaData,mktData,eotData,demoMode]);
 
   const SAP_PR = {
-    banfn:   r => r['Banfn']  || r['BANFN']  || '',   // PR number
-    bnfpo:   r => r['Bnfpo']  || r['BNFPO']  || '',   // PR item
-    desc:    r => r['Txz01']  || r['TXZ01']  || '',   // Description
-    vendor:  r => r['Ernam']  || r['ERNAM']  || '',   // Created by
-    dept:    r => r['Eknam']  || r['EKNAM']  || '',   // Department
-    date:    r => r['Badat']  || r['BADAT']  || '',   // PR date
-    valDate: r => r['ValSdate']|| '',
-    status:  r => r['Procstat']|| r['Frgzu'] || '',
-    poNo:    r => r['Ebeln']  || r['EBELN']  || '',   // Linked PO
-    plant:   r => r['Werks']  || r['WERKS']  || '',
-    matGrp:  r => r['Matkl']  || r['MATKL']  || '',
-    qty:     r => r['Menge']  || r['MENGE']  || 0,
-    price:   r => r['Preis']  || r['PREIS']  || 0,
-    wbs:     r => r['PS_PSP_PNR'] || '',
+    prNum:    r => r['pr_number']    || r['Banfn']    || '',
+    item:     r => r['pr_item']      || r['Bnfpo']    || '',
+    desc:     r => r['description']  || r['Txz01']    || '',
+    dept:     r => r['department']   || r['Eknam']    || '',
+    matGrp:   r => r['material_group']|| r['Matkl']   || '',
+    plant:    r => r['plant']        || r['Werks']    || '',
+    plantDesc:r => r['plant_desc']   || r['PlantDesc']|| '',
+    qty:      r => +(r['quantity']   || r['Menge']    || 0),
+    price:    r => +(r['price']      || r['Preis']    || 0),
+    netVal:   r => +(r['net_value']  || r['Netwr']    || 0),
+    requester:r => r['requester']    || r['Afnam']    || '',
+    createdBy:r => r['created_by']   || r['Ernam']    || '',
+    createdDt:r => r['created_date'] || r['Erdat']    || '',
+    prDate:   r => r['pr_date']      || r['Badat']    || '',
+    relDate:  r => r['release_date'] || r['Frgdt']    || '',
+    relStatus:r => r['rel_status_text']||r['RelStatus']||r['Frgst']||'',
+    procStatus:r=> r['proc_status']  || r['Procstat'] || '',
+    poNum:    r => r['po_number']    || r['Ebeln']    || '',
+    docType:  r => r['doc_type']     || r['Bsart']    || '',
+    deleted:  r => r['deleted']      || r['Loekz']    || false,
+    pGroup:   r => r['purch_group']  || r['Ekgrp']    || '',
+    hasPO:    r => !!(r['po_number'] || r['Ebeln']),
+    isReleased:r=> !!(r['release_date']||r['Frgdt']),
   };
 
   const SAP_PO = {
-    ebeln:   r => r['EBELN']  || '',   // PO number
-    vendor:  r => r['NAME1']  || '',   // Vendor name
-    lifnr:   r => r['LIFNR']  || '',   // Vendor code
-    date:    r => r['BADAT']  || '',   // PO date
-    validTo: r => r['KDATE']  || '',
-    netVal:  r => r['NETWR']  || 0,
-    currency:r => r['WAERS']  || 'INR',
-    status:  r => r['LOEKZ']  || '',
-    release: r => r['FRGKE']  || '',
-    type:    r => r['BSART']  || '',
-    group:   r => r['EKGRP']  || '',
-    company: r => r['BUKRS']  || '',
-    plant:   r => r['WERKS']  || '',
+    poNum:    r => r['po_number']    || r['EBELN']    || '',
+    item:     r => r['po_item']      || r['EBELP']    || '',
+    vendor:   r => r['vendor_name']  || r['NAME1']    || '',
+    dept:     r => r['department']   || r['EKNAM']    || '',
+    desc:     r => r['description']  || r['TXZ01']    || '',
+    matGrp:   r => r['material_group']||r['MATKL']    || '',
+    plant:    r => r['plant']        || r['WERKS']    || '',
+    plantDesc:r => r['plant_desc']   || r['PLANT_DESC']|| '',
+    qty:      r => +(r['quantity']   || r['MENGE']    || 0),
+    qtyDel:   r => +(r['qty_delivered']||r['MENGE_DEL']||0),
+    qtyInv:   r => +(r['qty_invoiced']||r['MENGE_INV']||0),
+    netVal:   r => +(r['net_value']  || r['NETWR']    || 0),
+    invVal:   r => +(r['inv_value']  || r['NETWR_INV']|| 0),
+    currency: r => r['currency']     || r['WAERS']    || 'INR',
+    poDate:   r => r['po_date']      || r['BADAT']    || '',
+    validTo:  r => r['valid_to']     || r['KDATE']    || '',
+    poRelease:r => r['po_release']   || r['FRGKE']    || '',
+    procStatus:r=> r['proc_status']  || r['PROCSTAT'] || '',
+    poType:   r => r['po_type']      || r['BSART']    || '',
+    pGroup:   r => r['purch_group']  || r['EKGRP']    || '',
+    // Delivery & invoice status
+    isDelivered:r=> (+(r['qty_delivered']||r['MENGE_DEL']||0)) >= (+(r['quantity']||r['MENGE']||1)),
+    isInvoiced: r=> (+(r['qty_invoiced'] ||r['MENGE_INV']||0)) >= (+(r['quantity']||r['MENGE']||1)),
+    deliveryPct:r=> { const q=+(r['quantity']||r['MENGE']||0); return q>0?Math.round((+(r['qty_delivered']||r['MENGE_DEL']||0))/q*100):0; },
+    invoicePct: r=> { const q=+(r['quantity']||r['MENGE']||0); return q>0?Math.round((+(r['qty_invoiced'] ||r['MENGE_INV']||0))/q*100):0; },
   };
   const nfaMap = useMemo(()=>{
     const m = {};
@@ -472,29 +493,49 @@ export default function PRPOApp() {
   },[allPRs,nfaMap,poMap,fSearch,fVendor,fGroup,fStage]);
 
   const kpi = useMemo(()=>{
-    const total      = allPRs.length;
-    const l1Approved = allPRs.filter(r=>!!PR.l1Sign(r)).length;
-    const l2Approved = allPRs.filter(r=>!!PR.l2Sign(r)).length;
-    const cpApproved = allPRs.filter(r=>!!PR.cpSign(r)).length;
-    const asgApproved= allPRs.filter(r=>!!PR.asgSign(r)).length;
-    const nfaCreated = allPRs.filter(r=>PR.nfaConverted(r)===1).length;
-    const rfqCreated = allPRs.filter(r=>PR.rfqConverted(r)===1).length;
-    const sapPRCount = allPRs.filter(r=>PR.isSapPR(r)===1).length;
-    const urgent     = allPRs.filter(r=>PR.isUrgent(r)===1).length;
-    const nfaApproved= nfaData.filter(r=>NFA.l1Sign(r)&&NFA.l2Sign(r)).length;
-    const vendorDone = nfaData.filter(r=>!!NFA.vendor(r)).length;
-    const woPoDone   = nfaData.filter(r=>!!NFA.woPoNum(r)).length;
-    const totalBudget= allPRs.reduce((s,r)=>s+(Number(PR.budget(r))||0),0);
-    const totalNFAVal= nfaData.reduce((s,r)=>s+(Number(NFA.amount(r))||0),0);
-    return {total,l1Approved,l2Approved,cpApproved,asgApproved,nfaCreated,rfqCreated,
-            sapPRCount,urgent,nfaApproved,vendorDone,woPoDone,totalBudget,totalNFAVal,
-            pendingL1: total-l1Approved,
-            pendingL2: l1Approved-l2Approved,
-            pendingCP: l2Approved-cpApproved,
-            pendingNFA: cpApproved-nfaCreated,
-            pendingWOPO: nfaCreated-woPoDone,
+    const total        = allPRs.length;
+    const l1Approved   = allPRs.filter(r=>!!PR.l1Sign(r)).length;
+    const l2Approved   = allPRs.filter(r=>!!PR.l2Sign(r)).length;
+    const cpApproved   = allPRs.filter(r=>!!PR.cpSign(r)).length;
+    const nfaCreated   = allPRs.filter(r=>PR.nfaConverted(r)===1).length;
+    const vendorDone   = nfaData.filter(r=>!!NFA.vendor(r)).length;
+    const woPoDone     = nfaData.filter(r=>!!NFA.woPoNum(r)).length;
+    const urgent       = allPRs.filter(r=>PR.isUrgent(r)===1).length;
+    // SAP PR stats
+    const sapPRTotal   = sapPR.length;
+    const sapPRwithPO  = sapPR.filter(r=>SAP_PR.hasPO(r)).length;
+    const sapPRreleased= sapPR.filter(r=>SAP_PR.isReleased(r)).length;
+    const sapPRpending = sapPRTotal - sapPRwithPO;
+    // SAP PO stats
+    const sapPOTotal   = sapPO.length;
+    const sapPODelivered=sapPO.filter(r=>SAP_PO.isDelivered(r)).length;
+    const sapPOInvoiced = sapPO.filter(r=>SAP_PO.isInvoiced(r)).length;
+    const sapPOValue   = sapPO.reduce((s,r)=>s+SAP_PO.netVal(r),0);
+    const sapPOInvValue= sapPO.reduce((s,r)=>s+SAP_PO.invVal(r),0);
+    // Dept breakdown
+    const depts = {};
+    sapPR.forEach(r=>{ const d=SAP_PR.dept(r)||'Unknown'; depts[d]=(depts[d]||0)+1; });
+    const topDepts = Object.entries(depts).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([k,v])=>({name:k,count:v}));
+    // Material group breakdown
+    const matGrps = {};
+    sapPO.forEach(r=>{ const m=SAP_PO.matGrp(r)||'Unknown'; matGrps[m]=(matGrps[m]||0)+SAP_PO.netVal(r); });
+    const topMatGrps = Object.entries(matGrps).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([k,v])=>({name:k,value:+(v/1e5).toFixed(1)}));
+    // Vendor breakdown
+    const vendors = {};
+    sapPO.forEach(r=>{ const v=SAP_PO.vendor(r)||'Unknown'; vendors[v]=(vendors[v]||0)+SAP_PO.netVal(r); });
+    const topVendors = Object.entries(vendors).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([k,v])=>({name:k,value:+(v/1e5).toFixed(1)}));
+
+    return {
+      total, l1Approved, l2Approved, cpApproved, nfaCreated, vendorDone, woPoDone, urgent,
+      pendingL1: total-l1Approved, pendingL2: l1Approved-l2Approved,
+      pendingCP: l2Approved-cpApproved, pendingNFA: cpApproved-nfaCreated,
+      sapPRTotal, sapPRwithPO, sapPRreleased, sapPRpending,
+      sapPOTotal, sapPODelivered, sapPOInvoiced, sapPOValue, sapPOInvValue,
+      topDepts, topMatGrps, topVendors,
+      deliveryRate: sapPOTotal>0?Math.round(sapPODelivered/sapPOTotal*100):0,
+      invoiceRate:  sapPOTotal>0?Math.round(sapPOInvoiced/sapPOTotal*100):0,
     };
-  },[allPRs,nfaData]);
+  },[allPRs,nfaData,sapPR,sapPO]);
 
   const fmt = n => n>=1e7?'₹'+(n/1e7).toFixed(1)+'Cr':n>=1e5?'₹'+(n/1e5).toFixed(1)+'L':'₹'+Math.round(n).toLocaleString();
   const isLoading = Object.values(loading).some(Boolean);
@@ -628,18 +669,19 @@ export default function PRPOApp() {
 
           {/* ══ OVERVIEW ══ */}
           {tab==='overview'&&(<>
-            {/* KPI row 1 — Journey funnel KPIs */}
+            {/* KPI Row 1 — QMS PR Journey */}
             <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12}}>
-              <KpiCard icon="📝" label="Total PRs"           value={(kpi.total||0).toLocaleString()}         color={T.teal}   sub={`SAP + VendorGlobe combined`}             loading={isLoading} pct={null}/>
-              <KpiCard icon="✅" label="PR Approved (SAP)"   value={(kpi.prApproved||0).toLocaleString()}    color={T.green}  sub={`${kpi.pendingPR} pending approval`}      loading={isLoading} pct={kpi.total?Math.round(kpi.prApproved/kpi.total*100):0}/>
-              <KpiCard icon="🌐" label="Sent to VendorGlobe" value={(kpi.sentToVG||0).toLocaleString()}      color={T.blue}   sub={`${kpi.pendingVG||0} approved but not sent`} loading={isLoading} pct={kpi.prApproved?Math.round(kpi.sentToVG/kpi.prApproved*100):0}/>
-              <KpiCard icon="📋" label="NFA Approved"        value={(kpi.nfaApproved||0).toLocaleString()}   color={T.purple} sub={`${kpi.pendingNFA||0} pending NFA approval`} loading={isLoading} pct={kpi.sentToVG?Math.round(kpi.nfaApproved/kpi.sentToVG*100):0}/>
+              <KpiCard icon="📝" label="QMS Total PRs"       value={(kpi.total||0).toLocaleString()}          color={T.teal}   sub={`${kpi.urgent||0} urgent`}                                        loading={isLoading} pct={null}/>
+              <KpiCard icon="✅" label="L1+L2 Approved"      value={(kpi.l2Approved||0).toLocaleString()}     color={T.green}  sub={`${kpi.pendingL1||0} pending L1 · ${kpi.pendingL2||0} pending L2`} loading={isLoading} pct={kpi.total?Math.round((kpi.l2Approved||0)/kpi.total*100):0}/>
+              <KpiCard icon="📋" label="NFA Created"         value={(kpi.nfaCreated||0).toLocaleString()}     color={T.purple} sub={`${kpi.pendingNFA||0} pending NFA conversion`}                    loading={isLoading} pct={kpi.total?Math.round((kpi.nfaCreated||0)/kpi.total*100):0}/>
+              <KpiCard icon="🏢" label="Vendor + WO/PO"      value={(kpi.woPoDone||0).toLocaleString()}       color={T.amber}  sub={`${kpi.vendorDone||0} vendors selected`}                          loading={isLoading} pct={null}/>
             </div>
+            {/* KPI Row 2 — SAP Data */}
             <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12}}>
-              <KpiCard icon="🏢" label="Vendor Selected"     value={(kpi.hasVendor||0).toLocaleString()}     color={T.amber}  sub="Vendors finalized via NFA"                loading={isLoading} pct={null}/>
-              <KpiCard icon="📦" label="PO Created (SAP)"    value={(kpi.hasPO||0).toLocaleString()}         color={T.tealD}  sub={`${kpi.pendingPO||0} awaiting PO creation`} loading={isLoading} pct={kpi.nfaApproved?Math.round(kpi.hasPO/kpi.nfaApproved*100):0}/>
-              <KpiCard icon="✅" label="PO Approved"          value={(kpi.poApproved||0).toLocaleString()}    color={T.green}  sub="POs released in SAP"                      loading={isLoading} pct={kpi.hasPO?Math.round(kpi.poApproved/kpi.hasPO*100):0}/>
-              <KpiCard icon="💰" label="Total PO Value"       value={fmt(kpi.totalPOVal||0)}                  color={T.navy}   sub="Net value of all POs from SAP"            loading={isLoading} pct={null}/>
+              <KpiCard icon="🏭" label="SAP PRs"             value={(kpi.sapPRTotal||0).toLocaleString()}     color={T.navy}   sub={`${kpi.sapPRwithPO||0} have PO · ${kpi.sapPRpending||0} pending`}  loading={loading.sapPR} pct={null}/>
+              <KpiCard icon="📦" label="SAP POs"             value={(kpi.sapPOTotal||0).toLocaleString()}     color={T.tealD}  sub={`${kpi.deliveryRate||0}% delivered · ${kpi.invoiceRate||0}% invoiced`} loading={loading.sapPO} pct={null}/>
+              <KpiCard icon="💰" label="Total PO Value"      value={`₹${((kpi.sapPOValue||0)/1e7).toFixed(1)}Cr`} color={T.green} sub="Net value from SAP"                                            loading={loading.sapPO} pct={null}/>
+              <KpiCard icon="🧾" label="Invoice Value"       value={`₹${((kpi.sapPOInvValue||0)/1e7).toFixed(1)}Cr`} color={T.blue} sub={`${kpi.invoiceRate||0}% of PO value`}                       loading={loading.sapPO} pct={kpi.sapPOValue?Math.round(((kpi.sapPOInvValue||0)/kpi.sapPOValue)*100):0}/>
             </div>
 
             {/* Funnel + status charts */}
@@ -948,97 +990,142 @@ export default function PRPOApp() {
 
           {/* ══ PO TRACKER ══ */}
           {tab==='po'&&(
-            <GC style={{padding:18}}>
-              <SH title="PO Tracker — SAP Purchase Orders" sub={`${sapPO.length} POs from SAP EKKO`}/>
-              {loading.sapPO?<Spinner/>:errors.sapPO?<ErrBox msg={errors.sapPO} onRetry={refreshAll}/>:(
-                <div style={{overflowY:'auto',maxHeight:'70vh'}}>
-                  <table style={{width:'100%',borderCollapse:'collapse',fontSize:11}}>
-                    <thead><tr style={{position:'sticky',top:0,background:'rgba(255,255,255,0.97)'}}>
-                      {['PO Number','PO Date','Vendor','Type','Net Value','Currency','Purch. Group','Company','Plant','Release'].map(h=>(
-                        <th key={h} style={{padding:'7px 10px',textAlign:'left',fontSize:9,fontWeight:800,color:T.tealD,textTransform:'uppercase',borderBottom:'2px solid rgba(0,105,120,0.15)',whiteSpace:'nowrap'}}>{h}</th>
-                      ))}
-                    </tr></thead>
-                    <tbody>
-                      {sapPO.slice(0,300).map((r,i)=>(
-                        <tr key={i} style={{borderBottom:'1px solid rgba(0,60,100,0.05)',background:i%2===0?'transparent':'rgba(0,151,167,0.02)'}}>
-                          <td style={{padding:'5px 10px',color:T.tealD,fontWeight:800}}>{r.po_number||r.EBELN}</td>
-                          <td style={{padding:'5px 10px',color:T.textM,fontSize:10}}>{r.po_date||r.BEDAT}</td>
-                          <td style={{padding:'5px 10px',color:T.navy,fontWeight:600}}>{r.vendor||r.LIFNR}</td>
-                          <td style={{padding:'5px 10px',color:T.textM,fontSize:10}}>{r.po_type||r.BSART}</td>
-                          <td style={{padding:'5px 10px',fontWeight:800,color:T.green}}>₹{parseFloat(r.net_value||r.NETWR||0).toLocaleString()}</td>
-                          <td style={{padding:'5px 10px',color:T.textM,fontSize:10}}>{r.currency||r.WAERS}</td>
-                          <td style={{padding:'5px 10px',color:T.textM,fontSize:10}}>{r.purchasing_group||r.EKGRP}</td>
-                          <td style={{padding:'5px 10px',color:T.textM,fontSize:10}}>{r.company_code||r.BUKRS}</td>
-                          <td style={{padding:'5px 10px',color:T.textM,fontSize:10}}>{r.plant||r.WERKS}</td>
-                          <td style={{padding:'5px 10px'}}><StatusBadge s={r.release_status||r.FRGKE||'Pending'}/></td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </GC>
-          )}
-
-          {/* ══ ANALYTICS ══ */}
-          {tab==='analytics'&&(
             <div style={{display:'flex',flexDirection:'column',gap:12}}>
-              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
-                <GC style={{padding:18}}>
-                  <SH title="PO Value by Vendor (Top 10)" sub="From SAP"/>
-                  <ResponsiveContainer width="100%" height={260}>
-                    <BarChart data={sapPO.reduce((acc,r)=>{const v=r.vendor||r.LIFNR||'Unknown';const e=acc.find(x=>x.name===v);if(e)e.value+=parseFloat(r.net_value||r.NETWR||0);else acc.push({name:v,value:parseFloat(r.net_value||r.NETWR||0)});return acc;},[]).sort((a,b)=>b.value-a.value).slice(0,10)} layout="vertical" margin={{top:0,right:70,bottom:0,left:4}}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.07)" horizontal={false}/>
-                      <XAxis type="number" tick={{fill:T.textM,fontSize:8}} axisLine={false} tickLine={false} tickFormatter={v=>v>=1e7?'₹'+(v/1e7).toFixed(0)+'Cr':v>=1e5?'₹'+(v/1e5).toFixed(0)+'L':'₹'+v}/>
-                      <YAxis type="category" dataKey="name" tick={{fill:T.navy,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false} width={80}/>
-                      <Tooltip content={<CTip/>}/>
-                      <Bar dataKey="value" name="PO Value" radius={[0,4,4,0]}>
-                        {CC.map((c,i)=><Cell key={i} fill={c}/>)}
-                        <LabelList dataKey="value" position="right" style={{fill:T.navy,fontSize:8,fontWeight:800}} formatter={v=>v>=1e7?'₹'+(v/1e7).toFixed(1)+'Cr':'₹'+(v/1e5).toFixed(0)+'L'}/>
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-                </GC>
-                <GC style={{padding:18}}>
-                  <SH title="PO Value by Purchasing Group"/>
-                  <ResponsiveContainer width="100%" height={260}>
-                    <BarChart data={sapPO.reduce((acc,r)=>{const g=r.purchasing_group||r.EKGRP||'Unknown';const e=acc.find(x=>x.name===g);if(e)e.value+=parseFloat(r.net_value||r.NETWR||0);else acc.push({name:g,value:parseFloat(r.net_value||r.NETWR||0)});return acc;},[]).sort((a,b)=>b.value-a.value)} margin={{top:8,right:20,bottom:8,left:0}}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.07)" vertical={false}/>
-                      <XAxis dataKey="name" tick={{fill:T.textM,fontSize:10,fontWeight:600}} axisLine={false} tickLine={false}/>
-                      <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} tickFormatter={v=>v>=1e7?'₹'+(v/1e7).toFixed(0)+'Cr':'₹'+(v/1e5).toFixed(0)+'L'} width={50}/>
-                      <Tooltip content={<CTip/>}/>
-                      <Bar dataKey="value" name="Value" radius={[4,4,0,0]}>
-                        {CC.map((c,i)=><Cell key={i} fill={c}/>)}
-                        <LabelList dataKey="value" position="top" style={{fill:T.navy,fontSize:9,fontWeight:800}} formatter={v=>v>=1e7?'₹'+(v/1e7).toFixed(1)+'Cr':''}/>
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-                </GC>
+              {/* PO Summary KPIs */}
+              <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12}}>
+                <KpiCard icon="📦" label="Total POs"         value={(kpi.sapPOTotal||0).toLocaleString()}          color={T.tealD} sub="From SAP PRD_PurchaseOrder"           loading={loading.sapPO} pct={null}/>
+                <KpiCard icon="💰" label="Total PO Value"    value={`₹${((kpi.sapPOValue||0)/1e7).toFixed(1)}Cr`} color={T.green} sub="Net value"                            loading={loading.sapPO} pct={null}/>
+                <KpiCard icon="🚚" label="Delivered"         value={(kpi.sapPODelivered||0).toLocaleString()}      color={T.teal}  sub={`${kpi.deliveryRate||0}% delivery rate`} loading={loading.sapPO} pct={kpi.deliveryRate}/>
+                <KpiCard icon="🧾" label="Invoiced"          value={(kpi.sapPOInvoiced||0).toLocaleString()}       color={T.blue}  sub={`₹${((kpi.sapPOInvValue||0)/1e7).toFixed(1)}Cr invoiced`} loading={loading.sapPO} pct={kpi.invoiceRate}/>
               </div>
-              {/* EOT data */}
               <GC style={{padding:18}}>
-                <SH title="EOT (Extension of Time) Records"/>
-                {loading.eot?<Spinner/>:errors.eot?<ErrBox msg={errors.eot}/>:(
-                  <div style={{overflowX:'auto'}}>
+                <SH title="PO Tracker — SAP PRD_PurchaseOrder" sub={`${sapPO.length} POs · Showing 300`}/>
+                {loading.sapPO?<Spinner/>:errors.sapPO?<ErrBox msg={errors.sapPO} onRetry={refreshAll}/>:(
+                  <div style={{overflowY:'auto',maxHeight:'65vh'}}>
                     <table style={{width:'100%',borderCollapse:'collapse',fontSize:11}}>
-                      <thead><tr style={{background:'rgba(0,105,120,0.06)'}}>
-                        {(eotData[0]?Object.keys(eotData[0]).slice(0,10):[]).map(h=>(
-                          <th key={h} style={{padding:'6px 10px',textAlign:'left',fontSize:9,fontWeight:800,color:T.tealD,textTransform:'uppercase',borderBottom:'2px solid rgba(0,105,120,0.15)',whiteSpace:'nowrap'}}>{h}</th>
+                      <thead><tr style={{position:'sticky',top:0,background:'rgba(255,255,255,0.97)'}}>
+                        {['PO #','Date','Vendor','Dept','Description','Mat.Group','Plant','Qty','Delivered','Invoiced','Net Value','Inv.Value','Release'].map(h=>(
+                          <th key={h} style={{padding:'7px 10px',textAlign:'left',fontSize:9,fontWeight:800,color:T.tealD,textTransform:'uppercase',borderBottom:'2px solid rgba(0,105,120,0.15)',whiteSpace:'nowrap'}}>{h}</th>
                         ))}
                       </tr></thead>
                       <tbody>
-                        {eotData.slice(0,100).map((r,i)=>(
-                          <tr key={i} style={{borderBottom:'1px solid rgba(0,60,100,0.05)',background:i%2===0?'transparent':'rgba(0,151,167,0.02)'}}>
-                            {(eotData[0]?Object.keys(eotData[0]).slice(0,10):[]).map(k=>(
-                              <td key={k} style={{padding:'5px 10px',color:T.textM,maxWidth:160,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{String(r[k]??'—')}</td>
-                            ))}
-                          </tr>
-                        ))}
+                        {sapPO.slice(0,300).map((r,i)=>{
+                          const delPct = SAP_PO.deliveryPct(r);
+                          const invPct = SAP_PO.invoicePct(r);
+                          return (
+                            <tr key={i} style={{borderBottom:'1px solid rgba(0,60,100,0.05)',background:i%2===0?'transparent':'rgba(0,151,167,0.02)'}}>
+                              <td style={{padding:'5px 10px',color:T.tealD,fontWeight:800,whiteSpace:'nowrap'}}>{SAP_PO.poNum(r)}</td>
+                              <td style={{padding:'5px 10px',color:T.textM,fontSize:10,whiteSpace:'nowrap'}}>{String(SAP_PO.poDate(r)).slice(0,10)}</td>
+                              <td style={{padding:'5px 10px',color:T.navy,fontWeight:600,maxWidth:150,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{SAP_PO.vendor(r)}</td>
+                              <td style={{padding:'5px 10px',color:T.textM,fontSize:10}}>{SAP_PO.dept(r)}</td>
+                              <td style={{padding:'5px 10px',color:T.textM,maxWidth:180,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{SAP_PO.desc(r)}</td>
+                              <td style={{padding:'5px 10px',color:T.textM,fontSize:10}}>{SAP_PO.matGrp(r)}</td>
+                              <td style={{padding:'5px 10px',color:T.textM,fontSize:10}}>{SAP_PO.plantDesc(r)||SAP_PO.plant(r)}</td>
+                              <td style={{padding:'5px 10px',color:T.textM,fontWeight:600}}>{SAP_PO.qty(r)}</td>
+                              <td style={{padding:'5px 10px'}}>
+                                <div style={{display:'flex',alignItems:'center',gap:4}}>
+                                  <div style={{width:40,height:5,background:'rgba(0,60,100,0.08)',borderRadius:2}}>
+                                    <div style={{width:delPct+'%',height:'100%',background:delPct>=100?T.green:delPct>50?T.amber:T.red,borderRadius:2}}/>
+                                  </div>
+                                  <span style={{fontSize:9,fontWeight:700,color:delPct>=100?T.green:T.amber}}>{delPct}%</span>
+                                </div>
+                              </td>
+                              <td style={{padding:'5px 10px'}}>
+                                <div style={{display:'flex',alignItems:'center',gap:4}}>
+                                  <div style={{width:40,height:5,background:'rgba(0,60,100,0.08)',borderRadius:2}}>
+                                    <div style={{width:invPct+'%',height:'100%',background:invPct>=100?T.blue:invPct>50?T.teal:T.gray,borderRadius:2}}/>
+                                  </div>
+                                  <span style={{fontSize:9,fontWeight:700,color:invPct>=100?T.blue:T.gray}}>{invPct}%</span>
+                                </div>
+                              </td>
+                              <td style={{padding:'5px 10px',fontWeight:800,color:T.green,whiteSpace:'nowrap'}}>₹{SAP_PO.netVal(r).toLocaleString()}</td>
+                              <td style={{padding:'5px 10px',fontWeight:700,color:T.blue,whiteSpace:'nowrap'}}>₹{SAP_PO.invVal(r).toLocaleString()}</td>
+                              <td style={{padding:'5px 10px'}}>
+                                <StatusBadge s={SAP_PO.poRelease(r)||SAP_PO.procStatus(r)||'Pending'}/>
+                              </td>
+                            </tr>
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>
                 )}
               </GC>
+            </div>
+          )}
+
+          {tab==='analytics'&&(
+            <div style={{display:'flex',flexDirection:'column',gap:12}}>
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+                <GC style={{padding:18}}>
+                  <SH title="PO Value by Vendor (Top 8)" sub="From SAP PRD_PurchaseOrder"/>
+                  <ResponsiveContainer width="100%" height={260}>
+                    <BarChart data={kpi.topVendors||[]} layout="vertical" margin={{top:0,right:70,bottom:0,left:4}}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.07)" horizontal={false}/>
+                      <XAxis type="number" tick={{fill:T.textM,fontSize:8}} axisLine={false} tickLine={false} tickFormatter={v=>v+'L'}/>
+                      <YAxis type="category" dataKey="name" tick={{fill:T.navy,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false} width={120}/>
+                      <Tooltip content={<CTip/>}/>
+                      <Bar dataKey="value" name="Value (₹L)" radius={[0,4,4,0]}>
+                        {(kpi.topVendors||[]).map((_,i)=><Cell key={i} fill={CC[i%CC.length]}/>)}
+                        <LabelList dataKey="value" position="right" style={{fill:T.navy,fontSize:8,fontWeight:800}} formatter={v=>'₹'+v+'L'}/>
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </GC>
+                <GC style={{padding:18}}>
+                  <SH title="PO Value by Material Group" sub="Top 8 categories"/>
+                  <ResponsiveContainer width="100%" height={260}>
+                    <BarChart data={kpi.topMatGrps||[]} layout="vertical" margin={{top:0,right:70,bottom:0,left:4}}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.07)" horizontal={false}/>
+                      <XAxis type="number" tick={{fill:T.textM,fontSize:8}} axisLine={false} tickLine={false} tickFormatter={v=>v+'L'}/>
+                      <YAxis type="category" dataKey="name" tick={{fill:T.navy,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false} width={100}/>
+                      <Tooltip content={<CTip/>}/>
+                      <Bar dataKey="value" name="Value (₹L)" radius={[0,4,4,0]}>
+                        {(kpi.topMatGrps||[]).map((_,i)=><Cell key={i} fill={CC[(i+3)%CC.length]}/>)}
+                        <LabelList dataKey="value" position="right" style={{fill:T.navy,fontSize:8,fontWeight:800}} formatter={v=>'₹'+v+'L'}/>
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </GC>
+              </div>
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+                <GC style={{padding:18}}>
+                  <SH title="PRs by Department" sub="From SAP PRD_PR"/>
+                  <ResponsiveContainer width="100%" height={200}>
+                    <BarChart data={kpi.topDepts||[]} margin={{top:8,right:20,bottom:8,left:0}}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.07)" vertical={false}/>
+                      <XAxis dataKey="name" tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false} angle={-15} textAnchor="end" height={40}/>
+                      <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={30}/>
+                      <Tooltip content={<CTip/>}/>
+                      <Bar dataKey="count" name="PRs" radius={[4,4,0,0]}>
+                        {(kpi.topDepts||[]).map((_,i)=><Cell key={i} fill={CC[i%CC.length]}/>)}
+                        <LabelList dataKey="count" position="top" style={{fill:T.navy,fontSize:9,fontWeight:800}}/>
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </GC>
+                <GC style={{padding:18}}>
+                  <SH title="Delivery vs Invoice Status" sub="PO completion overview"/>
+                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:16}}>
+                    {[
+                      {l:'Fully Delivered', v:kpi.sapPODelivered||0, c:T.green,  icon:'🚚', pct:kpi.deliveryRate},
+                      {l:'Pending Delivery',v:(kpi.sapPOTotal||0)-(kpi.sapPODelivered||0), c:T.amber, icon:'⏳', pct:100-(kpi.deliveryRate||0)},
+                      {l:'Fully Invoiced',  v:kpi.sapPOInvoiced||0,  c:T.blue,   icon:'🧾', pct:kpi.invoiceRate},
+                      {l:'Pending Invoice', v:(kpi.sapPOTotal||0)-(kpi.sapPOInvoiced||0), c:T.red,  icon:'❗', pct:100-(kpi.invoiceRate||0)},
+                    ].map((d,i)=>(
+                      <div key={i} style={{background:`${d.c}09`,border:`1px solid ${d.c}22`,borderRadius:10,padding:'12px 14px'}}>
+                        <div style={{fontSize:18}}>{d.icon}</div>
+                        <div style={{fontSize:20,fontWeight:900,color:d.c}}>{d.v.toLocaleString()}</div>
+                        <div style={{fontSize:9,color:T.textM,fontWeight:700,textTransform:'uppercase'}}>{d.l}</div>
+                        <div style={{marginTop:6,height:4,background:'rgba(0,60,100,0.08)',borderRadius:2}}>
+                          <div style={{width:`${Math.min(d.pct||0,100)}%`,height:'100%',background:d.c,borderRadius:2}}/>
+                        </div>
+                        <div style={{fontSize:9,color:d.c,fontWeight:800,marginTop:2}}>{d.pct||0}%</div>
+                      </div>
+                    ))}
+                  </div>
+                </GC>
+              </div>
             </div>
           )}
 
