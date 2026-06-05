@@ -12,6 +12,8 @@ const VG_URLS = {
   nfa:    `${LOCAL_SERVER}/api/nfa`,
   market: `${LOCAL_SERVER}/api/market`,
   eot:    `${LOCAL_SERVER}/api/eot`,
+  sap_pr: `${LOCAL_SERVER}/api/sap_pr`,
+  sap_po: `${LOCAL_SERVER}/api/sap_po`,
 };
 
 // SAP proxy still needs PHP file on server — skip until deployed
@@ -365,12 +367,10 @@ export default function PRPOApp() {
     fetchVG('nfa',    setNFA,    'nfa');
     fetchVG('market', setMkt,    'mkt');
     fetchVG('eot',    setEOT,    'eot');
-    fetchSAP('pr_list', setSapPR,  'sapPR');
-    fetchSAP('po_list', setSapPO,  'sapPO');
-    fetchSAP('pr_to_po',setSapLink,'sapLink');
-    fetchSAP('vendors', setVendors,'vendors');
+    fetchVG('sap_pr', setSapPR,  'sapPR');
+    fetchVG('sap_po', setSapPO,  'sapPO');
     setLR(new Date());
-  },[fetchVG,fetchSAP]);
+  },[fetchVG]);
 
   const loadDemo = () => {
     setPR(MOCK.pr); setNFA(MOCK.nfa); setMkt(MOCK.market); setEOT(MOCK.eot);
@@ -392,7 +392,38 @@ export default function PRPOApp() {
     return ()=>clearTimeout(t);
   },[errors,loading,prData,nfaData,mktData,eotData,demoMode]);
 
-  // ── Merge data using real field names ───────────────────────────────────────
+  const SAP_PR = {
+    banfn:   r => r['Banfn']  || r['BANFN']  || '',   // PR number
+    bnfpo:   r => r['Bnfpo']  || r['BNFPO']  || '',   // PR item
+    desc:    r => r['Txz01']  || r['TXZ01']  || '',   // Description
+    vendor:  r => r['Ernam']  || r['ERNAM']  || '',   // Created by
+    dept:    r => r['Eknam']  || r['EKNAM']  || '',   // Department
+    date:    r => r['Badat']  || r['BADAT']  || '',   // PR date
+    valDate: r => r['ValSdate']|| '',
+    status:  r => r['Procstat']|| r['Frgzu'] || '',
+    poNo:    r => r['Ebeln']  || r['EBELN']  || '',   // Linked PO
+    plant:   r => r['Werks']  || r['WERKS']  || '',
+    matGrp:  r => r['Matkl']  || r['MATKL']  || '',
+    qty:     r => r['Menge']  || r['MENGE']  || 0,
+    price:   r => r['Preis']  || r['PREIS']  || 0,
+    wbs:     r => r['PS_PSP_PNR'] || '',
+  };
+
+  const SAP_PO = {
+    ebeln:   r => r['EBELN']  || '',   // PO number
+    vendor:  r => r['NAME1']  || '',   // Vendor name
+    lifnr:   r => r['LIFNR']  || '',   // Vendor code
+    date:    r => r['BADAT']  || '',   // PO date
+    validTo: r => r['KDATE']  || '',
+    netVal:  r => r['NETWR']  || 0,
+    currency:r => r['WAERS']  || 'INR',
+    status:  r => r['LOEKZ']  || '',
+    release: r => r['FRGKE']  || '',
+    type:    r => r['BSART']  || '',
+    group:   r => r['EKGRP']  || '',
+    company: r => r['BUKRS']  || '',
+    plant:   r => r['WERKS']  || '',
+  };
   const nfaMap = useMemo(()=>{
     const m = {};
     nfaData.forEach(n=>{

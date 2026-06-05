@@ -1,195 +1,270 @@
 /**
- * PRPO Local Data Server
+ * PRPO Live Data Server
+ * Connects to SAP SQL + QMS APIs
  * Run: node prpo_server.js
- * Fetches live data from QMS and serves to your dashboard
+ * Dashboard reads from: http://localhost:3001/api/
  */
 
 const http  = require('http');
 const https = require('https');
 const url   = require('url');
 
-const PORT   = 3001;
-const BASE   = 'smartworlddevelopersonline.com';
-const EMAIL  = 'sunny.batra@smartworlddevelopers.com';
-const PASS   = 'swd@2021';
+// Try to load mssql — install with: npm install mssql
+let sql;
+try { sql = require('mssql'); } catch(e) { console.log('⚠️  mssql not installed. Run: npm install mssql'); }
 
-let SESSION_COOKIE = '';
-let cache = { pr:[], nfa:[], market:[], eot:[], lastFetch: null };
+const PORT = 3001;
 
-// ── Login to QMS ──────────────────────────────────────────────────────────────
-function login() {
-  return new Promise((resolve, reject) => {
+// ── CONFIG ────────────────────────────────────────────────────────────────────
+const SAP_CONFIG = {
+  server:   '192.168.66.33',
+  database: 'SWDBIDB',
+  user:     'sa',
+  password: 'Admin#123',
+  options:  { encrypt: false, trustServerCertificate: true, connectTimeout: 30000 },
+  pool:     { max: 5, min: 0, idleTimeoutMillis: 30000 },
+};
+
+const QMS_BASE  = 'smartworlddevelopersonline.com';
+const QMS_EMAIL = 'sunny.batra@smartworlddevelopers.com';
+const QMS_PASS  = 'swd@2021';
+
+// ── CACHE ─────────────────────────────────────────────────────────────────────
+let cache = {
+  pr: [], nfa: [], market: [], eot: [],
+  sap_pr: [], sap_po: [],
+  lastFetch: null, errors: {}
+};
+
+let QMS_COOKIE = '';
+
+// ── SAP SQL QUERIES ───────────────────────────────────────────────────────────
+const SAP_QUERIES = {
+  sap_pr: `
+    SELECT TOP 5000
+      Eknam, ValSdate, Procstat, ValEdate,
+      Banfn, Bnfpo, Ernam,
+      Matnr, Txz01, Menge, Meins,
+      Werks, Kostl, Sakto,
+      Frgkz, Frgzu, Badat,
+      Preis, Waers, Afnam,
+      PS_PSP_PNR, Matkl, Ebeln, Ebelp
+    FROM dbo.PRD_PR
+    ORDER BY Badat DESC`,
+
+  sap_po: `
+    SELECT TOP 5000
+      EBELN, KDATB, KDATE, LOEKZ,
+      BADAT, NAME1, EBELP,
+      NETWR, WAERS, LIFNR,
+      BSART, EKGRP, BUKRS, WERKS,
+      FRGKE, BEDAT
+    FROM dbo.PRD_PurchaseOrder
+    ORDER BY BADAT DESC`,
+};
+
+// ── QMS LOGIN ─────────────────────────────────────────────────────────────────
+function qmsLogin() {
+  return new Promise((resolve) => {
     console.log('🔐 Logging into QMS...');
 
-    // Step 1: GET login page to get initial cookie
     const getReq = https.request({
-      hostname: BASE, path: '/bi-power/home/login', method: 'GET',
-      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
+      hostname: QMS_BASE, path: '/bi-power/home/login', method: 'GET',
+      headers: { 'User-Agent': 'Mozilla/5.0' },
       rejectUnauthorized: false,
     }, (res) => {
-      let cookies = res.headers['set-cookie'] || [];
-      let initCookie = cookies.map(c => c.split(';')[0]).join('; ');
-
-      // Step 2: POST credentials
-      const body = `email=${encodeURIComponent(EMAIL)}&password=${encodeURIComponent(PASS)}`;
-      const postReq = https.request({
-        hostname: BASE, path: '/bi-power/home/login', method: 'POST',
-        headers: {
-          'User-Agent':     'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
-          'Content-Type':   'application/x-www-form-urlencoded',
-          'Content-Length': Buffer.byteLength(body),
-          'Cookie':         initCookie,
-          'Referer':        `https://${BASE}/bi-power/home/login`,
-          'Origin':         `https://${BASE}`,
-        },
-        rejectUnauthorized: false,
-      }, (res2) => {
-        let setCookies = res2.headers['set-cookie'] || [];
-        SESSION_COOKIE = setCookies.map(c => c.split(';')[0]).join('; ');
-        let data = '';
-        res2.on('data', d => data += d);
-        res2.on('end', () => {
-          if (SESSION_COOKIE) {
-            console.log('✅ Login successful!');
-            resolve(SESSION_COOKIE);
-          } else {
-            reject(new Error('Login failed — no cookie received'));
-          }
+      const initCookie = (res.headers['set-cookie']||[]).map(c=>c.split(';')[0]).join('; ');
+      let d=''; res.on('data',c=>d+=c); res.on('end',()=>{
+        const body = `email=${encodeURIComponent(QMS_EMAIL)}&password=${encodeURIComponent(QMS_PASS)}`;
+        const postReq = https.request({
+          hostname: QMS_BASE, path: '/bi-power/home/login', method: 'POST',
+          headers: {
+            'User-Agent':     'Mozilla/5.0',
+            'Content-Type':   'application/x-www-form-urlencoded',
+            'Content-Length': Buffer.byteLength(body),
+            'Cookie':         initCookie,
+            'Referer':        `https://${QMS_BASE}/bi-power/home/login`,
+          },
+          rejectUnauthorized: false,
+        }, (res2) => {
+          QMS_COOKIE = (res2.headers['set-cookie']||[]).map(c=>c.split(';')[0]).join('; ');
+          let d2=''; res2.on('data',c=>d2+=c);
+          res2.on('end',()=>{
+            if(QMS_COOKIE) { console.log('✅ QMS login successful'); resolve(true); }
+            else { console.log('❌ QMS login failed — trying without login...'); resolve(false); }
+          });
         });
+        postReq.on('error',()=>resolve(false));
+        postReq.write(body); postReq.end();
       });
-      postReq.on('error', reject);
-      postReq.write(body);
-      postReq.end();
     });
-    getReq.on('error', reject);
+    getReq.on('error',()=>resolve(false));
     getReq.end();
   });
 }
 
-// ── Fetch one API endpoint ────────────────────────────────────────────────────
-function fetchAPI(path) {
-  return new Promise((resolve, reject) => {
+// ── FETCH QMS API ─────────────────────────────────────────────────────────────
+function fetchQMS(path) {
+  return new Promise((resolve) => {
     const req = https.request({
-      hostname: BASE, path: `/bi-power/${path}`, method: 'GET',
+      hostname: QMS_BASE, path: `/bi-power/${path}`, method: 'GET',
       headers: {
-        'User-Agent':        'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
-        'Accept':            'application/json',
-        'Cookie':            SESSION_COOKIE,
-        'Referer':           `https://${BASE}/bi-power/home/dashboard`,
-        'X-Requested-With':  'XMLHttpRequest',
+        'User-Agent':       'Mozilla/5.0',
+        'Accept':           'application/json',
+        'Cookie':           QMS_COOKIE,
+        'Referer':          `https://${QMS_BASE}/bi-power/home/dashboard`,
+        'X-Requested-With': 'XMLHttpRequest',
       },
       rejectUnauthorized: false,
     }, (res) => {
-      let data = '';
-      res.on('data', d => data += d);
-      res.on('end', () => {
+      let data=''; res.on('data',d=>data+=d);
+      res.on('end',()=>{
         try {
           const json = JSON.parse(data);
-          if (json.status === 'unauthorized') {
-            reject(new Error('unauthorized'));
-          } else {
-            resolve(json);
-          }
-        } catch(e) {
-          reject(new Error('Invalid JSON: ' + data.slice(0,100)));
-        }
+          if(json.status==='unauthorized') { resolve([]); return; }
+          const arr = Array.isArray(json)?json:(json.data||[]);
+          resolve(arr);
+        } catch(e) { resolve([]); }
       });
     });
-    req.on('error', reject);
+    req.on('error',()=>resolve([]));
     req.end();
   });
 }
 
-// ── Fetch all APIs ────────────────────────────────────────────────────────────
-async function fetchAll() {
+// ── FETCH SAP SQL ─────────────────────────────────────────────────────────────
+async function fetchSAP(queryKey) {
+  if (!sql) return [];
   try {
-    console.log('\n📡 Fetching all QMS data...');
-
-    const [pr, nfa, market, eot] = await Promise.all([
-      fetchAPI('bi_prs.php').catch(async (e) => {
-        if (e.message === 'unauthorized') { await login(); return fetchAPI('bi_prs.php'); }
-        throw e;
-      }),
-      fetchAPI('bi_nfas.php').catch(e => ({ data: [] })),
-      fetchAPI('bi_market_place.php').catch(e => ({ data: [] })),
-      fetchAPI('bi_eot.php').catch(e => ({ data: [] })),
-    ]);
-
-    const extract = (r) => Array.isArray(r) ? r : (r?.data || []);
-
-    cache.pr      = extract(pr);
-    cache.nfa     = extract(nfa);
-    cache.market  = extract(market);
-    cache.eot     = extract(eot);
-    cache.lastFetch = new Date().toISOString();
-
-    console.log(`✅ Data fetched: PR=${cache.pr.length} NFA=${cache.nfa.length} Market=${cache.market.length} EOT=${cache.eot.length}`);
-    console.log(`⏰ Next refresh in 30 minutes`);
+    const pool = await sql.connect(SAP_CONFIG);
+    const result = await pool.request().query(SAP_QUERIES[queryKey]);
+    await pool.close();
+    console.log(`✅ SAP ${queryKey}: ${result.recordset.length} rows`);
+    return result.recordset;
   } catch(e) {
-    console.error('❌ Fetch error:', e.message);
+    console.log(`❌ SAP ${queryKey} error:`, e.message);
+    cache.errors[queryKey] = e.message;
+    return [];
   }
 }
 
-// ── HTTP Server ───────────────────────────────────────────────────────────────
-const server = http.createServer((req, res) => {
-  // CORS headers — allow dashboard to read data
+// ── FETCH ALL DATA ────────────────────────────────────────────────────────────
+async function fetchAll() {
+  console.log('\n📡 Fetching all data...\n');
+
+  // QMS APIs
+  if(!QMS_COOKIE) await qmsLogin();
+
+  const [pr, nfa, market, eot] = await Promise.all([
+    fetchQMS('bi_prs.php'),
+    fetchQMS('bi_nfas.php'),
+    fetchQMS('bi_market_place.php'),
+    fetchQMS('bi_eot.php'),
+  ]);
+
+  // If still unauthorized — re-login and retry
+  if(!pr.length) {
+    await qmsLogin();
+    const [pr2, nfa2] = await Promise.all([fetchQMS('bi_prs.php'), fetchQMS('bi_nfas.php')]);
+    cache.pr  = pr2;
+    cache.nfa = nfa2;
+  } else {
+    cache.pr  = pr;
+    cache.nfa = nfa;
+  }
+  cache.market = market;
+  cache.eot    = eot;
+
+  // SAP SQL
+  const [sap_pr, sap_po] = await Promise.all([
+    fetchSAP('sap_pr'),
+    fetchSAP('sap_po'),
+  ]);
+  cache.sap_pr = sap_pr;
+  cache.sap_po = sap_po;
+
+  cache.lastFetch = new Date().toISOString();
+  console.log(`\n✅ All data fetched at ${cache.lastFetch}`);
+  console.log(`   QMS PR: ${cache.pr.length} | NFA: ${cache.nfa.length} | Market: ${cache.market.length} | EOT: ${cache.eot.length}`);
+  console.log(`   SAP PR: ${cache.sap_pr.length} | SAP PO: ${cache.sap_po.length}`);
+  console.log(`   ⏰ Next refresh in 30 minutes\n`);
+}
+
+// ── HTTP SERVER ───────────────────────────────────────────────────────────────
+const server = http.createServer(async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Content-Type', 'application/json');
-
-  if (req.method === 'OPTIONS') { res.end(); return; }
+  if(req.method==='OPTIONS'){res.end();return;}
 
   const { pathname } = url.parse(req.url);
 
   const routes = {
-    '/api/pr':     () => cache.pr,
-    '/api/nfa':    () => cache.nfa,
-    '/api/market': () => cache.market,
-    '/api/eot':    () => cache.eot,
-    '/api/status': () => ({
-      lastFetch: cache.lastFetch,
-      counts: { pr: cache.pr.length, nfa: cache.nfa.length, market: cache.market.length, eot: cache.eot.length }
+    '/api/pr':      ()=>cache.pr,
+    '/api/nfa':     ()=>cache.nfa,
+    '/api/market':  ()=>cache.market,
+    '/api/eot':     ()=>cache.eot,
+    '/api/sap_pr':  ()=>cache.sap_pr,
+    '/api/sap_po':  ()=>cache.sap_po,
+    '/api/all':     ()=>({
+      pr:cache.pr, nfa:cache.nfa, market:cache.market, eot:cache.eot,
+      sap_pr:cache.sap_pr, sap_po:cache.sap_po,
     }),
-    '/api/refresh': async () => { await fetchAll(); return { refreshed: true, lastFetch: cache.lastFetch }; },
+    '/api/status':  ()=>({
+      lastFetch: cache.lastFetch,
+      errors: cache.errors,
+      counts: {
+        pr:cache.pr.length, nfa:cache.nfa.length,
+        market:cache.market.length, eot:cache.eot.length,
+        sap_pr:cache.sap_pr.length, sap_po:cache.sap_po.length,
+      }
+    }),
+    '/api/refresh': async ()=>{ await fetchAll(); return {ok:true, lastFetch:cache.lastFetch}; },
   };
 
   const handler = routes[pathname];
-  if (handler) {
-    Promise.resolve(handler()).then(data => {
-      res.end(JSON.stringify({ status:'success', data, count: Array.isArray(data)?data.length:1 }));
-    });
+  if(handler) {
+    const data = await Promise.resolve(handler());
+    const arr  = Array.isArray(data)?data:null;
+    res.end(JSON.stringify({
+      status:'success', data,
+      count: arr?arr.length:undefined,
+      lastFetch: cache.lastFetch,
+    }));
   } else {
     res.writeHead(404);
-    res.end(JSON.stringify({ error: 'Not found. Use /api/pr /api/nfa /api/market /api/eot /api/status /api/refresh' }));
+    res.end(JSON.stringify({error:'Not found', routes: Object.keys(routes)}));
   }
 });
 
-// ── Start ─────────────────────────────────────────────────────────────────────
+// ── START ─────────────────────────────────────────────────────────────────────
 async function start() {
-  console.log('🚀 PRPO Local Data Server starting...');
-  console.log(`📡 Dashboard will fetch from: http://localhost:${PORT}/api/`);
+  console.log('');
+  console.log('╔══════════════════════════════════════════╗');
+  console.log('║       PRPO Live Data Server v1.0         ║');
+  console.log('║  QMS APIs + SAP SQL → localhost:3001     ║');
+  console.log('╚══════════════════════════════════════════╝');
+  console.log('');
 
-  try {
-    await login();
-    await fetchAll();
-  } catch(e) {
-    console.error('⚠️  Initial fetch failed:', e.message);
-    console.log('Will retry on first dashboard request...');
-  }
+  await fetchAll();
 
   server.listen(PORT, () => {
-    console.log(`\n✅ Server running at http://localhost:${PORT}`);
-    console.log(`   PR data:     http://localhost:${PORT}/api/pr`);
-    console.log(`   NFA data:    http://localhost:${PORT}/api/nfa`);
-    console.log(`   Market data: http://localhost:${PORT}/api/market`);
-    console.log(`   EOT data:    http://localhost:${PORT}/api/eot`);
-    console.log(`   Status:      http://localhost:${PORT}/api/status`);
-    console.log(`   Force refresh: http://localhost:${PORT}/api/refresh`);
-    console.log('\n🔄 Auto-refreshing every 30 minutes...\n');
+    console.log(`🚀 Server: http://localhost:${PORT}`);
+    console.log(`   /api/pr      → QMS Purchase Requests (${cache.pr.length} rows)`);
+    console.log(`   /api/nfa     → QMS NFAs (${cache.nfa.length} rows)`);
+    console.log(`   /api/market  → QMS Marketplace`);
+    console.log(`   /api/eot     → QMS EOT`);
+    console.log(`   /api/sap_pr  → SAP PRD_PR (${cache.sap_pr.length} rows)`);
+    console.log(`   /api/sap_po  → SAP PRD_PurchaseOrder (${cache.sap_po.length} rows)`);
+    console.log(`   /api/status  → Connection status`);
+    console.log(`   /api/refresh → Force refresh now`);
+    console.log('');
+    console.log('📌 Keep this window open. Dashboard reads from here.');
+    console.log('🔄 Auto-refreshing every 30 minutes...');
   });
 
-  // Auto-refresh every 30 minutes
+  // Auto refresh every 30 min
   setInterval(fetchAll, 30 * 60 * 1000);
 }
 
-start();
+start().catch(console.error);
