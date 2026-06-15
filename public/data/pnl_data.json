@@ -1,503 +1,644 @@
 {
   "kpi": {
     "totalRevenue": 1730.56,
-    "totalActual": 50.0,
-    "pnl": 1680.56
+    "totalActual": 397.32,
+    "pnl": 1333.24
   },
   "projectExpense": [
     {
+      "SubCat": "Other",
+      "Actual": 0.54,
+      "Commitment": 1112.38
+    },
+    {
       "SubCat": "Civil & Structure",
-      "Actual": 44.97,
-      "Commitment": 24.27
-    },
-    {
-      "SubCat": "Consultancy",
-      "Actual": 0.47,
-      "Commitment": 1.07
-    },
-    {
-      "SubCat": "External Development",
-      "Actual": 0.42,
-      "Commitment": 0.1
-    },
-    {
-      "SubCat": "Fa\u00e7ade",
-      "Actual": 0.04,
-      "Commitment": 0.03
+      "Actual": 326.84,
+      "Commitment": 732.87
     },
     {
       "SubCat": "Finishing",
-      "Actual": 0.0,
-      "Commitment": 2.85
+      "Actual": 0.89,
+      "Commitment": 188.11
     },
     {
       "SubCat": "MEP",
-      "Actual": 0.0,
-      "Commitment": 0.21
+      "Actual": 1.83,
+      "Commitment": 131.99
+    },
+    {
+      "SubCat": "Sales & Marketing",
+      "Actual": 21.85,
+      "Commitment": 22.75
+    },
+    {
+      "SubCat": "Consultancy",
+      "Actual": 11.0,
+      "Commitment": 21.64
+    },
+    {
+      "SubCat": "Site Infrastructure",
+      "Actual": 12.45,
+      "Commitment": 12.99
     }
   ],
   "nonProjectExpense": [
     {
+      "SubCat": "Other",
+      "Actual": 0.02,
+      "Commitment": 31.66
+    },
+    {
       "SubCat": "OH & Admin",
-      "Actual": 0.2,
-      "Commitment": 1.11
+      "Actual": 10.97,
+      "Commitment": 15.77
     },
     {
       "SubCat": "Sales & Marketing",
-      "Actual": 3.89,
-      "Commitment": 3.03
+      "Actual": 10.75,
+      "Commitment": 15.33
+    },
+    {
+      "SubCat": "Consultancy",
+      "Actual": 0.2,
+      "Commitment": 0.53
     }
   ],
   "monthlyData": [
     {
+      "month": "2023-02",
+      "label": "Feb'23",
+      "revenue": 0,
+      "expense": 4.31,
+      "pnl": -4.31
+    },
+    {
+      "month": "2023-03",
+      "label": "Mar'23",
+      "revenue": 0,
+      "expense": 1.28,
+      "pnl": -1.28
+    },
+    {
+      "month": "2023-04",
+      "label": "Apr'23",
+      "revenue": 0,
+      "expense": 3.36,
+      "pnl": -3.36
+    },
+    {
+      "month": "2023-05",
+      "label": "May'23",
+      "revenue": 0,
+      "expense": 7.94,
+      "pnl": -7.94
+    },
+    {
+      "month": "2023-06",
+      "label": "Jun'23",
+      "revenue": 0,
+      "expense": 1.45,
+      "pnl": -1.45
+    },
+    {
+      "month": "2023-07",
+      "label": "Jul'23",
+      "revenue": 0,
+      "expense": 3.31,
+      "pnl": -3.31
+    },
+    {
+      "month": "2023-08",
+      "label": "Aug'23",
+      "revenue": 0,
+      "expense": 15.67,
+      "pnl": -15.67
+    },
+    {
+      "month": "2023-09",
+      "label": "Sep'23",
+      "revenue": 0,
+      "expense": 0.33,
+      "pnl": -0.33
+    },
+    {
+      "month": "2023-10",
+      "label": "Oct'23",
+      "revenue": 0,
+      "expense": 0.3,
+      "pnl": -0.3
+    },
+    {
       "month": "2023-11",
       "label": "Nov'23",
       "revenue": 146.45,
-      "expense": 0,
-      "pnl": 146.45
+      "expense": 6.81,
+      "pnl": 139.64
     },
     {
       "month": "2023-12",
       "label": "Dec'23",
       "revenue": 121.86,
-      "expense": 0,
-      "pnl": 121.86
+      "expense": 4.33,
+      "pnl": 117.53
     },
     {
       "month": "2024-01",
       "label": "Jan'24",
       "revenue": 162.45,
-      "expense": 0,
-      "pnl": 162.45
+      "expense": 5.22,
+      "pnl": 157.23
     },
     {
       "month": "2024-02",
       "label": "Feb'24",
       "revenue": 257.9,
-      "expense": 0,
-      "pnl": 257.9
+      "expense": 6.03,
+      "pnl": 251.87
     },
     {
       "month": "2024-03",
       "label": "Mar'24",
       "revenue": 160.71,
-      "expense": 0,
-      "pnl": 160.71
+      "expense": 5.44,
+      "pnl": 155.27
     },
     {
       "month": "2024-04",
       "label": "Apr'24",
       "revenue": 117.71,
-      "expense": 0,
-      "pnl": 117.71
+      "expense": 4.61,
+      "pnl": 113.1
     },
     {
       "month": "2024-05",
       "label": "May'24",
       "revenue": 91.81,
-      "expense": 0,
-      "pnl": 91.81
+      "expense": 3.5,
+      "pnl": 88.31
     },
     {
       "month": "2024-06",
       "label": "Jun'24",
       "revenue": 50.27,
-      "expense": 0,
-      "pnl": 50.27
+      "expense": 2.69,
+      "pnl": 47.58
     },
     {
       "month": "2024-07",
       "label": "Jul'24",
       "revenue": 24.01,
-      "expense": 0,
-      "pnl": 24.01
+      "expense": 191.62,
+      "pnl": -167.61
     },
     {
       "month": "2024-08",
       "label": "Aug'24",
       "revenue": 11.2,
-      "expense": 0,
-      "pnl": 11.2
+      "expense": 10.49,
+      "pnl": 0.71
     },
     {
       "month": "2024-09",
       "label": "Sep'24",
       "revenue": 8.15,
-      "expense": 0,
-      "pnl": 8.15
+      "expense": 3.76,
+      "pnl": 4.39
     },
     {
       "month": "2024-10",
       "label": "Oct'24",
       "revenue": 9.52,
-      "expense": 0,
-      "pnl": 9.52
+      "expense": 10.69,
+      "pnl": -1.17
     },
     {
       "month": "2024-11",
       "label": "Nov'24",
       "revenue": 12.1,
-      "expense": 0,
-      "pnl": 12.1
+      "expense": 13.66,
+      "pnl": -1.56
     },
     {
       "month": "2024-12",
       "label": "Dec'24",
       "revenue": 16.93,
-      "expense": 0,
-      "pnl": 16.93
+      "expense": 0.98,
+      "pnl": 15.95
     },
     {
       "month": "2025-01",
       "label": "Jan'25",
       "revenue": 14.11,
-      "expense": 0,
-      "pnl": 14.11
+      "expense": 1.44,
+      "pnl": 12.67
     },
     {
       "month": "2025-02",
       "label": "Feb'25",
       "revenue": 35.64,
-      "expense": 0,
-      "pnl": 35.64
+      "expense": 3.2,
+      "pnl": 32.44
     },
     {
       "month": "2025-03",
       "label": "Mar'25",
       "revenue": 47.31,
-      "expense": 4.98,
-      "pnl": 42.33
+      "expense": 4.97,
+      "pnl": 42.34
     },
     {
       "month": "2025-04",
       "label": "Apr'25",
       "revenue": 52.84,
-      "expense": 4.85,
-      "pnl": 47.99
+      "expense": 5.66,
+      "pnl": 47.18
     },
     {
       "month": "2025-05",
       "label": "May'25",
       "revenue": 29.05,
-      "expense": 4.92,
-      "pnl": 24.13
+      "expense": 6.88,
+      "pnl": 22.17
     },
     {
       "month": "2025-06",
       "label": "Jun'25",
       "revenue": 27.68,
-      "expense": 4.41,
-      "pnl": 23.27
+      "expense": 11.1,
+      "pnl": 16.58
     },
     {
       "month": "2025-07",
       "label": "Jul'25",
       "revenue": 28.21,
-      "expense": 1.91,
-      "pnl": 26.3
+      "expense": 2.03,
+      "pnl": 26.18
     },
     {
       "month": "2025-08",
       "label": "Aug'25",
       "revenue": 27.7,
-      "expense": 6.36,
-      "pnl": 21.34
+      "expense": 6.84,
+      "pnl": 20.86
     },
     {
       "month": "2025-09",
       "label": "Sep'25",
       "revenue": 41.07,
-      "expense": 4.15,
-      "pnl": 36.92
+      "expense": 4.13,
+      "pnl": 36.94
     },
     {
       "month": "2025-10",
       "label": "Oct'25",
       "revenue": 33.47,
-      "expense": 3.9,
-      "pnl": 29.57
+      "expense": 3.71,
+      "pnl": 29.76
     },
     {
       "month": "2025-11",
       "label": "Nov'25",
       "revenue": 25.73,
-      "expense": 5.15,
-      "pnl": 20.58
+      "expense": 4.72,
+      "pnl": 21.01
     },
     {
       "month": "2025-12",
       "label": "Dec'25",
       "revenue": 29.1,
-      "expense": 3.51,
-      "pnl": 25.59
+      "expense": 3.91,
+      "pnl": 25.19
     },
     {
       "month": "2026-01",
       "label": "Jan'26",
       "revenue": 42.91,
-      "expense": 3.6,
-      "pnl": 39.31
+      "expense": 5.17,
+      "pnl": 37.74
     },
     {
       "month": "2026-02",
       "label": "Feb'26",
       "revenue": 25.72,
-      "expense": 2.02,
-      "pnl": 23.7
+      "expense": 10.76,
+      "pnl": 14.96
     },
     {
       "month": "2026-03",
       "label": "Mar'26",
       "revenue": 25.44,
-      "expense": 0.24,
-      "pnl": 25.2
+      "expense": 7.49,
+      "pnl": 17.95
     },
     {
       "month": "2026-04",
       "label": "Apr'26",
       "revenue": 25.8,
-      "expense": 0,
-      "pnl": 25.8
+      "expense": 5.35,
+      "pnl": 20.45
     },
     {
       "month": "2026-05",
       "label": "May'26",
       "revenue": 18.06,
-      "expense": 0,
-      "pnl": 18.06
+      "expense": 2.16,
+      "pnl": 15.9
     },
     {
       "month": "2026-06",
       "label": "Jun'26",
       "revenue": 9.65,
-      "expense": 0,
-      "pnl": 9.65
+      "expense": 0.02,
+      "pnl": 9.63
     }
   ],
   "monthlyCollection": [
     {
+      "month": "2023-02",
+      "label": "Feb'23",
+      "revenue": 0,
+      "expense": 4.31,
+      "pnl": -4.31
+    },
+    {
+      "month": "2023-03",
+      "label": "Mar'23",
+      "revenue": 0,
+      "expense": 1.28,
+      "pnl": -1.28
+    },
+    {
+      "month": "2023-04",
+      "label": "Apr'23",
+      "revenue": 0,
+      "expense": 3.36,
+      "pnl": -3.36
+    },
+    {
+      "month": "2023-05",
+      "label": "May'23",
+      "revenue": 0,
+      "expense": 7.94,
+      "pnl": -7.94
+    },
+    {
+      "month": "2023-06",
+      "label": "Jun'23",
+      "revenue": 0,
+      "expense": 1.45,
+      "pnl": -1.45
+    },
+    {
+      "month": "2023-07",
+      "label": "Jul'23",
+      "revenue": 0,
+      "expense": 3.31,
+      "pnl": -3.31
+    },
+    {
+      "month": "2023-08",
+      "label": "Aug'23",
+      "revenue": 0,
+      "expense": 15.67,
+      "pnl": -15.67
+    },
+    {
+      "month": "2023-09",
+      "label": "Sep'23",
+      "revenue": 0,
+      "expense": 0.33,
+      "pnl": -0.33
+    },
+    {
+      "month": "2023-10",
+      "label": "Oct'23",
+      "revenue": 0,
+      "expense": 0.3,
+      "pnl": -0.3
+    },
+    {
       "month": "2023-11",
       "label": "Nov'23",
       "revenue": 146.45,
-      "expense": 0,
-      "pnl": 146.45
+      "expense": 6.81,
+      "pnl": 139.64
     },
     {
       "month": "2023-12",
       "label": "Dec'23",
       "revenue": 121.86,
-      "expense": 0,
-      "pnl": 121.86
+      "expense": 4.33,
+      "pnl": 117.53
     },
     {
       "month": "2024-01",
       "label": "Jan'24",
       "revenue": 162.45,
-      "expense": 0,
-      "pnl": 162.45
+      "expense": 5.22,
+      "pnl": 157.23
     },
     {
       "month": "2024-02",
       "label": "Feb'24",
       "revenue": 257.9,
-      "expense": 0,
-      "pnl": 257.9
+      "expense": 6.03,
+      "pnl": 251.87
     },
     {
       "month": "2024-03",
       "label": "Mar'24",
       "revenue": 160.71,
-      "expense": 0,
-      "pnl": 160.71
+      "expense": 5.44,
+      "pnl": 155.27
     },
     {
       "month": "2024-04",
       "label": "Apr'24",
       "revenue": 117.71,
-      "expense": 0,
-      "pnl": 117.71
+      "expense": 4.61,
+      "pnl": 113.1
     },
     {
       "month": "2024-05",
       "label": "May'24",
       "revenue": 91.81,
-      "expense": 0,
-      "pnl": 91.81
+      "expense": 3.5,
+      "pnl": 88.31
     },
     {
       "month": "2024-06",
       "label": "Jun'24",
       "revenue": 50.27,
-      "expense": 0,
-      "pnl": 50.27
+      "expense": 2.69,
+      "pnl": 47.58
     },
     {
       "month": "2024-07",
       "label": "Jul'24",
       "revenue": 24.01,
-      "expense": 0,
-      "pnl": 24.01
+      "expense": 191.62,
+      "pnl": -167.61
     },
     {
       "month": "2024-08",
       "label": "Aug'24",
       "revenue": 11.2,
-      "expense": 0,
-      "pnl": 11.2
+      "expense": 10.49,
+      "pnl": 0.71
     },
     {
       "month": "2024-09",
       "label": "Sep'24",
       "revenue": 8.15,
-      "expense": 0,
-      "pnl": 8.15
+      "expense": 3.76,
+      "pnl": 4.39
     },
     {
       "month": "2024-10",
       "label": "Oct'24",
       "revenue": 9.52,
-      "expense": 0,
-      "pnl": 9.52
+      "expense": 10.69,
+      "pnl": -1.17
     },
     {
       "month": "2024-11",
       "label": "Nov'24",
       "revenue": 12.1,
-      "expense": 0,
-      "pnl": 12.1
+      "expense": 13.66,
+      "pnl": -1.56
     },
     {
       "month": "2024-12",
       "label": "Dec'24",
       "revenue": 16.93,
-      "expense": 0,
-      "pnl": 16.93
+      "expense": 0.98,
+      "pnl": 15.95
     },
     {
       "month": "2025-01",
       "label": "Jan'25",
       "revenue": 14.11,
-      "expense": 0,
-      "pnl": 14.11
+      "expense": 1.44,
+      "pnl": 12.67
     },
     {
       "month": "2025-02",
       "label": "Feb'25",
       "revenue": 35.64,
-      "expense": 0,
-      "pnl": 35.64
+      "expense": 3.2,
+      "pnl": 32.44
     },
     {
       "month": "2025-03",
       "label": "Mar'25",
       "revenue": 47.31,
-      "expense": 4.98,
-      "pnl": 42.33
+      "expense": 4.97,
+      "pnl": 42.34
     },
     {
       "month": "2025-04",
       "label": "Apr'25",
       "revenue": 52.84,
-      "expense": 4.85,
-      "pnl": 47.99
+      "expense": 5.66,
+      "pnl": 47.18
     },
     {
       "month": "2025-05",
       "label": "May'25",
       "revenue": 29.05,
-      "expense": 4.92,
-      "pnl": 24.13
+      "expense": 6.88,
+      "pnl": 22.17
     },
     {
       "month": "2025-06",
       "label": "Jun'25",
       "revenue": 27.68,
-      "expense": 4.41,
-      "pnl": 23.27
+      "expense": 11.1,
+      "pnl": 16.58
     },
     {
       "month": "2025-07",
       "label": "Jul'25",
       "revenue": 28.21,
-      "expense": 1.91,
-      "pnl": 26.3
+      "expense": 2.03,
+      "pnl": 26.18
     },
     {
       "month": "2025-08",
       "label": "Aug'25",
       "revenue": 27.7,
-      "expense": 6.36,
-      "pnl": 21.34
+      "expense": 6.84,
+      "pnl": 20.86
     },
     {
       "month": "2025-09",
       "label": "Sep'25",
       "revenue": 41.07,
-      "expense": 4.15,
-      "pnl": 36.92
+      "expense": 4.13,
+      "pnl": 36.94
     },
     {
       "month": "2025-10",
       "label": "Oct'25",
       "revenue": 33.47,
-      "expense": 3.9,
-      "pnl": 29.57
+      "expense": 3.71,
+      "pnl": 29.76
     },
     {
       "month": "2025-11",
       "label": "Nov'25",
       "revenue": 25.73,
-      "expense": 5.15,
-      "pnl": 20.58
+      "expense": 4.72,
+      "pnl": 21.01
     },
     {
       "month": "2025-12",
       "label": "Dec'25",
       "revenue": 29.1,
-      "expense": 3.51,
-      "pnl": 25.59
+      "expense": 3.91,
+      "pnl": 25.19
     },
     {
       "month": "2026-01",
       "label": "Jan'26",
       "revenue": 42.91,
-      "expense": 3.6,
-      "pnl": 39.31
+      "expense": 5.17,
+      "pnl": 37.74
     },
     {
       "month": "2026-02",
       "label": "Feb'26",
       "revenue": 25.72,
-      "expense": 2.02,
-      "pnl": 23.7
+      "expense": 10.76,
+      "pnl": 14.96
     },
     {
       "month": "2026-03",
       "label": "Mar'26",
       "revenue": 25.44,
-      "expense": 0.24,
-      "pnl": 25.2
+      "expense": 7.49,
+      "pnl": 17.95
     },
     {
       "month": "2026-04",
       "label": "Apr'26",
       "revenue": 25.8,
-      "expense": 0,
-      "pnl": 25.8
+      "expense": 5.35,
+      "pnl": 20.45
     },
     {
       "month": "2026-05",
       "label": "May'26",
       "revenue": 18.06,
-      "expense": 0,
-      "pnl": 18.06
+      "expense": 2.16,
+      "pnl": 15.9
     },
     {
       "month": "2026-06",
       "label": "Jun'26",
       "revenue": 9.65,
-      "expense": 0,
-      "pnl": 9.65
+      "expense": 0.02,
+      "pnl": 9.63
     }
   ]
 }
