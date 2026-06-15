@@ -545,7 +545,7 @@ const PnLChart = ({md}) => {
       data:{labels,datasets:[
         {type:'bar',label:'Revenue',data:revData,backgroundColor:'rgba(0,151,167,0.85)',borderRadius:4,borderSkipped:false,order:2},
         {type:'bar',label:'Expense',data:expData,backgroundColor:'rgba(239,68,68,0.8)',borderRadius:4,borderSkipped:false,order:2},
-        {type:'line',label:'Profit/Loss',data:pnlData,borderColor:'#f59e0b',borderWidth:3,borderDash:[8,4],
+        {type:'line',label:'Surplus / Deficit',data:pnlData,borderColor:'#f59e0b',borderWidth:3,borderDash:[8,4],
           pointBackgroundColor:pnlData.map(v=>v>=0?'#10b981':'#ef4444'),
           pointRadius:6,pointHoverRadius:8,pointBorderColor:'#fff',pointBorderWidth:2,
           fill:false,tension:0.3,order:1},
@@ -559,7 +559,7 @@ const PnLChart = ({md}) => {
             backgroundColor:'rgba(255,255,255,0.97)',titleColor:'#0d2137',bodyColor:'#334155',
             borderColor:'rgba(0,151,167,0.3)',borderWidth:1,padding:12,
             titleFont:{size:13,weight:'bold'},bodyFont:{size:12},
-            callbacks:{label:ctx=>{const v=ctx.raw;const sign=ctx.dataset.label==='Profit/Loss'?(v>=0?'▲ ':'▼ '):'';return ` ${ctx.dataset.label}: ${sign}₹${Math.abs(v).toFixed(2)} Cr`;}}
+            callbacks:{label:ctx=>{const v=ctx.raw;const sign=ctx.dataset.label==='Surplus / Deficit'?(v>=0?'▲ ':'▼ '):'';return ` ${ctx.dataset.label}: ${sign}₹${Math.abs(v).toFixed(2)} Cr`;}}
           }
         },
         scales:{
@@ -569,7 +569,7 @@ const PnLChart = ({md}) => {
       }
     });
   },[md]);
-  return <div style={{position:'relative',height:320}}><canvas ref={canvasRef} role="img" aria-label="Revenue vs Expense vs Profit/Loss chart"/></div>;
+  return <div style={{position:'relative',height:320}}><canvas ref={canvasRef} role="img" aria-label="Revenue vs Expense vs Surplus / Deficit chart"/></div>;
 };
 
 const PnLTab = ({T, GC, SH, filters, sf}) => {
@@ -660,7 +660,7 @@ const PnLTab = ({T, GC, SH, filters, sf}) => {
         <div style={{position:'relative',overflow:'hidden',background:'rgba(255,255,255,0.92)',backdropFilter:'blur(12px)',borderRadius:14,padding:'16px 18px',boxShadow:'0 2px 16px rgba(0,80,120,0.08)',border:`2px solid ${pnl>=0?'#10b981':'#ef4444'}`}}>
           <div style={{position:'absolute',top:0,left:0,right:0,height:4,background:pnl>=0?'linear-gradient(90deg,#10b981,#34d399)':'linear-gradient(90deg,#ef4444,#f87171)',borderRadius:'14px 14px 0 0'}}/>
           <div style={{position:'absolute',right:12,top:12,fontSize:32,opacity:0.12}}>{pnl>=0?'📈':'📉'}</div>
-          <p style={{fontSize:9,fontWeight:800,color:'#94a3b8',textTransform:'uppercase',letterSpacing:.7,margin:'4px 0 6px'}}>Profit / Loss</p>
+          <p style={{fontSize:9,fontWeight:800,color:'#94a3b8',textTransform:'uppercase',letterSpacing:.7,margin:'4px 0 6px'}}>Surplus / Deficit</p>
           <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
             <span style={{fontSize:22,fontWeight:900,color:pnl>=0?'#065f46':'#991b1b',lineHeight:1}}>{pnl>=0?'▲':'▼'} ₹{Math.abs(pnl).toLocaleString('en-IN',{maximumFractionDigits:1})} Cr</span>
           </div>
@@ -753,11 +753,11 @@ const PnLTab = ({T, GC, SH, filters, sf}) => {
       <GC style={{padding:20,marginBottom:16}}>
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:12,flexWrap:'wrap',gap:8}}>
           <div>
-            <p style={{fontSize:12,fontWeight:800,color:T.tealD,letterSpacing:.4,margin:0,textTransform:'uppercase'}}>Revenue vs Expense vs Profit / Loss</p>
+            <p style={{fontSize:12,fontWeight:800,color:T.tealD,letterSpacing:.4,margin:0,textTransform:'uppercase'}}>Revenue vs Expense vs Surplus / Deficit</p>
             <p style={{fontSize:10,color:T.gray,margin:'2px 0 0'}}>Monthly comparison · ₹ Cr · Mar 2025 onwards</p>
           </div>
           <div style={{display:'flex',gap:16}}>
-            {[['#0097a7','Revenue',''],['#ef4444','Expense',''],['#f59e0b','Profit/Loss','- -']].map(([col,lbl,dash])=>(
+            {[['#0097a7','Revenue',''],['#ef4444','Expense',''],['#f59e0b','Surplus / Deficit','- -']].map(([col,lbl,dash])=>(
               <div key={lbl} style={{display:'flex',alignItems:'center',gap:5,fontSize:11,color:T.textM}}>
                 {dash?<svg width="22" height="3"><line x1="0" y1="1.5" x2="22" y2="1.5" stroke={col} strokeWidth="2.5" strokeDasharray="6 3"/></svg>:<div style={{width:12,height:12,borderRadius:2,background:col}}/>}
                 <span style={{fontWeight:600}}>{lbl}</span>
