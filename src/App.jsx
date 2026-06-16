@@ -531,6 +531,7 @@ class AppErrorBoundary extends React.Component {
 const CollectionsTab = ({T, GC, SH}) => {
   const [dk, setDk] = React.useState(null);
   const [planType, setPlanType] = React.useState('all');
+  const [showNote, setShowNote] = React.useState(false);
 
   React.useEffect(()=>{
     fetch('/data/dapp_kpi.json').then(r=>r.json()).then(setDk).catch(()=>{});
@@ -580,13 +581,21 @@ const CollectionsTab = ({T, GC, SH}) => {
       <span style={{marginLeft:'auto',fontSize:9,color:T.textL,fontStyle:'italic'}}>Amounts shown W/O GST except where noted</span>
     </div>
 
-    {/* ADVANCE NOTE */}
+    {/* ADVANCE NOTE — compact pill with hover tooltip */}
     {advRaw>0&&(
-      <div style={{background:'rgba(245,158,11,0.06)',border:'1px solid rgba(245,158,11,0.25)',borderRadius:10,padding:'10px 14px',display:'flex',gap:10,alignItems:'flex-start'}}>
-        <span style={{fontSize:16}}>⚠️</span>
-        <div>
-          <p style={{fontSize:10,fontWeight:800,color:'#92400e',margin:'0 0 3px',textTransform:'uppercase',letterSpacing:0.5}}>Advance Money Note</p>
-          <p style={{fontSize:9,color:'#78350f',margin:0,lineHeight:1.5}}>{dk.advanceNote}</p>
+      <div style={{display:'flex',alignItems:'center',gap:8}}>
+        <div style={{position:'relative',display:'inline-flex',alignItems:'center',gap:6,background:'rgba(245,158,11,0.1)',border:'1px solid rgba(245,158,11,0.3)',borderRadius:20,padding:'4px 12px',cursor:'pointer'}}
+          onMouseEnter={()=>setShowNote(true)} onMouseLeave={()=>setShowNote(false)}>
+          <span style={{fontSize:12}}>⚠️</span>
+          <span style={{fontSize:9,fontWeight:800,color:'#92400e',letterSpacing:0.4}}>
+            Advance: ₹{advRaw.toFixed(1)} Cr received · GST −₹{advGst.toFixed(2)} Cr · Net ₹{advNet.toFixed(1)} Cr
+          </span>
+          <span style={{fontSize:8,color:'#b45309',borderLeft:'1px solid rgba(180,87,9,0.3)',paddingLeft:8,opacity:0.7}}>hover for details</span>
+          {showNote&&(
+            <div style={{position:'absolute',top:'calc(100% + 8px)',left:0,zIndex:99,background:'#fff',border:'1px solid rgba(245,158,11,0.3)',borderRadius:10,padding:'10px 14px',boxShadow:'0 8px 24px rgba(0,0,0,0.12)',width:440,pointerEvents:'none'}}>
+              <p style={{fontSize:9,color:'#78350f',margin:0,lineHeight:1.6}}>{dk.advanceNote}</p>
+            </div>
+          )}
         </div>
       </div>
     )}
