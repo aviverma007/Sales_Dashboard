@@ -651,7 +651,9 @@ const CollectionsTab = ({T, GC, SH}) => {
               <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} tickFormatter={v=>'₹'+v+'Cr'} width={48}/>
               <Tooltip formatter={(v,n)=>[`₹${v} Cr`,n]} labelFormatter={l=>{const m=milestones.find(x=>x.name===l);return `${l}${m?.expectedDate?' ('+m.expectedDate+')':''}`;}}/>
               <Legend wrapperStyle={{fontSize:9,fontWeight:700}} iconSize={8}/>
-              <Bar dataKey="totalCr" name={planType==='clp'?'CLP Amount':'TLP Amount'} fill={planType==='clp'?T.teal:T.amber} radius={[4,4,0,0]} maxBarSize={40}/>
+              <Bar dataKey="totalCr" name={planType==='clp'?'CLP Amount':'TLP Amount'} fill={planType==='clp'?T.teal:T.amber} radius={[4,4,0,0]} maxBarSize={40}>
+                <LabelList dataKey="totalCr" position="top" style={{fill:T.textD,fontSize:8,fontWeight:800}} formatter={v=>v>0?`₹${v>=100?v.toFixed(0):v.toFixed(1)}Cr`:''}/>
+              </Bar>
             </ComposedChart>
           </ResponsiveContainer>
         </div>
