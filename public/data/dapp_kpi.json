@@ -1,1225 +1,643 @@
 {
-  "totalUnits": 956,
-  "bookedUnits": 613,
-  "availUnits": 284,
-  "soldPct": 64,
-  "bookedSuperArea": 1997660,
-  "availSuperArea": 928125,
-  "totalSuperArea": 3130690,
-  "bookedCarpetArea": 1065877,
-  "bookedTCV": 35987445579.0,
-  "unsoldValue": 16719986348.03,
-  "totalProjectValue": 52707431927.03,
-  "avgRatePerSqft": 18014.8,
-  "soldPctValue": 68,
-  "totalDemandRaised": 10578447922.0,
-  "totalReceived": 12304880663.0,
-  "outstanding1": 116824443.0,
-  "installmentTotal": 35987445625.0,
-  "upcoming": 23682564962.0,
-  "advanceInReceived": 1726432741.0,
-  "stillOutstanding": 116824443.0,
-  "totalTax": 503228488.0,
-  "collEff": 116,
-  "collPctInstallment": 34,
-  "unitsOutstanding": 145,
-  "activeBookings": 611,
-  "cancelledBookings": 72,
-  "upcomingByMilestone": [
-    {
-      "name": "Completion - 40th Floor Slab",
-      "amtCr": 911.18
+  "kpi": {
+    "all": {
+      "totalInstallment": 1154.85,
+      "totalReceived": 1403.73,
+      "totalOutstanding": 33.79,
+      "totalDemandWoTax": 1154.85,
+      "advanceAmt": 226.57,
+      "advanceNet": 215.78
     },
-    {
-      "name": "Occupation Certificate",
-      "amtCr": 759.41
+    "tlp": {
+      "totalInstallment": 1096.09,
+      "totalReceived": 1293.99,
+      "totalOutstanding": 20.69,
+      "totalDemandWoTax": 1096.09,
+      "advanceAmt": 167.03,
+      "advanceNet": 159.07
     },
-    {
-      "name": "Offer of Possession",
-      "amtCr": 381.52
-    },
-    {
-      "name": "Other",
-      "amtCr": 193.58
-    },
-    {
-      "name": "Start of Finishing Work",
-      "amtCr": 166.27
-    },
-    {
-      "name": "On Allotment",
-      "amtCr": 42.75
-    },
-    {
-      "name": "Completion - 32nd Floor Slab",
-      "amtCr": 34.92
-    },
-    {
-      "name": "Completion - Top Floor",
-      "amtCr": 23.7
-    },
-    {
-      "name": "Completion - 15th Floor",
-      "amtCr": 15.88
-    },
-    {
-      "name": "Completion - Tower Structure",
-      "amtCr": 13.75
-    },
-    {
-      "name": "Booking Amount",
-      "amtCr": 11.87
-    },
-    {
-      "name": "Completion - Super Structure",
-      "amtCr": 8.36
+    "clp": {
+      "totalInstallment": 58.76,
+      "totalReceived": 109.74,
+      "totalOutstanding": 13.1,
+      "totalDemandWoTax": 58.76,
+      "advanceAmt": 59.54,
+      "advanceNet": 56.71
     }
-  ],
-  "upcomingByTower": [
-    {
-      "name": "T-1",
-      "amtCr": 515.62
+  },
+  "gstRate": 0.05,
+  "advanceNote": "\u26a0\ufe0f Advance Money Note: \u20b9226.6 Cr was received from customers before any SAP demand/invoice was generated. Since no tax invoice exists for these receipts, GST @5% has been back-calculated and deducted (\u20b910.79 Cr) to arrive at the net base amount of \u20b9215.78 Cr. This ensures amounts shown are comparable to other demand figures which are W/O Tax.",
+  "advance": {
+    "all": {
+      "rawCr": 226.57,
+      "netCr": 215.78,
+      "gstCr": 10.79
     },
-    {
-      "name": "T-4",
-      "amtCr": 480.21
+    "tlp": {
+      "rawCr": 167.03,
+      "netCr": 159.07,
+      "gstCr": 7.95
     },
-    {
-      "name": "T-6",
-      "amtCr": 469.0
-    },
-    {
-      "name": "T-2",
-      "amtCr": 468.06
-    },
-    {
-      "name": "T-3",
-      "amtCr": 439.29
-    },
-    {
-      "name": "T-5",
-      "amtCr": 191.02
+    "clp": {
+      "rawCr": 59.54,
+      "netCr": 56.71,
+      "gstCr": 2.84
     }
-  ],
-  "upcomingByMonth": [
-    {
-      "month": "2023-11",
-      "label": "Nov'23",
-      "amtCr": 7.87
-    },
-    {
-      "month": "2023-12",
-      "label": "Dec'23",
-      "amtCr": 20.49
-    },
-    {
-      "month": "2024-01",
-      "label": "Jan'24",
-      "amtCr": 2.86
-    },
-    {
-      "month": "2024-02",
-      "label": "Feb'24",
-      "amtCr": 7.37
-    },
-    {
-      "month": "2024-03",
-      "label": "Mar'24",
-      "amtCr": 6.02
-    },
-    {
-      "month": "2024-04",
-      "label": "Apr'24",
-      "amtCr": 5.14
-    },
-    {
-      "month": "2024-05",
-      "label": "May'24",
-      "amtCr": 1.93
-    },
-    {
-      "month": "2024-06",
-      "label": "Jun'24",
-      "amtCr": 0.1
-    },
-    {
-      "month": "2024-07",
-      "label": "Jul'24",
-      "amtCr": 2.5
-    },
-    {
-      "month": "2024-08",
-      "label": "Aug'24",
-      "amtCr": 0.37
-    },
-    {
-      "month": "2024-09",
-      "label": "Sep'24",
-      "amtCr": 1.43
-    },
-    {
-      "month": "2024-11",
-      "label": "Nov'24",
-      "amtCr": 0.57
-    },
-    {
-      "month": "2024-12",
-      "label": "Dec'24",
-      "amtCr": 1107.6
-    },
-    {
-      "month": "2025-01",
-      "label": "Jan'25",
-      "amtCr": 17.22
-    },
-    {
-      "month": "2025-02",
-      "label": "Feb'25",
-      "amtCr": 1.78
-    },
-    {
-      "month": "2025-03",
-      "label": "Mar'25",
-      "amtCr": 0.27
-    },
-    {
-      "month": "2025-04",
-      "label": "Apr'25",
-      "amtCr": 1.61
-    },
-    {
-      "month": "2025-05",
-      "label": "May'25",
-      "amtCr": 0.38
-    },
-    {
-      "month": "2025-06",
-      "label": "Jun'25",
-      "amtCr": 7.3
-    },
-    {
-      "month": "2025-07",
-      "label": "Jul'25",
-      "amtCr": 4.02
-    },
-    {
-      "month": "2025-08",
-      "label": "Aug'25",
-      "amtCr": 11.94
-    },
-    {
-      "month": "2025-09",
-      "label": "Sep'25",
-      "amtCr": 29.91
-    },
-    {
-      "month": "2025-10",
-      "label": "Oct'25",
-      "amtCr": 24.81
-    },
-    {
-      "month": "2025-11",
-      "label": "Nov'25",
-      "amtCr": 46.34
-    },
-    {
-      "month": "2025-12",
-      "label": "Dec'25",
-      "amtCr": 185.64
-    },
-    {
-      "month": "2026-01",
-      "label": "Jan'26",
-      "amtCr": 6.91
-    },
-    {
-      "month": "2026-02",
-      "label": "Feb'26",
-      "amtCr": 20.85
-    },
-    {
-      "month": "2026-03",
-      "label": "Mar'26",
-      "amtCr": 11.51
-    },
-    {
-      "month": "2026-04",
-      "label": "Apr'26",
-      "amtCr": 21.41
-    },
-    {
-      "month": "2026-05",
-      "label": "May'26",
-      "amtCr": 2.49
-    },
-    {
-      "month": "2026-06",
-      "label": "Jun'26",
-      "amtCr": 12.95
-    },
-    {
-      "month": "2026-07",
-      "label": "Jul'26",
-      "amtCr": 7.24
-    },
-    {
-      "month": "2026-08",
-      "label": "Aug'26",
-      "amtCr": 1.99
-    },
-    {
-      "month": "2026-09",
-      "label": "Sep'26",
-      "amtCr": 1.94
-    },
-    {
-      "month": "2026-11",
-      "label": "Nov'26",
-      "amtCr": 4.65
-    },
-    {
-      "month": "2026-12",
-      "label": "Dec'26",
-      "amtCr": 257.46
-    },
-    {
-      "month": "2027-01",
-      "label": "Jan'27",
-      "amtCr": 0.11
-    },
-    {
-      "month": "2027-02",
-      "label": "Feb'27",
-      "amtCr": 1.05
-    },
-    {
-      "month": "2027-03",
-      "label": "Mar'27",
-      "amtCr": 31.59
-    },
-    {
-      "month": "2027-04",
-      "label": "Apr'27",
-      "amtCr": 13.33
-    },
-    {
-      "month": "2027-06",
-      "label": "Jun'27",
-      "amtCr": 2.74
-    },
-    {
-      "month": "2027-07",
-      "label": "Jul'27",
-      "amtCr": 18.9
-    },
-    {
-      "month": "2027-08",
-      "label": "Aug'27",
-      "amtCr": 10.86
-    },
-    {
-      "month": "2027-09",
-      "label": "Sep'27",
-      "amtCr": 10.09
-    },
-    {
-      "month": "2027-10",
-      "label": "Oct'27",
-      "amtCr": 2.1
-    },
-    {
-      "month": "2027-11",
-      "label": "Nov'27",
-      "amtCr": 0.96
-    },
-    {
-      "month": "2027-12",
-      "label": "Dec'27",
-      "amtCr": 150.32
-    },
-    {
-      "month": "2028-01",
-      "label": "Jan'28",
-      "amtCr": 33.81
-    },
-    {
-      "month": "2028-02",
-      "label": "Feb'28",
-      "amtCr": 16.17
-    },
-    {
-      "month": "2028-03",
-      "label": "Mar'28",
-      "amtCr": 11.48
-    },
-    {
-      "month": "2028-05",
-      "label": "May'28",
-      "amtCr": 11.32
-    },
-    {
-      "month": "2028-07",
-      "label": "Jul'28",
-      "amtCr": 0.98
-    },
-    {
-      "month": "2028-08",
-      "label": "Aug'28",
-      "amtCr": 37.79
-    },
-    {
-      "month": "2028-09",
-      "label": "Sep'28",
-      "amtCr": 6.77
-    },
-    {
-      "month": "2028-10",
-      "label": "Oct'28",
-      "amtCr": 16.7
-    },
-    {
-      "month": "2028-11",
-      "label": "Nov'28",
-      "amtCr": 5.63
-    },
-    {
-      "month": "2028-12",
-      "label": "Dec'28",
-      "amtCr": 71.02
-    },
-    {
-      "month": "2029-01",
-      "label": "Jan'29",
-      "amtCr": 3.34
-    },
-    {
-      "month": "2029-02",
-      "label": "Feb'29",
-      "amtCr": 60.77
-    },
-    {
-      "month": "2029-03",
-      "label": "Mar'29",
-      "amtCr": 24.85
-    },
-    {
-      "month": "2029-04",
-      "label": "Apr'29",
-      "amtCr": 11.42
-    },
-    {
-      "month": "2029-05",
-      "label": "May'29",
-      "amtCr": 15.72
-    },
-    {
-      "month": "2029-06",
-      "label": "Jun'29",
-      "amtCr": 12.23
-    },
-    {
-      "month": "2029-07",
-      "label": "Jul'29",
-      "amtCr": 3.38
-    },
-    {
-      "month": "2029-08",
-      "label": "Aug'29",
-      "amtCr": 22.72
-    },
-    {
-      "month": "2029-09",
-      "label": "Sep'29",
-      "amtCr": 14.21
-    },
-    {
-      "month": "2029-10",
-      "label": "Oct'29",
-      "amtCr": 7.79
-    },
-    {
-      "month": "2029-11",
-      "label": "Nov'29",
-      "amtCr": 7.69
-    },
-    {
-      "month": "2029-12",
-      "label": "Dec'29",
-      "amtCr": 19.89
-    },
-    {
-      "month": "2030-01",
-      "label": "Jan'30",
-      "amtCr": 0.79
-    },
-    {
-      "month": "2030-03",
-      "label": "Mar'30",
-      "amtCr": 1.0
-    },
-    {
-      "month": "2030-04",
-      "label": "Apr'30",
-      "amtCr": 1.6
-    },
-    {
-      "month": "2030-05",
-      "label": "May'30",
-      "amtCr": 6.51
-    },
-    {
-      "month": "2030-06",
-      "label": "Jun'30",
-      "amtCr": 3.33
-    },
-    {
-      "month": "2030-07",
-      "label": "Jul'30",
-      "amtCr": 9.09
-    },
-    {
-      "month": "2030-10",
-      "label": "Oct'30",
-      "amtCr": 1.76
-    },
-    {
-      "month": "2030-11",
-      "label": "Nov'30",
-      "amtCr": 4.12
-    },
-    {
-      "month": "2030-12",
-      "label": "Dec'30",
-      "amtCr": 0.5
-    },
-    {
-      "month": "2031-02",
-      "label": "Feb'31",
-      "amtCr": 1.83
-    },
-    {
-      "month": "2031-03",
-      "label": "Mar'31",
-      "amtCr": 8.03
-    },
-    {
-      "month": "2031-04",
-      "label": "Apr'31",
-      "amtCr": 2.37
-    },
-    {
-      "month": "2031-05",
-      "label": "May'31",
-      "amtCr": 3.01
-    },
-    {
-      "month": "2031-07",
-      "label": "Jul'31",
-      "amtCr": 5.41
-    },
-    {
-      "month": "2031-09",
-      "label": "Sep'31",
-      "amtCr": 0.29
-    },
-    {
-      "month": "2031-10",
-      "label": "Oct'31",
-      "amtCr": 1.18
-    },
-    {
-      "month": "2031-11",
-      "label": "Nov'31",
-      "amtCr": 0.2
-    },
-    {
-      "month": "2032-03",
-      "label": "Mar'32",
-      "amtCr": 4.0
-    },
-    {
-      "month": "2032-04",
-      "label": "Apr'32",
-      "amtCr": 0.58
-    },
-    {
-      "month": "2032-07",
-      "label": "Jul'32",
-      "amtCr": 0.3
-    },
-    {
-      "month": "2032-09",
-      "label": "Sep'32",
-      "amtCr": 0.6
-    },
-    {
-      "month": "2032-10",
-      "label": "Oct'32",
-      "amtCr": 4.14
+  },
+  "milestonesUpcoming": [
+    {
+      "name": "On Completion of 10th Floor",
+      "type": "clp",
+      "totalCr": 3.88,
+      "T1": 0,
+      "T2": 0.63,
+      "T3": 0.64,
+      "T4": 2.61,
+      "T5": 0,
+      "T6": 0,
+      "expectedDate": "2026-05"
+    },
+    {
+      "name": "On Completion of 15th Floor",
+      "type": "clp",
+      "totalCr": 17.3,
+      "T1": 0,
+      "T2": 4.95,
+      "T3": 10.11,
+      "T4": 1.2,
+      "T5": 1.04,
+      "T6": 0,
+      "expectedDate": "2026-07"
+    },
+    {
+      "name": "On Completion of 20th Floor Slab",
+      "type": "clp",
+      "totalCr": 0.61,
+      "T1": 0,
+      "T2": 0,
+      "T3": 0,
+      "T4": 0.61,
+      "T5": 0,
+      "T6": 0,
+      "expectedDate": "2026-09"
+    },
+    {
+      "name": "On Completion of 25th Floor",
+      "type": "clp",
+      "totalCr": 6.99,
+      "T1": 0,
+      "T2": 0.63,
+      "T3": 0.83,
+      "T4": 3.19,
+      "T5": 2.34,
+      "T6": 0,
+      "expectedDate": "2026-11"
+    },
+    {
+      "name": "On Completion of 29th Floor Slab",
+      "type": "clp",
+      "totalCr": 1.73,
+      "T1": 1.73,
+      "T2": 0,
+      "T3": 0,
+      "T4": 0,
+      "T5": 0,
+      "T6": 0,
+      "expectedDate": "2027-01"
+    },
+    {
+      "name": "On Completion of 32nd Floor Slab",
+      "type": "clp",
+      "totalCr": 43.86,
+      "T1": 10.27,
+      "T2": 17.06,
+      "T3": 5.11,
+      "T4": 6.93,
+      "T5": 4.48,
+      "T6": 0,
+      "expectedDate": "2027-02"
+    },
+    {
+      "name": "On Completion of 34th Floor",
+      "type": "clp",
+      "totalCr": 2.92,
+      "T1": 0,
+      "T2": 0.32,
+      "T3": 0.32,
+      "T4": 1.3,
+      "T5": 0.98,
+      "T6": 0,
+      "expectedDate": "2027-03"
+    },
+    {
+      "name": "On Laying of 40th Floor Slab",
+      "type": "clp",
+      "totalCr": 1010.59,
+      "T1": 217.55,
+      "T2": 178.86,
+      "T3": 182.96,
+      "T4": 181.46,
+      "T5": 3.05,
+      "T6": 246.7,
+      "expectedDate": "2027-07"
+    },
+    {
+      "name": "On Completion of Structure",
+      "type": "clp",
+      "totalCr": 42.81,
+      "T1": 13.0,
+      "T2": 4.78,
+      "T3": 10.11,
+      "T4": 0.47,
+      "T5": 12.35,
+      "T6": 2.11,
+      "expectedDate": "2027-08"
+    },
+    {
+      "name": "On Application of Occupation Certificate",
+      "type": "clp",
+      "totalCr": 817.0,
+      "T1": 170.25,
+      "T2": 161.4,
+      "T3": 151.12,
+      "T4": 155.03,
+      "T5": 23.87,
+      "T6": 155.32,
+      "expectedDate": "2028-05"
+    },
+    {
+      "name": "On Laying of Flooring",
+      "type": "clp",
+      "totalCr": 5.92,
+      "T1": 2.51,
+      "T2": 0,
+      "T3": 1.11,
+      "T4": 1.18,
+      "T5": 0,
+      "T6": 1.11,
+      "expectedDate": "2028-06"
+    },
+    {
+      "name": "On Offer of Possession",
+      "type": "clp",
+      "totalCr": 411.51,
+      "T1": 85.45,
+      "T2": 77.19,
+      "T3": 74.09,
+      "T4": 75.68,
+      "T5": 16.38,
+      "T6": 82.72,
+      "expectedDate": "2028-08"
+    },
+    {
+      "name": "Time Linked April 2026",
+      "type": "tlp",
+      "totalCr": 10.74,
+      "T1": 2.48,
+      "T2": 2.84,
+      "T3": 1.8,
+      "T4": 2.03,
+      "T5": 0,
+      "T6": 1.59,
+      "expectedDate": null
+    },
+    {
+      "name": "Time Linked May 2026",
+      "type": "tlp",
+      "totalCr": 3.23,
+      "T1": 0,
+      "T2": 0,
+      "T3": 0.62,
+      "T4": 2.61,
+      "T5": 0,
+      "T6": 0,
+      "expectedDate": null
+    },
+    {
+      "name": "Time Linked Aug 2026",
+      "type": "tlp",
+      "totalCr": 0.54,
+      "T1": 0,
+      "T2": 0,
+      "T3": 0,
+      "T4": 0.13,
+      "T5": 0.41,
+      "T6": 0,
+      "expectedDate": null
+    },
+    {
+      "name": "Time Linked Nov 2026",
+      "type": "tlp",
+      "totalCr": 0.67,
+      "T1": 0,
+      "T2": 0,
+      "T3": 0,
+      "T4": 0.67,
+      "T5": 0,
+      "T6": 0,
+      "expectedDate": null
+    },
+    {
+      "name": "Time Linked Aug 2027",
+      "type": "tlp",
+      "totalCr": 0.52,
+      "T1": 0,
+      "T2": 0,
+      "T3": 0,
+      "T4": 0,
+      "T5": 0.52,
+      "T6": 0,
+      "expectedDate": null
+    },
+    {
+      "name": "On start of finishing work of unit",
+      "type": "clp",
+      "totalCr": 178.26,
+      "T1": 21.95,
+      "T2": 31.7,
+      "T3": 5.66,
+      "T4": 34.59,
+      "T5": 74.96,
+      "T6": 9.4,
+      "expectedDate": null
     }
   ],
   "monthlyTrend": [
     {
       "month": "2023-11",
       "label": "Nov'23",
-      "demCr": 34.0,
-      "recCr": 36.3,
-      "eff": 107
+      "tlp_dem": 33.21,
+      "clp_dem": 0.0,
+      "tlp_rec": 26.27,
+      "clp_rec": 0.0,
+      "dem": 33.21,
+      "rec": 26.27
     },
     {
       "month": "2023-12",
       "label": "Dec'23",
-      "demCr": 113.2,
-      "recCr": 112.0,
-      "eff": 99
+      "tlp_dem": 354.71,
+      "clp_dem": 0.0,
+      "tlp_rec": 372.96,
+      "clp_rec": 0.0,
+      "dem": 354.71,
+      "rec": 372.96
     },
     {
       "month": "2024-01",
       "label": "Jan'24",
-      "demCr": 136.8,
-      "recCr": 135.1,
-      "eff": 99
+      "tlp_dem": 100.38,
+      "clp_dem": 0.0,
+      "tlp_rec": 104.4,
+      "clp_rec": 0.0,
+      "dem": 100.38,
+      "rec": 104.4
     },
     {
       "month": "2024-02",
       "label": "Feb'24",
-      "demCr": 238.0,
-      "recCr": 231.2,
-      "eff": 97
+      "tlp_dem": 87.75,
+      "clp_dem": 3.78,
+      "tlp_rec": 92.31,
+      "clp_rec": 2.29,
+      "dem": 91.53,
+      "rec": 94.6
     },
     {
       "month": "2024-03",
       "label": "Mar'24",
-      "demCr": 109.9,
-      "recCr": 103.9,
-      "eff": 94
+      "tlp_dem": 53.59,
+      "clp_dem": 0.0,
+      "tlp_rec": 55.86,
+      "clp_rec": 0.0,
+      "dem": 53.59,
+      "rec": 55.86
     },
     {
       "month": "2024-04",
       "label": "Apr'24",
-      "demCr": 92.2,
-      "recCr": 86.8,
-      "eff": 94
+      "tlp_dem": 64.44,
+      "clp_dem": 1.82,
+      "tlp_rec": 67.64,
+      "clp_rec": 1.91,
+      "dem": 66.26,
+      "rec": 69.56
     },
     {
       "month": "2024-05",
       "label": "May'24",
-      "demCr": 56.0,
-      "recCr": 56.6,
-      "eff": 101
+      "tlp_dem": 64.62,
+      "clp_dem": 1.76,
+      "tlp_rec": 67.49,
+      "clp_rec": 1.85,
+      "dem": 66.38,
+      "rec": 69.34
     },
     {
       "month": "2024-06",
       "label": "Jun'24",
-      "demCr": 31.5,
-      "recCr": 31.4,
-      "eff": 100
+      "tlp_dem": 19.51,
+      "clp_dem": 0.0,
+      "tlp_rec": 20.47,
+      "clp_rec": 0.0,
+      "dem": 19.51,
+      "rec": 20.47
     },
     {
       "month": "2024-07",
       "label": "Jul'24",
-      "demCr": 14.7,
-      "recCr": 12.1,
-      "eff": 82
+      "tlp_dem": 7.07,
+      "clp_dem": 0.0,
+      "tlp_rec": 7.43,
+      "clp_rec": 0.0,
+      "dem": 7.07,
+      "rec": 7.43
     },
     {
       "month": "2024-08",
       "label": "Aug'24",
-      "demCr": 9.2,
-      "recCr": 8.8,
-      "eff": 96
+      "tlp_dem": 6.62,
+      "clp_dem": 0.0,
+      "tlp_rec": 6.95,
+      "clp_rec": 0.0,
+      "dem": 6.62,
+      "rec": 6.95
     },
     {
       "month": "2024-09",
       "label": "Sep'24",
-      "demCr": 5.6,
-      "recCr": 4.6,
-      "eff": 83
+      "tlp_dem": 5.6,
+      "clp_dem": 0.0,
+      "tlp_rec": 5.88,
+      "clp_rec": 0.0,
+      "dem": 5.6,
+      "rec": 5.88
     },
     {
       "month": "2024-10",
       "label": "Oct'24",
-      "demCr": 5.6,
-      "recCr": 5.6,
-      "eff": 100
+      "tlp_dem": 3.51,
+      "clp_dem": 0.0,
+      "tlp_rec": 3.64,
+      "clp_rec": 0.0,
+      "dem": 3.51,
+      "rec": 3.64
     },
     {
       "month": "2024-11",
       "label": "Nov'24",
-      "demCr": 3.8,
-      "recCr": 3.8,
-      "eff": 99
+      "tlp_dem": 7.41,
+      "clp_dem": 0.0,
+      "tlp_rec": 7.78,
+      "clp_rec": 0.0,
+      "dem": 7.41,
+      "rec": 7.78
     },
     {
       "month": "2024-12",
       "label": "Dec'24",
-      "demCr": 16.7,
-      "recCr": 153.0,
-      "eff": 917
+      "tlp_dem": 13.78,
+      "clp_dem": 0.0,
+      "tlp_rec": 16.45,
+      "clp_rec": 0.0,
+      "dem": 13.78,
+      "rec": 16.45
     },
     {
       "month": "2025-01",
       "label": "Jan'25",
-      "demCr": 8.2,
-      "recCr": 62.6,
-      "eff": 759
+      "tlp_dem": 26.78,
+      "clp_dem": 0.0,
+      "tlp_rec": 27.08,
+      "clp_rec": 0.0,
+      "dem": 26.78,
+      "rec": 27.08
     },
     {
       "month": "2025-02",
       "label": "Feb'25",
-      "demCr": 31.9,
-      "recCr": 30.5,
-      "eff": 96
+      "tlp_dem": 20.48,
+      "clp_dem": 3.94,
+      "tlp_rec": 20.21,
+      "clp_rec": 4.12,
+      "dem": 24.43,
+      "rec": 24.32
     },
     {
       "month": "2025-03",
       "label": "Mar'25",
-      "demCr": 24.2,
-      "recCr": 23.8,
-      "eff": 98
+      "tlp_dem": 36.33,
+      "clp_dem": 0.0,
+      "tlp_rec": 38.08,
+      "clp_rec": 0.0,
+      "dem": 36.33,
+      "rec": 38.08
     },
     {
       "month": "2025-04",
       "label": "Apr'25",
-      "demCr": 33.1,
-      "recCr": 31.3,
-      "eff": 95
+      "tlp_dem": 10.42,
+      "clp_dem": 0.0,
+      "tlp_rec": 10.89,
+      "clp_rec": 0.0,
+      "dem": 10.42,
+      "rec": 10.89
     },
     {
       "month": "2025-05",
       "label": "May'25",
-      "demCr": 11.7,
-      "recCr": 11.3,
-      "eff": 96
+      "tlp_dem": 12.9,
+      "clp_dem": 0.0,
+      "tlp_rec": 13.54,
+      "clp_rec": 0.0,
+      "dem": 12.9,
+      "rec": 13.54
     },
     {
       "month": "2025-06",
       "label": "Jun'25",
-      "demCr": 15.5,
-      "recCr": 7.8,
-      "eff": 51
+      "tlp_dem": 16.23,
+      "clp_dem": 0.0,
+      "tlp_rec": 16.44,
+      "clp_rec": 0.0,
+      "dem": 16.23,
+      "rec": 16.44
     },
     {
       "month": "2025-07",
       "label": "Jul'25",
-      "demCr": 17.7,
-      "recCr": 14.0,
-      "eff": 79
+      "tlp_dem": 14.82,
+      "clp_dem": 0.0,
+      "tlp_rec": 14.56,
+      "clp_rec": 0.0,
+      "dem": 14.82,
+      "rec": 14.56
     },
     {
       "month": "2025-08",
       "label": "Aug'25",
-      "demCr": 23.6,
-      "recCr": 18.9,
-      "eff": 80
+      "tlp_dem": 18.78,
+      "clp_dem": 0.0,
+      "tlp_rec": 17.54,
+      "clp_rec": 0.0,
+      "dem": 18.78,
+      "rec": 17.54
     },
     {
       "month": "2025-09",
       "label": "Sep'25",
-      "demCr": 24.1,
-      "recCr": 18.9,
-      "eff": 79
+      "tlp_dem": 22.29,
+      "clp_dem": 24.92,
+      "tlp_rec": 25.54,
+      "clp_rec": 22.68,
+      "dem": 47.21,
+      "rec": 48.21
     },
     {
       "month": "2025-10",
       "label": "Oct'25",
-      "demCr": 0.7,
-      "recCr": 5.9,
-      "eff": 806
+      "tlp_dem": 12.4,
+      "clp_dem": 1.23,
+      "tlp_rec": 13.02,
+      "clp_rec": 1.29,
+      "dem": 13.63,
+      "rec": 14.31
     },
     {
       "month": "2025-11",
       "label": "Nov'25",
-      "demCr": 0.0,
-      "recCr": 3.0,
-      "eff": 0
+      "tlp_dem": 14.54,
+      "clp_dem": 5.48,
+      "tlp_rec": 14.98,
+      "clp_rec": 4.14,
+      "dem": 20.02,
+      "rec": 19.12
     },
     {
       "month": "2025-12",
       "label": "Dec'25",
-      "demCr": 0.0,
-      "recCr": 2.7,
-      "eff": 0
+      "tlp_dem": 7.65,
+      "clp_dem": 4.06,
+      "tlp_rec": 9.4,
+      "clp_rec": 5.93,
+      "dem": 11.71,
+      "rec": 15.33
+    },
+    {
+      "month": "2026-01",
+      "label": "Jan'26",
+      "tlp_dem": 8.0,
+      "clp_dem": 0.0,
+      "tlp_rec": 8.02,
+      "clp_rec": 0.0,
+      "dem": 8.0,
+      "rec": 8.02
     },
     {
       "month": "2026-02",
       "label": "Feb'26",
-      "demCr": 0.0,
-      "recCr": 0.6,
-      "eff": 0
+      "tlp_dem": 15.27,
+      "clp_dem": 0.0,
+      "tlp_rec": 15.31,
+      "clp_rec": 0.0,
+      "dem": 15.27,
+      "rec": 15.31
+    },
+    {
+      "month": "2026-03",
+      "label": "Mar'26",
+      "tlp_dem": 5.79,
+      "clp_dem": 1.86,
+      "tlp_rec": 6.08,
+      "clp_rec": 1.95,
+      "dem": 7.66,
+      "rec": 8.03
+    },
+    {
+      "month": "2026-04",
+      "label": "Apr'26",
+      "tlp_dem": 19.56,
+      "clp_dem": 0.99,
+      "tlp_rec": 14.07,
+      "clp_rec": 0.84,
+      "dem": 20.55,
+      "rec": 14.91
+    },
+    {
+      "month": "2026-05",
+      "label": "May'26",
+      "tlp_dem": 8.48,
+      "clp_dem": 3.09,
+      "tlp_rec": 6.59,
+      "clp_rec": 3.19,
+      "dem": 11.57,
+      "rec": 9.78
     },
     {
       "month": "2026-06",
       "label": "Jun'26",
-      "demCr": 0.0,
-      "recCr": 0.0,
-      "eff": 0
-    },
-    {
-      "month": "2026-09",
-      "label": "Sep'26",
-      "demCr": 0.0,
-      "recCr": 2.3,
-      "eff": 0
-    },
-    {
-      "month": "2026-11",
-      "label": "Nov'26",
-      "demCr": 0.0,
-      "recCr": 0.2,
-      "eff": 0
-    },
-    {
-      "month": "2026-12",
-      "label": "Dec'26",
-      "demCr": 0.0,
-      "recCr": 1.3,
-      "eff": 0
-    },
-    {
-      "month": "2027-03",
-      "label": "Mar'27",
-      "demCr": 0.0,
-      "recCr": 4.9,
-      "eff": 0
-    },
-    {
-      "month": "2027-04",
-      "label": "Apr'27",
-      "demCr": 0.0,
-      "recCr": 1.2,
-      "eff": 0
-    },
-    {
-      "month": "2027-07",
-      "label": "Jul'27",
-      "demCr": 0.0,
-      "recCr": 1.2,
-      "eff": 0
-    },
-    {
-      "month": "2027-08",
-      "label": "Aug'27",
-      "demCr": 0.0,
-      "recCr": 0.0,
-      "eff": 0
-    },
-    {
-      "month": "2027-09",
-      "label": "Sep'27",
-      "demCr": 0.0,
-      "recCr": 2.7,
-      "eff": 0
-    },
-    {
-      "month": "2027-10",
-      "label": "Oct'27",
-      "demCr": 0.0,
-      "recCr": 0.7,
-      "eff": 0
-    },
-    {
-      "month": "2027-12",
-      "label": "Dec'27",
-      "demCr": 0.0,
-      "recCr": 0.1,
-      "eff": 0
-    },
-    {
-      "month": "2028-01",
-      "label": "Jan'28",
-      "demCr": 0.0,
-      "recCr": 1.2,
-      "eff": 0
-    },
-    {
-      "month": "2028-08",
-      "label": "Aug'28",
-      "demCr": 0.0,
-      "recCr": 0.0,
-      "eff": 0
-    },
-    {
-      "month": "2028-09",
-      "label": "Sep'28",
-      "demCr": 0.0,
-      "recCr": 1.1,
-      "eff": 0
-    },
-    {
-      "month": "2028-11",
-      "label": "Nov'28",
-      "demCr": 0.0,
-      "recCr": 0.0,
-      "eff": 0
-    },
-    {
-      "month": "2029-02",
-      "label": "Feb'29",
-      "demCr": 0.0,
-      "recCr": 0.0,
-      "eff": 0
-    },
-    {
-      "month": "2029-06",
-      "label": "Jun'29",
-      "demCr": 0.0,
-      "recCr": 0.0,
-      "eff": 0
-    },
-    {
-      "month": "2029-10",
-      "label": "Oct'29",
-      "demCr": 0.0,
-      "recCr": 0.0,
-      "eff": 0
+      "tlp_dem": 3.17,
+      "clp_dem": 5.82,
+      "tlp_rec": 0.1,
+      "clp_rec": 0.0,
+      "dem": 8.98,
+      "rec": 0.1
     }
   ],
-  "towerAgeing": [
+  "towerKpi": [
     {
       "tower": "T-1",
-      "b0_30": 0.0,
-      "b31_60": 0.0,
-      "b61_90": 0.0,
-      "b90p": 1.0,
-      "total": 1.0,
-      "units": 30
+      "tlp_dem": 224.37,
+      "clp_dem": 8.28,
+      "tlp_rec": 229.03,
+      "clp_rec": 3.2,
+      "tlp_out": 5.59,
+      "clp_out": 5.5
     },
     {
       "tower": "T-2",
-      "b0_30": 0.0,
-      "b31_60": 0.0,
-      "b61_90": 0.0,
-      "b90p": 0.69,
-      "total": 0.69,
-      "units": 30
+      "tlp_dem": 210.39,
+      "clp_dem": 8.9,
+      "tlp_rec": 219.16,
+      "clp_rec": 8.18,
+      "tlp_out": 1.67,
+      "clp_out": 0.09
     },
     {
       "tower": "T-3",
-      "b0_30": 0.0,
-      "b31_60": 0.0,
-      "b61_90": 0.0,
-      "b90p": 9.07,
-      "total": 9.07,
-      "units": 37
+      "tlp_dem": 177.71,
+      "clp_dem": 18.37,
+      "tlp_rec": 184.26,
+      "clp_rec": 12.03,
+      "tlp_out": 3.96,
+      "clp_out": 7.26
     },
     {
       "tower": "T-4",
-      "b0_30": 0.0,
-      "b31_60": 0.0,
-      "b61_90": 0.0,
-      "b90p": 0.26,
-      "total": 0.26,
-      "units": 23
+      "tlp_dem": 208.19,
+      "clp_dem": 13.34,
+      "tlp_rec": 210.38,
+      "clp_rec": 13.95,
+      "tlp_out": 5.84,
+      "clp_out": 0.05
     },
     {
       "tower": "T-5",
-      "b0_30": 0.0,
-      "b31_60": 0.0,
-      "b61_90": 0.0,
-      "b90p": 0.21,
-      "total": 0.21,
-      "units": 7
+      "tlp_dem": 60.54,
+      "clp_dem": 9.86,
+      "tlp_rec": 63.28,
+      "clp_rec": 12.83,
+      "tlp_out": 1.93,
+      "clp_out": 0.21
     },
     {
       "tower": "T-6",
-      "b0_30": 0.0,
-      "b31_60": 0.0,
-      "b61_90": 0.0,
-      "b90p": 0.46,
-      "total": 0.46,
-      "units": 18
-    }
-  ],
-  "collectedByMilestone": [
-    {
-      "name": "On Allotment",
-      "amtCr": 598.1
-    },
-    {
-      "name": "Other",
-      "amtCr": 323.24
-    },
-    {
-      "name": "Offer of Possession",
-      "amtCr": 124.88
-    },
-    {
-      "name": "Booking Amount",
-      "amtCr": 101.11
-    },
-    {
-      "name": "Completion - 40th Floor Slab",
-      "amtCr": 50.1
-    },
-    {
-      "name": "Occupation Certificate",
-      "amtCr": 26.8
-    },
-    {
-      "name": "Completion - 32nd Floor Slab",
-      "amtCr": 5.44
-    },
-    {
-      "name": "Completion - Super Structure",
-      "amtCr": 0.7
-    },
-    {
-      "name": "Start of Finishing Work",
-      "amtCr": 0.1
-    }
-  ],
-  "collectedByTower": [
-    {
-      "name": "T-6",
-      "amtCr": 259.93
-    },
-    {
-      "name": "T-1",
-      "amtCr": 253.87
-    },
-    {
-      "name": "T-2",
-      "amtCr": 244.03
-    },
-    {
-      "name": "T-4",
-      "amtCr": 230.86
-    },
-    {
-      "name": "T-3",
-      "amtCr": 221.09
-    },
-    {
-      "name": "T-5",
-      "amtCr": 20.7
-    }
-  ],
-  "collectedByMonth": [
-    {
-      "month": "2023-11",
-      "label": "Nov'23",
-      "amtCr": 36.34
-    },
-    {
-      "month": "2023-12",
-      "label": "Dec'23",
-      "amtCr": 111.95
-    },
-    {
-      "month": "2024-01",
-      "label": "Jan'24",
-      "amtCr": 135.06
-    },
-    {
-      "month": "2024-02",
-      "label": "Feb'24",
-      "amtCr": 231.22
-    },
-    {
-      "month": "2024-03",
-      "label": "Mar'24",
-      "amtCr": 103.86
-    },
-    {
-      "month": "2024-04",
-      "label": "Apr'24",
-      "amtCr": 86.77
-    },
-    {
-      "month": "2024-05",
-      "label": "May'24",
-      "amtCr": 56.61
-    },
-    {
-      "month": "2024-06",
-      "label": "Jun'24",
-      "amtCr": 31.37
-    },
-    {
-      "month": "2024-07",
-      "label": "Jul'24",
-      "amtCr": 12.11
-    },
-    {
-      "month": "2024-08",
-      "label": "Aug'24",
-      "amtCr": 8.77
-    },
-    {
-      "month": "2024-09",
-      "label": "Sep'24",
-      "amtCr": 4.64
-    },
-    {
-      "month": "2024-10",
-      "label": "Oct'24",
-      "amtCr": 5.55
-    },
-    {
-      "month": "2024-11",
-      "label": "Nov'24",
-      "amtCr": 3.76
-    },
-    {
-      "month": "2024-12",
-      "label": "Dec'24",
-      "amtCr": 152.95
-    },
-    {
-      "month": "2025-01",
-      "label": "Jan'25",
-      "amtCr": 62.56
-    },
-    {
-      "month": "2025-02",
-      "label": "Feb'25",
-      "amtCr": 30.49
-    },
-    {
-      "month": "2025-03",
-      "label": "Mar'25",
-      "amtCr": 23.79
-    },
-    {
-      "month": "2025-04",
-      "label": "Apr'25",
-      "amtCr": 31.32
-    },
-    {
-      "month": "2025-05",
-      "label": "May'25",
-      "amtCr": 11.28
-    },
-    {
-      "month": "2025-06",
-      "label": "Jun'25",
-      "amtCr": 7.85
-    },
-    {
-      "month": "2025-07",
-      "label": "Jul'25",
-      "amtCr": 13.99
-    },
-    {
-      "month": "2025-08",
-      "label": "Aug'25",
-      "amtCr": 18.89
-    },
-    {
-      "month": "2025-09",
-      "label": "Sep'25",
-      "amtCr": 18.93
-    },
-    {
-      "month": "2025-10",
-      "label": "Oct'25",
-      "amtCr": 5.86
-    },
-    {
-      "month": "2025-11",
-      "label": "Nov'25",
-      "amtCr": 2.96
-    },
-    {
-      "month": "2025-12",
-      "label": "Dec'25",
-      "amtCr": 2.69
-    },
-    {
-      "month": "2026-02",
-      "label": "Feb'26",
-      "amtCr": 0.6
-    },
-    {
-      "month": "2026-06",
-      "label": "Jun'26",
-      "amtCr": 0.0
-    },
-    {
-      "month": "2026-09",
-      "label": "Sep'26",
-      "amtCr": 2.33
-    },
-    {
-      "month": "2026-11",
-      "label": "Nov'26",
-      "amtCr": 0.22
-    },
-    {
-      "month": "2026-12",
-      "label": "Dec'26",
-      "amtCr": 1.33
-    },
-    {
-      "month": "2027-03",
-      "label": "Mar'27",
-      "amtCr": 4.94
-    },
-    {
-      "month": "2027-04",
-      "label": "Apr'27",
-      "amtCr": 1.21
-    },
-    {
-      "month": "2027-07",
-      "label": "Jul'27",
-      "amtCr": 1.19
-    },
-    {
-      "month": "2027-08",
-      "label": "Aug'27",
-      "amtCr": 0.01
-    },
-    {
-      "month": "2027-09",
-      "label": "Sep'27",
-      "amtCr": 2.73
-    },
-    {
-      "month": "2027-10",
-      "label": "Oct'27",
-      "amtCr": 0.7
-    },
-    {
-      "month": "2027-12",
-      "label": "Dec'27",
-      "amtCr": 0.1
-    },
-    {
-      "month": "2028-01",
-      "label": "Jan'28",
-      "amtCr": 1.21
-    },
-    {
-      "month": "2028-08",
-      "label": "Aug'28",
-      "amtCr": 0.0
-    },
-    {
-      "month": "2028-09",
-      "label": "Sep'28",
-      "amtCr": 1.1
-    },
-    {
-      "month": "2028-11",
-      "label": "Nov'28",
-      "amtCr": 0.0
-    },
-    {
-      "month": "2029-02",
-      "label": "Feb'29",
-      "amtCr": 0.0
-    },
-    {
-      "month": "2029-06",
-      "label": "Jun'29",
-      "amtCr": 0.0
-    },
-    {
-      "month": "2029-10",
-      "label": "Oct'29",
-      "amtCr": 0.0
+      "tlp_dem": 214.89,
+      "clp_dem": 0.0,
+      "tlp_rec": 220.84,
+      "clp_rec": 0.0,
+      "tlp_out": 1.7,
+      "clp_out": 0.0
     }
   ]
 }
