@@ -541,9 +541,9 @@ const CollectionsTab = ({T, GC, SH}) => {
 
   const kpi    = dk.kpi?.[planType] || {};
   const adv    = dk.advance?.[planType] || {};
-  const instCr = kpi.totalInstallment || 0;
-  const recCr  = kpi.totalReceived    || 0;
-  const outCr  = kpi.totalOutstanding || 0;
+  const instCr = kpi.totalInstallment  || 0;
+  const recCr  = kpi.totalReceivedWoT  || 0;
+  const outCr  = kpi.totalOutstanding  || 0;
   const advRaw = adv.rawCr || 0;
   const advNet = adv.netCr || 0;
   const advGst = adv.gstCr || 0;
@@ -610,9 +610,9 @@ const CollectionsTab = ({T, GC, SH}) => {
         <div style={{position:'absolute',bottom:0,left:0,right:0,height:3,background:`linear-gradient(90deg,${T.amber},transparent)`,borderRadius:'0 0 14px 14px'}}/>
       </GC>
       <GC style={{padding:13}} cls="kc">
-        <p style={{fontSize:8,color:T.textM,fontWeight:700,textTransform:'uppercase',margin:'0 0 4px',letterSpacing:0.5}}>Total Received (incl. advance)</p>
+        <p style={{fontSize:8,color:T.textM,fontWeight:700,textTransform:'uppercase',margin:'0 0 4px',letterSpacing:0.5}}>Total Received (W/O GST)</p>
         <p style={{fontSize:20,fontWeight:900,color:T.tealD,margin:'0 0 4px',letterSpacing:-0.5}}>{fmtC(recCr)}</p>
-        <p style={{fontSize:8,color:T.textL,margin:0}}>From "Received Amt (in Bank)"</p>
+        <p style={{fontSize:8,color:T.textL,margin:0}}>Bank received − CGST − SGST</p>
         <div style={{position:'absolute',bottom:0,left:0,right:0,height:3,background:`linear-gradient(90deg,${T.tealD},${T.teal})`,borderRadius:'0 0 14px 14px'}}/>
       </GC>
       <GC style={{padding:13}} cls="kc">

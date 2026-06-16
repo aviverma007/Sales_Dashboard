@@ -2,31 +2,37 @@
   "kpi": {
     "all": {
       "totalInstallment": 1154.85,
-      "totalReceived": 1403.73,
+      "totalReceivedBank": 1403.73,
+      "totalReceivedWoT": 1335.19,
       "totalOutstanding": 33.79,
       "totalDemandWoTax": 1154.85,
       "advanceAmt": 226.57,
-      "advanceNet": 215.78
+      "advanceNet": 215.78,
+      "advanceGst": 10.79
     },
     "tlp": {
       "totalInstallment": 1096.09,
-      "totalReceived": 1293.99,
+      "totalReceivedBank": 1293.99,
+      "totalReceivedWoT": 1231.23,
       "totalOutstanding": 20.69,
       "totalDemandWoTax": 1096.09,
       "advanceAmt": 167.03,
-      "advanceNet": 159.07
+      "advanceNet": 159.07,
+      "advanceGst": 7.95
     },
     "clp": {
       "totalInstallment": 58.76,
-      "totalReceived": 109.74,
+      "totalReceivedBank": 109.74,
+      "totalReceivedWoT": 103.97,
       "totalOutstanding": 13.1,
       "totalDemandWoTax": 58.76,
       "advanceAmt": 59.54,
-      "advanceNet": 56.71
+      "advanceNet": 56.71,
+      "advanceGst": 2.84
     }
   },
   "gstRate": 0.05,
-  "advanceNote": "\u26a0\ufe0f Advance Money Note: \u20b9226.6 Cr was received from customers before any SAP demand/invoice was generated. Since no tax invoice exists for these receipts, GST @5% has been back-calculated and deducted (\u20b910.79 Cr) to arrive at the net base amount of \u20b9215.78 Cr. This ensures amounts shown are comparable to other demand figures which are W/O Tax.",
+  "advanceNote": "\u26a0\ufe0f Advance Money: \u20b9226.6 Cr received before SAP demand was raised. No tax invoice exists for these receipts, so GST @5% has been back-calculated (\u20b910.79 Cr) to show the net W/O Tax amount of \u20b9215.78 Cr.",
   "advance": {
     "all": {
       "rawCr": 226.57,
@@ -268,320 +274,320 @@
       "label": "Nov'23",
       "tlp_dem": 33.21,
       "clp_dem": 0.0,
-      "tlp_rec": 26.27,
+      "tlp_rec": 24.61,
       "clp_rec": 0.0,
       "dem": 33.21,
-      "rec": 26.27
+      "rec": 24.61
     },
     {
       "month": "2023-12",
       "label": "Dec'23",
       "tlp_dem": 354.71,
       "clp_dem": 0.0,
-      "tlp_rec": 372.96,
+      "tlp_rec": 355.23,
       "clp_rec": 0.0,
       "dem": 354.71,
-      "rec": 372.96
+      "rec": 355.23
     },
     {
       "month": "2024-01",
       "label": "Jan'24",
       "tlp_dem": 100.38,
       "clp_dem": 0.0,
-      "tlp_rec": 104.4,
+      "tlp_rec": 99.38,
       "clp_rec": 0.0,
       "dem": 100.38,
-      "rec": 104.4
+      "rec": 99.38
     },
     {
       "month": "2024-02",
       "label": "Feb'24",
       "tlp_dem": 87.75,
       "clp_dem": 3.78,
-      "tlp_rec": 92.31,
-      "clp_rec": 2.29,
+      "tlp_rec": 87.92,
+      "clp_rec": 2.1,
       "dem": 91.53,
-      "rec": 94.6
+      "rec": 90.02
     },
     {
       "month": "2024-03",
       "label": "Mar'24",
       "tlp_dem": 53.59,
       "clp_dem": 0.0,
-      "tlp_rec": 55.86,
+      "tlp_rec": 53.18,
       "clp_rec": 0.0,
       "dem": 53.59,
-      "rec": 55.86
+      "rec": 53.18
     },
     {
       "month": "2024-04",
       "label": "Apr'24",
       "tlp_dem": 64.44,
       "clp_dem": 1.82,
-      "tlp_rec": 67.64,
-      "clp_rec": 1.91,
+      "tlp_rec": 64.42,
+      "clp_rec": 1.82,
       "dem": 66.26,
-      "rec": 69.56
+      "rec": 66.24
     },
     {
       "month": "2024-05",
       "label": "May'24",
       "tlp_dem": 64.62,
       "clp_dem": 1.76,
-      "tlp_rec": 67.49,
-      "clp_rec": 1.85,
+      "tlp_rec": 64.26,
+      "clp_rec": 1.76,
       "dem": 66.38,
-      "rec": 69.34
+      "rec": 66.03
     },
     {
       "month": "2024-06",
       "label": "Jun'24",
       "tlp_dem": 19.51,
       "clp_dem": 0.0,
-      "tlp_rec": 20.47,
+      "tlp_rec": 19.49,
       "clp_rec": 0.0,
       "dem": 19.51,
-      "rec": 20.47
+      "rec": 19.49
     },
     {
       "month": "2024-07",
       "label": "Jul'24",
       "tlp_dem": 7.07,
       "clp_dem": 0.0,
-      "tlp_rec": 7.43,
+      "tlp_rec": 7.07,
       "clp_rec": 0.0,
       "dem": 7.07,
-      "rec": 7.43
+      "rec": 7.07
     },
     {
       "month": "2024-08",
       "label": "Aug'24",
       "tlp_dem": 6.62,
       "clp_dem": 0.0,
-      "tlp_rec": 6.95,
+      "tlp_rec": 6.62,
       "clp_rec": 0.0,
       "dem": 6.62,
-      "rec": 6.95
+      "rec": 6.62
     },
     {
       "month": "2024-09",
       "label": "Sep'24",
       "tlp_dem": 5.6,
       "clp_dem": 0.0,
-      "tlp_rec": 5.88,
+      "tlp_rec": 5.6,
       "clp_rec": 0.0,
       "dem": 5.6,
-      "rec": 5.88
+      "rec": 5.6
     },
     {
       "month": "2024-10",
       "label": "Oct'24",
       "tlp_dem": 3.51,
       "clp_dem": 0.0,
-      "tlp_rec": 3.64,
+      "tlp_rec": 3.47,
       "clp_rec": 0.0,
       "dem": 3.51,
-      "rec": 3.64
+      "rec": 3.47
     },
     {
       "month": "2024-11",
       "label": "Nov'24",
       "tlp_dem": 7.41,
       "clp_dem": 0.0,
-      "tlp_rec": 7.78,
+      "tlp_rec": 7.41,
       "clp_rec": 0.0,
       "dem": 7.41,
-      "rec": 7.78
+      "rec": 7.41
     },
     {
       "month": "2024-12",
       "label": "Dec'24",
       "tlp_dem": 13.78,
       "clp_dem": 0.0,
-      "tlp_rec": 16.45,
+      "tlp_rec": 15.76,
       "clp_rec": 0.0,
       "dem": 13.78,
-      "rec": 16.45
+      "rec": 15.76
     },
     {
       "month": "2025-01",
       "label": "Jan'25",
       "tlp_dem": 26.78,
       "clp_dem": 0.0,
-      "tlp_rec": 27.08,
+      "tlp_rec": 25.74,
       "clp_rec": 0.0,
       "dem": 26.78,
-      "rec": 27.08
+      "rec": 25.74
     },
     {
       "month": "2025-02",
       "label": "Feb'25",
       "tlp_dem": 20.48,
       "clp_dem": 3.94,
-      "tlp_rec": 20.21,
-      "clp_rec": 4.12,
+      "tlp_rec": 19.18,
+      "clp_rec": 3.92,
       "dem": 24.43,
-      "rec": 24.32
+      "rec": 23.1
     },
     {
       "month": "2025-03",
       "label": "Mar'25",
       "tlp_dem": 36.33,
       "clp_dem": 0.0,
-      "tlp_rec": 38.08,
+      "tlp_rec": 36.26,
       "clp_rec": 0.0,
       "dem": 36.33,
-      "rec": 38.08
+      "rec": 36.26
     },
     {
       "month": "2025-04",
       "label": "Apr'25",
       "tlp_dem": 10.42,
       "clp_dem": 0.0,
-      "tlp_rec": 10.89,
+      "tlp_rec": 10.36,
       "clp_rec": 0.0,
       "dem": 10.42,
-      "rec": 10.89
+      "rec": 10.36
     },
     {
       "month": "2025-05",
       "label": "May'25",
       "tlp_dem": 12.9,
       "clp_dem": 0.0,
-      "tlp_rec": 13.54,
+      "tlp_rec": 12.89,
       "clp_rec": 0.0,
       "dem": 12.9,
-      "rec": 13.54
+      "rec": 12.89
     },
     {
       "month": "2025-06",
       "label": "Jun'25",
       "tlp_dem": 16.23,
       "clp_dem": 0.0,
-      "tlp_rec": 16.44,
+      "tlp_rec": 15.62,
       "clp_rec": 0.0,
       "dem": 16.23,
-      "rec": 16.44
+      "rec": 15.62
     },
     {
       "month": "2025-07",
       "label": "Jul'25",
       "tlp_dem": 14.82,
       "clp_dem": 0.0,
-      "tlp_rec": 14.56,
+      "tlp_rec": 13.81,
       "clp_rec": 0.0,
       "dem": 14.82,
-      "rec": 14.56
+      "rec": 13.81
     },
     {
       "month": "2025-08",
       "label": "Aug'25",
       "tlp_dem": 18.78,
       "clp_dem": 0.0,
-      "tlp_rec": 17.54,
+      "tlp_rec": 16.61,
       "clp_rec": 0.0,
       "dem": 18.78,
-      "rec": 17.54
+      "rec": 16.61
     },
     {
       "month": "2025-09",
       "label": "Sep'25",
       "tlp_dem": 22.29,
       "clp_dem": 24.92,
-      "tlp_rec": 25.54,
-      "clp_rec": 22.68,
+      "tlp_rec": 24.42,
+      "clp_rec": 21.43,
       "dem": 47.21,
-      "rec": 48.21
+      "rec": 45.85
     },
     {
       "month": "2025-10",
       "label": "Oct'25",
       "tlp_dem": 12.4,
       "clp_dem": 1.23,
-      "tlp_rec": 13.02,
-      "clp_rec": 1.29,
+      "tlp_rec": 12.4,
+      "clp_rec": 1.23,
       "dem": 13.63,
-      "rec": 14.31
+      "rec": 13.63
     },
     {
       "month": "2025-11",
       "label": "Nov'25",
       "tlp_dem": 14.54,
       "clp_dem": 5.48,
-      "tlp_rec": 14.98,
-      "clp_rec": 4.14,
+      "tlp_rec": 14.25,
+      "clp_rec": 3.87,
       "dem": 20.02,
-      "rec": 19.12
+      "rec": 18.12
     },
     {
       "month": "2025-12",
       "label": "Dec'25",
       "tlp_dem": 7.65,
       "clp_dem": 4.06,
-      "tlp_rec": 9.4,
-      "clp_rec": 5.93,
+      "tlp_rec": 9.02,
+      "clp_rec": 5.73,
       "dem": 11.71,
-      "rec": 15.33
+      "rec": 14.75
     },
     {
       "month": "2026-01",
       "label": "Jan'26",
       "tlp_dem": 8.0,
       "clp_dem": 0.0,
-      "tlp_rec": 8.02,
+      "tlp_rec": 7.62,
       "clp_rec": 0.0,
       "dem": 8.0,
-      "rec": 8.02
+      "rec": 7.62
     },
     {
       "month": "2026-02",
       "label": "Feb'26",
       "tlp_dem": 15.27,
       "clp_dem": 0.0,
-      "tlp_rec": 15.31,
+      "tlp_rec": 14.55,
       "clp_rec": 0.0,
       "dem": 15.27,
-      "rec": 15.31
+      "rec": 14.55
     },
     {
       "month": "2026-03",
       "label": "Mar'26",
       "tlp_dem": 5.79,
       "clp_dem": 1.86,
-      "tlp_rec": 6.08,
-      "clp_rec": 1.95,
+      "tlp_rec": 5.79,
+      "clp_rec": 1.86,
       "dem": 7.66,
-      "rec": 8.03
+      "rec": 7.64
     },
     {
       "month": "2026-04",
       "label": "Apr'26",
       "tlp_dem": 19.56,
       "clp_dem": 0.99,
-      "tlp_rec": 14.07,
-      "clp_rec": 0.84,
+      "tlp_rec": 13.09,
+      "clp_rec": 0.79,
       "dem": 20.55,
-      "rec": 14.91
+      "rec": 13.88
     },
     {
       "month": "2026-05",
       "label": "May'26",
       "tlp_dem": 8.48,
       "clp_dem": 3.09,
-      "tlp_rec": 6.59,
-      "clp_rec": 3.19,
+      "tlp_rec": 6.16,
+      "clp_rec": 3.04,
       "dem": 11.57,
-      "rec": 9.78
+      "rec": 9.2
     },
     {
       "month": "2026-06",
       "label": "Jun'26",
       "tlp_dem": 3.17,
       "clp_dem": 5.82,
-      "tlp_rec": 0.1,
-      "clp_rec": 0.0,
+      "tlp_rec": -0.06,
+      "clp_rec": -0.29,
       "dem": 8.98,
-      "rec": 0.1
+      "rec": -0.35
     }
   ],
   "towerKpi": [
@@ -589,8 +595,8 @@
       "tower": "T-1",
       "tlp_dem": 224.37,
       "clp_dem": 8.28,
-      "tlp_rec": 229.03,
-      "clp_rec": 3.2,
+      "tlp_rec": 217.82,
+      "clp_rec": 2.78,
       "tlp_out": 5.59,
       "clp_out": 5.5
     },
@@ -598,8 +604,8 @@
       "tower": "T-2",
       "tlp_dem": 210.39,
       "clp_dem": 8.9,
-      "tlp_rec": 219.16,
-      "clp_rec": 8.18,
+      "tlp_rec": 208.64,
+      "clp_rec": 7.74,
       "tlp_out": 1.67,
       "clp_out": 0.09
     },
@@ -607,8 +613,8 @@
       "tower": "T-3",
       "tlp_dem": 177.71,
       "clp_dem": 18.37,
-      "tlp_rec": 184.26,
-      "clp_rec": 12.03,
+      "tlp_rec": 175.37,
+      "clp_rec": 11.12,
       "tlp_out": 3.96,
       "clp_out": 7.26
     },
@@ -616,8 +622,8 @@
       "tower": "T-4",
       "tlp_dem": 208.19,
       "clp_dem": 13.34,
-      "tlp_rec": 210.38,
-      "clp_rec": 13.95,
+      "tlp_rec": 199.97,
+      "clp_rec": 13.28,
       "tlp_out": 5.84,
       "clp_out": 0.05
     },
@@ -625,8 +631,8 @@
       "tower": "T-5",
       "tlp_dem": 60.54,
       "clp_dem": 9.86,
-      "tlp_rec": 63.28,
-      "clp_rec": 12.83,
+      "tlp_rec": 60.26,
+      "clp_rec": 12.34,
       "tlp_out": 1.93,
       "clp_out": 0.21
     },
@@ -634,7 +640,7 @@
       "tower": "T-6",
       "tlp_dem": 214.89,
       "clp_dem": 0.0,
-      "tlp_rec": 220.84,
+      "tlp_rec": 210.1,
       "clp_rec": 0.0,
       "tlp_out": 1.7,
       "clp_out": 0.0
