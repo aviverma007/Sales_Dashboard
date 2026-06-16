@@ -540,7 +540,7 @@ const CollectionsTab = ({T, GC, SH}) => {
   if(!dk) return <div style={{textAlign:'center',padding:40,color:T.textL,fontSize:12}}>Loading Demand & Collection data…</div>;
 
   const kpi    = dk.kpi?.[planType] || {};
-  const adv    = dk.advance?.[planType] || {};
+  const adv    = planType==='all' ? (dk.advance_all||{}) : (dk.advance?.[planType] || {});
   const instCr = kpi.totalInstallment  || 0;
   const recCr  = kpi.totalReceivedWoT  || 0;
   const outCr  = kpi.totalOutstanding  || 0;
@@ -549,19 +549,28 @@ const CollectionsTab = ({T, GC, SH}) => {
   const advGst = adv.gstCr || 0;
 
   const allMilestones = dk.milestonesUpcoming || [];
-  const milestones    = planType==='all' ? allMilestones : allMilestones.filter(m=>m.type===planType);
+  const milestones    = planType==='all' ? allMilestones
+    : planType==='hybrid_earlier' ? allMilestones.filter(m=>m.type==='hybrid_earlier')
+    : planType==='hybrid_later'   ? allMilestones.filter(m=>m.type==='hybrid_later')
+    : allMilestones.filter(m=>m.type===planType);
   const allMonthly    = dk.monthlyTrend || [];
   const towers        = dk.towerKpi || [];
+
+  // Keys for monthly/tower data
+  const demKey = planType==='all'?null:planType==='hybrid_earlier'?'he_dem':planType==='hybrid_later'?'hl_dem':planType+'_dem';
+  const recKey = planType==='all'?null:planType==='hybrid_earlier'?'he_rec':planType==='hybrid_later'?'hl_rec':planType+'_rec';
+  const outKey = planType==='all'?null:planType==='hybrid_earlier'?'he_out':planType==='hybrid_later'?'hl_out':planType+'_out';
 
   const upcomingByMonth = {};
   milestones.forEach(m=>{
     if(!m.expectedDate) return;
     const ym=m.expectedDate;
-    if(!upcomingByMonth[ym]) upcomingByMonth[ym]={month:ym,label:'',tlp:0,clp:0};
+    if(!upcomingByMonth[ym]) upcomingByMonth[ym]={month:ym,label:'',tlp:0,clp:0,hybrid_later:0,hybrid_earlier:0};
     const [yr,mo]=ym.split('-');
     const MN={'01':'Jan','02':'Feb','03':'Mar','04':'Apr','05':'May','06':'Jun','07':'Jul','08':'Aug','09':'Sep','10':'Oct','11':'Nov','12':'Dec'};
     upcomingByMonth[ym].label=`${MN[mo]}'${yr.slice(2)}`;
-    upcomingByMonth[ym][m.type]+=m.totalCr;
+    const key = m.type==='hybrid_earlier'?'hybrid_earlier':m.type==='hybrid_later'?'hybrid_later':m.type;
+    upcomingByMonth[ym][key] = (upcomingByMonth[ym][key]||0) + m.totalCr;
   });
   const upcomingMonthArr=Object.values(upcomingByMonth).sort((a,b)=>a.month.localeCompare(b.month));
 
@@ -573,12 +582,23 @@ const CollectionsTab = ({T, GC, SH}) => {
 
   return (<>
     {/* TLP / CLP TOGGLE */}
-    <div style={{display:'flex',alignItems:'center',gap:10,background:'rgba(255,255,255,0.95)',borderRadius:12,padding:'10px 16px',border:'1px solid rgba(0,100,140,0.1)',boxShadow:'0 2px 8px rgba(0,60,100,0.06)'}}>
+    <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap',background:'rgba(255,255,255,0.95)',borderRadius:12,padding:'10px 16px',border:'1px solid rgba(0,100,140,0.1)',boxShadow:'0 2px 8px rgba(0,60,100,0.06)'}}>
       <span style={{fontSize:11,fontWeight:800,color:T.textM,textTransform:'uppercase',letterSpacing:0.8,marginRight:4}}>Payment Plan:</span>
-      {[['all','All Plans'],['tlp','TLP — Time Linked'],['clp','CLP — Construction Linked']].map(([k,l])=>(
-        <button key={k} onClick={()=>setPlanType(k)} style={planType===k?{...TEAL_BTN,boxShadow:`0 2px 8px ${T.tealD}55`}:GREY_BTN}>{l}</button>
+      {[
+        ['all',          'All Plans',                  T.tealD],
+        ['tlp',          'TLP — Time Linked',          T.amber],
+        ['clp',          'CLP — Construction Linked',  '#2e7d32'],
+        ['hybrid_later', 'Hybrid — Whichever Later',   '#7c3aed'],
+        ['hybrid_earlier','Hybrid — Whichever Earlier','#b45309'],
+      ].map(([k,l,col])=>(
+        <button key={k} onClick={()=>setPlanType(k)}
+          style={planType===k
+            ? {background:col,color:'#fff',border:'none',borderRadius:8,padding:'7px 16px',fontWeight:800,fontSize:10,cursor:'pointer',letterSpacing:0.4,boxShadow:`0 2px 8px ${col}66`}
+            : {background:'rgba(0,100,140,0.06)',color:T.textM,border:`1px solid rgba(0,100,140,0.15)`,borderRadius:8,padding:'7px 16px',fontWeight:700,fontSize:10,cursor:'pointer',letterSpacing:0.4}}>
+          {l}
+        </button>
       ))}
-      <span style={{marginLeft:'auto',fontSize:9,color:T.textL,fontStyle:'italic'}}>Amounts shown W/O GST except where noted</span>
+      <span style={{marginLeft:'auto',fontSize:9,color:T.textL,fontStyle:'italic'}}>All amounts W/O GST</span>
     </div>
 
     {/* ADVANCE NOTE — compact pill with hover tooltip */}
@@ -651,7 +671,9 @@ const CollectionsTab = ({T, GC, SH}) => {
               <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} tickFormatter={v=>'₹'+v+'Cr'} width={48}/>
               <Tooltip formatter={(v,n)=>[`₹${v} Cr`,n]} labelFormatter={l=>{const m=milestones.find(x=>x.name===l);return `${l}${m?.expectedDate?' ('+m.expectedDate+')':''}`;}}/>
               <Legend wrapperStyle={{fontSize:9,fontWeight:700}} iconSize={8}/>
-              <Bar dataKey="totalCr" name={planType==='clp'?'CLP Amount':'TLP Amount'} fill={planType==='clp'?T.teal:T.amber} radius={[4,4,0,0]} maxBarSize={40}>
+              <Bar dataKey="totalCr" name={planType==='clp'?'CLP Amount':planType==='hybrid_later'?'Hybrid (Later)':planType==='hybrid_earlier'?'Hybrid (Earlier)':'TLP Amount'}
+                fill={planType==='clp'?'#2e7d32':planType==='hybrid_later'?'#7c3aed':planType==='hybrid_earlier'?'#b45309':T.amber}
+                radius={[4,4,0,0]} maxBarSize={40}>
                 <LabelList dataKey="totalCr" position="top" style={{fill:T.textD,fontSize:8,fontWeight:800}} formatter={v=>v>0?`₹${v>=100?v.toFixed(0):v.toFixed(1)}Cr`:''}/>
               </Bar>
             </ComposedChart>
@@ -698,7 +720,9 @@ const CollectionsTab = ({T, GC, SH}) => {
           <Tooltip formatter={(v,n)=>[`₹${v} Cr`,n]}/>
           <Legend wrapperStyle={{fontSize:9,fontWeight:700}} iconSize={8}/>
           {(planType==='all'||planType==='tlp')&&<Bar dataKey="tlp" name="TLP" fill={T.amber} radius={[3,3,0,0]} stackId="a"/>}
-          {(planType==='all'||planType==='clp')&&<Bar dataKey="clp" name="CLP" fill={T.teal} radius={[3,3,0,0]} stackId="a"/>}
+          {(planType==='all'||planType==='clp')&&<Bar dataKey="clp" name="CLP" fill="#2e7d32" radius={[3,3,0,0]} stackId="a"/>}
+          {(planType==='all'||planType==='hybrid_later')&&<Bar dataKey="hybrid_later" name="Hybrid (Later)" fill="#7c3aed" radius={[3,3,0,0]} stackId="a"/>}
+          {(planType==='all'||planType==='hybrid_earlier')&&<Bar dataKey="hybrid_earlier" name="Hybrid (Earlier)" fill="#b45309" radius={[3,3,0,0]} stackId="a"/>}
         </ComposedChart>
       </ResponsiveContainer>
     </GC>
@@ -707,9 +731,9 @@ const CollectionsTab = ({T, GC, SH}) => {
     <SectionHead title="Tower-wise Collection" icon="🏢"/>
     <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10}}>
       {towers.map((tw,i)=>{
-        const dem=planType==='tlp'?tw.tlp_dem:planType==='clp'?tw.clp_dem:(tw.tlp_dem+tw.clp_dem);
-        const rec=planType==='tlp'?tw.tlp_rec:planType==='clp'?tw.clp_rec:(tw.tlp_rec+tw.clp_rec);
-        const out=planType==='tlp'?tw.tlp_out:planType==='clp'?tw.clp_out:(tw.tlp_out+tw.clp_out);
+        const dem=demKey?tw[demKey]||0:(tw.tlp_dem+tw.clp_dem+(tw.he_dem||0)+(tw.hl_dem||0));
+        const rec=recKey?tw[recKey]||0:(tw.tlp_rec+tw.clp_rec+(tw.he_rec||0)+(tw.hl_rec||0));
+        const out=outKey?tw[outKey]||0:(tw.tlp_out+tw.clp_out+(tw.he_out||0)+(tw.hl_out||0));
         const eff=dem>0?Math.round(rec/dem*100):0;
         return (
           <GC key={i} style={{padding:14}} cls="kc">
@@ -748,9 +772,13 @@ const CollectionsTab = ({T, GC, SH}) => {
               <Tooltip formatter={(v,n)=>[`₹${v} Cr`,n]}/>
               <Legend wrapperStyle={{fontSize:9,fontWeight:700}} iconSize={8}/>
               {(planType==='all'||planType==='tlp')&&<Bar dataKey="tlp_dem" name="TLP Demand" fill={T.amber} fillOpacity={0.7} radius={[3,3,0,0]} stackId="dem"/>}
-              {(planType==='all'||planType==='clp')&&<Bar dataKey="clp_dem" name="CLP Demand" fill="#f59e0b" fillOpacity={0.4} radius={[3,3,0,0]} stackId="dem"/>}
+              {(planType==='all'||planType==='clp')&&<Bar dataKey="clp_dem" name="CLP Demand" fill="#2e7d32" fillOpacity={0.6} radius={[3,3,0,0]} stackId="dem"/>}
+              {(planType==='all'||planType==='hybrid_later')&&<Bar dataKey="hl_dem" name="Hybrid(Later) Demand" fill="#7c3aed" fillOpacity={0.6} radius={[3,3,0,0]} stackId="dem"/>}
+              {(planType==='all'||planType==='hybrid_earlier')&&<Bar dataKey="he_dem" name="Hybrid(Earlier) Demand" fill="#b45309" fillOpacity={0.6} radius={[3,3,0,0]} stackId="dem"/>}
               {(planType==='all'||planType==='tlp')&&<Bar dataKey="tlp_rec" name="TLP Received" fill={T.teal} fillOpacity={0.8} radius={[3,3,0,0]} stackId="rec"/>}
-              {(planType==='all'||planType==='clp')&&<Bar dataKey="clp_rec" name="CLP Received" fill={T.tealD} fillOpacity={0.5} radius={[3,3,0,0]} stackId="rec"/>}
+              {(planType==='all'||planType==='clp')&&<Bar dataKey="clp_rec" name="CLP Received" fill={T.tealD} fillOpacity={0.6} radius={[3,3,0,0]} stackId="rec"/>}
+              {(planType==='all'||planType==='hybrid_later')&&<Bar dataKey="hl_rec" name="Hybrid(Later) Received" fill="#a855f7" fillOpacity={0.7} radius={[3,3,0,0]} stackId="rec"/>}
+              {(planType==='all'||planType==='hybrid_earlier')&&<Bar dataKey="he_rec" name="Hybrid(Earlier) Received" fill="#d97706" fillOpacity={0.7} radius={[3,3,0,0]} stackId="rec"/>}
             </ComposedChart>
           </ResponsiveContainer>
         </div>
