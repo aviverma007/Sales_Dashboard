@@ -1,8 +1,8 @@
 {
   "kpi": {
-    "totalRevenue": 1730.56,
+    "totalRevenue": 1732.73,
     "totalExpenditure": 45.2,
-    "surplus": 1685.36
+    "surplus": 1687.53
   },
   "expenditureByCategory": [
     {
@@ -46,70 +46,70 @@
     {
       "month": "2023-01",
       "label": "Jan'23",
-      "revenue": 0,
+      "revenue": 0.0,
       "expenditure": 0.07,
       "surplus": -0.07
     },
     {
       "month": "2023-02",
       "label": "Feb'23",
-      "revenue": 0,
+      "revenue": 0.0,
       "expenditure": 0.29,
       "surplus": -0.29
     },
     {
       "month": "2023-03",
       "label": "Mar'23",
-      "revenue": 0,
+      "revenue": 0.0,
       "expenditure": 7.09,
       "surplus": -7.09
     },
     {
       "month": "2023-04",
       "label": "Apr'23",
-      "revenue": 0,
+      "revenue": 0.0,
       "expenditure": 1.26,
       "surplus": -1.26
     },
     {
       "month": "2023-05",
       "label": "May'23",
-      "revenue": 0,
+      "revenue": 0.0,
       "expenditure": 3.01,
       "surplus": -3.01
     },
     {
       "month": "2023-06",
       "label": "Jun'23",
-      "revenue": 0,
+      "revenue": 0.0,
       "expenditure": 1.7,
       "surplus": -1.7
     },
     {
       "month": "2023-07",
       "label": "Jul'23",
-      "revenue": 0,
+      "revenue": 0.0,
       "expenditure": 2.38,
       "surplus": -2.38
     },
     {
       "month": "2023-08",
       "label": "Aug'23",
-      "revenue": 0,
+      "revenue": 0.0,
       "expenditure": 1.61,
       "surplus": -1.61
     },
     {
       "month": "2023-09",
       "label": "Sep'23",
-      "revenue": 0,
+      "revenue": 0.0,
       "expenditure": 0.69,
       "surplus": -0.69
     },
     {
       "month": "2023-10",
       "label": "Oct'23",
-      "revenue": 0,
+      "revenue": 0.0,
       "expenditure": 1.29,
       "surplus": -1.29
     },
@@ -333,79 +333,79 @@
     {
       "month": "2026-06",
       "label": "Jun'26",
-      "revenue": 9.65,
+      "revenue": 11.82,
       "expenditure": 0.12,
-      "surplus": 9.53
+      "surplus": 11.7
     }
   ],
   "monthlyCollection": [
     {
       "month": "2023-01",
       "label": "Jan'23",
-      "revenue": 0,
+      "revenue": 0.0,
       "expenditure": 0.07,
       "surplus": -0.07
     },
     {
       "month": "2023-02",
       "label": "Feb'23",
-      "revenue": 0,
+      "revenue": 0.0,
       "expenditure": 0.29,
       "surplus": -0.29
     },
     {
       "month": "2023-03",
       "label": "Mar'23",
-      "revenue": 0,
+      "revenue": 0.0,
       "expenditure": 7.09,
       "surplus": -7.09
     },
     {
       "month": "2023-04",
       "label": "Apr'23",
-      "revenue": 0,
+      "revenue": 0.0,
       "expenditure": 1.26,
       "surplus": -1.26
     },
     {
       "month": "2023-05",
       "label": "May'23",
-      "revenue": 0,
+      "revenue": 0.0,
       "expenditure": 3.01,
       "surplus": -3.01
     },
     {
       "month": "2023-06",
       "label": "Jun'23",
-      "revenue": 0,
+      "revenue": 0.0,
       "expenditure": 1.7,
       "surplus": -1.7
     },
     {
       "month": "2023-07",
       "label": "Jul'23",
-      "revenue": 0,
+      "revenue": 0.0,
       "expenditure": 2.38,
       "surplus": -2.38
     },
     {
       "month": "2023-08",
       "label": "Aug'23",
-      "revenue": 0,
+      "revenue": 0.0,
       "expenditure": 1.61,
       "surplus": -1.61
     },
     {
       "month": "2023-09",
       "label": "Sep'23",
-      "revenue": 0,
+      "revenue": 0.0,
       "expenditure": 0.69,
       "surplus": -0.69
     },
     {
       "month": "2023-10",
       "label": "Oct'23",
-      "revenue": 0,
+      "revenue": 0.0,
       "expenditure": 1.29,
       "surplus": -1.29
     },
@@ -629,9 +629,9 @@
     {
       "month": "2026-06",
       "label": "Jun'26",
-      "revenue": 9.65,
+      "revenue": 11.82,
       "expenditure": 0.12,
-      "surplus": 9.53
+      "surplus": 11.7
     }
   ]
 }
