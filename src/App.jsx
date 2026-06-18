@@ -799,12 +799,12 @@ const PnLChart = ({md}) => {
     if(!Chart||!md||!md.length) return;
     const labels=md.map(r=>r.label);
     const revData=md.map(r=>+(r.revenue||0));
-    const expData=md.map(r=>+(r.expense||0));
-    const pnlData=md.map(r=>+(r.pnl||0));
+    const expData=md.map(r=>+(r.expenditure||0));
+    const pnlData=md.map(r=>+(r.surplus||0));
     el._chartInst=new Chart(el,{
       data:{labels,datasets:[
         {type:'bar',label:'Revenue',data:revData,backgroundColor:'rgba(0,151,167,0.85)',borderRadius:4,borderSkipped:false,order:2},
-        {type:'bar',label:'Expense',data:expData,backgroundColor:'rgba(239,68,68,0.8)',borderRadius:4,borderSkipped:false,order:2},
+        {type:'bar',label:'Expenditure',data:expData,backgroundColor:'rgba(239,68,68,0.8)',borderRadius:4,borderSkipped:false,order:2},
         {type:'line',label:'Surplus / Deficit',data:pnlData,borderColor:'#f59e0b',borderWidth:3,borderDash:[8,4],
           pointBackgroundColor:pnlData.map(v=>v>=0?'#10b981':'#ef4444'),
           pointRadius:6,pointHoverRadius:8,pointBorderColor:'#fff',pointBorderWidth:2,
@@ -829,7 +829,7 @@ const PnLChart = ({md}) => {
       }
     });
   },[md]);
-  return <div style={{position:'relative',height:320}}><canvas ref={canvasRef} role="img" aria-label="Revenue vs Expense vs Surplus / Deficit chart"/></div>;
+  return <div style={{position:'relative',height:320}}><canvas ref={canvasRef} role="img" aria-label="Revenue vs Expenditure vs Surplus / Deficit chart"/></div>;
 };
 
 const PnLTab = ({T, GC, SH, filters, sf}) => {
@@ -844,8 +844,8 @@ const PnLTab = ({T, GC, SH, filters, sf}) => {
   },[]);
 
   const kpi = pnlRaw?.kpi || {};
-  const projExp = pnlRaw?.projectExpense || [];
-  const npExp = pnlRaw?.nonProjectExpense || [];
+  const projExp = pnlRaw?.expenditureByCategory || pnlRaw?.projectExpense || [];
+  const npExp = [];
   const monthlyColl = pnlRaw?.monthlyCollection || [];
 
   // FY helper
@@ -887,8 +887,8 @@ const PnLTab = ({T, GC, SH, filters, sf}) => {
     ? filteredColl.reduce((s,r)=>s+(r.revenue||0),0)
     : (kpi.totalRevenue||0);
   const totalExpense = (fyFilter||qFilter||moFilter)
-    ? filteredColl.reduce((s,r)=>s+(r.expense||0),0)
-    : (kpi.totalActual||0);
+    ? filteredColl.reduce((s,r)=>s+(r.expenditure||0),0)
+    : (kpi.totalExpenditure||0);
   const pnl = totalRevenue - totalExpense;
 
   const CC = ['#0097a7','#7c3aed','#10b981','#f59e0b','#ef4444','#1565c0','#e65100','#2e7d32','#d81b60','#37474f','#00838f','#4a148c','#1b5e20','#b71c1c','#e65100','#006064','#33691e'];
@@ -915,7 +915,7 @@ const PnLTab = ({T, GC, SH, filters, sf}) => {
       {/* KPI Row */}
       <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12,marginBottom:16}}>
         <KpiCard label="Revenue (Collection)" value={`₹${totalRevenue.toLocaleString('en-IN',{maximumFractionDigits:1})} Cr`} sub="Total received from customers" color="#0097a7"/>
-        <KpiCard label="Total Expense (Actual)" value={`₹${totalExpense.toLocaleString('en-IN',{maximumFractionDigits:2})} Cr`} sub="Actual spend to date" color="#ef4444"/>
+        <KpiCard label="Total Expenditure (Actual)" value={`₹${totalExpense.toLocaleString('en-IN',{maximumFractionDigits:2})} Cr`} sub="Actual spend to date" color="#ef4444"/>
 
         <div style={{position:'relative',overflow:'hidden',background:'rgba(255,255,255,0.92)',backdropFilter:'blur(12px)',borderRadius:14,padding:'16px 18px',boxShadow:'0 2px 16px rgba(0,80,120,0.08)',border:`2px solid ${pnl>=0?'#10b981':'#ef4444'}`}}>
           <div style={{position:'absolute',top:0,left:0,right:0,height:4,background:pnl>=0?'linear-gradient(90deg,#10b981,#34d399)':'linear-gradient(90deg,#ef4444,#f87171)',borderRadius:'14px 14px 0 0'}}/>
@@ -936,7 +936,7 @@ const PnLTab = ({T, GC, SH, filters, sf}) => {
 
         {/* Project Expense Pie */}
         <GC style={{padding:16}}>
-          <SH title="Cost of Construction — Project Expenses" sub="By category (Actual spend in ₹ Cr)"/>
+          <SH title="Cost of Construction — Project Expenditure" sub="By category (Actual spend in ₹ Cr)"/>
           {(()=>{const projTotal=projExp.reduce((s,r)=>s+r.Actual,0);return(
           <div style={{display:'flex',gap:16,alignItems:'center'}}>
             <div style={{position:'relative',width:180,height:180,flexShrink:0}}>
@@ -973,7 +973,7 @@ const PnLTab = ({T, GC, SH, filters, sf}) => {
 
         {/* Non-Project Expense Pie */}
         <GC style={{padding:16}}>
-          <SH title="Non-Project Expenses" sub="By category (Actual spend in ₹ Cr)"/>
+          <SH title="Non-Project Expenditure" sub="By category (Actual spend in ₹ Cr)"/>
           {(()=>{const npFiltered=npExp.filter(r=>r.Actual>0);const npTotal=npFiltered.reduce((s,r)=>s+r.Actual,0);return(
           <div style={{display:'flex',gap:16,alignItems:'center'}}>
             <div style={{position:'relative',width:180,height:180,flexShrink:0}}>
@@ -1013,11 +1013,11 @@ const PnLTab = ({T, GC, SH, filters, sf}) => {
       <GC style={{padding:20,marginBottom:16}}>
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:12,flexWrap:'wrap',gap:8}}>
           <div>
-            <p style={{fontSize:12,fontWeight:800,color:T.tealD,letterSpacing:.4,margin:0,textTransform:'uppercase'}}>Revenue vs Expense vs Surplus / Deficit</p>
+            <p style={{fontSize:12,fontWeight:800,color:T.tealD,letterSpacing:.4,margin:0,textTransform:'uppercase'}}>Revenue vs Expenditure vs Surplus / Deficit</p>
             <p style={{fontSize:10,color:T.gray,margin:'2px 0 0'}}>Monthly comparison · ₹ Cr · Mar 2025 onwards</p>
           </div>
           <div style={{display:'flex',gap:16}}>
-            {[['#0097a7','Revenue',''],['#ef4444','Expense',''],['#f59e0b','Surplus / Deficit','- -']].map(([col,lbl,dash])=>(
+            {[['#0097a7','Revenue',''],['#ef4444','Expenditure',''],['#f59e0b','Surplus / Deficit','- -']].map(([col,lbl,dash])=>(
               <div key={lbl} style={{display:'flex',alignItems:'center',gap:5,fontSize:11,color:T.textM}}>
                 {dash?<svg width="22" height="3"><line x1="0" y1="1.5" x2="22" y2="1.5" stroke={col} strokeWidth="2.5" strokeDasharray="6 3"/></svg>:<div style={{width:12,height:12,borderRadius:2,background:col}}/>}
                 <span style={{fontWeight:600}}>{lbl}</span>
