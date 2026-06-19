@@ -532,6 +532,7 @@ const CollectionsTab = ({T, GC, SH}) => {
   const [dk, setDk] = React.useState(null);
   const [planType, setPlanType] = React.useState('all');
   const [showNote, setShowNote] = React.useState(false);
+  const [rangeIdx, setRangeIdx] = React.useState([0, 999]);
 
   React.useEffect(()=>{
     fetch('/data/dapp_kpi.json').then(r=>r.json()).then(setDk).catch(()=>{});
@@ -555,6 +556,12 @@ const CollectionsTab = ({T, GC, SH}) => {
     : allMilestones.filter(m=>m.type===planType);
   const allMonthly    = dk.monthlyTrend || [];
   const towers        = dk.towerKpi || [];
+
+  // Range slider filtering for monthly trend chart
+  const collMonths = allMonthly.map(r=>r.month);
+  const safeL = Math.min(rangeIdx[0], Math.max(0, collMonths.length-1));
+  const safeR = Math.min(rangeIdx[1], Math.max(0, collMonths.length-1));
+  const filteredMonthly = allMonthly.slice(safeL, safeR+1);
 
   // Keys for monthly/tower data
   const demKey = planType==='all'?null:planType==='hybrid_earlier'?'he_dem':planType==='hybrid_later'?'hl_dem':planType+'_dem';
@@ -760,12 +767,18 @@ const CollectionsTab = ({T, GC, SH}) => {
 
     {/* SECTION 5: MONTHLY TREND */}
     <SectionHead title="Monthly Demand vs Collection Trend" icon="📈"/>
+    <MonthRangeSlider
+      months={collMonths}
+      rangeIdx={rangeIdx}
+      setRangeIdx={setRangeIdx}
+      onReset={()=>setRangeIdx([0,999])}
+    />
     <GC style={{padding:16}}>
       <SH2 title="Month-wise Demand Raised vs Received" sub="From bill creation date in DAPP (W/O GST)"/>
       <div style={{overflowX:'auto'}}>
         <div style={{minWidth:Math.max(allMonthly.length*55,500)+'px'}}>
           <ResponsiveContainer width="100%" height={240}>
-            <ComposedChart data={allMonthly} margin={{top:14,right:20,bottom:28,left:0}}>
+            <ComposedChart data={filteredMonthly} margin={{top:14,right:20,bottom:28,left:0}}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.07)" vertical={false}/>
               <XAxis dataKey="label" tick={{fill:T.textM,fontSize:8,fontWeight:600}} angle={-30} textAnchor="end" height={36} axisLine={false} tickLine={false}/>
               <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} tickFormatter={v=>'₹'+v+'Cr'} width={46}/>
@@ -834,6 +847,7 @@ const PnLChart = ({md}) => {
 
 const PnLTab = ({T, GC, SH, filters, sf}) => {
   const [pnlRaw, setPnlRaw] = React.useState(null);
+  const [pnlRangeIdx, setPnlRangeIdx] = React.useState([0, 999]);
   // Use main filters for FY/Quarter/Month
   const fyFilter = filters.fy||'';
   const qFilter = filters.quarter||'';
@@ -875,13 +889,17 @@ const PnLTab = ({T, GC, SH, filters, sf}) => {
   const allMos = monthlyColl.map(r=>r.month).sort();
 
   const MO_NAME={Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'};
-  const filteredColl = (pnlRaw?.monthlyData||[]).filter(r=>{
+  const filteredCollBase = (pnlRaw?.monthlyData||[]).filter(r=>{
     if(!r.month||r.month==='NaT')return false;
     if(fyFilter){const fys=fyFilter.split('||').filter(Boolean);if(fys.length&&!fys.some(fy=>getFY(r.month)===fy))return false;}
     if(qFilter){const qs=qFilter.split('||').filter(Boolean).map(q=>q.split(' ')[0]);const moN=parseInt(r.month.split('-')[1]);const Q={Q1:[4,5,6],Q2:[7,8,9],Q3:[10,11,12],Q4:[1,2,3]};if(qs.length&&!qs.some(q=>(Q[q]||[]).includes(moN)))return false;}
     if(moFilter){const mos=moFilter.split('||').filter(Boolean);const moNum=r.month.split('-')[1];if(mos.length&&!mos.some(mn=>MO_NAME[mn]===moNum))return false;}
     return true;
   });
+  const pnlMonths = filteredCollBase.map(r=>r.month);
+  const pnlSafeL = Math.min(pnlRangeIdx[0], Math.max(0, pnlMonths.length-1));
+  const pnlSafeR = Math.min(pnlRangeIdx[1], Math.max(0, pnlMonths.length-1));
+  const filteredColl = filteredCollBase.slice(pnlSafeL, pnlSafeR+1);
 
   const totalRevenue = (fyFilter||qFilter||moFilter)
     ? filteredColl.reduce((s,r)=>s+(r.revenue||0),0)
@@ -1025,6 +1043,12 @@ const PnLTab = ({T, GC, SH, filters, sf}) => {
             ))}
           </div>
         </div>
+        <MonthRangeSlider
+          months={pnlMonths}
+          rangeIdx={pnlRangeIdx}
+          setRangeIdx={setPnlRangeIdx}
+          onReset={()=>setPnlRangeIdx([0,999])}
+        />
 <PnLChart md={filteredColl}/>
       </GC>
 
