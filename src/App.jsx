@@ -530,25 +530,24 @@ class AppErrorBoundary extends React.Component {
 // ── Dashboard Summary Bar Component ──────────────────────────────────────────
 const SummaryBar = ({raw, filters, T, GC}) => {
   const [pnlKpi, setPnlKpi] = React.useState(null);
-  const [dappKpi, setDappKpi] = React.useState(null);
 
   React.useEffect(()=>{
     fetch('/data/pnl_data.json').then(r=>r.json()).then(d=>setPnlKpi(d?.kpi||{})).catch(()=>{});
-    fetch('/data/dapp_kpi.json').then(r=>r.json()).then(d=>setDappKpi(d?.kpi?.all||{})).catch(()=>{});
   },[]);
 
   const selProjs = filters.project ? filters.project.split('||').filter(Boolean) : [];
   const invr = (raw?.invr||[]).filter(u=>!selProjs.length||selProjs.includes(u.project));
-  const booked = invr.filter(u=>u.status==='BOOKED');
+  const booked = invr.filter(u=>u.status==='Booked');
   const areaSold = booked.reduce((s,u)=>s+(u.carpetArea||u.superArea||0),0);
+  const dkAll = raw?.dappKpi?.kpi?.all || {};
 
   const totalUnits = booked.length;
   const areaSoldK  = (areaSold/1000).toFixed(1);
-  const totalColl  = (dappKpi?.totalReceivedWoT || 0).toFixed(1);
-  const totalExp   = (pnlKpi?.totalExpenditure  || 0).toFixed(1);
+  const totalColl  = (dkAll.totalReceivedWoT || 0).toFixed(1);
+  const totalExp   = (pnlKpi?.totalExpenditure || 0).toFixed(1);
 
   const cards = [
-    { label:'Total Units Sold',             value: totalUnits.toLocaleString('en-IN'), sub:`of ${invr.length} total · ${invr.filter(u=>u.status==='AVAILABLE').length} available`, color:'#0097a7' },
+    { label:'Total Units Sold',             value: totalUnits.toLocaleString('en-IN'), sub:`of ${invr.length} total · ${invr.filter(u=>u.status==='Available').length} available`, color:'#0097a7' },
     { label:'Total Area Sold',              value:`${areaSoldK}K sqft`,                sub:'Carpet area of booked units', color:'#7c3aed' },
     { label:'Total Collection (W/O GST)',   value:`₹${totalColl} Cr`,                 sub:'Received from customers (bank)', color:'#10b981' },
     { label:'Total Expenditure (incl. GST)',value:`₹${totalExp} Cr`,                  sub:'CJI3 + ME2L actual spend', color:'#ef4444' },
@@ -1186,9 +1185,12 @@ function AppInner() {
     Promise.all([
       fetch('/data/dashboard_data.json').then(r=>r.json()),
       fetch('/data/dapp_kpi.json').then(r=>r.json()).catch(()=>({})),
-    ]).then(([d, kpi])=>{
-      d.dappKpi = kpi;
-      window.__dappKpi = kpi;  // make available to PnLTab
+      fetch('/data/pnl_data.json').then(r=>r.json()).catch(()=>({})),
+    ]).then(([d, dappKpi, pnlData])=>{
+      d.dappKpi = dappKpi;
+      window.__dappKpi  = dappKpi;
+      window.__dappKpi2 = dappKpi;   // used by cards
+      window.__pnlKpi   = pnlData?.kpi || {};
       setRaw(d);
       setLoading(false);
       const firstProj=(d.filterOptions?.projects||[])[0]||'SMARTWORLD THE EDITION';
@@ -1290,20 +1292,21 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
   },[fo,filters.fy]);
 
   const kpi=useMemo(()=>{
-    const dk=raw?.kpiExtra||{};
-    const dkAll=window.__dappKpi2?.kpi?.all||{};
+    const dk   = raw?.kpiExtra   || {};
+    const dkap = raw?.dappKpi?.kpi?.all || {};
     const tS=pA.reduce((s,r)=>s+(r.bsp||0),0);
     const ws={APPROVED:0,PENDING:0,REJECTED:0};
     wF.forEach(r=>{if(ws[r.status]!==undefined)ws[r.status]++;});
     return{
-      totalUnits:      iFAll.length,
-      bookedUnits:     iFAll.filter(r=>r.status==='Booked'||r.status==='BOOKED').length,
-      availableUnits:  iFAll.filter(r=>r.status==='Available'||r.status==='AVAILABLE').length,
-      inProgressUnits: iFAll.filter(r=>r.status==='In Progress').length,
-      totalSales:tS,
-      dappDemand:   dkAll.totalInstallment ? dkAll.totalInstallment*1e7 : dFAll.reduce((s,r)=>s+(r.demand||0),0),
-      dappReceived: dkAll.totalReceivedWoT  ? dkAll.totalReceivedWoT*1e7  : dFAll.reduce((s,r)=>s+(r.received||0),0),
-      dappOutstanding: dkAll.totalOutstanding ? dkAll.totalOutstanding*1e7 : dFAll.reduce((s,r)=>s+(r.outstanding||0),0),
+      totalUnits:       iFAll.length,
+      bookedUnits:      iFAll.filter(r=>r.status==='Booked').length,
+      availableUnits:   iFAll.filter(r=>r.status==='Available').length,
+      inProgressUnits:  iFAll.filter(r=>r.status==='In Progress').length,
+      totalSales:       tS,
+      // Demand/collection from dapp_kpi.json (most accurate)
+      dappDemand:       (dkap.totalInstallment||0)*1e7,
+      dappReceived:     (dkap.totalReceivedWoT||0)*1e7,
+      dappOutstanding:  (dkap.totalOutstanding||0)*1e7,
       activeBookings:   pAAll.length,
       cancelledBookings:pCAll.length,
       pipelineBookings: wF.filter(r=>r.status==='PENDING').length,
@@ -1330,21 +1333,24 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
     });
   },[pA,pC,raw,iF]);
   const kpiEx=useMemo(()=>{
-    // Single source of truth: dapp_kpi.json (pre-computed from Excel files)
     const dk = raw?.kpiExtra || {};
-    const bookedAreaSqft = dk.bookedAreaSqft || iFAll.filter(r=>r.status==='Booked'||r.status==='BOOKED').reduce((s,r)=>s+(r.superArea||0),0);
-    const carpetAreaSqft = dk.carpetAreaSqft || iFAll.filter(r=>r.status==='Booked'||r.status==='BOOKED').reduce((s,r)=>s+(r.carpetArea||0),0);
-    const availAreaSqft  = iFAll.filter(r=>r.status==='Available'||r.status==='AVAILABLE').reduce((s,r)=>s+(r.superArea||0),0);
+    // Areas from kpiExtra (pre-computed from actual Excel)
+    const bookedAreaSqft = dk.bookedAreaSqft || pAAll.reduce((s,r)=>s+(r.superArea||0),0);
+    const carpetAreaSqft = dk.carpetAreaSqft || pAAll.reduce((s,r)=>s+(r.carpet||r.carpetArea||0),0);
+    const availAreaSqft  = iFAll.filter(r=>r.status==='Available').reduce((s,r)=>s+(r.superArea||0),0);
     const totalSuperArea = iFAll.reduce((s,r)=>s+(r.superArea||0),0);
-    const totalBSPCr     = dk.totalBSPCr || +(pAAll.reduce((s,r)=>s+(r.bsp||0),0)/1e7).toFixed(1);
+    // BSP/TCV from pdrn (active bookings) — most accurate
+    const totalBSPCr     = dk.totalBSPCr  || +(pAAll.reduce((s,r)=>s+(r.bsp||0),0)/1e7).toFixed(1);
+    const totalTCVCr     = dk.totalTCVCr  || totalBSPCr;
     const cancelledBSPCr = dk.cancelledBSPCr || +(pCAll.reduce((s,r)=>s+(r.bsp||0),0)/1e7).toFixed(1);
     const cancelledAreaSqft = pCAll.reduce((s,r)=>s+(r.superArea||0),0);
-    const totalTCVCr     = dk.totalTCVCr || +(pAAll.reduce((s,r)=>s+(r.bsp||0),0)/1e7).toFixed(1);
-    const avgRatePerSqft = dk.avgRatePerSqft || (bookedAreaSqft>0 ? Math.round(+(totalTCVCr*1e7)/bookedAreaSqft) : 0);
-    const availBSPCr     = iFAll.filter(r=>r.status==='Available'||r.status==='AVAILABLE').reduce((s,r)=>s+(r.bsp||0),0)/1e7;
-    const unsoldValueCr  = +availBSPCr.toFixed(1);
-    const totalProjCr    = +(+totalTCVCr + unsoldValueCr).toFixed(1);
-    const soldPctValue   = totalProjCr>0 ? Math.round(+totalTCVCr/totalProjCr*100) : 0;
+    // Avg rate from kpiExtra (most reliable) or computed
+    const avgRatePerSqft = dk.avgRatePerSqft || (bookedAreaSqft>0 ? Math.round(totalTCVCr*1e7/bookedAreaSqft) : 0);
+    // Unsold value = available units × avg rate (available bsp not in invr)
+    const unsoldValueCr  = +(availAreaSqft * avgRatePerSqft / 1e7).toFixed(1);
+    // Total project = sold TCV + estimated unsold
+    const totalProjCr    = +(totalTCVCr + unsoldValueCr).toFixed(1);
+    const soldPctValue   = totalProjCr>0 ? Math.round(totalTCVCr/totalProjCr*100) : 0;
     return {
       bookedAreaSqft, carpetAreaSqft, availAreaSqft, totalSuperArea,
       totalBSPCr, totalTCVCr, cancelledBSPCr, cancelledAreaSqft,
@@ -1764,16 +1770,16 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                 <SH title="Total Sales Value (₹Cr)" compact/>
                 {(()=>{
                   // All values from kpiEx (sourced from dapp_kpi.json / invr Excel)
-                  const dkAll = window.__dappKpi2?.kpi?.all || {};
+                  const dkAll = raw?.dappKpi?.kpi?.all || {};
                   const bookedTCV      = +kpiEx.totalTCVCr;
                   const unsoldBSP      = +kpiEx.unsoldValueCr;
                   const totalPotential = +kpiEx.totalProjCr;
                   const soldPct        = kpiEx.soldPctValue || 0;
-                  const availUnits     = iFAll.filter(r=>r.status==='Available'||r.status==='AVAILABLE').length;
+                  const availUnits     = iFAll.filter(r=>r.status==='Available').length;
                   const installmentTotal = dkAll.totalInstallment || 0;
                   const totalReceived    = dkAll.totalReceivedWoT || 0;
                   const upcomingAmt      = dkAll.totalOutstanding || 0;
-                  const collectedPct     = installmentTotal>0?Math.round(totalReceived/installmentTotal*100):0;
+                  const collectedPct     = installmentTotal>0?Math.min(Math.round(totalReceived/installmentTotal*100),100):0;
                   return(
                     <div style={{display:'flex',flexDirection:'column',gap:6}}>
                       {/* Row 1: donut + sold/unsold */}
