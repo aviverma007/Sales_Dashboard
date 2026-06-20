@@ -553,16 +553,76 @@ const SummaryBar = ({raw, filters, T, GC}) => {
     { label:'Total Expenditure (incl. GST)',value:`₹${totalExp} Cr`,                  sub:'CJI3 + ME2L actual spend', color:'#ef4444' },
   ];
 
+  const totalRevenue = pnlKpi?.totalRevenue || 0;
+  const surplus      = pnlKpi?.surplus      || 0;
+  const totalExpNum  = parseFloat(totalExp);
+  const totalCollNum = parseFloat(totalColl);
+
+  // Bar chart data — financial KPIs in Cr
+  const chartData = [
+    { name:'Revenue\n(Collection)', value: totalRevenue, color:'#0097a7' },
+    { name:'Collection\n(W/O GST)',  value: totalCollNum,  color:'#10b981' },
+    { name:'Expenditure\n(incl.GST)',value: totalExpNum,   color:'#ef4444' },
+    { name:'Surplus /\nDeficit',     value: surplus,       color: surplus>=0?'#059669':'#dc2626' },
+  ];
+
   return (
-    <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10,marginBottom:4}}>
-      {cards.map(({label,value,sub,color})=>(
-        <GC key={label} style={{padding:'13px 16px'}} cls="kc">
-          <div style={{position:'absolute',top:0,left:0,right:0,height:3,background:color,borderRadius:'14px 14px 0 0'}}/>
-          <p style={{fontSize:8,fontWeight:800,color:'#94a3b8',textTransform:'uppercase',letterSpacing:.7,margin:'2px 0 5px'}}>{label}</p>
-          <p style={{fontSize:21,fontWeight:900,color:T.navy,margin:'0 0 3px',lineHeight:1,letterSpacing:-0.5}}>{value}</p>
-          <p style={{fontSize:9,color:T.textL,margin:0}}>{sub}</p>
-        </GC>
-      ))}
+    <div style={{display:'flex',flexDirection:'column',gap:10,marginBottom:4}}>
+      {/* ── KPI Cards ── */}
+      <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10}}>
+        {cards.map(({label,value,sub,color})=>(
+          <GC key={label} style={{padding:'13px 16px'}} cls="kc">
+            <div style={{position:'absolute',top:0,left:0,right:0,height:3,background:color,borderRadius:'14px 14px 0 0'}}/>
+            <p style={{fontSize:8,fontWeight:800,color:'#94a3b8',textTransform:'uppercase',letterSpacing:.7,margin:'2px 0 5px'}}>{label}</p>
+            <p style={{fontSize:21,fontWeight:900,color:T.navy,margin:'0 0 3px',lineHeight:1,letterSpacing:-0.5}}>{value}</p>
+            <p style={{fontSize:9,color:T.textL,margin:0}}>{sub}</p>
+          </GC>
+        ))}
+      </div>
+
+      {/* ── Combined KPI Bar Chart ── */}
+      <GC style={{padding:'14px 20px 10px'}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10}}>
+          <div>
+            <p style={{fontSize:11,fontWeight:900,color:T.tealD,margin:0,textTransform:'uppercase',letterSpacing:0.5}}>Project Financial Overview</p>
+            <p style={{fontSize:9,color:T.textL,margin:'2px 0 0'}}>All values in ₹ Cr — Revenue · Collection · Expenditure · Surplus</p>
+          </div>
+          <div style={{display:'flex',gap:12}}>
+            {chartData.map(d=>(
+              <div key={d.name} style={{display:'flex',alignItems:'center',gap:5}}>
+                <div style={{width:10,height:10,borderRadius:2,background:d.color}}/>
+                <span style={{fontSize:9,color:T.textM,fontWeight:600,whiteSpace:'nowrap'}}>{d.name.replace('\n',' ')}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <ResponsiveContainer width="100%" height={180}>
+          <ComposedChart data={chartData} margin={{top:24,right:20,bottom:8,left:0}}>
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.06)" vertical={false}/>
+            <XAxis dataKey="name" tick={{fill:T.textM,fontSize:10,fontWeight:700}}
+              tickFormatter={v=>v.replace('\n',' ')} axisLine={false} tickLine={false}/>
+            <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false}
+              tickFormatter={v=>`₹${v>=1000?(v/1000).toFixed(1)+'K':v}Cr`} width={56}/>
+            <Tooltip formatter={(v)=>[`₹${(+v).toFixed(1)} Cr`,'Value']}/>
+            <Bar dataKey="value" radius={[6,6,0,0]} maxBarSize={80} isAnimationActive={true} animationDuration={900}>
+              {chartData.map((d,i)=><Cell key={i} fill={d.color} fillOpacity={0.85}/>)}
+              <LabelList dataKey="value" position="top"
+                style={{fontWeight:900,fontSize:11}}
+                formatter={v=>`₹${(+v).toFixed(0)}Cr`}
+                content={({x,y,width,value,index})=>{
+                  const d=chartData[index]||{};
+                  return(
+                    <text x={x+width/2} y={y-6} textAnchor="middle"
+                      style={{fill:d.color,fontSize:11,fontWeight:900}}>
+                      ₹{(+value).toFixed(0)}Cr
+                    </text>
+                  );
+                }}
+              />
+            </Bar>
+          </ComposedChart>
+        </ResponsiveContainer>
+      </GC>
     </div>
   );
 };
