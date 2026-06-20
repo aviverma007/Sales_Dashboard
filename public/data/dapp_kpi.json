@@ -82,6 +82,42 @@
   },
   "milestonesUpcoming": [
     {
+      "name": "On start of Excavation or 1 year from date of booking whichever is later",
+      "type": "hybrid_later",
+      "totalCr": 0.0,
+      "T1": 0.0,
+      "T2": 0.0,
+      "T3": 0.0,
+      "T4": 0.0,
+      "T5": 0.0,
+      "T6": 0.0,
+      "expectedDate": "2025-03"
+    },
+    {
+      "name": "On or Before 31st March 2025 or Completion of Excavation (whichever is later)",
+      "type": "hybrid_later",
+      "totalCr": 0.03,
+      "T1": 0.03,
+      "T2": 0.0,
+      "T3": 0.0,
+      "T4": 0.0,
+      "T5": 0.0,
+      "T6": 0.0,
+      "expectedDate": "2025-03"
+    },
+    {
+      "name": "On or Before 19th November 2025 or Completion of Upper Basement (whichever is later)",
+      "type": "hybrid_later",
+      "totalCr": 0.0,
+      "T1": 0.0,
+      "T2": 0.0,
+      "T3": 0.0,
+      "T4": 0.0,
+      "T5": 0.0,
+      "T6": 0.0,
+      "expectedDate": "2025-11"
+    },
+    {
       "name": "Time Linked April 2026",
       "type": "tlp",
       "totalCr": 10.74,
@@ -116,6 +152,30 @@
       "T5": 0,
       "T6": 0,
       "expectedDate": "2026-05"
+    },
+    {
+      "name": "On or before 17th May'2026 or Completion of 3rd Floor Roof Slab (whichever is later)",
+      "type": "hybrid_later",
+      "totalCr": 0.2,
+      "T1": 0.0,
+      "T2": 0.0,
+      "T3": 0.0,
+      "T4": 0.0,
+      "T5": 0.2,
+      "T6": 0.0,
+      "expectedDate": "2026-05"
+    },
+    {
+      "name": "On or Before 29 Jun 2026 Or On Completion of 7th Floor Slab (Whichever is later) (On Execution/Signing of Agreement for Sale)",
+      "type": "hybrid_later",
+      "totalCr": 5.47,
+      "T1": 5.47,
+      "T2": 0.0,
+      "T3": 0.0,
+      "T4": 0.0,
+      "T5": 0.0,
+      "T6": 0.0,
+      "expectedDate": "2026-06"
     },
     {
       "name": "On Completion of 15th Floor",
