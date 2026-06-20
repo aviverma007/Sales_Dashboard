@@ -401,7 +401,7 @@ const ChartCardCP = ({topCP,cpExpanded,setCpExpanded,CC,T,CTip,SH}) => {
         <XAxis type="number" tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false}/>
         <YAxis type="category" dataKey="name" tick={{fill:T.text,fontSize:10,fontWeight:700}} axisLine={false} tickLine={false} width={145} tickFormatter={v=>v?.length>20?v.slice(0,20)+'…':v}/>
         <Tooltip content={<CTip fmt={(v,n)=>n==='Sales (₹Cr)'?'₹'+v+' Cr':v?.toLocaleString?.('en-IN')}/>}/>
-        <Bar dataKey="units" name="Units" radius={[0,4,4,0]}>
+        <Bar dataKey="units" name="Units" radius={[0,4,4,0]}><LabelList dataKey="units" position="right" style={{fill:T.navy,fontSize:8,fontWeight:800}}/>
           {visible.map((_,i)=><Cell key={i} fill={CC[i%CC.length]}/>)}
           <LabelList content={({x,y,width,height,value,index})=>{
             const d=visible[index];
@@ -440,7 +440,7 @@ const ChartCardBvC = ({bvc,bMode,setBMode,bOff,setBOff,toQuarterly,ChartControls
         <Bar dataKey="targetTopper" name="Target Remaining" stackId="a" fill={T.amber} fillOpacity={0.85} radius={[3,3,0,0]}>
           <LabelList dataKey="remaining" position="top" style={{fill:T.amber,fontSize:7,fontWeight:800}} formatter={v=>v>0?String(v):''}/>
         </Bar>
-        <Bar dataKey="cancelled" name="Cancelled" fill={T.red} radius={[2,2,0,0]} fillOpacity={0.85}>
+        <Bar dataKey="cancelled" name="Cancelled" fill={T.red} radius={[2,2,0,0]} fillOpacity={0.85}><LabelList dataKey="cancelled" position="top" style={{fill:T.red,fontSize:7,fontWeight:800}} formatter={v=>v>0?v:''}/>
           <LabelList dataKey="cancelled" position="top" style={{fill:T.red,fontSize:8,fontWeight:700}} formatter={v=>v>0?v:''}/>
         </Bar>
       </BarChart>
@@ -1290,24 +1290,22 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
   },[fo,filters.fy]);
 
   const kpi=useMemo(()=>{
-    const dk=raw?.dappKpi||{};
+    const dk=raw?.kpiExtra||{};
+    const dkAll=window.__dappKpi2?.kpi?.all||{};
     const tS=pA.reduce((s,r)=>s+(r.bsp||0),0);
     const ws={APPROVED:0,PENDING:0,REJECTED:0};
     wF.forEach(r=>{if(ws[r.status]!==undefined)ws[r.status]++;});
     return{
-      // Units from dapp_kpi (sourced from invr Excel — most accurate)
-      totalUnits:      dk.totalUnits      || iFAll.length,
-      bookedUnits:     dk.bookedUnits     || iFAll.filter(r=>r.status==='Booked').length,
-      availableUnits:  dk.availUnits      || iFAll.filter(r=>r.status==='Available').length,
+      totalUnits:      iFAll.length,
+      bookedUnits:     iFAll.filter(r=>r.status==='Booked'||r.status==='BOOKED').length,
+      availableUnits:  iFAll.filter(r=>r.status==='Available'||r.status==='AVAILABLE').length,
       inProgressUnits: iFAll.filter(r=>r.status==='In Progress').length,
       totalSales:tS,
-      // Demand/collection from dapp_kpi
-      dappDemand:   dk.totalDemandRaised || dFAll.reduce((s,r)=>s+(r.demand||0),0),
-      dappReceived: dk.totalReceived     || dFAll.reduce((s,r)=>s+(r.received||0),0),
-      dappOutstanding: dk.stillOutstanding || dFAll.reduce((s,r)=>s+(r.outstanding||0),0),
-      // Bookings from pdrn
-      activeBookings:   dk.activeBookings   || pAAll.length,
-      cancelledBookings:dk.cancelledBookings|| pCAll.length,
+      dappDemand:   dkAll.totalInstallment ? dkAll.totalInstallment*1e7 : dFAll.reduce((s,r)=>s+(r.demand||0),0),
+      dappReceived: dkAll.totalReceivedWoT  ? dkAll.totalReceivedWoT*1e7  : dFAll.reduce((s,r)=>s+(r.received||0),0),
+      dappOutstanding: dkAll.totalOutstanding ? dkAll.totalOutstanding*1e7 : dFAll.reduce((s,r)=>s+(r.outstanding||0),0),
+      activeBookings:   pAAll.length,
+      cancelledBookings:pCAll.length,
       pipelineBookings: wF.filter(r=>r.status==='PENDING').length,
       wfApproved:ws.APPROVED,wfPending:ws.PENDING,wfRejected:ws.REJECTED,
     };
@@ -1333,19 +1331,20 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
   },[pA,pC,raw,iF]);
   const kpiEx=useMemo(()=>{
     // Single source of truth: dapp_kpi.json (pre-computed from Excel files)
-    const dk = raw?.dappKpi || {};
-    const bookedAreaSqft = dk.bookedSuperArea || iFAll.filter(r=>r.status==='Booked').reduce((s,r)=>s+(r.superArea||0),0);
-    const carpetAreaSqft = dk.bookedCarpetArea || iFAll.filter(r=>r.status==='Booked').reduce((s,r)=>s+(r.carpetArea||0),0);
-    const availAreaSqft  = dk.availSuperArea   || iFAll.filter(r=>r.status==='Available').reduce((s,r)=>s+(r.superArea||0),0);
-    const totalSuperArea = dk.totalSuperArea   || iFAll.reduce((s,r)=>s+(r.superArea||0),0);
-    const totalBSPCr     = +(pAAll.reduce((s,r)=>s+(r.bsp||0),0)/1e7).toFixed(1);
-    const cancelledBSPCr = +(pCAll.reduce((s,r)=>s+(r.bsp||0),0)/1e7).toFixed(1);
+    const dk = raw?.kpiExtra || {};
+    const bookedAreaSqft = dk.bookedAreaSqft || iFAll.filter(r=>r.status==='Booked'||r.status==='BOOKED').reduce((s,r)=>s+(r.superArea||0),0);
+    const carpetAreaSqft = dk.carpetAreaSqft || iFAll.filter(r=>r.status==='Booked'||r.status==='BOOKED').reduce((s,r)=>s+(r.carpetArea||0),0);
+    const availAreaSqft  = iFAll.filter(r=>r.status==='Available'||r.status==='AVAILABLE').reduce((s,r)=>s+(r.superArea||0),0);
+    const totalSuperArea = iFAll.reduce((s,r)=>s+(r.superArea||0),0);
+    const totalBSPCr     = dk.totalBSPCr || +(pAAll.reduce((s,r)=>s+(r.bsp||0),0)/1e7).toFixed(1);
+    const cancelledBSPCr = dk.cancelledBSPCr || +(pCAll.reduce((s,r)=>s+(r.bsp||0),0)/1e7).toFixed(1);
     const cancelledAreaSqft = pCAll.reduce((s,r)=>s+(r.superArea||0),0);
-    const totalTCVCr     = dk.bookedTCV ? +(dk.bookedTCV/1e7).toFixed(1) : +(pAAll.reduce((s,r)=>s+(r.tcv||0),0)/1e7).toFixed(1);
-    const avgRatePerSqft = Math.round(dk.avgRatePerSqft || (bookedAreaSqft>0 ? (dk.bookedTCV||0)/bookedAreaSqft : 0));
-    const unsoldValueCr  = dk.unsoldValue ? +(dk.unsoldValue/1e7).toFixed(1) : 0;
-    const totalProjCr    = dk.totalProjectValue ? +(dk.totalProjectValue/1e7).toFixed(1) : +(+totalTCVCr+unsoldValueCr).toFixed(1);
-    const soldPctValue   = dk.soldPctValue || (totalProjCr>0?Math.round(+totalTCVCr/totalProjCr*100):0);
+    const totalTCVCr     = dk.totalTCVCr || +(pAAll.reduce((s,r)=>s+(r.bsp||0),0)/1e7).toFixed(1);
+    const avgRatePerSqft = dk.avgRatePerSqft || (bookedAreaSqft>0 ? Math.round(+(totalTCVCr*1e7)/bookedAreaSqft) : 0);
+    const availBSPCr     = iFAll.filter(r=>r.status==='Available'||r.status==='AVAILABLE').reduce((s,r)=>s+(r.bsp||0),0)/1e7;
+    const unsoldValueCr  = +availBSPCr.toFixed(1);
+    const totalProjCr    = +(+totalTCVCr + unsoldValueCr).toFixed(1);
+    const soldPctValue   = totalProjCr>0 ? Math.round(+totalTCVCr/totalProjCr*100) : 0;
     return {
       bookedAreaSqft, carpetAreaSqft, availAreaSqft, totalSuperArea,
       totalBSPCr, totalTCVCr, cancelledBSPCr, cancelledAreaSqft,
@@ -1765,15 +1764,15 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                 <SH title="Total Sales Value (₹Cr)" compact/>
                 {(()=>{
                   // All values from kpiEx (sourced from dapp_kpi.json / invr Excel)
-                  const dk2 = raw?.dappKpi || {};
+                  const dkAll = window.__dappKpi2?.kpi?.all || {};
                   const bookedTCV      = +kpiEx.totalTCVCr;
                   const unsoldBSP      = +kpiEx.unsoldValueCr;
                   const totalPotential = +kpiEx.totalProjCr;
                   const soldPct        = kpiEx.soldPctValue || 0;
-                  const availUnits     = dk2.availUnits || iFAll.filter(r=>r.status==='Available').length;
-                  const installmentTotal = +((dk2.installmentTotal||0)/1e7).toFixed(2);
-                  const totalReceived    = +((dk2.totalReceived||0)/1e7).toFixed(2);
-                  const upcomingAmt      = +((dk2.upcoming||0)/1e7).toFixed(2);
+                  const availUnits     = iFAll.filter(r=>r.status==='Available'||r.status==='AVAILABLE').length;
+                  const installmentTotal = dkAll.totalInstallment || 0;
+                  const totalReceived    = dkAll.totalReceivedWoT || 0;
+                  const upcomingAmt      = dkAll.totalOutstanding || 0;
                   const collectedPct     = installmentTotal>0?Math.round(totalReceived/installmentTotal*100):0;
                   return(
                     <div style={{display:'flex',flexDirection:'column',gap:6}}>
@@ -2079,7 +2078,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                           <Bar dataKey="target" name="Target" fill="#b0bec5" fillOpacity={0.75} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={1000} animationEasing="ease-out">
                             <LabelList dataKey="target" position="top" style={{fill:'#607d8b',fontSize:8,fontWeight:800}} formatter={v=>v>0?v:''}/>
                           </Bar>
-                          <Bar dataKey="achieved" name="Achieved" fill={T.teal} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={800} animationEasing="ease-out">
+                          <Bar dataKey="achieved" name="Achieved" fill={T.teal} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={800} animationEasing="ease-out"><LabelList dataKey="achieved" position="top" style={{fill:T.tealD,fontSize:7,fontWeight:800}} formatter={v=>v>0?v:''}/>
                             {sl.map((d,i)=><Cell key={i} fill={d.isCurrent?T.tealD:T.teal} fillOpacity={d.isCurrent?1:0.85}/>)}
                             <LabelList dataKey="achieved" position="top" style={{fill:T.tealD,fontSize:8,fontWeight:800}} formatter={v=>v>0?v:''}/>
                           </Bar>
@@ -2155,7 +2154,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                           <Bar dataKey="target" name="Target TSV" fill="#b0bec5" fillOpacity={0.75} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={1000} animationEasing="ease-out">
                             <LabelList dataKey="target" position="top" style={{fill:'#607d8b',fontSize:7,fontWeight:700}} formatter={v=>v>0?v+'Cr':''}/>
                           </Bar>
-                          <Bar dataKey="achieved" name="Actual BSP" fill={T.teal} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={800} animationEasing="ease-out">
+                          <Bar dataKey="achieved" name="Actual BSP" fill={T.teal} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={800} animationEasing="ease-out"><LabelList dataKey="achieved" position="top" style={{fill:T.tealD,fontSize:7,fontWeight:800}} formatter={v=>v>0?'₹'+v+'Cr':''}/>
                             {sl.map((d,i)=><Cell key={i} fill={d.isCurrent?T.tealD:T.teal} fillOpacity={d.isCurrent?1:0.85}/>)}
                             <LabelList dataKey="achieved" position="top" style={{fill:T.tealD,fontSize:7,fontWeight:700}} formatter={v=>v>0?v+'Cr':''}/>
                           </Bar>
@@ -2244,7 +2243,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                           <Bar dataKey="target" name="Target" fill="#b0bec5" fillOpacity={0.75} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={1000}>
                             <LabelList dataKey="target" position="insideTop" style={{fill:'#607d8b',fontSize:7,fontWeight:700}} formatter={v=>v>0?v+'K':''}/>
                           </Bar>
-                          <Bar dataKey="achieved" name="Achieved" fill={T.teal} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={800}>
+                          <Bar dataKey="achieved" name="Achieved" fill={T.teal} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={800}><LabelList dataKey="achieved" position="top" style={{fill:T.tealD,fontSize:7,fontWeight:800}} formatter={v=>v>0?v:''}/>
                             {sl.map((d,i)=><Cell key={i} fill={d.isCurrent?T.tealD:T.teal} fillOpacity={d.isCurrent?1:0.85}/>)}
                             <LabelList dataKey="achieved" position="top" style={{fill:T.tealD,fontSize:8,fontWeight:800}} formatter={v=>v!=null&&v>0?v+'K':''}/>
                           </Bar>
