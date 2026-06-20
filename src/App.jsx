@@ -989,10 +989,7 @@ const PnLTab = ({T, GC, SH, filters, sf, raw}) => {
         </div>
       </div>
 
-      {/* Charts Row */}
-      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginBottom:16}}>
-
-        {/* ── Mini KPI Bar Card ── */}
+      {/* ── Project at a Glance Bar Card ── */}
         {(()=>{
           const selProjs = filters.project ? filters.project.split('||').filter(Boolean) : [];
           const invr     = (raw?.invr||[]).filter(u=>!selProjs.length||selProjs.includes(u.project));
@@ -1013,7 +1010,7 @@ const PnLTab = ({T, GC, SH, filters, sf, raw}) => {
           const maxVal = Math.max(...bars.map(b=>b.rawVal), 1);
 
           return (
-            <GC style={{padding:'16px 18px',gridColumn:'1 / -1'}}>
+            <GC style={{padding:'16px 18px'}}>
               <p style={{fontSize:11,fontWeight:900,color:T.tealD,margin:'0 0 14px',textTransform:'uppercase',letterSpacing:0.5}}>
                 Project at a Glance
               </p>
@@ -1043,7 +1040,12 @@ const PnLTab = ({T, GC, SH, filters, sf, raw}) => {
           );
         })()}
 
-        {/* Project Expense Pie */}
+
+      {/* Charts Row */}
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginBottom:16}}>
+
+
+                {/* Project Expense Pie */}
         <GC style={{padding:16}}>
           <SH title="Cost of Construction — Project Expenditure" sub="By category (Actual spend in ₹ Cr)"/>
           {(()=>{const projTotal=projExp.reduce((s,r)=>s+r.Actual,0);return(
