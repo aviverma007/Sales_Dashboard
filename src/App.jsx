@@ -2264,7 +2264,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                       target:d.targetAreaSqft?+(d.targetAreaSqft/100000).toFixed(2):null,
                       targetLine:(()=>{if(areaProjMap2[d.label]!=null)return null;const p=d.label.match(/([A-Za-z]{3})'(\d{2})/);if(p&&(2000+parseInt(p[2]))*100+(moNA2[p[1]]||0)<todayYMA3)return null;return d.targetAreaSqft?+(d.targetAreaSqft/100000).toFixed(2):null;})(),
                       projection:areaProjMap2[d.label]!=null?+(areaProjMap2[d.label]/100000).toFixed(2):null,
-                      bridge:(d.label===lastALbl2?+(areaProjMap2[lastALbl2]/1000).toFixed(1):d.label===nqBLblA2?(monthlyWithTargets.find(r=>r.label===nqBLblA2)?.targetAreaSqft?+(monthlyWithTargets.find(r=>r.label===nqBLblA2).targetAreaSqft/1000).toFixed(1):null):null),
+                      bridge:(d.label===lastALbl2?+(areaProjMap2[lastALbl2]/100000).toFixed(2):d.label===nqBLblA2?(monthlyWithTargets.find(r=>r.label===nqBLblA2)?.targetAreaSqft?+(monthlyWithTargets.find(r=>r.label===nqBLblA2).targetAreaSqft/100000).toFixed(2):null):null),
                     }));
                     const data=suMode==='quarterly'?toQuarterly(rawDataA,'label').map(q=>({...q,isFuture:false,isCurrent:false})):rawDataA;
                     const parseM=l=>{const p=l.match(/([A-Za-z]{3})'(\d{2})/);if(!p)return'';const mn={Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'};return(p[2]>='90'?'19':'20')+p[2]+'-'+mn[p[1]];};const dataF=chartMonthFrom?data.filter(d=>parseM(d.label)>=chartMonthFrom):data;
@@ -2292,7 +2292,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                         <ComposedChart data={sl} margin={{top:28,right:8,bottom:18,left:0}} barGap={6} barCategoryGap="35%">
                           <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.1)" vertical={false}/>
                           <XAxis dataKey="label" tick={({x,y,payload})=>{const d=sl.find(s=>s.label===payload.value);return<text x={x} y={y+10} textAnchor="middle" fontSize={9} fill={d?.isCurrent?T.tealD:T.textM} fontWeight={d?.isCurrent?900:600}>{payload.value}</text>;}} axisLine={false} tickLine={false}/>
-                          <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={34} tickFormatter={v=>v+'K'}/>
+                          <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={34} tickFormatter={v=>v+'L'}/>
                           <Tooltip content={({active,payload,label})=>{
                             if(!active||!payload?.length)return null;
                             const d=sl.find(s=>s.label===label);
@@ -2307,14 +2307,14 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                           <Bar dataKey="target" name="Target" fill="#b0bec5" fillOpacity={0.75} radius={[4,4,0,0]} barSize={28} isAnimationActive={true} animationDuration={1000}>
                             <LabelList dataKey="target" position="top" style={{fill:'#607d8b',fontSize:8,fontWeight:700}} formatter={v=>v>0?v+'L':''}/>
                           </Bar>
-                          <Bar dataKey="achieved" name="Achieved" fill={T.teal} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={800}><LabelList dataKey="achieved" position="top" style={{fill:T.tealD,fontSize:7,fontWeight:800}} formatter={v=>v>0?v:''}/>
+                          <Bar dataKey="achieved" name="Achieved" fill={T.teal} radius={[4,4,0,0]} barSize={28} isAnimationActive={true} animationDuration={800}>
                             {sl.map((d,i)=><Cell key={i} fill={d.isCurrent?T.tealD:T.teal} fillOpacity={d.isCurrent?1:0.85}/>)}
-                            <LabelList dataKey="achieved" position="top" style={{fill:T.tealD,fontSize:8,fontWeight:800}} formatter={v=>v!=null&&v>0?v+'K':''}/>
+                            <LabelList dataKey="achieved" position="top" style={{fill:T.tealD,fontSize:8,fontWeight:800}} formatter={v=>v!=null&&v>0?v+'L':''}/>
                           </Bar>
 
                           <Line type="monotone" dataKey="targetLine" stroke="#607d8b" strokeWidth={2} strokeDasharray="5 3" dot={{r:3,fill:'#607d8b',stroke:'#fff',strokeWidth:1.5}} activeDot={{r:4}} legendType="none" connectNulls={false}/>
                           <Line type="monotone" dataKey="projection" name="Adjusted" stroke="#22c55e" strokeWidth={2.5} strokeDasharray="6 2" dot={({cx,cy,payload})=>payload.projection!=null?<circle cx={cx} cy={cy} r={5} fill="#22c55e" stroke="#fff" strokeWidth={2}/>:<g/>} activeDot={{r:6,fill:'#22c55e'}} connectNulls={false}>
-                            <LabelList dataKey="projection" position="top" offset={18} content={({x,y,value})=>{if(value==null)return null;const txt='▲'+value+'K';const w=txt.length*5.5+8;return(<g><rect x={x-w/2} y={y-28} width={w} height={16} rx={4} fill="white" stroke="#22c55e" strokeWidth={1} opacity={0.95}/><text x={x} y={y-17} textAnchor="middle" fill="#16a34a" fontSize={8} fontWeight={900}>{txt}</text></g>);}}/>
+                            <LabelList dataKey="projection" position="top" offset={18} content={({x,y,value})=>{if(value==null)return null;const txt='▲'+value+'L';const w=txt.length*5.5+8;return(<g><rect x={x-w/2} y={y-28} width={w} height={16} rx={4} fill="white" stroke="#22c55e" strokeWidth={1} opacity={0.95}/><text x={x} y={y-17} textAnchor="middle" fill="#16a34a" fontSize={8} fontWeight={900}>{txt}</text></g>);}}/>
                           </Line>
                           <Line type="monotone" dataKey="bridge" stroke="#90a4ae" strokeWidth={1.5} strokeDasharray="4 3" dot={false} activeDot={false} legendType="none" connectNulls={true}/>
                         </ComposedChart>
