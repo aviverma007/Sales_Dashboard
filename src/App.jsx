@@ -568,7 +568,7 @@ const SummaryBar = ({raw, filters, T, GC}) => {
 };
 
 // ── Collections Tab Component ─────────────────────────────────────────────────
-const CollectionsTab = ({T, GC, SH}) => {
+const CollectionsTab = ({T, GC, SH, filters={}, raw}) => {
   const [dk, setDk] = React.useState(null);
   const [planType, setPlanType] = React.useState('all');
   const [showNote, setShowNote] = React.useState(false);
@@ -581,11 +581,52 @@ const CollectionsTab = ({T, GC, SH}) => {
 
   if(!dk) return <div style={{textAlign:'center',padding:40,color:T.textL,fontSize:12}}>Loading Demand & Collection data…</div>;
 
-  const kpi    = dk.kpi?.[planType] || {};
+  // ── Filter helpers ────────────────────────────────────────────────────────
+  const fyFilter  = filters.fy     || '';
+  const moFilter  = filters.month  || '';
+  const qFilter   = filters.quarter|| '';
+  const MN = {Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'};
+  const FYQ = {Q1:['04','05','06'],Q2:['07','08','09'],Q3:['10','11','12'],Q4:['01','02','03']};
+
+  const monthInFilter = (ym) => {
+    if(!ym) return true;
+    const [yr,mo] = ym.split('-');
+    if(fyFilter) {
+      const fys = fyFilter.split('||').filter(Boolean);
+      const moN = parseInt(mo);
+      const fyStr = moN>=4 ? `FY${yr}-${String(+yr+1).slice(2)}` : `FY${+yr-1}-${yr.slice(2)}`;
+      if(fys.length && !fys.includes(fyStr)) return false;
+    }
+    if(moFilter) {
+      const mos = moFilter.split('||').filter(Boolean);
+      if(mos.length && !mos.some(m=>MN[m]===mo)) return false;
+    }
+    if(qFilter) {
+      const qs = qFilter.split('||').filter(Boolean).map(q=>q.split(' ')[0]);
+      if(qs.length && !qs.some(q=>(FYQ[q]||[]).includes(mo))) return false;
+    }
+    return true;
+  };
+
+  const hasFilter = !!(fyFilter||moFilter||qFilter);
+
+  // Filter monthlyTrend for trend chart
+  const allMonthlyRaw = dk.monthlyTrend || [];
+  const allMonthly    = hasFilter ? allMonthlyRaw.filter(r=>monthInFilter(r.month)) : allMonthlyRaw;
+
+  // Filter KPIs from raw dapp data when filter active
+  const dappRows = hasFilter ? (raw?.dapp||[]).filter(r=>monthInFilter(r.billMonth)) : null;
+  const filtKpi  = dappRows ? {
+    totalInstallment: dappRows.reduce((s,r)=>s+(r.demand||0),0)/1e7,
+    totalReceivedWoT: dappRows.reduce((s,r)=>s+(r.received||0),0)/1e7,
+    totalOutstanding: dappRows.reduce((s,r)=>s+(r.outstanding||0),0)/1e7,
+  } : null;
+
+  const kpi    = filtKpi || dk.kpi?.[planType] || {};
   const adv    = planType==='all' ? (dk.advance_all||{}) : (dk.advance?.[planType] || {});
-  const instCr = kpi.totalInstallment  || 0;
-  const recCr  = kpi.totalReceivedWoT  || 0;
-  const outCr  = kpi.totalOutstanding  || 0;
+  const instCr = filtKpi ? filtKpi.totalInstallment : (kpi.totalInstallment || 0);
+  const recCr  = filtKpi ? filtKpi.totalReceivedWoT : (kpi.totalReceivedWoT  || 0);
+  const outCr  = filtKpi ? filtKpi.totalOutstanding  : (kpi.totalOutstanding  || 0);
   const advRaw = adv.rawCr || 0;
   const advNet = adv.netCr || 0;
   const advGst = adv.gstCr || 0;
@@ -599,7 +640,6 @@ const CollectionsTab = ({T, GC, SH}) => {
     ? (a.expectedDate||'9999-99').localeCompare(b.expectedDate||'9999-99')
     : b.totalCr - a.totalCr
   );
-  const allMonthly    = dk.monthlyTrend || [];
   const towers        = dk.towerKpi || [];
 
   // Range slider filtering for monthly trend chart
@@ -3230,7 +3270,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
         ══════════════════════════════════════════════════════ */}
         {tab==='collections'&&(
           <div style={{display:'flex',flexDirection:'column',gap:16}}>
-            <CollectionsTab T={T} GC={GC} SH={SH}/>
+            <CollectionsTab T={T} GC={GC} SH={SH} filters={filters} raw={raw}/>
           </div>
         )}
 
