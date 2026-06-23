@@ -770,41 +770,34 @@ const CollectionsTab = ({T, GC, SH, filters={}, raw}) => {
     <GC style={{padding:16}}>
       <SH2 title="Expected Collection per Month" sub="Based on milestone expected dates from Slab Matrix"/>
       <ResponsiveContainer width="100%" height={220}>
-        <ComposedChart data={upcomingMonthArr} margin={{top:24,right:20,bottom:20,left:0}}>
+        <ComposedChart data={upcomingMonthArr.map(d=>({
+          ...d,
+          total: +((d.tlp||0)+(d.clp||0)+(d.hybrid_later||0)+(d.hybrid_earlier||0)).toFixed(2)
+        }))} margin={{top:28,right:20,bottom:20,left:0}}>
           <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.07)" vertical={false}/>
           <XAxis dataKey="label" tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false}/>
-          <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} tickFormatter={v=>v>=1?'₹'+v+'Cr':v>0?'₹'+(v*100).toFixed(0)+'L':''} width={50}/>
+          <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false}
+            tickFormatter={v=>v>=1?'₹'+v+'Cr':v>0?'₹'+(v*100).toFixed(0)+'L':''} width={50}/>
           <Tooltip content={({active,payload,label})=>{
             if(!active||!payload?.length) return null;
-            const fmt=v=>v===0?null:v>=1?`₹${v.toFixed(2)} Cr`:`₹${(v*100).toFixed(1)} L`;
+            const d=payload[0]?.payload||{};
+            const total=(d.tlp||0)+(d.clp||0)+(d.hybrid_later||0)+(d.hybrid_earlier||0);
+            const fmt=v=>v>=1?`₹${v.toFixed(2)} Cr`:`₹${(v*100).toFixed(1)} L`;
             return(
               <div style={{background:'#fff',border:'1px solid #e5e7eb',borderRadius:8,padding:'8px 12px',fontSize:10,boxShadow:'0 2px 8px rgba(0,0,0,0.1)'}}>
                 <p style={{margin:'0 0 5px',fontWeight:800,color:T.navy,fontSize:11}}>{label}</p>
-                {payload.filter(p=>p.name&&(p.value||0)>0).map(p=>(
-                  <p key={p.name} style={{margin:'0 0 2px',color:p.fill,fontWeight:700}}>{p.name} : {fmt(p.value)}</p>
-                ))}
+                <p style={{margin:'0 0 2px',color:T.tealD,fontWeight:800}}>Total: {fmt(total)}</p>
+                {d.clp>0&&<p style={{margin:'0 0 1px',color:'#2e7d32'}}>CLP: {fmt(d.clp)}</p>}
+                {d.tlp>0&&<p style={{margin:'0 0 1px',color:T.amber}}>TLP: {fmt(d.tlp)}</p>}
+                {d.hybrid_later>0&&<p style={{margin:'0 0 1px',color:'#7c3aed'}}>Hybrid Later: {fmt(d.hybrid_later)}</p>}
+                {d.hybrid_earlier>0&&<p style={{margin:0,color:'#b45309'}}>Hybrid Earlier: {fmt(d.hybrid_earlier)}</p>}
               </div>
             );
           }}/>
-          <Legend wrapperStyle={{fontSize:9,fontWeight:700}} iconSize={8}/>
-          {(planType==='all'||planType==='tlp')&&<Bar dataKey="tlp" name="TLP" fill={T.amber} radius={[3,3,0,0]} stackId="a" minPointSize={3}/>}
-          {(planType==='all'||planType==='clp')&&<Bar dataKey="clp" name="CLP" fill="#2e7d32" radius={[3,3,0,0]} stackId="a" minPointSize={3}>
-            {planType==='clp'&&<LabelList dataKey="clp" position="top" style={{fill:'#2e7d32',fontSize:9,fontWeight:800}} formatter={v=>v>0?'₹'+v+'Cr':''}/>}
-          </Bar>}
-          {(planType==='all'||planType==='hybrid_later')&&<Bar dataKey="hybrid_later" name="Hybrid (Later)" fill="#7c3aed" radius={[3,3,0,0]} stackId="a" minPointSize={3}/>}
-          {(planType==='all'||planType==='hybrid_earlier')&&<Bar dataKey="hybrid_earlier" name="Hybrid (Earlier)" fill="#b45309" radius={[3,3,0,0]} stackId="a" minPointSize={3}>
-            {planType==='hybrid_earlier'&&<LabelList dataKey="hybrid_earlier" position="top" style={{fill:'#b45309',fontSize:9,fontWeight:800}} formatter={v=>v>0?'₹'+v+'Cr':''}/>}
-          </Bar>}
-          {/* Total label for All Plans view — custom content on each bar group */}
-          {planType==='all'&&<Bar dataKey="tlp" name="" fill="transparent" stackId="total" legendType="none"
-            label={({x,y,width,index})=>{
-              const d=upcomingMonthArr[index];
-              if(!d) return null;
-              const total=+(((d.tlp||0)+(d.clp||0)+(d.hybrid_later||0)+(d.hybrid_earlier||0))).toFixed(1);
-              if(total<=0) return null;
-              return <text x={x+width/2} y={y-4} textAnchor="middle" fontSize={9} fontWeight={800} fill={T.tealD}>₹{total}Cr</text>;
-            }}
-          />}
+          <Bar dataKey="total" name="Collection" fill={T.tealD} radius={[4,4,0,0]} minPointSize={4}>
+            <LabelList dataKey="total" position="top" style={{fontSize:9,fontWeight:800,fill:T.tealD}}
+              formatter={v=>v>0?(v>=1?'₹'+v.toFixed(1)+'Cr':'₹'+(v*100).toFixed(0)+'L'):''}/>
+          </Bar>
         </ComposedChart>
       </ResponsiveContainer>
     </GC>
