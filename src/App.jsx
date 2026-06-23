@@ -3223,7 +3223,6 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
             <Chip label="Units"    value={kpi.totalUnits?.toLocaleString('en-IN')} color={T.teal} small/>
             <Chip label="Active"   value={kpi.activeBookings?.toLocaleString('en-IN')} color={T.navy} small/>
             <Chip label="Demand"   value={fmtCr(kpi.dappDemand)} color={T.amber} small/>
-            <Chip label="Workflow" value={`${kpi.wfApproved} approved`} color={T.greenL} small/>
           </div>
           <div style={{display:'flex',flexDirection:'column',alignItems:'flex-end',gap:1}}>
             <div style={{display:'flex',alignItems:'center',gap:10}}>
