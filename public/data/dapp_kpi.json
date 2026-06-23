@@ -1,37 +1,37 @@
 {
   "kpi": {
     "all": {
-      "totalInstallment": 1154.85,
-      "totalReceivedBank": 1403.73,
-      "totalReceivedWoT": 1335.19,
-      "totalOutstanding": 33.79,
-      "totalDemandWoTax": 1154.85,
-      "advanceAmt": 226.57,
-      "advanceNet": 215.78,
-      "advanceGst": 10.79
+      "totalInstallment": 3670.89,
+      "totalReceivedBank": 1408.64,
+      "totalReceivedWoT": 1339.86,
+      "totalOutstanding": 32.45,
+      "totalDemandWoTax": 1156.49,
+      "advanceAmt": 230.13,
+      "advanceNet": 219.17,
+      "advanceGst": 10.96
     },
     "tlp": {
-      "totalInstallment": 1096.09,
-      "totalReceivedBank": 1293.99,
-      "totalReceivedWoT": 1231.23,
-      "totalOutstanding": 20.69,
-      "totalDemandWoTax": 1096.09,
-      "advanceAmt": 167.03,
-      "advanceNet": 159.07,
-      "advanceGst": 7.95
+      "totalInstallment": 2342.73,
+      "totalReceivedBank": 1303.33,
+      "totalReceivedWoT": 1240.59,
+      "totalOutstanding": 19.56,
+      "totalDemandWoTax": 1097.73,
+      "advanceAmt": 164.94,
+      "advanceNet": 157.08,
+      "advanceGst": 7.85
     },
     "clp": {
-      "totalInstallment": 46.66,
-      "totalReceivedBank": 99.75,
-      "totalReceivedWoT": 94.72,
-      "totalOutstanding": 7.4,
+      "totalInstallment": 1117.09,
+      "totalReceivedBank": 95.32,
+      "totalReceivedWoT": 90.03,
+      "totalOutstanding": 7.2,
       "totalDemandWoTax": 46.66,
-      "advanceAmt": 56.56,
-      "advanceNet": 53.87,
-      "advanceGst": 2.69
+      "advanceAmt": 62.21,
+      "advanceNet": 59.25,
+      "advanceGst": 2.96
     },
     "hybrid_earlier": {
-      "totalInstallment": 0.0,
+      "totalInstallment": 3.81,
       "totalReceivedBank": 0.0,
       "totalReceivedWoT": 0.0,
       "totalOutstanding": 0.0,
@@ -41,7 +41,7 @@
       "advanceGst": 0.0
     },
     "hybrid_later": {
-      "totalInstallment": 12.1,
+      "totalInstallment": 207.27,
       "totalReceivedBank": 9.99,
       "totalReceivedWoT": 9.25,
       "totalOutstanding": 5.7,
@@ -52,17 +52,17 @@
     }
   },
   "gstRate": 0.05,
-  "advanceNote": "\u26a0\ufe0f Advance Money: \u20b9226.6 Cr received before SAP demand was raised. No tax invoice exists for these receipts, so GST @5% has been back-calculated (\u20b910.79 Cr) to show the net W/O Tax amount of \u20b9215.78 Cr.",
+  "advanceNote": "\u26a0\ufe0f Advance Money: \u20b9230.1 Cr received before SAP demand was raised. GST @5% back-calculated (\u20b910.96 Cr) to show net W/O Tax of \u20b9219.17 Cr.",
   "advance": {
     "tlp": {
-      "rawCr": 167.03,
-      "netCr": 159.07,
-      "gstCr": 7.95
+      "rawCr": 164.94,
+      "netCr": 157.08,
+      "gstCr": 7.85
     },
     "clp": {
-      "rawCr": 56.56,
-      "netCr": 53.87,
-      "gstCr": 2.69
+      "rawCr": 62.21,
+      "netCr": 59.25,
+      "gstCr": 2.96
     },
     "hybrid_earlier": {
       "rawCr": 0.0,
@@ -76,9 +76,9 @@
     }
   },
   "advance_all": {
-    "rawCr": 226.57,
-    "netCr": 215.78,
-    "gstCr": 10.79
+    "rawCr": 230.13,
+    "netCr": 219.17,
+    "gstCr": 10.96
   },
   "milestonesUpcoming": [
     {
@@ -366,12 +366,12 @@
       "clp_dem": 0.0,
       "he_dem": 0.0,
       "hl_dem": 0.0,
-      "tlp_rec": 24.61,
+      "tlp_rec": 37.11,
       "clp_rec": 0.0,
       "he_rec": 0.0,
       "hl_rec": 0.0,
       "dem": 33.21,
-      "rec": 24.61
+      "rec": 37.11
     },
     {
       "month": "2023-12",
@@ -380,12 +380,12 @@
       "clp_dem": 0.0,
       "he_dem": 0.0,
       "hl_dem": 0.0,
-      "tlp_rec": 355.23,
+      "tlp_rec": 351.72,
       "clp_rec": 0.0,
       "he_rec": 0.0,
       "hl_rec": 0.0,
       "dem": 354.71,
-      "rec": 355.23
+      "rec": 351.72
     },
     {
       "month": "2024-01",
@@ -394,12 +394,12 @@
       "clp_dem": 0.0,
       "he_dem": 0.0,
       "hl_dem": 0.0,
-      "tlp_rec": 99.38,
+      "tlp_rec": 99.73,
       "clp_rec": 0.0,
       "he_rec": 0.0,
       "hl_rec": 0.0,
       "dem": 100.38,
-      "rec": 99.38
+      "rec": 99.73
     },
     {
       "month": "2024-02",
@@ -408,12 +408,12 @@
       "clp_dem": 3.78,
       "he_dem": 0.0,
       "hl_dem": 0.0,
-      "tlp_rec": 87.92,
+      "tlp_rec": 89.55,
       "clp_rec": 2.1,
       "he_rec": 0.0,
       "hl_rec": 0.0,
       "dem": 91.53,
-      "rec": 90.02
+      "rec": 91.65
     },
     {
       "month": "2024-03",
@@ -674,12 +674,12 @@
       "clp_dem": 24.92,
       "he_dem": 0.0,
       "hl_dem": 0.0,
-      "tlp_rec": 24.42,
-      "clp_rec": 21.43,
+      "tlp_rec": 21.2,
+      "clp_rec": 14.99,
       "he_rec": 0.0,
       "hl_rec": 0.0,
       "dem": 47.21,
-      "rec": 45.85
+      "rec": 36.2
     },
     {
       "month": "2025-10",
@@ -702,12 +702,12 @@
       "clp_dem": 4.34,
       "he_dem": 0.0,
       "hl_dem": 1.14,
-      "tlp_rec": 14.25,
-      "clp_rec": 2.73,
+      "tlp_rec": 14.0,
+      "clp_rec": 2.22,
       "he_rec": 0.0,
       "hl_rec": 1.14,
       "dem": 20.02,
-      "rec": 18.12
+      "rec": 17.36
     },
     {
       "month": "2025-12",
@@ -716,12 +716,12 @@
       "clp_dem": 3.25,
       "he_dem": 0.0,
       "hl_dem": 0.82,
-      "tlp_rec": 9.02,
-      "clp_rec": 4.91,
+      "tlp_rec": 7.36,
+      "clp_rec": 1.58,
       "he_rec": 0.0,
       "hl_rec": 0.82,
       "dem": 11.71,
-      "rec": 14.75
+      "rec": 9.76
     },
     {
       "month": "2026-01",
@@ -730,12 +730,12 @@
       "clp_dem": 0.0,
       "he_dem": 0.0,
       "hl_dem": 0.0,
-      "tlp_rec": 7.62,
+      "tlp_rec": 9.54,
       "clp_rec": 0.0,
       "he_rec": 0.0,
       "hl_rec": 0.0,
       "dem": 8.0,
-      "rec": 7.62
+      "rec": 9.54
     },
     {
       "month": "2026-02",
@@ -744,12 +744,12 @@
       "clp_dem": 0.0,
       "he_dem": 0.0,
       "hl_dem": 0.0,
-      "tlp_rec": 14.55,
+      "tlp_rec": 15.52,
       "clp_rec": 0.0,
       "he_rec": 0.0,
       "hl_rec": 0.0,
       "dem": 15.27,
-      "rec": 14.55
+      "rec": 15.52
     },
     {
       "month": "2026-03",
@@ -772,12 +772,12 @@
       "clp_dem": 0.0,
       "he_dem": 0.0,
       "hl_dem": 0.99,
-      "tlp_rec": 13.09,
+      "tlp_rec": 14.25,
       "clp_rec": 0.0,
       "he_rec": 0.0,
       "hl_rec": 0.79,
       "dem": 20.55,
-      "rec": 13.88
+      "rec": 15.04
     },
     {
       "month": "2026-05",
@@ -786,26 +786,26 @@
       "clp_dem": 3.09,
       "he_dem": 0.0,
       "hl_dem": 0.0,
-      "tlp_rec": 6.16,
+      "tlp_rec": 7.21,
       "clp_rec": 3.04,
       "he_rec": 0.0,
       "hl_rec": 0.0,
       "dem": 11.57,
-      "rec": 9.2
+      "rec": 10.25
     },
     {
       "month": "2026-06",
       "label": "Jun'26",
-      "tlp_dem": 3.17,
+      "tlp_dem": 4.81,
       "clp_dem": 0.61,
       "he_dem": 0.0,
       "hl_dem": 5.21,
-      "tlp_rec": -0.06,
-      "clp_rec": -0.03,
+      "tlp_rec": 0.36,
+      "clp_rec": 0.17,
       "he_rec": 0.0,
       "hl_rec": -0.26,
-      "dem": 8.98,
-      "rec": -0.35
+      "dem": 10.62,
+      "rec": 0.27
     }
   ],
   "towerKpi": [
@@ -815,11 +815,11 @@
       "clp_dem": 0.0,
       "he_dem": 0.0,
       "hl_dem": 8.28,
-      "tlp_rec": 217.82,
+      "tlp_rec": 223.55,
       "clp_rec": 0.0,
       "he_rec": 0.0,
       "hl_rec": 2.78,
-      "tlp_out": 5.59,
+      "tlp_out": 3.71,
       "clp_out": 0.0,
       "he_out": 0.0,
       "hl_out": 5.5
@@ -830,8 +830,8 @@
       "clp_dem": 8.9,
       "he_dem": 0.0,
       "hl_dem": 0.0,
-      "tlp_rec": 208.64,
-      "clp_rec": 7.74,
+      "tlp_rec": 209.29,
+      "clp_rec": 7.23,
       "he_rec": 0.0,
       "hl_rec": 0.0,
       "tlp_out": 1.67,
@@ -841,16 +841,16 @@
     },
     {
       "tower": "T-3",
-      "tlp_dem": 177.71,
+      "tlp_dem": 177.91,
       "clp_dem": 17.17,
       "he_dem": 0.0,
       "hl_dem": 1.2,
-      "tlp_rec": 175.37,
-      "clp_rec": 9.91,
+      "tlp_rec": 172.94,
+      "clp_rec": 10.11,
       "he_rec": 0.0,
       "hl_rec": 1.2,
-      "tlp_out": 3.96,
-      "clp_out": 7.26,
+      "tlp_out": 3.65,
+      "clp_out": 7.06,
       "he_out": 0.0,
       "hl_out": 0.0
     },
@@ -860,26 +860,26 @@
       "clp_dem": 12.2,
       "he_dem": 0.0,
       "hl_dem": 1.14,
-      "tlp_rec": 199.97,
-      "clp_rec": 12.14,
+      "tlp_rec": 200.45,
+      "clp_rec": 8.81,
       "he_rec": 0.0,
       "hl_rec": 1.14,
-      "tlp_out": 5.84,
+      "tlp_out": 5.83,
       "clp_out": 0.05,
       "he_out": 0.0,
       "hl_out": 0.0
     },
     {
       "tower": "T-5",
-      "tlp_dem": 60.54,
+      "tlp_dem": 61.99,
       "clp_dem": 8.38,
       "he_dem": 0.0,
       "hl_dem": 1.48,
-      "tlp_rec": 60.26,
-      "clp_rec": 11.06,
+      "tlp_rec": 58.4,
+      "clp_rec": 4.62,
       "he_rec": 0.0,
       "hl_rec": 1.28,
-      "tlp_out": 1.93,
+      "tlp_out": 2.99,
       "clp_out": 0.01,
       "he_out": 0.0,
       "hl_out": 0.2
@@ -890,7 +890,7 @@
       "clp_dem": 0.0,
       "he_dem": 0.0,
       "hl_dem": 0.0,
-      "tlp_rec": 210.1,
+      "tlp_rec": 218.88,
       "clp_rec": 0.0,
       "he_rec": 0.0,
       "hl_rec": 0.0,
