@@ -949,6 +949,11 @@ const PnLTab = ({T, GC, SH, filters, sf, raw}) => {
     : (kpi.totalExpenditure||0);
   const pnl = totalRevenue - totalExpense;
 
+  const cb = pnlRaw?.collectionBreakdown || {};
+  const receiptCr  = (fyFilter||qFilter||moFilter) ? filteredColl.reduce((s,r)=>s+(r.receipt||0),0)  : (kpi.totalReceipt||0);
+  const jvCr       = (fyFilter||qFilter||moFilter) ? filteredColl.reduce((s,r)=>s+(r.jv||0),0)       : (kpi.totalJV||0);
+  const paymentCr  = (fyFilter||qFilter||moFilter) ? filteredColl.reduce((s,r)=>s+(r.payment||0),0)  : (kpi.totalPayment||0);
+
   const CC = ['#0097a7','#7c3aed','#10b981','#f59e0b','#ef4444','#1565c0','#e65100','#2e7d32','#d81b60','#37474f','#00838f','#4a148c','#1b5e20','#b71c1c','#e65100','#006064','#33691e'];
 
   const KpiCard = ({label,value,sub,color='#0097a7',icon}) => (
@@ -971,10 +976,9 @@ const PnLTab = ({T, GC, SH, filters, sf, raw}) => {
 
 
       {/* KPI Row */}
-      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12,marginBottom:16}}>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10,marginBottom:10}}>
         <KpiCard label="Revenue (Collection)" value={`₹${totalRevenue.toLocaleString('en-IN',{maximumFractionDigits:1})} Cr`} sub="Total received from customers" color="#0097a7"/>
         <KpiCard label="Total Expenditure (Actual)" value={`₹${totalExpense.toLocaleString('en-IN',{maximumFractionDigits:2})} Cr`} sub="Actual spend to date" color="#ef4444"/>
-
         <div style={{position:'relative',overflow:'hidden',background:'rgba(255,255,255,0.92)',backdropFilter:'blur(12px)',borderRadius:14,padding:'16px 18px',boxShadow:'0 2px 16px rgba(0,80,120,0.08)',border:`2px solid ${pnl>=0?'#10b981':'#ef4444'}`}}>
           <div style={{position:'absolute',top:0,left:0,right:0,height:4,background:pnl>=0?'linear-gradient(90deg,#10b981,#34d399)':'linear-gradient(90deg,#ef4444,#f87171)',borderRadius:'14px 14px 0 0'}}/>
           <div style={{position:'absolute',right:12,top:12,fontSize:32,opacity:0.12}}>{pnl>=0?'📈':'📉'}</div>
@@ -988,6 +992,35 @@ const PnLTab = ({T, GC, SH, filters, sf, raw}) => {
           </div>
         </div>
       </div>
+
+      {/* Collection Breakdown Card */}
+      <GC style={{padding:'14px 18px',marginBottom:12}}>
+        <p style={{fontSize:10,fontWeight:900,color:T.tealD,textTransform:'uppercase',letterSpacing:0.5,margin:'0 0 10px'}}>Collection Breakdown (from zrec)</p>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:8}}>
+          {[
+            {label:'RECEIPT',        val:receiptCr,   desc:'Cash / Cheque / Online',     color:'#10b981'},
+            {label:'JOURNAL VOUCHER',val:jvCr,        desc:'Credit notes / Adjustments', color:'#7c3aed'},
+            {label:'PAYMENT',        val:paymentCr,   desc:'Refunds / Reversals',        color:'#ef4444'},
+            {label:'TOTAL',          val:totalRevenue, desc:'All receipts combined',      color:T.tealD},
+          ].map(({label,val,desc,color})=>(
+            <div key={label} style={{background:`${color}09`,border:`1px solid ${color}30`,borderRadius:10,padding:'10px 12px',position:'relative'}}>
+              <div style={{position:'absolute',top:0,left:0,right:0,height:3,background:color,borderRadius:'10px 10px 0 0'}}/>
+              <p style={{fontSize:7,fontWeight:800,color:'#94a3b8',textTransform:'uppercase',letterSpacing:0.5,margin:'2px 0 4px'}}>{label}</p>
+              <p style={{fontSize:18,fontWeight:900,color:color,margin:'0 0 3px',letterSpacing:-0.5}}>₹{(+val||0).toFixed(1)} Cr</p>
+              <p style={{fontSize:8,color:T.textL,margin:0}}>{desc}</p>
+            </div>
+          ))}
+        </div>
+        <div style={{marginTop:10,background:'rgba(245,158,11,0.06)',border:'1px solid rgba(245,158,11,0.2)',borderRadius:8,padding:'8px 12px'}}>
+          <p style={{fontSize:9,color:'#92400e',margin:0,lineHeight:1.7}}>
+            <strong>Reconciliation: </strong>
+            DAPP Received (bank incl.GST) = <strong>₹{(raw?.dappKpi?.kpi?.all?.totalReceivedBank||0).toFixed(1)} Cr</strong>
+            &nbsp;·&nbsp; DAPP W/O GST = <strong>₹{(raw?.dappKpi?.kpi?.all?.totalReceivedWoT||0).toFixed(1)} Cr</strong>
+            &nbsp;·&nbsp; zrec RECEIPT only = <strong>₹{(+receiptCr||0).toFixed(1)} Cr</strong>
+            &nbsp;·&nbsp; JV difference = <strong>₹{(+jvCr||0).toFixed(1)} Cr</strong>
+          </p>
+        </div>
+      </GC>
 
             {/* Charts Row */}
       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginBottom:16}}>
@@ -1871,23 +1904,39 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                           </div>
                         </div>
                       </div>
-                      {/* Row 2: Collection progress */}
-                      <div style={{background:'rgba(0,100,140,0.04)',borderRadius:7,padding:'5px 8px'}}>
-                        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:4}}>
-                          <span style={{fontSize:7,color:T.textM,fontWeight:700,textTransform:'uppercase'}}>Collection Progress</span>
-                          <span style={{fontSize:9,fontWeight:900,color:collectedPct>100?T.amber:T.tealD}}>{collectedDisplay} collected</span>
+                      {/* Row 2: Collection breakdown */}
+                      <div style={{background:'rgba(0,100,140,0.04)',borderRadius:7,padding:'6px 8px'}}>
+                        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:5}}>
+                          <span style={{fontSize:7,color:T.textM,fontWeight:800,textTransform:'uppercase'}}>Collection Progress (DAPP)</span>
+                          <span style={{fontSize:9,fontWeight:900,color:collectedPct>100?T.amber:T.tealD}}>{collectedDisplay}</span>
                         </div>
-                        <div style={{height:6,background:'rgba(0,100,140,0.1)',borderRadius:3,overflow:'hidden',marginBottom:5}}>
-                          <div style={{width:Math.min(collectedPct,100)+'%',height:'100%',background:`linear-gradient(90deg,${T.teal},${T.tealD})`,borderRadius:3,transition:'width 0.6s ease'}}/>
+                        <div style={{height:5,background:'rgba(0,100,140,0.1)',borderRadius:3,overflow:'hidden',marginBottom:5}}>\
+                          <div style={{width:Math.min(collectedPct,100)+'%',height:'100%',background:`linear-gradient(90deg,${T.teal},${T.tealD})`,borderRadius:3}}/>
                         </div>
-                        <div style={{display:'flex',justifyContent:'space-between'}}>
+                        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:4,marginBottom:5}}>
                           <div>
-                            <p style={{fontSize:6,color:T.textM,fontWeight:700,margin:0}}>RECEIVED</p>
-                            <p style={{fontSize:11,fontWeight:900,color:T.tealD,margin:0}}>₹{totalReceived.toFixed(0)} Cr</p>
+                            <p style={{fontSize:6,color:T.textM,fontWeight:700,margin:0}}>DEMAND RAISED (W/O GST)</p>
+                            <p style={{fontSize:10,fontWeight:900,color:T.navy,margin:0}}>₹{installmentTotal.toFixed(0)} Cr</p>
                           </div>
                           <div style={{textAlign:'right'}}>
-                            <p style={{fontSize:6,color:T.textM,fontWeight:700,margin:0}}>UPCOMING</p>
-                            <p style={{fontSize:11,fontWeight:900,color:'#7c3aed',margin:0}}>₹{upcomingAmt.toFixed(0)} Cr</p>
+                            <p style={{fontSize:6,color:T.textM,fontWeight:700,margin:0}}>RECEIVED (W/O GST)</p>
+                            <p style={{fontSize:10,fontWeight:900,color:T.tealD,margin:0}}>₹{totalReceived.toFixed(0)} Cr</p>
+                          </div>
+                        </div>
+                        {/* zrec breakdown */}
+                        <div style={{borderTop:'1px solid rgba(0,100,140,0.1)',paddingTop:5}}>
+                          <p style={{fontSize:6,color:T.textM,fontWeight:800,textTransform:'uppercase',margin:'0 0 3px'}}>zrec Receipts</p>
+                          <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:3}}>
+                            {[
+                              {l:'RECEIPT',    v:window.__pnlKpi?.totalReceipt ||0, c:'#10b981'},
+                              {l:'JV',         v:window.__pnlKpi?.totalJV      ||0, c:'#7c3aed'},
+                              {l:'TOTAL',      v:window.__pnlKpi?.totalRevenue  ||0, c:T.tealD},
+                            ].map(({l,v,c})=>(
+                              <div key={l} style={{background:`${c}0d`,borderRadius:4,padding:'2px 5px',textAlign:'center'}}>
+                                <p style={{fontSize:6,color:'#94a3b8',fontWeight:700,margin:0}}>{l}</p>
+                                <p style={{fontSize:9,fontWeight:900,color:c,margin:0}}>₹{v.toFixed(0)}Cr</p>
+                              </div>
+                            ))}
                           </div>
                         </div>
                       </div>
