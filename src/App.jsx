@@ -891,11 +891,13 @@ const PnLChart = ({md}) => {
     const pnlData=md.map(r=>+(r.surplus||0));
     el._chartInst=new Chart(el,{
       data:{labels,datasets:[
-        {type:'bar',label:'Revenue',data:revData,backgroundColor:'rgba(0,151,167,0.85)',borderRadius:4,borderSkipped:false,order:2},
-        {type:'bar',label:'Expenditure',data:expData,backgroundColor:'rgba(239,68,68,0.8)',borderRadius:4,borderSkipped:false,order:2},
-        {type:'line',label:'Surplus / Deficit',data:pnlData,borderColor:'#f59e0b',borderWidth:3,borderDash:[8,4],
+        {type:'bar',label:'Collection',data:revData,backgroundColor:'rgba(37,99,235,0.8)',borderRadius:4,borderSkipped:false,order:2},
+        {type:'bar',label:'Expenditure',data:expData,backgroundColor:'rgba(234,179,8,0.85)',borderRadius:4,borderSkipped:false,order:2},
+        {type:'line',label:'Surplus / Deficit',data:pnlData,
+          segment:{borderColor:ctx=>pnlData[ctx.p1DataIndex]>=pnlData[ctx.p0DataIndex]?'#10b981':'#ef4444'},
+          borderWidth:3,
           pointBackgroundColor:pnlData.map(v=>v>=0?'#10b981':'#ef4444'),
-          pointRadius:6,pointHoverRadius:8,pointBorderColor:'#fff',pointBorderWidth:2,
+          pointRadius:5,pointHoverRadius:7,pointBorderColor:'#fff',pointBorderWidth:2,
           fill:false,tension:0.3,order:1},
       ]},
       options:{
@@ -905,7 +907,7 @@ const PnLChart = ({md}) => {
           legend:{display:false},
           tooltip:{
             backgroundColor:'rgba(255,255,255,0.97)',titleColor:'#0d2137',bodyColor:'#334155',
-            borderColor:'rgba(0,151,167,0.3)',borderWidth:1,padding:12,
+            borderColor:'rgba(37,99,235,0.2)',borderWidth:1,padding:12,
             titleFont:{size:13,weight:'bold'},bodyFont:{size:12},
             callbacks:{label:ctx=>{const v=ctx.raw;const sign=ctx.dataset.label==='Surplus / Deficit'?(v>=0?'▲ ':'▼ '):'';return ` ${ctx.dataset.label}: ${sign}₹${Math.abs(v).toFixed(2)} Cr`;}}
           }
@@ -917,7 +919,7 @@ const PnLChart = ({md}) => {
       }
     });
   },[md]);
-  return <div style={{position:'relative',height:320}}><canvas ref={canvasRef} role="img" aria-label="Revenue vs Expenditure vs Surplus / Deficit chart"/></div>;
+  return <div style={{position:'relative',height:320}}><canvas ref={canvasRef} role="img" aria-label="Collection vs Expenditure vs Surplus / Deficit chart"/></div>;
 };
 
 const PnLTab = ({T, GC, SH, filters, sf, raw}) => {
@@ -1113,7 +1115,7 @@ const PnLTab = ({T, GC, SH, filters, sf, raw}) => {
             <p style={{fontSize:10,color:T.gray,margin:'2px 0 0'}}>Monthly comparison · ₹ Cr · Mar 2025 onwards</p>
           </div>
           <div style={{display:'flex',gap:16}}>
-            {[['#0097a7','Revenue',''],['#ef4444','Expenditure',''],['#f59e0b','Surplus / Deficit','- -']].map(([col,lbl,dash])=>(
+            {[['#2563eb','Collection',''],['#eab308','Expenditure',''],['#10b981','Surplus / Deficit (↑green ↓red)','- -']].map(([col,lbl,dash])=>(
               <div key={lbl} style={{display:'flex',alignItems:'center',gap:5,fontSize:11,color:T.textM}}>
                 {dash?<svg width="22" height="3"><line x1="0" y1="1.5" x2="22" y2="1.5" stroke={col} strokeWidth="2.5" strokeDasharray="6 3"/></svg>:<div style={{width:12,height:12,borderRadius:2,background:col}}/>}
                 <span style={{fontWeight:600}}>{lbl}</span>
