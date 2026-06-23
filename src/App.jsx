@@ -798,6 +798,37 @@ const CollectionsTab = ({T, GC, SH, filters={}, raw}) => {
       </ResponsiveContainer>
     </GC>
 
+    {/* SECTION 4: TOWER-WISE */}
+    <SectionHead title="Tower-wise Collection" icon="🏢"/>
+    <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10}}>
+      {towers.map((tw,i)=>{
+        const dem=demKey?tw[demKey]||0:(tw.tlp_dem+tw.clp_dem+(tw.he_dem||0)+(tw.hl_dem||0));
+        const rec=recKey?tw[recKey]||0:(tw.tlp_rec+tw.clp_rec+(tw.he_rec||0)+(tw.hl_rec||0));
+        const out=outKey?tw[outKey]||0:(tw.tlp_out+tw.clp_out+(tw.he_out||0)+(tw.hl_out||0));
+        const eff=dem>0?Math.round(rec/dem*100):0;
+        return (
+          <GC key={i} style={{padding:14}} cls="kc">
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+              <p style={{fontSize:13,fontWeight:900,color:T.tealD,margin:0}}>{tw.tower}</p>
+              <span style={{fontSize:10,fontWeight:800,color:eff>=100?'#059669':eff>=80?T.tealD:T.amber,background:eff>=100?'rgba(5,150,105,0.1)':'rgba(0,151,167,0.1)',borderRadius:6,padding:'2px 8px'}}>{eff}% eff</span>
+            </div>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:6}}>
+              {[['Demand',dem,T.amber],['Received',rec,T.tealD],['Outstanding',out,T.red]].map(([l,v,c])=>(
+                <div key={l} style={{background:'rgba(0,100,140,0.04)',borderRadius:6,padding:'5px 7px'}}>
+                  <p style={{fontSize:7,color:T.textM,fontWeight:700,textTransform:'uppercase',margin:'0 0 2px'}}>{l}</p>
+                  <p style={{fontSize:11,fontWeight:900,color:c,margin:0}}>₹{v.toFixed(1)}Cr</p>
+                </div>
+              ))}
+            </div>
+            <div style={{marginTop:8,height:4,background:'rgba(0,100,140,0.08)',borderRadius:2}}>
+              <div style={{width:Math.min(eff,100)+'%',height:'100%',background:`linear-gradient(90deg,${T.teal},${T.tealD})`,borderRadius:2,transition:'width 0.5s'}}/>
+            </div>
+            <div style={{position:'absolute',bottom:0,left:0,right:0,height:3,background:`linear-gradient(90deg,${T.tealD},transparent)`,borderRadius:'0 0 14px 14px'}}/>
+          </GC>
+        );
+      })}
+    </div>
+
     {/* SECTION 3: MILESTONE CHART */}
     <SectionHead title="Upcoming Milestone Collections" icon="🏗️"/>
     <GC style={{padding:16}}>
@@ -874,37 +905,6 @@ const CollectionsTab = ({T, GC, SH, filters={}, raw}) => {
         </table>
       </div>
     </GC>
-
-    {/* SECTION 4: TOWER-WISE */}
-    <SectionHead title="Tower-wise Collection" icon="🏢"/>
-    <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10}}>
-      {towers.map((tw,i)=>{
-        const dem=demKey?tw[demKey]||0:(tw.tlp_dem+tw.clp_dem+(tw.he_dem||0)+(tw.hl_dem||0));
-        const rec=recKey?tw[recKey]||0:(tw.tlp_rec+tw.clp_rec+(tw.he_rec||0)+(tw.hl_rec||0));
-        const out=outKey?tw[outKey]||0:(tw.tlp_out+tw.clp_out+(tw.he_out||0)+(tw.hl_out||0));
-        const eff=dem>0?Math.round(rec/dem*100):0;
-        return (
-          <GC key={i} style={{padding:14}} cls="kc">
-            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
-              <p style={{fontSize:13,fontWeight:900,color:T.tealD,margin:0}}>{tw.tower}</p>
-              <span style={{fontSize:10,fontWeight:800,color:eff>=100?'#059669':eff>=80?T.tealD:T.amber,background:eff>=100?'rgba(5,150,105,0.1)':'rgba(0,151,167,0.1)',borderRadius:6,padding:'2px 8px'}}>{eff}% eff</span>
-            </div>
-            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:6}}>
-              {[['Demand',dem,T.amber],['Received',rec,T.tealD],['Outstanding',out,T.red]].map(([l,v,c])=>(
-                <div key={l} style={{background:'rgba(0,100,140,0.04)',borderRadius:6,padding:'5px 7px'}}>
-                  <p style={{fontSize:7,color:T.textM,fontWeight:700,textTransform:'uppercase',margin:'0 0 2px'}}>{l}</p>
-                  <p style={{fontSize:11,fontWeight:900,color:c,margin:0}}>₹{v.toFixed(1)}Cr</p>
-                </div>
-              ))}
-            </div>
-            <div style={{marginTop:8,height:4,background:'rgba(0,100,140,0.08)',borderRadius:2}}>
-              <div style={{width:Math.min(eff,100)+'%',height:'100%',background:`linear-gradient(90deg,${T.teal},${T.tealD})`,borderRadius:2,transition:'width 0.5s'}}/>
-            </div>
-            <div style={{position:'absolute',bottom:0,left:0,right:0,height:3,background:`linear-gradient(90deg,${T.tealD},transparent)`,borderRadius:'0 0 14px 14px'}}/>
-          </GC>
-        );
-      })}
-    </div>
 
     {/* SECTION 5: MONTHLY TREND */}
     <SectionHead title="Monthly Demand vs Collection Trend" icon="📈"/>
