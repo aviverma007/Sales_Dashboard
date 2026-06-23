@@ -723,7 +723,13 @@ const CollectionsTab = ({T, GC, SH, filters={}, raw}) => {
 
     {/* SECTION 1: KPI SUMMARY */}
     <SectionHead title="Demand & Collection Summary" icon="📊"/>
-    <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10}}>
+    <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:10}}>
+      <GC style={{padding:13}} cls="kc">
+        <p style={{fontSize:8,color:T.textM,fontWeight:700,textTransform:'uppercase',margin:'0 0 4px',letterSpacing:0.5}}>Total Sales Value (TCV)</p>
+        <p style={{fontSize:20,fontWeight:900,color:'#1d4ed8',margin:'0 0 4px',letterSpacing:-0.5}}>₹{((raw?.kpiExtra?.totalTCVCr)||0).toFixed(0)} Cr</p>
+        <p style={{fontSize:8,color:T.textL,margin:0}}>Booked TCV incl. tax</p>
+        <div style={{position:'absolute',bottom:0,left:0,right:0,height:3,background:'linear-gradient(90deg,#1d4ed8,transparent)',borderRadius:'0 0 14px 14px'}}/>
+      </GC>
       <GC style={{padding:13}} cls="kc">
         <p style={{fontSize:8,color:T.textM,fontWeight:700,textTransform:'uppercase',margin:'0 0 4px',letterSpacing:0.5}}>Total Installment (W/O GST)</p>
         <p style={{fontSize:20,fontWeight:900,color:T.amber,margin:'0 0 4px',letterSpacing:-0.5}}>{fmtC(instCr)}</p>
