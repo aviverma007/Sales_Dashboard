@@ -641,8 +641,6 @@ const CollectionsTab = ({T, GC, SH, filters={}, raw}) => {
   };
 
   const milestones = (planType==='all' ? allMilestones
-    : planType==='hybrid_earlier' ? allMilestones.filter(m=>m.type==='hybrid_earlier')
-    : planType==='hybrid_later'   ? allMilestones.filter(m=>m.type==='hybrid_later')
     : allMilestones.filter(m=>m.type===planType)
   ).filter(m=>milestoneInFilter(m.expectedDate))
    .slice().sort((a,b)=>sortBy==='date'
@@ -658,19 +656,19 @@ const CollectionsTab = ({T, GC, SH, filters={}, raw}) => {
   const filteredMonthly = allMonthly.slice(safeL, safeR+1);
 
   // Keys for monthly/tower data
-  const demKey = planType==='all'?null:planType==='hybrid_earlier'?'he_dem':planType==='hybrid_later'?'hl_dem':planType+'_dem';
-  const recKey = planType==='all'?null:planType==='hybrid_earlier'?'he_rec':planType==='hybrid_later'?'hl_rec':planType+'_rec';
-  const outKey = planType==='all'?null:planType==='hybrid_earlier'?'he_out':planType==='hybrid_later'?'hl_out':planType+'_out';
+  const demKey = planType==='all'?null:planType+'_dem';
+  const recKey = planType==='all'?null:planType+'_rec';
+  const outKey = planType==='all'?null:planType+'_out';
 
   const upcomingByMonth = {};
   milestones.forEach(m=>{
     if(!m.expectedDate) return;
     const ym=m.expectedDate;
-    if(!upcomingByMonth[ym]) upcomingByMonth[ym]={month:ym,label:'',tlp:0,clp:0,hybrid_later:0,hybrid_earlier:0};
+    if(!upcomingByMonth[ym]) upcomingByMonth[ym]={month:ym,label:'',tlp:0,clp:0};
     const [yr,mo]=ym.split('-');
     const MN={'01':'Jan','02':'Feb','03':'Mar','04':'Apr','05':'May','06':'Jun','07':'Jul','08':'Aug','09':'Sep','10':'Oct','11':'Nov','12':'Dec'};
     upcomingByMonth[ym].label=`${MN[mo]}'${yr.slice(2)}`;
-    const key = m.type==='hybrid_earlier'?'hybrid_earlier':m.type==='hybrid_later'?'hybrid_later':m.type;
+    const key = m.type;
     upcomingByMonth[ym][key] = (upcomingByMonth[ym][key]||0) + m.totalCr;
   });
   const upcomingMonthArr=Object.values(upcomingByMonth).sort((a,b)=>a.month.localeCompare(b.month));
@@ -689,8 +687,6 @@ const CollectionsTab = ({T, GC, SH, filters={}, raw}) => {
         ['all',          'All Plans',                  T.tealD],
         ['tlp',          'TLP — Time Linked',          T.amber],
         ['clp',          'CLP — Construction Linked',  '#2e7d32'],
-        ['hybrid_later', 'Hybrid — Whichever Later',   '#7c3aed'],
-        ['hybrid_earlier','Hybrid — Whichever Earlier','#b45309'],
       ].map(([k,l,col])=>(
         <button key={k} onClick={()=>setPlanType(k)}
           style={planType===k
@@ -772,7 +768,7 @@ const CollectionsTab = ({T, GC, SH, filters={}, raw}) => {
       <ResponsiveContainer width="100%" height={220}>
         <ComposedChart data={upcomingMonthArr.map(d=>({
           ...d,
-          total: +((d.tlp||0)+(d.clp||0)+(d.hybrid_later||0)+(d.hybrid_earlier||0)).toFixed(2)
+          total: +((d.tlp||0)+(d.clp||0)).toFixed(2)
         }))} margin={{top:28,right:20,bottom:20,left:0}}>
           <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.07)" vertical={false}/>
           <XAxis dataKey="label" tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false}/>
@@ -781,7 +777,7 @@ const CollectionsTab = ({T, GC, SH, filters={}, raw}) => {
           <Tooltip content={({active,payload,label})=>{
             if(!active||!payload?.length) return null;
             const d=payload[0]?.payload||{};
-            const total=(d.tlp||0)+(d.clp||0)+(d.hybrid_later||0)+(d.hybrid_earlier||0);
+            const total=(d.tlp||0)+(d.clp||0);
             const fmt=v=>v>=1?`₹${v.toFixed(2)} Cr`:`₹${(v*100).toFixed(1)} L`;
             return(
               <div style={{background:'#fff',border:'1px solid #e5e7eb',borderRadius:8,padding:'8px 12px',fontSize:10,boxShadow:'0 2px 8px rgba(0,0,0,0.1)'}}>
@@ -789,8 +785,7 @@ const CollectionsTab = ({T, GC, SH, filters={}, raw}) => {
                 <p style={{margin:'0 0 2px',color:T.tealD,fontWeight:800}}>Total: {fmt(total)}</p>
                 {d.clp>0&&<p style={{margin:'0 0 1px',color:'#2e7d32'}}>CLP: {fmt(d.clp)}</p>}
                 {d.tlp>0&&<p style={{margin:'0 0 1px',color:T.amber}}>TLP: {fmt(d.tlp)}</p>}
-                {d.hybrid_later>0&&<p style={{margin:'0 0 1px',color:'#7c3aed'}}>Hybrid Later: {fmt(d.hybrid_later)}</p>}
-                {d.hybrid_earlier>0&&<p style={{margin:0,color:'#b45309'}}>Hybrid Earlier: {fmt(d.hybrid_earlier)}</p>}
+
               </div>
             );
           }}/>
@@ -860,8 +855,8 @@ const CollectionsTab = ({T, GC, SH, filters={}, raw}) => {
               <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} tickFormatter={v=>'₹'+v+'Cr'} width={48}/>
               <Tooltip formatter={(v,n)=>[`₹${v} Cr`,n]} labelFormatter={l=>{const m=milestones.find(x=>x.name===l);const n=m?.shortName||l;return `${n}${m?.expectedDate?' ('+m.expectedDate+')':''}`;}}/>
               <Legend wrapperStyle={{fontSize:9,fontWeight:700}} iconSize={8}/>
-              <Bar dataKey="totalCr" name={planType==='clp'?'CLP Amount':planType==='hybrid_later'?'Hybrid (Later)':planType==='hybrid_earlier'?'Hybrid (Earlier)':'TLP Amount'}
-                fill={planType==='clp'?'#2e7d32':planType==='hybrid_later'?'#7c3aed':planType==='hybrid_earlier'?'#b45309':T.amber}
+              <Bar dataKey="totalCr" name={planType==='clp'?'CLP Amount':'TLP Amount'}
+                fill={planType==='clp'?'#2e7d32':T.amber}
                 radius={[3,3,0,0]} maxBarSize={40}>
                 <LabelList content={({x,y,width,value,index})=>{
                   const m=milestones[index];
@@ -910,7 +905,7 @@ const CollectionsTab = ({T, GC, SH, filters={}, raw}) => {
               <tr key={i} style={{borderBottom:'1px solid rgba(0,100,140,0.07)',background:i%2===0?'transparent':'rgba(0,100,140,0.02)'}}>
                 <td style={{padding:'8px 10px',color:T.textD,fontWeight:600,fontSize:12,maxWidth:260}}>{m.shortName||m.name}</td>
                 <td style={{padding:'8px 10px',textAlign:'right'}}>
-                  <span style={{background:m.type==='tlp'?'rgba(245,158,11,0.12)':m.type==='clp'?'rgba(0,151,167,0.12)':'rgba(124,58,237,0.12)',color:m.type==='tlp'?T.amber:m.type==='clp'?T.tealD:'#7c3aed',borderRadius:4,padding:'3px 8px',fontSize:10,fontWeight:800}}>{m.type.toUpperCase()}</span>
+                  <span style={{background:m.type==='tlp'?'rgba(245,158,11,0.12)':'rgba(0,151,167,0.12)',color:m.type==='tlp'?T.amber:T.tealD,borderRadius:4,padding:'3px 8px',fontSize:10,fontWeight:800}}>{m.type.toUpperCase()}</span>
                 </td>
                 <td style={{padding:'8px 10px',textAlign:'right',color:T.textM,fontWeight:600,fontSize:12}}>{m.expectedDate||'—'}</td>
                 {['T1','T2','T3','T4','T5','T6'].map(t=>(
