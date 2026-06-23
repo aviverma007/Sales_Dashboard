@@ -989,59 +989,7 @@ const PnLTab = ({T, GC, SH, filters, sf, raw}) => {
         </div>
       </div>
 
-      {/* ── Project at a Glance Bar Card ── */}
-        {(()=>{
-          const selProjs = filters.project ? filters.project.split('||').filter(Boolean) : [];
-          const invr     = (raw?.invr||[]).filter(u=>!selProjs.length||selProjs.includes(u.project));
-          const booked   = invr.filter(u=>u.status==='Booked');
-          const areaSqft = booked.reduce((s,u)=>s+(u.carpetArea||u.superArea||0),0);
-          const dkAll    = raw?.dappKpi?.kpi?.all || {};
-
-          const bars = [
-            { label:'Units Sold',        rawVal: booked.length,                    display:`${booked.length}`,          unit:'units',  color:'#0097a7' },
-            { label:'Area Sold',         rawVal: areaSqft/1000,                    display:`${(areaSqft/1000).toFixed(0)}K`,unit:'sqft',color:'#7c3aed' },
-            { label:'Revenue',           rawVal: totalRevenue,                     display:`₹${totalRevenue.toFixed(0)}`,unit:'Cr',    color:'#10b981' },
-            { label:'Collection (W/GST)',rawVal: dkAll.totalReceivedBank||0,       display:`₹${(dkAll.totalReceivedBank||0).toFixed(0)}`,unit:'Cr',color:'#0891b2' },
-            { label:'Collection (W/O GST)',rawVal:dkAll.totalReceivedWoT||0,      display:`₹${(dkAll.totalReceivedWoT||0).toFixed(0)}`,unit:'Cr',color:'#06b6d4' },
-            { label:'Expenditure',       rawVal: totalExpense,                     display:`₹${totalExpense.toFixed(0)}`,unit:'Cr',    color:'#ef4444' },
-            { label:'Outstanding',       rawVal: dkAll.totalOutstanding||0,        display:`₹${(dkAll.totalOutstanding||0).toFixed(1)}`,unit:'Cr',color:'#f59e0b' },
-            { label:'Surplus',           rawVal: pnl,                              display:`₹${pnl.toFixed(0)}`,         unit:'Cr',    color: pnl>=0?'#059669':'#dc2626' },
-          ];
-          const maxVal = Math.max(...bars.map(b=>b.rawVal), 1);
-
-          return (
-            <GC style={{padding:'16px 18px'}}>
-              <p style={{fontSize:11,fontWeight:900,color:T.tealD,margin:'0 0 14px',textTransform:'uppercase',letterSpacing:0.5}}>
-                Project at a Glance
-              </p>
-              <div style={{display:'flex',alignItems:'flex-end',gap:10,height:140,padding:'0 4px'}}>
-                {bars.map(({label,rawVal,display,unit,color})=>{
-                  const pct = Math.max((rawVal/maxVal)*100, rawVal>0?3:0);
-                  return (
-                    <div key={label} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:4,height:'100%',justifyContent:'flex-end'}}>
-                      {/* Value label above bar */}
-                      <span style={{fontSize:9,fontWeight:900,color,whiteSpace:'nowrap',marginBottom:2}}>{display}</span>
-                      {/* Bar */}
-                      <div style={{width:'100%',height:`${pct}%`,background:color,borderRadius:'5px 5px 0 0',
-                        minHeight: rawVal>0?4:0,
-                        boxShadow:`0 -2px 8px ${color}44`,
-                        transition:'height 0.6s ease',position:'relative'}}>
-                        <div style={{position:'absolute',inset:0,background:'linear-gradient(180deg,rgba(255,255,255,0.15),transparent)',borderRadius:'5px 5px 0 0'}}/>
-                      </div>
-                      {/* Label below */}
-                      <span style={{fontSize:7.5,fontWeight:700,color:T.textM,textAlign:'center',lineHeight:1.2,marginTop:4}}>{label}</span>
-                    </div>
-                  );
-                })}
-              </div>
-              {/* Bottom baseline */}
-              <div style={{height:1,background:'rgba(0,100,140,0.1)',marginTop:4}}/>
-            </GC>
-          );
-        })()}
-
-
-      {/* Charts Row */}
+            {/* Charts Row */}
       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginBottom:16}}>
 
 
@@ -1145,6 +1093,57 @@ const PnLTab = ({T, GC, SH, filters, sf, raw}) => {
 <PnLChart md={filteredColl}/>
       </GC>
 
+
+      {/* ── Project at a Glance Bar Card ── */}
+        {(()=>{
+          const selProjs = filters.project ? filters.project.split('||').filter(Boolean) : [];
+          const invr     = (raw?.invr||[]).filter(u=>!selProjs.length||selProjs.includes(u.project));
+          const booked   = invr.filter(u=>u.status==='Booked');
+          const areaSqft = booked.reduce((s,u)=>s+(u.carpetArea||u.superArea||0),0);
+          const dkAll    = raw?.dappKpi?.kpi?.all || {};
+
+          const bars = [
+            { label:'Units Sold',        rawVal: booked.length,                    display:`${booked.length}`,          unit:'units',  color:'#0097a7' },
+            { label:'Area Sold',         rawVal: areaSqft/1000,                    display:`${(areaSqft/1000).toFixed(0)}K`,unit:'sqft',color:'#7c3aed' },
+            { label:'Revenue',           rawVal: totalRevenue,                     display:`₹${totalRevenue.toFixed(0)}`,unit:'Cr',    color:'#10b981' },
+            { label:'Collection (W/GST)',rawVal: dkAll.totalReceivedBank||0,       display:`₹${(dkAll.totalReceivedBank||0).toFixed(0)}`,unit:'Cr',color:'#0891b2' },
+            { label:'Collection (W/O GST)',rawVal:dkAll.totalReceivedWoT||0,      display:`₹${(dkAll.totalReceivedWoT||0).toFixed(0)}`,unit:'Cr',color:'#06b6d4' },
+            { label:'Expenditure',       rawVal: totalExpense,                     display:`₹${totalExpense.toFixed(0)}`,unit:'Cr',    color:'#ef4444' },
+            { label:'Outstanding',       rawVal: dkAll.totalOutstanding||0,        display:`₹${(dkAll.totalOutstanding||0).toFixed(1)}`,unit:'Cr',color:'#f59e0b' },
+            { label:'Surplus',           rawVal: pnl,                              display:`₹${pnl.toFixed(0)}`,         unit:'Cr',    color: pnl>=0?'#059669':'#dc2626' },
+          ];
+          const maxVal = Math.max(...bars.map(b=>b.rawVal), 1);
+
+          return (
+            <GC style={{padding:'16px 18px'}}>
+              <p style={{fontSize:11,fontWeight:900,color:T.tealD,margin:'0 0 14px',textTransform:'uppercase',letterSpacing:0.5}}>
+                Project at a Glance
+              </p>
+              <div style={{display:'flex',alignItems:'flex-end',gap:10,height:140,padding:'0 4px'}}>
+                {bars.map(({label,rawVal,display,unit,color})=>{
+                  const pct = Math.max((rawVal/maxVal)*100, rawVal>0?3:0);
+                  return (
+                    <div key={label} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:4,height:'100%',justifyContent:'flex-end'}}>
+                      {/* Value label above bar */}
+                      <span style={{fontSize:9,fontWeight:900,color,whiteSpace:'nowrap',marginBottom:2}}>{display}</span>
+                      {/* Bar */}
+                      <div style={{width:'100%',height:`${pct}%`,background:color,borderRadius:'5px 5px 0 0',
+                        minHeight: rawVal>0?4:0,
+                        boxShadow:`0 -2px 8px ${color}44`,
+                        transition:'height 0.6s ease',position:'relative'}}>
+                        <div style={{position:'absolute',inset:0,background:'linear-gradient(180deg,rgba(255,255,255,0.15),transparent)',borderRadius:'5px 5px 0 0'}}/>
+                      </div>
+                      {/* Label below */}
+                      <span style={{fontSize:7.5,fontWeight:700,color:T.textM,textAlign:'center',lineHeight:1.2,marginTop:4}}>{label}</span>
+                    </div>
+                  );
+                })}
+              </div>
+              {/* Bottom baseline */}
+              <div style={{height:1,background:'rgba(0,100,140,0.1)',marginTop:4}}/>
+            </GC>
+          );
+        })()}
 
     </div>
   );
