@@ -733,22 +733,22 @@ const CollectionsTab = ({T, GC, SH}) => {
           <thead>
             <tr style={{background:'rgba(0,100,140,0.06)'}}>
               {['Milestone','Type','Expected Date','T-1','T-2','T-3','T-4','T-5','T-6','Total (Cr)'].map(h=>(
-                <th key={h} style={{padding:'6px 8px',textAlign:h==='Milestone'?'left':'right',color:T.textM,fontWeight:800,textTransform:'uppercase',fontSize:8,letterSpacing:0.4,borderBottom:'1px solid rgba(0,100,140,0.1)'}}>{h}</th>
+                <th key={h} style={{padding:'8px 10px',textAlign:h==='Milestone'?'left':'right',color:T.textM,fontWeight:800,textTransform:'uppercase',fontSize:10,letterSpacing:0.4,borderBottom:'2px solid rgba(0,100,140,0.12)'}}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {milestones.map((m,i)=>(
-              <tr key={i} style={{borderBottom:'1px solid rgba(0,100,140,0.05)',background:i%2===0?'transparent':'rgba(0,100,140,0.02)'}}>
-                <td style={{padding:'5px 8px',color:T.textD,fontWeight:600,maxWidth:200}}>{m.name}</td>
-                <td style={{padding:'5px 8px',textAlign:'right'}}>
-                  <span style={{background:m.type==='tlp'?'rgba(245,158,11,0.12)':'rgba(0,151,167,0.12)',color:m.type==='tlp'?T.amber:T.tealD,borderRadius:4,padding:'2px 6px',fontSize:8,fontWeight:800}}>{m.type.toUpperCase()}</span>
+              <tr key={i} style={{borderBottom:'1px solid rgba(0,100,140,0.07)',background:i%2===0?'transparent':'rgba(0,100,140,0.02)'}}>
+                <td style={{padding:'8px 10px',color:T.textD,fontWeight:600,fontSize:12,maxWidth:260}}>{m.name}</td>
+                <td style={{padding:'8px 10px',textAlign:'right'}}>
+                  <span style={{background:m.type==='tlp'?'rgba(245,158,11,0.12)':m.type==='clp'?'rgba(0,151,167,0.12)':'rgba(124,58,237,0.12)',color:m.type==='tlp'?T.amber:m.type==='clp'?T.tealD:'#7c3aed',borderRadius:4,padding:'3px 8px',fontSize:10,fontWeight:800}}>{m.type.toUpperCase()}</span>
                 </td>
-                <td style={{padding:'5px 8px',textAlign:'right',color:T.textM,fontWeight:600}}>{m.expectedDate||'—'}</td>
+                <td style={{padding:'8px 10px',textAlign:'right',color:T.textM,fontWeight:600,fontSize:12}}>{m.expectedDate||'—'}</td>
                 {['T1','T2','T3','T4','T5','T6'].map(t=>(
-                  <td key={t} style={{padding:'5px 8px',textAlign:'right',color:m[t]>0?T.tealD:T.textL,fontWeight:m[t]>0?700:400}}>{m[t]>0?`₹${m[t]}`:'-'}</td>
+                  <td key={t} style={{padding:'8px 10px',textAlign:'right',color:m[t]>0?T.tealD:T.textL,fontWeight:m[t]>0?700:400,fontSize:12}}>{m[t]>0?`₹${m[t]}`:'-'}</td>
                 ))}
-                <td style={{padding:'5px 8px',textAlign:'right',color:T.tealD,fontWeight:900}}>₹{m.totalCr.toFixed(2)}</td>
+                <td style={{padding:'8px 10px',textAlign:'right',color:T.tealD,fontWeight:900,fontSize:13}}>₹{m.totalCr.toFixed(2)}</td>
               </tr>
             ))}
           </tbody>
