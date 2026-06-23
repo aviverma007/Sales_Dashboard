@@ -863,9 +863,9 @@ const CollectionsTab = ({T, GC, SH, filters={}, raw}) => {
           <ResponsiveContainer width="100%" height={260}>
             <ComposedChart data={milestones} margin={{top:32,right:20,bottom:60,left:0}}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.07)" vertical={false}/>
-              <XAxis dataKey="name" tick={{fill:T.textM,fontSize:7,fontWeight:600}} angle={-35} textAnchor="end" height={70} axisLine={false} tickLine={false} tickFormatter={v=>v.length>22?v.slice(0,22)+'…':v}/>
+              <XAxis dataKey="name" tick={{fill:T.textM,fontSize:7,fontWeight:600}} angle={-35} textAnchor="end" height={70} axisLine={false} tickLine={false} tickFormatter={v=>{const m=milestones.find(x=>x.name===v);const n=m?.shortName||v;return n.length>20?n.slice(0,20)+'…':n;}}/>
               <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} tickFormatter={v=>'₹'+v+'Cr'} width={48}/>
-              <Tooltip formatter={(v,n)=>[`₹${v} Cr`,n]} labelFormatter={l=>{const m=milestones.find(x=>x.name===l);return `${l}${m?.expectedDate?' ('+m.expectedDate+')':''}`;}}/>
+              <Tooltip formatter={(v,n)=>[`₹${v} Cr`,n]} labelFormatter={l=>{const m=milestones.find(x=>x.name===l);const n=m?.shortName||l;return `${n}${m?.expectedDate?' ('+m.expectedDate+')':''}`;}}/>
               <Legend wrapperStyle={{fontSize:9,fontWeight:700}} iconSize={8}/>
               <Bar dataKey="totalCr" name={planType==='clp'?'CLP Amount':planType==='hybrid_later'?'Hybrid (Later)':planType==='hybrid_earlier'?'Hybrid (Earlier)':'TLP Amount'}
                 fill={planType==='clp'?'#2e7d32':planType==='hybrid_later'?'#7c3aed':planType==='hybrid_earlier'?'#b45309':T.amber}
@@ -915,7 +915,7 @@ const CollectionsTab = ({T, GC, SH, filters={}, raw}) => {
           <tbody>
             {milestones.map((m,i)=>(
               <tr key={i} style={{borderBottom:'1px solid rgba(0,100,140,0.07)',background:i%2===0?'transparent':'rgba(0,100,140,0.02)'}}>
-                <td style={{padding:'8px 10px',color:T.textD,fontWeight:600,fontSize:12,maxWidth:260}}>{m.name}</td>
+                <td style={{padding:'8px 10px',color:T.textD,fontWeight:600,fontSize:12,maxWidth:260}}>{m.shortName||m.name}</td>
                 <td style={{padding:'8px 10px',textAlign:'right'}}>
                   <span style={{background:m.type==='tlp'?'rgba(245,158,11,0.12)':m.type==='clp'?'rgba(0,151,167,0.12)':'rgba(124,58,237,0.12)',color:m.type==='tlp'?T.amber:m.type==='clp'?T.tealD:'#7c3aed',borderRadius:4,padding:'3px 8px',fontSize:10,fontWeight:800}}>{m.type.toUpperCase()}</span>
                 </td>
