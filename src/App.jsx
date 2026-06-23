@@ -894,9 +894,15 @@ const PnLChart = ({md}) => {
         {type:'bar',label:'Collection',data:revData,backgroundColor:'rgba(37,99,235,0.8)',borderRadius:4,borderSkipped:false,order:2,barPercentage:0.6,categoryPercentage:0.7},
         {type:'bar',label:'Expenditure',data:expData,backgroundColor:'rgba(234,179,8,0.85)',borderRadius:4,borderSkipped:false,order:2,barPercentage:0.6,categoryPercentage:0.7},
         {type:'line',label:'Surplus / Deficit',data:pnlData,
-          segment:{borderColor:ctx=>pnlData[ctx.p1DataIndex]>=pnlData[ctx.p0DataIndex]?'#10b981':'#ef4444'},
+          segment:{borderColor:ctx=>{
+            const v0=pnlData[ctx.p0DataIndex], v1=pnlData[ctx.p1DataIndex];
+            if(v0===0||v1===0) return '#f59e0b';
+            if(v0>0&&v1>0) return '#10b981';
+            if(v0<0&&v1<0) return '#ef4444';
+            return '#f59e0b'; // crossing zero
+          }},
           borderWidth:3,
-          pointBackgroundColor:pnlData.map(v=>v>=0?'#10b981':'#ef4444'),
+          pointBackgroundColor:pnlData.map(v=>v>0?'#10b981':v<0?'#ef4444':'#f59e0b'),
           pointRadius:5,pointHoverRadius:7,pointBorderColor:'#fff',pointBorderWidth:2,
           fill:false,tension:0.3,order:1},
       ]},
