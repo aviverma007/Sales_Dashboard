@@ -32,7 +32,8 @@ function Portal() {
   const [err, setErr] = useState('');
 
   const submit = () => {
-    const user = USERS[u];
+    const key = Object.keys(USERS).find(k => k.toLowerCase() === u.trim().toLowerCase());
+    const user = key ? USERS[key] : null;
     if (user && p === user.password) {
       sessionStorage.setItem(user.sessionKey, '1');
       setProfile(user.profile);
