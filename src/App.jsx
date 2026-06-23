@@ -1479,7 +1479,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
     return{summary:{totalCancelled:total,rebooked:rebooked.length,stillVacant:vacant.length,rebookedPct:total>0?Math.round(rebooked.length/total*100):0},buckets:(base.buckets||[]).map(b=>({...b,count:bucketMap[b.label]||0})),byProject,vacantUnits:vacant,rebookedUnits:rebooked};
   },[raw,filters.project]);
   const byProj=useMemo(()=>{const map={};pA.forEach(r=>{const p=r.project;if(!p)return;if(!map[p])map[p]={name:p,units:0,bspCr:0};map[p].units++;map[p].bspCr+=(r.bsp||0)/1e7;});return Object.values(map).sort((a,b)=>b.units-a.units).map(r=>({...r,bspCr:+r.bspCr.toFixed(1)}));},[pA]);
-  const topCP=useMemo(()=>{const map={};pA.forEach(r=>{const b=r.brokerName;if(!b)return;if(!map[b])map[b]={name:b,units:0,bspCr:0};map[b].units++;map[b].bspCr+=(r.bsp||0)/1e7;});return Object.values(map).sort((a,b)=>b.units-a.units).map(r=>({...r,bspCr:+r.bspCr.toFixed(1)}));},[pA]);
+  const topCP=useMemo(()=>{const map={};pA.forEach(r=>{const b=r.brokerName;if(!b)return;if(!map[b])map[b]={name:b,units:0,bspCr:0,area:0};map[b].units++;map[b].bspCr+=(r.bsp||0)/1e7;map[b].area+=(r.superArea||0);});return Object.values(map).sort((a,b)=>b.units-a.units).map(r=>({...r,bspCr:+r.bspCr.toFixed(1),avgRate:r.area>0?Math.round(r.bspCr*1e7/r.area):0}));},[pA]);
   const bhkS=useMemo(()=>{
     const map={};
     // Booked from pdrn (filtered) — track area sum
@@ -2888,7 +2888,16 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.08)" vertical={false}/>
                                 <XAxis dataKey="name" tick={{fill:T.textM,fontSize:8,fontWeight:600}} axisLine={false} tickLine={false} angle={-35} textAnchor="end" interval={0} height={60} tickFormatter={v=>v?.length>14?v.slice(0,14)+'…':v}/>
                                 <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={24} domain={[0,maxU+10]}/>
-                                <Tooltip content={<CTip fmt={(v,n)=>n==='Units'?v+' units':'₹'+v+' Cr'}/>}/>
+                                <Tooltip content={({active,payload,label})=>{
+                                  if(!active||!payload?.length)return null;
+                                  const d=slice.find(r=>r.name===label)||{};
+                                  return(<div style={{background:'#fff',border:'1px solid #e5e7eb',borderRadius:8,padding:'8px 12px',fontSize:10,boxShadow:'0 2px 8px rgba(0,0,0,0.1)'}}>
+                                    <p style={{margin:'0 0 4px',fontWeight:800,color:T.navy,fontSize:11}}>{label}</p>
+                                    <p style={{margin:'0 0 2px',color:T.tealD}}>Units: <strong>{d.units}</strong></p>
+                                    <p style={{margin:'0 0 2px',color:T.amber}}>BSP: <strong>₹{d.bspCr} Cr</strong></p>
+                                    <p style={{margin:0,color:'#7c3aed'}}>Avg Rate: <strong>₹{(d.avgRate||0).toLocaleString('en-IN')}/sqft</strong></p>
+                                  </div>);
+                                }}/>
                                 <defs>
                                   <linearGradient id="cpLineGrad" x1="0" y1="0" x2="0" y2="1">
                                     <stop offset="5%" stopColor={T.teal} stopOpacity={0.15}/>
@@ -2939,13 +2948,26 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                                 <XAxis dataKey="name" tick={{fill:T.textM,fontSize:8,fontWeight:600}} axisLine={false} tickLine={false} angle={-35} textAnchor="end" interval={0} height={60} tickFormatter={v=>v?.length>14?v.slice(0,14)+'…':v}/>
                                 <YAxis yAxisId="l" tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={32} tickFormatter={v=>v+'Cr'}/>
                                 <YAxis yAxisId="r" orientation="right" tickFormatter={v=>v+'%'} domain={[0,Math.max(...dataWithPct.map(d=>d.pct),10)+5]} tick={{fill:T.amber,fontSize:9}} axisLine={false} tickLine={false} width={28}/>
-                                <Tooltip content={<CTip fmt={(v,n)=>n==='₹Cr'?'₹'+v+' Cr':v+'%'}/>}/>
+                                <YAxis yAxisId="rate" orientation="right" hide={true}/>
+                                <Tooltip content={({active,payload,label})=>{
+                                  if(!active||!payload?.length)return null;
+                                  const d=dataWithPct.find(r=>r.name===label)||{};
+                                  return(<div style={{background:'#fff',border:'1px solid #e5e7eb',borderRadius:8,padding:'8px 12px',fontSize:10,boxShadow:'0 2px 8px rgba(0,0,0,0.1)'}}>
+                                    <p style={{margin:'0 0 4px',fontWeight:800,color:T.navy,fontSize:11}}>{label}</p>
+                                    <p style={{margin:'0 0 2px',color:T.navy}}>BSP: <strong>₹{d.bspCr} Cr</strong></p>
+                                    <p style={{margin:'0 0 2px',color:T.amber}}>% of Total: <strong>{d.pct}%</strong></p>
+                                    <p style={{margin:0,color:'#7c3aed'}}>Avg Rate: <strong>₹{(d.avgRate||0).toLocaleString('en-IN')}/sqft</strong></p>
+                                  </div>);
+                                }}/>
                                 <Legend wrapperStyle={{fontSize:9,fontWeight:700}} iconSize={8}/>
                                 <Bar yAxisId="l" dataKey="bspCr" name="₹Cr" radius={[3,3,0,0]}>
                                   {dataWithPct.map((d,i)=><Cell key={i} fill={i===0?T.navy:i<3?'#1a4a6b':'#2a6a8b'}/>)}
                                   <LabelList dataKey="bspCr" position="top" style={{fill:T.navy,fontSize:8,fontWeight:800}} formatter={v=>'₹'+v}/>
                                 </Bar>
                                 <Line yAxisId="r" type="monotone" dataKey="pct" name="% of Total" stroke={T.amber} strokeWidth={2} dot={{r:3,fill:T.amber}} activeDot={{r:5}}/>
+                                <Line yAxisId="rate" type="monotone" dataKey="avgRate" name="Avg ₹/sqft" stroke="#7c3aed" strokeWidth={1.5} strokeDasharray="3 3" dot={{r:3,fill:'#7c3aed',stroke:'#fff',strokeWidth:1}} activeDot={{r:5}}>
+                                  <LabelList dataKey="avgRate" position="top" style={{fill:'#7c3aed',fontSize:7,fontWeight:700}} formatter={v=>v?'₹'+Math.round(v/1000)+'K':''}/>
+                                </Line>
                               </ComposedChart>
                             </ResponsiveContainer>
                           </div>
