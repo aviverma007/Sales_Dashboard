@@ -772,7 +772,7 @@ const CollectionsTab = ({T, GC, SH, filters={}, raw}) => {
       <div style={{overflowX:'auto'}}>
         <div style={{minWidth:Math.max(milestones.length*70,600)+'px'}}>
           <ResponsiveContainer width="100%" height={260}>
-            <ComposedChart data={milestones} margin={{top:16,right:20,bottom:60,left:0}}>
+            <ComposedChart data={milestones} margin={{top:32,right:20,bottom:60,left:0}}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.07)" vertical={false}/>
               <XAxis dataKey="name" tick={{fill:T.textM,fontSize:7,fontWeight:600}} angle={-35} textAnchor="end" height={70} axisLine={false} tickLine={false} tickFormatter={v=>v.length>22?v.slice(0,22)+'…':v}/>
               <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} tickFormatter={v=>'₹'+v+'Cr'} width={48}/>
@@ -781,7 +781,18 @@ const CollectionsTab = ({T, GC, SH, filters={}, raw}) => {
               <Bar dataKey="totalCr" name={planType==='clp'?'CLP Amount':planType==='hybrid_later'?'Hybrid (Later)':planType==='hybrid_earlier'?'Hybrid (Earlier)':'TLP Amount'}
                 fill={planType==='clp'?'#2e7d32':planType==='hybrid_later'?'#7c3aed':planType==='hybrid_earlier'?'#b45309':T.amber}
                 radius={[3,3,0,0]} maxBarSize={40}>
-                <LabelList dataKey="totalCr" position="top" style={{fill:T.textD,fontSize:8,fontWeight:800}} formatter={v=>v>0?`₹${v>=100?v.toFixed(0):v.toFixed(1)}Cr`:''}/>
+                <LabelList content={({x,y,width,value,index})=>{
+                  const m=milestones[index];
+                  if(!m||!value||value<=0) return null;
+                  const amt=`₹${value>=100?value.toFixed(0):value.toFixed(1)}Cr`;
+                  const date=m.expectedDate||'';
+                  return(
+                    <g>
+                      <text x={x+width/2} y={y-14} textAnchor="middle" fill={T.textD} fontSize={8} fontWeight={800}>{amt}</text>
+                      {date&&<text x={x+width/2} y={y-3} textAnchor="middle" fill="#94a3b8" fontSize={7}>{date}</text>}
+                    </g>
+                  );
+                }}/>
               </Bar>
             </ComposedChart>
           </ResponsiveContainer>
