@@ -2215,10 +2215,12 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                           <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={40} tickFormatter={v=>v+'Cr'}/>
                           <Tooltip content={({active,payload,label})=>{if(!active||!payload?.length)return null;const d=sl.find(s=>s.label===label);return(<div style={{background:'rgba(255,255,255,0.97)',border:'1px solid rgba(0,151,167,0.3)',borderRadius:10,padding:'8px 12px',fontSize:10}}><p style={{color:T.tealD,fontWeight:800,margin:'0 0 4px'}}>{label}</p>{d?.achieved!=null&&<p style={{color:T.tealD,margin:0}}>Achieved: ₹{d.achieved}Cr</p>}{d?.target!=null&&<p style={{color:'#607d8b',margin:0}}>Target: ₹{d.target}Cr</p>}</div>);}}/>
                           <Legend wrapperStyle={{fontSize:9,fontWeight:700}} iconSize={8}/>
-                          <Bar dataKey="target" name="Target TSV" fill="#b0bec5" fillOpacity={0.75} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={1000} animationEasing="ease-out"/>
+                          <Bar dataKey="target" name="Target TSV" fill="#b0bec5" fillOpacity={0.75} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={1000} animationEasing="ease-out">
+                            <LabelList dataKey="target" position="top" style={{fill:'#607d8b',fontSize:7,fontWeight:700}} formatter={v=>v>0?v+'Cr':''}/>
+                          </Bar>
                           <Bar dataKey="achieved" name="Actual BSP" fill={T.teal} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={800} animationEasing="ease-out">
                             {sl.map((d,i)=><Cell key={i} fill={d.isCurrent?T.tealD:T.teal} fillOpacity={d.isCurrent?1:0.85}/>)}
-                            <LabelList dataKey="achieved" position="insideTop" style={{fill:'#fff',fontSize:7,fontWeight:800}} formatter={v=>v>0?'₹'+v+'Cr':''}/>
+                            <LabelList dataKey="achieved" position="top" style={{fill:T.tealD,fontSize:7,fontWeight:800}} formatter={v=>v>0?'₹'+v+'Cr':''}/>
                           </Bar>
 
                           <Line type="monotone" dataKey="targetLine" stroke="#607d8b" strokeWidth={2} strokeDasharray="5 3" dot={{r:3,fill:'#607d8b',stroke:'#fff',strokeWidth:1.5}} activeDot={{r:4}} legendType="none" connectNulls={false}/>
