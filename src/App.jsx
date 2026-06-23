@@ -993,31 +993,94 @@ const PnLTab = ({T, GC, SH, filters, sf, raw}) => {
         </div>
       </div>
 
-      {/* Collection Breakdown Card */}
-      <GC style={{padding:'14px 18px',marginBottom:12}}>
-        <p style={{fontSize:10,fontWeight:900,color:T.tealD,textTransform:'uppercase',letterSpacing:0.5,margin:'0 0 10px'}}>Collection Breakdown (from zrec)</p>
-        <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:8}}>
-          {[
-            {label:'RECEIPT',        val:receiptCr,   desc:'Cash / Cheque / Online',     color:'#10b981'},
-            {label:'JOURNAL VOUCHER',val:jvCr,        desc:'Credit notes / Adjustments', color:'#7c3aed'},
-            {label:'PAYMENT',        val:paymentCr,   desc:'Refunds / Reversals',        color:'#ef4444'},
-            {label:'TOTAL',          val:totalRevenue, desc:'All receipts combined',      color:T.tealD},
-          ].map(({label,val,desc,color})=>(
-            <div key={label} style={{background:`${color}09`,border:`1px solid ${color}30`,borderRadius:10,padding:'10px 12px',position:'relative'}}>
-              <div style={{position:'absolute',top:0,left:0,right:0,height:3,background:color,borderRadius:'10px 10px 0 0'}}/>
-              <p style={{fontSize:7,fontWeight:800,color:'#94a3b8',textTransform:'uppercase',letterSpacing:0.5,margin:'2px 0 4px'}}>{label}</p>
-              <p style={{fontSize:18,fontWeight:900,color:color,margin:'0 0 3px',letterSpacing:-0.5}}>₹{(+val||0).toFixed(1)} Cr</p>
-              <p style={{fontSize:8,color:T.textL,margin:0}}>{desc}</p>
-            </div>
-          ))}
+      {/* ── COLLECTION & TSV EXPLAINED CARD ── */}
+      <GC style={{padding:'16px 20px',marginBottom:12}}>
+        <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:14}}>
+          <p style={{fontSize:11,fontWeight:900,color:T.tealD,textTransform:'uppercase',letterSpacing:0.6,margin:0}}>💡 Collection & TSV — Explained</p>
+          <div style={{flex:1,height:1,background:'rgba(0,151,167,0.15)'}}/>
         </div>
-        <div style={{marginTop:10,background:'rgba(245,158,11,0.06)',border:'1px solid rgba(245,158,11,0.2)',borderRadius:8,padding:'8px 12px'}}>
-          <p style={{fontSize:9,color:'#92400e',margin:0,lineHeight:1.7}}>
-            <strong>Reconciliation: </strong>
-            DAPP Received (bank incl.GST) = <strong>₹{(raw?.dappKpi?.kpi?.all?.totalReceivedBank||0).toFixed(1)} Cr</strong>
-            &nbsp;·&nbsp; DAPP W/O GST = <strong>₹{(raw?.dappKpi?.kpi?.all?.totalReceivedWoT||0).toFixed(1)} Cr</strong>
-            &nbsp;·&nbsp; zrec RECEIPT only = <strong>₹{(+receiptCr||0).toFixed(1)} Cr</strong>
-            &nbsp;·&nbsp; JV difference = <strong>₹{(+jvCr||0).toFixed(1)} Cr</strong>
+
+        {/* ROW 1: Two sources side by side */}
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:12}}>
+
+          {/* SOURCE 1: DAPP */}
+          <div style={{background:'rgba(0,151,167,0.04)',border:'1px solid rgba(0,151,167,0.2)',borderRadius:12,padding:'12px 14px'}}>
+            <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:10}}>
+              <div style={{width:10,height:10,borderRadius:2,background:T.tealD}}/>
+              <p style={{fontSize:9,fontWeight:900,color:T.tealD,margin:0,textTransform:'uppercase',letterSpacing:0.5}}>Source 1 — DAPP (Demand Schedule)</p>
+            </div>
+            <p style={{fontSize:8,color:T.textL,margin:'0 0 10px',lineHeight:1.5}}>Tracks demand milestones raised per unit. Shows what has been billed and what has been paid against those bills.</p>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6}}>
+              {[
+                {l:'Demand Raised (W/O GST)', v:(raw?.dappKpi?.kpi?.all?.totalInstallment||0).toFixed(1), c:T.navy,   note:'Total billed to customers'},
+                {l:'Received (Bank, incl GST)',v:(raw?.dappKpi?.kpi?.all?.totalReceivedBank||0).toFixed(1),c:T.tealD,  note:'Money hit bank account'},
+                {l:'Received W/O GST',         v:(raw?.dappKpi?.kpi?.all?.totalReceivedWoT||0).toFixed(1), c:'#059669',note:'Net of CGST + SGST deducted'},
+                {l:'Outstanding',              v:(raw?.dappKpi?.kpi?.all?.totalOutstanding||0).toFixed(1),  c:'#ef4444',note:'Billed but not yet paid'},
+              ].map(({l,v,c,note})=>(
+                <div key={l} style={{background:'rgba(255,255,255,0.7)',borderRadius:8,padding:'8px 10px',border:'1px solid rgba(0,100,140,0.08)'}}>
+                  <p style={{fontSize:7,color:'#94a3b8',fontWeight:700,margin:'0 0 2px',textTransform:'uppercase'}}>{l}</p>
+                  <p style={{fontSize:15,fontWeight:900,color:c,margin:'0 0 2px'}}>₹{v} Cr</p>
+                  <p style={{fontSize:7,color:T.textL,margin:0,fontStyle:'italic'}}>{note}</p>
+                </div>
+              ))}
+            </div>
+            <div style={{marginTop:8,background:'rgba(0,151,167,0.06)',borderRadius:6,padding:'6px 8px'}}>
+              <p style={{fontSize:8,color:T.textM,margin:0,lineHeight:1.5}}>
+                <strong>⚠️ Advance money</strong> (₹{(raw?.dappKpi?.kpi?.all?.advanceAmt||0).toFixed(1)} Cr) received before any SAP demand was raised — included in "Received" but not in "Demand Raised"
+              </p>
+            </div>
+          </div>
+
+          {/* SOURCE 2: zrec */}
+          <div style={{background:'rgba(124,58,237,0.04)',border:'1px solid rgba(124,58,237,0.2)',borderRadius:12,padding:'12px 14px'}}>
+            <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:10}}>
+              <div style={{width:10,height:10,borderRadius:2,background:'#7c3aed'}}/>
+              <p style={{fontSize:9,fontWeight:900,color:'#7c3aed',margin:0,textTransform:'uppercase',letterSpacing:0.5}}>Source 2 — zrec (SAP Receipt Register)</p>
+            </div>
+            <p style={{fontSize:8,color:T.textL,margin:'0 0 10px',lineHeight:1.5}}>SAP bank receipt register — every transaction posted. Includes actual cash receipts AND accounting journal entries.</p>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6}}>
+              {[
+                {l:'RECEIPT (Cash)',      v:(+receiptCr||0).toFixed(1),  c:'#10b981', note:'Actual cash / cheque / online'},
+                {l:'JOURNAL VOUCHER',    v:(+jvCr||0).toFixed(1),        c:'#7c3aed', note:'Accounting entries — NOT cash'},
+                {l:'PAYMENT (Refunds)',  v:(+paymentCr||0).toFixed(1),   c:'#ef4444', note:'Reversals / refunds posted'},
+                {l:'TOTAL (all entries)',v:(+totalRevenue||0).toFixed(1), c:T.tealD,   note:'RECEIPT + JV + PAYMENT'},
+              ].map(({l,v,c,note})=>(
+                <div key={l} style={{background:'rgba(255,255,255,0.7)',borderRadius:8,padding:'8px 10px',border:'1px solid rgba(124,58,237,0.08)'}}>
+                  <p style={{fontSize:7,color:'#94a3b8',fontWeight:700,margin:'0 0 2px',textTransform:'uppercase'}}>{l}</p>
+                  <p style={{fontSize:15,fontWeight:900,color:c,margin:'0 0 2px'}}>₹{v} Cr</p>
+                  <p style={{fontSize:7,color:T.textL,margin:0,fontStyle:'italic'}}>{note}</p>
+                </div>
+              ))}
+            </div>
+            <div style={{marginTop:8,background:'rgba(124,58,237,0.06)',borderRadius:6,padding:'6px 8px'}}>
+              <p style={{fontSize:8,color:'#6d28d9',margin:0,lineHeight:1.5}}>
+                <strong>⚠️ Journal Vouchers</strong> (₹{(+jvCr||0).toFixed(1)} Cr) are accounting credit notes & adjustments — not actual customer payments. Exclude these to see true cash collection.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* ROW 2: Difference explained */}
+        <div style={{background:'rgba(245,158,11,0.06)',border:'1px solid rgba(245,158,11,0.25)',borderRadius:10,padding:'12px 14px'}}>
+          <p style={{fontSize:9,fontWeight:900,color:'#92400e',margin:'0 0 8px',textTransform:'uppercase',letterSpacing:0.5}}>🔍 Why do DAPP and zrec show different numbers?</p>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:8}}>
+            {[
+              {l:'zrec TOTAL',        v:(+totalRevenue||0).toFixed(1),  c:T.tealD,   e:'All SAP entries'},
+              {l:'(−) Journal Vouchers',v:(+jvCr||0).toFixed(1),        c:'#7c3aed', e:'Accounting, not cash'},
+              {l:'= zrec Cash Only',  v:((+receiptCr||0)+(+paymentCr||0)).toFixed(1), c:'#10b981', e:'True cash received'},
+              {l:'DAPP W/O GST',      v:(raw?.dappKpi?.kpi?.all?.totalReceivedWoT||0).toFixed(1), c:'#0097a7', e:'From demand schedule'},
+            ].map(({l,v,c,e})=>(
+              <div key={l} style={{textAlign:'center',background:'rgba(255,255,255,0.6)',borderRadius:8,padding:'8px'}}>
+                <p style={{fontSize:7,color:'#94a3b8',fontWeight:700,margin:'0 0 3px',textTransform:'uppercase'}}>{l}</p>
+                <p style={{fontSize:14,fontWeight:900,color:c,margin:'0 0 2px'}}>₹{v} Cr</p>
+                <p style={{fontSize:7,color:T.textL,margin:0,fontStyle:'italic'}}>{e}</p>
+              </div>
+            ))}
+          </div>
+          <p style={{fontSize:8,color:'#78350f',margin:'8px 0 0',lineHeight:1.6}}>
+            Remaining difference between zrec cash (₹{((+receiptCr||0)+(+paymentCr||0)).toFixed(1)} Cr) and DAPP W/O GST (₹{(raw?.dappKpi?.kpi?.all?.totalReceivedWoT||0).toFixed(1)} Cr) = 
+            <strong> ₹{Math.abs(((+receiptCr||0)+(+paymentCr||0))-(raw?.dappKpi?.kpi?.all?.totalReceivedWoT||0)).toFixed(1)} Cr</strong> — 
+            likely timing difference (receipts in SAP not yet updated in DAPP) + advance payments.
           </p>
         </div>
       </GC>
@@ -1904,37 +1967,43 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                           </div>
                         </div>
                       </div>
-                      {/* Row 2: Collection breakdown */}
+                      {/* Row 2: Collection — two sources explained */}
                       <div style={{background:'rgba(0,100,140,0.04)',borderRadius:7,padding:'6px 8px'}}>
-                        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:5}}>
-                          <span style={{fontSize:7,color:T.textM,fontWeight:800,textTransform:'uppercase'}}>Collection Progress (DAPP)</span>
-                          <span style={{fontSize:9,fontWeight:900,color:collectedPct>100?T.amber:T.tealD}}>{collectedDisplay}</span>
+                        <p style={{fontSize:6,fontWeight:900,color:T.tealD,textTransform:'uppercase',margin:'0 0 5px',letterSpacing:0.5}}>Collection Progress</p>
+                        {/* DAPP progress */}
+                        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:3}}>
+                          <span style={{fontSize:6,color:T.textM,fontWeight:700}}>DAPP: Demand vs Received (W/O GST)</span>
+                          <span style={{fontSize:8,fontWeight:900,color:collectedPct>100?T.amber:T.tealD}}>{collectedDisplay}</span>
                         </div>
-                        <div style={{height:5,background:'rgba(0,100,140,0.1)',borderRadius:3,overflow:'hidden',marginBottom:5}}>\
-                          <div style={{width:Math.min(collectedPct,100)+'%',height:'100%',background:`linear-gradient(90deg,${T.teal},${T.tealD})`,borderRadius:3}}/>
+                        <div style={{height:4,background:'rgba(0,100,140,0.1)',borderRadius:2,overflow:'hidden',marginBottom:5}}>
+                          <div style={{width:Math.min(collectedPct,100)+'%',height:'100%',background:`linear-gradient(90deg,${T.teal},${T.tealD})`,borderRadius:2}}/>
                         </div>
-                        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:4,marginBottom:5}}>
-                          <div>
-                            <p style={{fontSize:6,color:T.textM,fontWeight:700,margin:0}}>DEMAND RAISED (W/O GST)</p>
-                            <p style={{fontSize:10,fontWeight:900,color:T.navy,margin:0}}>₹{installmentTotal.toFixed(0)} Cr</p>
-                          </div>
-                          <div style={{textAlign:'right'}}>
-                            <p style={{fontSize:6,color:T.textM,fontWeight:700,margin:0}}>RECEIVED (W/O GST)</p>
-                            <p style={{fontSize:10,fontWeight:900,color:T.tealD,margin:0}}>₹{totalReceived.toFixed(0)} Cr</p>
-                          </div>
+                        <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:3,marginBottom:5}}>
+                          {[
+                            {l:'Demand Raised',v:installmentTotal.toFixed(0),c:T.navy,   note:'Billed W/O GST'},
+                            {l:'Received',     v:totalReceived.toFixed(0),   c:'#059669',note:'W/O GST (net)'},
+                            {l:'Outstanding',  v:upcomingAmt.toFixed(0),     c:'#ef4444',note:'Still due'},
+                          ].map(({l,v,c,note})=>(
+                            <div key={l} style={{background:'rgba(255,255,255,0.7)',borderRadius:4,padding:'3px 5px',textAlign:'center'}}>
+                              <p style={{fontSize:5.5,color:'#94a3b8',fontWeight:700,margin:'0 0 1px',textTransform:'uppercase'}}>{l}</p>
+                              <p style={{fontSize:9,fontWeight:900,color:c,margin:'0 0 1px'}}>₹{v}Cr</p>
+                              <p style={{fontSize:5.5,color:T.textL,margin:0,fontStyle:'italic'}}>{note}</p>
+                            </div>
+                          ))}
                         </div>
                         {/* zrec breakdown */}
                         <div style={{borderTop:'1px solid rgba(0,100,140,0.1)',paddingTop:5}}>
-                          <p style={{fontSize:6,color:T.textM,fontWeight:800,textTransform:'uppercase',margin:'0 0 3px'}}>zrec Receipts</p>
+                          <p style={{fontSize:6,color:'#7c3aed',fontWeight:900,textTransform:'uppercase',margin:'0 0 3px'}}>zrec: SAP Receipt Register</p>
                           <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:3}}>
                             {[
-                              {l:'RECEIPT',    v:window.__pnlKpi?.totalReceipt ||0, c:'#10b981'},
-                              {l:'JV',         v:window.__pnlKpi?.totalJV      ||0, c:'#7c3aed'},
-                              {l:'TOTAL',      v:window.__pnlKpi?.totalRevenue  ||0, c:T.tealD},
-                            ].map(({l,v,c})=>(
-                              <div key={l} style={{background:`${c}0d`,borderRadius:4,padding:'2px 5px',textAlign:'center'}}>
-                                <p style={{fontSize:6,color:'#94a3b8',fontWeight:700,margin:0}}>{l}</p>
-                                <p style={{fontSize:9,fontWeight:900,color:c,margin:0}}>₹{v.toFixed(0)}Cr</p>
+                              {l:'Cash (RECEIPT)',  v:(window.__pnlKpi?.totalReceipt||0).toFixed(0),  c:'#10b981', note:'Actual payments'},
+                              {l:'JV (Accounting)', v:(window.__pnlKpi?.totalJV||0).toFixed(0),       c:'#7c3aed', note:'NOT real cash'},
+                              {l:'Total (zrec)',    v:(window.__pnlKpi?.totalRevenue||0).toFixed(0),   c:T.tealD,   note:'All SAP entries'},
+                            ].map(({l,v,c,note})=>(
+                              <div key={l} style={{background:`${c}0d`,border:`1px solid ${c}30`,borderRadius:4,padding:'3px 5px',textAlign:'center'}}>
+                                <p style={{fontSize:5.5,color:'#94a3b8',fontWeight:700,margin:'0 0 1px',textTransform:'uppercase'}}>{l}</p>
+                                <p style={{fontSize:9,fontWeight:900,color:c,margin:'0 0 1px'}}>₹{v}Cr</p>
+                                <p style={{fontSize:5.5,color:T.textL,margin:0,fontStyle:'italic'}}>{note}</p>
                               </div>
                             ))}
                           </div>
