@@ -1,7 +1,7 @@
 {
   "kpi": {
     "all": {
-      "totalInstallment": 3670.89,
+      "totalInstallment": 1156.49,
       "totalReceivedBank": 1408.64,
       "totalReceivedWoT": 1339.86,
       "totalOutstanding": 32.45,
@@ -11,7 +11,7 @@
       "advanceGst": 10.96
     },
     "tlp": {
-      "totalInstallment": 2342.73,
+      "totalInstallment": 1097.73,
       "totalReceivedBank": 1303.33,
       "totalReceivedWoT": 1240.59,
       "totalOutstanding": 19.56,
@@ -21,7 +21,7 @@
       "advanceGst": 7.85
     },
     "clp": {
-      "totalInstallment": 1117.09,
+      "totalInstallment": 46.66,
       "totalReceivedBank": 95.32,
       "totalReceivedWoT": 90.03,
       "totalOutstanding": 7.2,
@@ -31,7 +31,7 @@
       "advanceGst": 2.96
     },
     "hybrid_earlier": {
-      "totalInstallment": 3.81,
+      "totalInstallment": 0.0,
       "totalReceivedBank": 0.0,
       "totalReceivedWoT": 0.0,
       "totalOutstanding": 0.0,
@@ -41,7 +41,7 @@
       "advanceGst": 0.0
     },
     "hybrid_later": {
-      "totalInstallment": 207.27,
+      "totalInstallment": 12.1,
       "totalReceivedBank": 9.99,
       "totalReceivedWoT": 9.25,
       "totalOutstanding": 5.7,
