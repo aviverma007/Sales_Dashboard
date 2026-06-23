@@ -1711,7 +1711,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
       <div style={{position:'relative',zIndex:1,maxWidth:1440,margin:'0 auto',padding:'16px 24px 24px',animation:'fadeIn 0.35s ease'}}>
 
         {/* ── Summary Bar — always visible across all tabs ── */}
-        <SummaryBar raw={raw} filters={filters} T={T} GC={GC}/>
+        
 
         {/* ══════════════════════════════════════════════════════
             TAB: OVERVIEW
