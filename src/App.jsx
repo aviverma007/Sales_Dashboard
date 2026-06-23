@@ -776,12 +776,12 @@ const CollectionsTab = ({T, GC, SH, filters={}, raw}) => {
           <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} tickFormatter={v=>'₹'+v+'Cr'} width={46}/>
           <Tooltip formatter={(v,n)=>[`₹${v} Cr`,n]}/>
           <Legend wrapperStyle={{fontSize:9,fontWeight:700}} iconSize={8}/>
-          {(planType==='all'||planType==='tlp')&&<Bar dataKey="tlp" name="TLP" fill={T.amber} radius={[3,3,0,0]} stackId="a"/>}
-          {(planType==='all'||planType==='clp')&&<Bar dataKey="clp" name="CLP" fill="#2e7d32" radius={[3,3,0,0]} stackId="a">
+          {(planType==='all'||planType==='tlp')&&<Bar dataKey="tlp" name="TLP" fill={T.amber} radius={[3,3,0,0]} stackId="a" minPointSize={3}/>}
+          {(planType==='all'||planType==='clp')&&<Bar dataKey="clp" name="CLP" fill="#2e7d32" radius={[3,3,0,0]} stackId="a" minPointSize={3}>
             {planType==='clp'&&<LabelList dataKey="clp" position="top" style={{fill:'#2e7d32',fontSize:9,fontWeight:800}} formatter={v=>v>0?'₹'+v+'Cr':''}/>}
           </Bar>}
-          {(planType==='all'||planType==='hybrid_later')&&<Bar dataKey="hybrid_later" name="Hybrid (Later)" fill="#7c3aed" radius={[3,3,0,0]} stackId="a"/>}
-          {(planType==='all'||planType==='hybrid_earlier')&&<Bar dataKey="hybrid_earlier" name="Hybrid (Earlier)" fill="#b45309" radius={[3,3,0,0]} stackId="a">
+          {(planType==='all'||planType==='hybrid_later')&&<Bar dataKey="hybrid_later" name="Hybrid (Later)" fill="#7c3aed" radius={[3,3,0,0]} stackId="a" minPointSize={3}/>}
+          {(planType==='all'||planType==='hybrid_earlier')&&<Bar dataKey="hybrid_earlier" name="Hybrid (Earlier)" fill="#b45309" radius={[3,3,0,0]} stackId="a" minPointSize={3}>
             {planType==='hybrid_earlier'&&<LabelList dataKey="hybrid_earlier" position="top" style={{fill:'#b45309',fontSize:9,fontWeight:800}} formatter={v=>v>0?'₹'+v+'Cr':''}/>}
           </Bar>}
           {/* Total label for All Plans view — custom content on each bar group */}
