@@ -632,11 +632,20 @@ const CollectionsTab = ({T, GC, SH, filters={}, raw}) => {
   const advGst = adv.gstCr || 0;
 
   const allMilestones = dk.milestonesUpcoming || [];
-  const milestones    = (planType==='all' ? allMilestones
+
+  // Filter milestones by expected date matching selected FY/Quarter/Month
+  const milestoneInFilter = (expectedDate) => {
+    if(!hasFilter) return true;
+    if(!expectedDate) return false; // exclude milestones with no date when filter active
+    return monthInFilter(expectedDate);
+  };
+
+  const milestones = (planType==='all' ? allMilestones
     : planType==='hybrid_earlier' ? allMilestones.filter(m=>m.type==='hybrid_earlier')
     : planType==='hybrid_later'   ? allMilestones.filter(m=>m.type==='hybrid_later')
     : allMilestones.filter(m=>m.type===planType)
-  ).slice().sort((a,b)=>sortBy==='date'
+  ).filter(m=>milestoneInFilter(m.expectedDate))
+   .slice().sort((a,b)=>sortBy==='date'
     ? (a.expectedDate||'9999-99').localeCompare(b.expectedDate||'9999-99')
     : b.totalCr - a.totalCr
   );
@@ -753,7 +762,7 @@ const CollectionsTab = ({T, GC, SH, filters={}, raw}) => {
     {/* SECTION 2: MILESTONE CHART */}
     <SectionHead title="Upcoming Milestone Collections" icon="🏗️"/>
     <GC style={{padding:16}}>
-      <SH2 title="Milestone-wise Expected Collection" sub={`Total upcoming: ₹${milestones.reduce((s,m)=>s+m.totalCr,0).toFixed(0)} Cr — sorted by expected date`}/>
+      <SH2 title="Milestone-wise Expected Collection" sub={`Total upcoming: ₹${milestones.reduce((s,m)=>s+m.totalCr,0).toFixed(0)} Cr${hasFilter?' (filtered)':''} — sorted by ${sortBy==='date'?'date':'amount'}`}/>
       <div style={{overflowX:'auto'}}>
         <div style={{minWidth:Math.max(milestones.length*70,600)+'px'}}>
           <ResponsiveContainer width="100%" height={260}>
