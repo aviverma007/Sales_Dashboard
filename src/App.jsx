@@ -806,12 +806,26 @@ const CollectionsTab = ({T, GC, SH, filters={}, raw}) => {
         const rec=recKey?tw[recKey]||0:(tw.tlp_rec+tw.clp_rec+(tw.he_rec||0)+(tw.hl_rec||0));
         const out=outKey?tw[outKey]||0:(tw.tlp_out+tw.clp_out+(tw.he_out||0)+(tw.hl_out||0));
         const eff=dem>0?Math.round(rec/dem*100):0;
+        // Get TSV from towerData in raw
+        const tRaw=(raw?.towerData||[]).find(r=>r.tower===tw.tower&&(!raw?.filterOptions?.projects||r.project==='SMARTWORLD THE EDITION'));
+        const bspCr = tRaw?.totalBSPCr || 0;
+        const units  = tRaw?.booked || 0;
+        const avail  = tRaw?.available || 0;
+        const rate   = tRaw?.pricePerSqft || 0;
         return (
           <GC key={i} style={{padding:14}} cls="kc">
-            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
-              <p style={{fontSize:13,fontWeight:900,color:T.tealD,margin:0}}>{tw.tower}</p>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
+              <div>
+                <p style={{fontSize:13,fontWeight:900,color:T.tealD,margin:0}}>{tw.tower}</p>
+                <p style={{fontSize:9,color:T.textL,margin:'1px 0 0'}}>{units} booked · {avail} avail · ₹{rate.toLocaleString('en-IN')}/sqft</p>
+              </div>
               <span style={{fontSize:10,fontWeight:800,color:eff>=100?'#059669':eff>=80?T.tealD:T.amber,background:eff>=100?'rgba(5,150,105,0.1)':'rgba(0,151,167,0.1)',borderRadius:6,padding:'2px 8px'}}>{eff}% eff</span>
             </div>
+            {/* TSV bar */}
+            {bspCr>0&&<div style={{background:'rgba(37,99,235,0.06)',borderRadius:6,padding:'5px 8px',marginBottom:6,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+              <p style={{fontSize:7,color:'#1d4ed8',fontWeight:700,textTransform:'uppercase',margin:0}}>Total Sales Value (BSP)</p>
+              <p style={{fontSize:12,fontWeight:900,color:'#1d4ed8',margin:0}}>₹{bspCr.toFixed(1)} Cr</p>
+            </div>}
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:6}}>
               {[['Demand',dem,T.amber],['Received',rec,T.tealD],['Outstanding',out,T.red]].map(([l,v,c])=>(
                 <div key={l} style={{background:'rgba(0,100,140,0.04)',borderRadius:6,padding:'5px 7px'}}>
