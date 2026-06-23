@@ -548,7 +548,7 @@ const SummaryBar = ({raw, filters, T, GC}) => {
 
   const cards = [
     { label:'Total Units Sold',             value: totalUnits.toLocaleString('en-IN'), sub:`of ${invr.length} total · ${invr.filter(u=>u.status==='Available').length} available`, color:'#0097a7' },
-    { label:'Total Area Sold',              value:`${areaSoldK}K sqft`,                sub:'Carpet area of booked units', color:'#7c3aed' },
+    { label:'Total Area Sold',              value:`${(areaSold/100000).toFixed(2)} L sqft`,                sub:'Carpet area of booked units', color:'#7c3aed' },
     { label:'Total Collection (W/O GST)',   value:`₹${totalColl} Cr`,                 sub:'Received from customers (bank)', color:'#10b981' },
     { label:'Total Expenditure (incl. GST)',value:`₹${totalExp} Cr`,                  sub:'CJI3 + ME2L actual spend', color:'#ef4444' },
   ];
@@ -1104,7 +1104,7 @@ const PnLTab = ({T, GC, SH, filters, sf, raw}) => {
 
           const bars = [
             { label:'Units Sold',        rawVal: booked.length,                    display:`${booked.length}`,          unit:'units',  color:'#0097a7' },
-            { label:'Area Sold',         rawVal: areaSqft/1000,                    display:`${(areaSqft/1000).toFixed(0)}K`,unit:'sqft',color:'#7c3aed' },
+            { label:'Area Sold',         rawVal: areaSqft/1000,                    display:`${(areaSqft/100000).toFixed(2)}L`,unit:'L sqft',color:'#7c3aed' },
             { label:'Revenue',           rawVal: totalRevenue,                     display:`₹${totalRevenue.toFixed(0)}`,unit:'Cr',    color:'#10b981' },
             { label:'Collection (W/GST)',rawVal: dkAll.totalReceivedBank||0,       display:`₹${(dkAll.totalReceivedBank||0).toFixed(0)}`,unit:'Cr',color:'#0891b2' },
             { label:'Collection (W/O GST)',rawVal:dkAll.totalReceivedWoT||0,      display:`₹${(dkAll.totalReceivedWoT||0).toFixed(0)}`,unit:'Cr',color:'#06b6d4' },
@@ -1770,7 +1770,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
 
               {/* CARD B: Area — pie chart with sold+available */}
               <GC style={{padding:14}} cls="kc">
-                <SH title="Area (sq ft)" compact/>
+                <SH title="Area (Lakh sq ft)" compact/>
                 {(()=>{
                   const sold=kpiEx.bookedAreaSqft||0;
                   const avail=kpiEx.availAreaSqft||0;
@@ -1786,7 +1786,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                               cx="50%" cy="50%" innerRadius={33} outerRadius={52} paddingAngle={3} dataKey="value" strokeWidth={2} stroke="rgba(255,255,255,0.9)" labelLine={false}>
                               <Cell fill={T.teal}/><Cell fill={T.amber}/>
                             </Pie>
-                            <Tooltip content={<CTip fmt={v=>(v/1000).toFixed(0)+'K sqft'}/>}/>
+                            <Tooltip content={<CTip fmt={v=>(v/100000).toFixed(2)+' L sqft'}/>}/>
                           </PieChart>
                         </ResponsiveContainer>
                         <div style={{position:'absolute',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',pointerEvents:'none'}}>
@@ -1797,17 +1797,17 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                       <div style={{flex:1,display:'flex',flexDirection:'column',gap:6}}>
                         <div>
                           <p style={{fontSize:8,color:T.textM,fontWeight:700,margin:'0 0 2px',textTransform:'uppercase'}}>Saleable Area</p>
-                          <p style={{fontSize:20,fontWeight:900,color:T.navy,margin:0,letterSpacing:-0.5}}>{(tot/1000).toFixed(0)}K sqft</p>
-                          <p style={{fontSize:8,color:T.textM,margin:'2px 0 0'}}>Booked carpet: {(kpiEx.carpetAreaSqft/1000).toFixed(0)}K sqft</p>
+                          <p style={{fontSize:20,fontWeight:900,color:T.navy,margin:0,letterSpacing:-0.5}}>{(tot/100000).toFixed(2)} L sqft</p>
+                          <p style={{fontSize:8,color:T.textM,margin:'2px 0 0'}}>Booked carpet: {(kpiEx.carpetAreaSqft/100000).toFixed(2)} L sqft</p>
                         </div>
                         <div style={{display:'flex',gap:8}}>
                           <div style={{flex:1,background:`${T.teal}0d`,borderRadius:6,padding:'5px 8px'}}>
                             <p style={{fontSize:8,color:T.textM,fontWeight:700,margin:'0 0 2px'}}>Sold</p>
-                            <p style={{fontSize:15,fontWeight:900,color:T.tealD,margin:0}}>{(sold/1000).toFixed(0)}K</p>
+                            <p style={{fontSize:15,fontWeight:900,color:T.tealD,margin:0}}>{(sold/100000).toFixed(2)}L</p>
                           </div>
                           <div style={{flex:1,background:`${T.amber}0d`,borderRadius:6,padding:'5px 8px'}}>
                             <p style={{fontSize:8,color:T.textM,fontWeight:700,margin:'0 0 2px'}}>Available</p>
-                            <p style={{fontSize:15,fontWeight:900,color:T.amber,margin:0}}>{(avail/1000).toFixed(0)}K</p>
+                            <p style={{fontSize:15,fontWeight:900,color:T.amber,margin:0}}>{(avail/100000).toFixed(2)}L</p>
                           </div>
                         </div>
                       </div>
@@ -2231,7 +2231,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
 
                 {/* ── CHART 4: AREA Booked vs Target ── */}
                 <GC style={{padding:16}}>
-                  <SH title="Area (sq ft) — Booked vs Target"/>
+                  <SH title="Area (Lakh sq ft) — Booked vs Target"/>
                   {(()=>{
                     const WIN=10;
                     // Build from monthlyWithTargets — same source as other 3 charts
@@ -2255,10 +2255,10 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const nqBLblA2=ml4(nqBYA2,nqBMoA2);
                     const rawDataA=monthlyWithTargets.map(d=>({
                       label:d.label,isFuture:d.isFuture,isCurrent:d.label===TODAY_LABEL,
-                      achieved:d.isFuture?null:(d.bookedAreaSqft!=null&&d.bookedAreaSqft>0?+(d.bookedAreaSqft/1000).toFixed(1):0),
-                      target:d.targetAreaSqft?+(d.targetAreaSqft/1000).toFixed(1):null,
-                      targetLine:(()=>{if(areaProjMap2[d.label]!=null)return null;const p=d.label.match(/([A-Za-z]{3})'(\d{2})/);if(p&&(2000+parseInt(p[2]))*100+(moNA2[p[1]]||0)<todayYMA3)return null;return d.targetAreaSqft?+(d.targetAreaSqft/1000).toFixed(1):null;})(),
-                      projection:areaProjMap2[d.label]!=null?+(areaProjMap2[d.label]/1000).toFixed(1):null,
+                      achieved:d.isFuture?null:(d.bookedAreaSqft!=null&&d.bookedAreaSqft>0?+(d.bookedAreaSqft/100000).toFixed(2):0),
+                      target:d.targetAreaSqft?+(d.targetAreaSqft/100000).toFixed(2):null,
+                      targetLine:(()=>{if(areaProjMap2[d.label]!=null)return null;const p=d.label.match(/([A-Za-z]{3})'(\d{2})/);if(p&&(2000+parseInt(p[2]))*100+(moNA2[p[1]]||0)<todayYMA3)return null;return d.targetAreaSqft?+(d.targetAreaSqft/100000).toFixed(2):null;})(),
+                      projection:areaProjMap2[d.label]!=null?+(areaProjMap2[d.label]/100000).toFixed(2):null,
                       bridge:(d.label===lastALbl2?+(areaProjMap2[lastALbl2]/1000).toFixed(1):d.label===nqBLblA2?(monthlyWithTargets.find(r=>r.label===nqBLblA2)?.targetAreaSqft?+(monthlyWithTargets.find(r=>r.label===nqBLblA2).targetAreaSqft/1000).toFixed(1):null):null),
                     }));
                     const data=suMode==='quarterly'?toQuarterly(rawDataA,'label').map(q=>({...q,isFuture:false,isCurrent:false})):rawDataA;
@@ -2293,9 +2293,9 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                             const d=sl.find(s=>s.label===label);
                             return(<div style={{background:'rgba(255,255,255,0.97)',border:'1px solid rgba(0,151,167,0.3)',borderRadius:10,padding:'8px 12px',fontSize:10}}>
                               <p style={{color:T.tealD,fontWeight:800,margin:'0 0 4px'}}>{label}</p>
-                              {d?.achieved!=null&&<p style={{color:T.teal,margin:'0 0 2px',fontWeight:700}}>Achieved: {d.achieved}K sq ft</p>}
-                              {d?.target!=null&&<p style={{color:'#607d8b',margin:'0 0 2px'}}>Target: {d.target}K sq ft</p>}
-                              {d?.projection!=null&&<p style={{color:'#22c55e',margin:0,fontWeight:700}}>▲ Projection: {d.projection}K sq ft</p>}
+                              {d?.achieved!=null&&<p style={{color:T.teal,margin:'0 0 2px',fontWeight:700}}>Achieved: {d.achieved} L sqft</p>}
+                              {d?.target!=null&&<p style={{color:'#607d8b',margin:'0 0 2px'}}>Target: {d.target} L sqft</p>}
+                              {d?.projection!=null&&<p style={{color:'#22c55e',margin:0,fontWeight:700}}>▲ Projection: {d.projection} L sqft</p>}
                             </div>);
                           }}/>
                           <Legend wrapperStyle={{fontSize:9,fontWeight:700}} iconSize={8} payload={[{value:'Target',type:'rect',color:'#b0bec5'},{value:'Achieved',type:'rect',color:T.teal},{value:'Projection',type:'line',color:'#22c55e'}]}/>
@@ -2753,7 +2753,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
 
               {/* Tower-wise Booking Status table */}
               <GC style={{padding:16,marginTop:4,display:showTowerType?'block':'none',animation:showTowerType?'flipIn 0.8s cubic-bezier(0.4,0,0.2,1) forwards':'none'}}>
-                <SH title="Tower-wise Booking Status" sub="Booked · Cancelled · Booked Area (sq ft) · Avg Price/sq ft"/>
+                <SH title="Tower-wise Booking Status" sub="Booked · Cancelled · Booked Area (L sqft) · Avg Price/sq ft"/>
                 {(()=>{
                   const INIT=10;
                   const SHORT={'SMARTWORLD THE EDITION':'THE EDITION','Smartworld Sky Arc':'Sky Arc','Trump Residences Gurgaon':'Residences Gurgaon','Smartworld Le Courtyard':'Le Courtyard','Smartworld Suites':'Suites'};
@@ -2792,7 +2792,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                               <td style={{...TD,textAlign:'right'}}><span style={{display:'inline-flex',alignItems:'center',gap:4,justifyContent:'flex-end'}}><span style={{width:8,height:8,borderRadius:'50%',background:T.teal,flexShrink:0}}/>{r.booked}</span></td>
                               <td style={{...TD,textAlign:'right'}}><span style={{display:'inline-flex',alignItems:'center',gap:4,justifyContent:'flex-end'}}><span style={{width:8,height:8,borderRadius:'50%',background:'#ef4444',flexShrink:0}}/><span style={{color:'#ef4444',fontWeight:700}}>{r.cancelled}</span></span></td>
                               <td style={{...TD}}><div style={{display:'flex',alignItems:'center',gap:6}}><div style={{flex:1,height:6,background:'rgba(0,100,140,0.1)',borderRadius:3,overflow:'hidden'}}><div style={{width:r.successPct+'%',height:'100%',background:r.successPct>=90?'#22c55e':r.successPct>=80?T.teal:'#f59e0b',borderRadius:3}}/></div><span style={{fontSize:10,fontWeight:800,color:r.successPct>=90?'#16a34a':r.successPct>=80?T.tealD:'#b45309',minWidth:28}}>{r.successPct}%</span></div></td>
-                              <td style={{...TD,textAlign:'right',color:T.textM}}>{r.bookedArea.toLocaleString('en-IN')} sq ft</td>
+                              <td style={{...TD,textAlign:'right',color:T.textM}}>{(r.bookedArea/100000).toFixed(2)} L sqft</td>
                               <td style={{...TD,textAlign:'right',color:T.textM}}>{r.cancelledArea.toLocaleString('en-IN')} sq ft</td>
                               <td style={{...TD,textAlign:'right',fontWeight:800,color:T.tealD}}>₹{r.totalSalesCr} Cr</td>
                               <td style={{...TD,textAlign:'right'}}><span style={{background:'rgba(0,151,167,0.08)',borderRadius:6,padding:'2px 8px',fontWeight:800,color:T.navy,fontSize:10}}>₹{r.avgRate.toLocaleString('en-IN')}/sq ft</span></td>
@@ -3081,7 +3081,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
               {/* Top 3 KPI cards */}
               <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12,marginBottom:12}}>
                 {[
-                  {label:'Total Booked Area',value:`${(areaSummary.bookedArea/1e6)?.toFixed(2)}M`,sub:'sq ft',icon:'🏢',color:T.teal},
+                  {label:'Total Booked Area',value:`${(areaSummary.bookedArea/100000)?.toFixed(2)} L`,sub:'sqft',icon:'🏢',color:T.teal},
                   {label:'Available Area',value:`${(areaSummary.availableArea/1e6)?.toFixed(2)}M`,sub:'sq ft',icon:'🔓',color:T.amber},
                   {label:'Avg Price / sq ft',value:`₹${areaSummary.avgPricePerSqft?.toLocaleString('en-IN')}`,sub:`Range ₹${areaSummary.minPricePerSqft?.toLocaleString('en-IN')} – ₹${areaSummary.maxPricePerSqft?.toLocaleString('en-IN')}`,icon:'💰',color:T.navy},
                 ].map((d,i)=>(
