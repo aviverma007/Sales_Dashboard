@@ -573,6 +573,7 @@ const CollectionsTab = ({T, GC, SH}) => {
   const [planType, setPlanType] = React.useState('all');
   const [showNote, setShowNote] = React.useState(false);
   const [rangeIdx, setRangeIdx] = React.useState([0, 999]);
+  const [sortBy, setSortBy] = React.useState('amount'); // 'amount' | 'date'
 
   React.useEffect(()=>{
     fetch('/data/dapp_kpi.json').then(r=>r.json()).then(setDk).catch(()=>{});
@@ -594,7 +595,10 @@ const CollectionsTab = ({T, GC, SH}) => {
     : planType==='hybrid_earlier' ? allMilestones.filter(m=>m.type==='hybrid_earlier')
     : planType==='hybrid_later'   ? allMilestones.filter(m=>m.type==='hybrid_later')
     : allMilestones.filter(m=>m.type===planType)
-  ).slice().sort((a,b)=>b.totalCr - a.totalCr);
+  ).slice().sort((a,b)=>sortBy==='date'
+    ? (a.expectedDate||'9999-99').localeCompare(b.expectedDate||'9999-99')
+    : b.totalCr - a.totalCr
+  );
   const allMonthly    = dk.monthlyTrend || [];
   const towers        = dk.towerKpi || [];
 
@@ -733,7 +737,23 @@ const CollectionsTab = ({T, GC, SH}) => {
           <thead>
             <tr style={{background:'rgba(0,100,140,0.06)'}}>
               {['Milestone','Type','Expected Date','T-1','T-2','T-3','T-4','T-5','T-6','Total (Cr)'].map(h=>(
-                <th key={h} style={{padding:'8px 10px',textAlign:h==='Milestone'?'left':'right',color:T.textM,fontWeight:800,textTransform:'uppercase',fontSize:10,letterSpacing:0.4,borderBottom:'2px solid rgba(0,100,140,0.12)'}}>{h}</th>
+                <th key={h} style={{padding:'8px 10px',textAlign:h==='Milestone'?'left':'right',color:T.textM,fontWeight:800,textTransform:'uppercase',fontSize:10,letterSpacing:0.4,borderBottom:'2px solid rgba(0,100,140,0.12)'}}>
+                  {h==='Expected Date'
+                    ? <div style={{display:'flex',alignItems:'center',justifyContent:'flex-end',gap:6}}>
+                        <span>{h}</span>
+                        <button onClick={()=>setSortBy(s=>s==='date'?'amount':'date')}
+                          style={{fontSize:9,fontWeight:800,cursor:'pointer',border:'none',borderRadius:5,padding:'2px 7px',
+                            background:sortBy==='date'?T.tealD:'rgba(0,100,140,0.1)',
+                            color:sortBy==='date'?'#fff':T.tealD}}>
+                          {sortBy==='date'?'↕ Date':'↕ Amount'}
+                        </button>
+                      </div>
+                    : h==='Total (Cr)'
+                    ? <div style={{display:'flex',alignItems:'center',justifyContent:'flex-end',gap:6}}>
+                        <span>{h}</span>
+                      </div>
+                    : h}
+                </th>
               ))}
             </tr>
           </thead>
