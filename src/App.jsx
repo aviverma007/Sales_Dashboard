@@ -2493,57 +2493,64 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
 
                 {/* ── CHART: Tower Wise % Sold ─────────────────────── */}
                 <GC style={{padding:16}}>
-                  <SH title="Tower Wise Sold %" sub="% of units sold per tower · all projects unless filtered"/>
+                  <SH title="Tower Wise Sold % — Units & TSV" sub="Unit % sold vs TSV % sold per tower"/>
                   {(()=>{
-                    // For Edition: compute live from filtered invr. For others: use towerData pctSold.
                     const selProjs=filters.project?filters.project.split('||').filter(Boolean):[];
                     const editionOnly=selProjs.length===1&&selProjs[0]==='SMARTWORLD THE EDITION';
-                    const editionIncluded=!selProjs.length||selProjs.includes('SMARTWORLD THE EDITION');
 
                     let twData=[];
                     if(editionOnly){
-                      // Use live invr data for Edition
+                      // Live from invr + towerData for BSP
                       const inv={};
                       iF.forEach(r=>{const t=r.tower||'';if(!t)return;if(!inv[t])inv[t]={booked:0,total:0};inv[t].total++;if(r.status==='Booked')inv[t].booked++;});
-                      twData=Object.entries(inv).filter(([t])=>t).map(([t,v])=>({tower:t,pct:v.total>0?Math.round(v.booked/v.total*100):0,booked:v.booked,total:v.total,project:'SMARTWORLD THE EDITION'}));
+                      twData=Object.entries(inv).filter(([t])=>t).map(([t,v])=>{
+                        const td=towerData.find(r=>r.tower===t&&r.project==='SMARTWORLD THE EDITION')||{};
+                        const totalBSP=(td.totalBSPCr||0)+(td.available||0)*(td.pricePerSqft||0)*((td.bookedArea||1)/(td.booked||1))/1e7;
+                        const tsvPct=totalBSP>0?Math.round((td.totalBSPCr||0)/totalBSP*100):0;
+                        return {tower:t, unitPct:v.total>0?Math.round(v.booked/v.total*100):0,
+                          tsvPct, booked:v.booked, total:v.total,
+                          bspCr:td.totalBSPCr||0, avgRate:td.pricePerSqft||0};
+                      });
                     } else {
-                      // Use towerData from JSON (has pctSold for all projects)
                       const filtered=towerData.filter(r=>!selProjs.length||selProjs.includes(r.project));
-                      // Group by tower+project label
-                      twData=filtered.map(r=>({tower:r.tower+(selProjs.length!==1?` (${(r.project||'').split(' ').pop()})` :''),pct:r.pctSold||Math.round(r.booked/(r.total||r.booked+r.cancelled||1)*100),booked:r.booked,total:r.total||r.booked+r.cancelled,project:r.project}));
+                      twData=filtered.map(r=>{
+                        // Total potential BSP = sold BSP + (available units × avg rate × avg area)
+                        const avgArea = r.booked>0 ? (r.bookedArea/r.booked) : 0;
+                        const availBSP = (r.available||0)*avgArea*(r.pricePerSqft||0)/1e7;
+                        const totalBSP = (r.totalBSPCr||0) + availBSP;
+                        const tsvPct = totalBSP>0 ? Math.round((r.totalBSPCr||0)/totalBSP*100) : 0;
+                        return {tower:r.tower+(selProjs.length!==1?` (${(r.project||'').split(' ').pop()})` :''),
+                          unitPct:r.pctSold||0, tsvPct,
+                          booked:r.booked, total:r.total||r.booked+r.cancelled,
+                          bspCr:r.totalBSPCr||0, avgRate:r.pricePerSqft||0};
+                      });
                     }
-                    twData=twData.map(d=>({...d,remaining:100-d.pct})).sort((a,b)=>a.tower.localeCompare(b.tower));
-                    const barW=36, minW=Math.max(twData.length*(barW+20)+80,300);
-                    const needsHScroll=twData.length>8;
+                    twData=twData.sort((a,b)=>a.tower.localeCompare(b.tower));
                     return(
-                      <>
-                        <div style={{overflowX:needsHScroll?'auto':'visible',overflowY:'hidden'}}>
-                          <div style={{width:needsHScroll?minW+'px':'100%',minWidth:'100%'}}>
-                            <ResponsiveContainer width="100%" height={240}>
-                              <BarChart data={twData} margin={{top:24,right:8,bottom:24,left:0}} barSize={barW} barCategoryGap="25%">
-                                <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.08)" vertical={false}/>
-                                <XAxis dataKey="tower" tick={{fill:T.text,fontSize:9,fontWeight:700}} axisLine={false} tickLine={false} angle={-30} textAnchor="end" height={36}/>
-                                <YAxis domain={[0,100]} tickFormatter={v=>v+'%'} tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={32}/>
-                                <Tooltip content={({active,payload,label})=>{
-                                  if(!active||!payload?.length)return null;
-                                  const d=twData.find(r=>r.tower===label);
-                                  return(<div style={{background:'#fff',border:'1px solid #e5e7eb',borderRadius:8,padding:'8px 12px',fontSize:10,boxShadow:'0 2px 8px rgba(0,0,0,0.1)'}}>
-                                    <p style={{margin:'0 0 3px',fontWeight:800,color:T.navy}}>{label}</p>
-                                    <p style={{margin:'0 0 2px',color:T.tealD,fontWeight:700}}>Sold: {d?.booked} / {d?.total} units ({d?.pct}%)</p>
-                                    <p style={{margin:0,color:'#9ca3af'}}>Unsold: {100-d?.pct}%</p>
-                                  </div>);
-                                }}/>
-                                <Legend wrapperStyle={{fontSize:9,fontWeight:700}} iconSize={8}/>
-                                <Bar dataKey="pct" name="% Sold" stackId="s" fill={T.tealD} radius={[0,0,0,0]}>
-                                  <LabelList dataKey="pct" position="insideTop" formatter={v=>v+'%'} style={{fill:'#fff',fontSize:9,fontWeight:800}}/>
-                                </Bar>
-                                <Bar dataKey="remaining" name="Unsold %" stackId="s" fill="#e2e8f0" fillOpacity={0.8} radius={[3,3,0,0]}/>
-                              </BarChart>
-                            </ResponsiveContainer>
-                          </div>
-                        </div>
-                        {needsHScroll&&<div style={{textAlign:'center',fontSize:9,color:T.textL,marginTop:2}}>← scroll to see all towers →</div>}
-                      </>
+                      <ResponsiveContainer width="100%" height={240}>
+                        <BarChart data={twData} margin={{top:24,right:8,bottom:24,left:0}} barGap={4} barCategoryGap="25%">
+                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.08)" vertical={false}/>
+                          <XAxis dataKey="tower" tick={{fill:T.text,fontSize:9,fontWeight:700}} axisLine={false} tickLine={false}/>
+                          <YAxis domain={[0,100]} tickFormatter={v=>v+'%'} tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={32}/>
+                          <Tooltip content={({active,payload,label})=>{
+                            if(!active||!payload?.length)return null;
+                            const d=twData.find(r=>r.tower===label);
+                            return(<div style={{background:'#fff',border:'1px solid #e5e7eb',borderRadius:8,padding:'8px 12px',fontSize:10,boxShadow:'0 2px 8px rgba(0,0,0,0.1)'}}>
+                              <p style={{margin:'0 0 4px',fontWeight:800,color:T.navy}}>{label}</p>
+                              <p style={{margin:'0 0 2px',color:T.tealD,fontWeight:700}}>Units: {d?.booked}/{d?.total} ({d?.unitPct}%)</p>
+                              <p style={{margin:'0 0 2px',color:T.amber,fontWeight:700}}>TSV: ₹{d?.bspCr?.toFixed(1)} Cr ({d?.tsvPct}%)</p>
+                              <p style={{margin:0,color:'#9ca3af',fontSize:9}}>Avg Rate: ₹{d?.avgRate?.toLocaleString('en-IN')}/sqft</p>
+                            </div>);
+                          }}/>
+                          <Legend wrapperStyle={{fontSize:9,fontWeight:700}} iconSize={8}/>
+                          <Bar dataKey="unitPct" name="Unit % Sold" fill={T.tealD} radius={[3,3,0,0]} maxBarSize={32}>
+                            <LabelList dataKey="unitPct" position="top" formatter={v=>v+'%'} style={{fill:T.tealD,fontSize:8,fontWeight:800}}/>
+                          </Bar>
+                          <Bar dataKey="tsvPct" name="TSV % Sold" fill={T.amber} radius={[3,3,0,0]} maxBarSize={32}>
+                            <LabelList dataKey="tsvPct" position="top" formatter={v=>v+'%'} style={{fill:T.amber,fontSize:8,fontWeight:800}}/>
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
                     );
                   })()}
                 </GC>
