@@ -1775,8 +1775,8 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                 {(()=>{
                   const sold=kpiEx.bookedAreaSqft||0;
                   const avail=kpiEx.availAreaSqft||0;
-                  const totalSA=kpiEx.totalSuperArea||0;
-                  const tot=totalSA>0?totalSA:(sold+avail);
+                  // Use only saleable area (booked + available) — exclude management units
+                  const tot=sold+avail;
                   const pct=tot>0?Math.round((sold/tot)*100):0;
                   return(
                     <div style={{display:'flex',alignItems:'center',gap:12}}>
@@ -1797,9 +1797,9 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                       </div>
                       <div style={{flex:1,display:'flex',flexDirection:'column',gap:6}}>
                         <div>
-                          <p style={{fontSize:8,color:T.textM,fontWeight:700,margin:'0 0 2px',textTransform:'uppercase'}}>Total</p>
-                          <p style={{fontSize:20,fontWeight:900,color:T.navy,margin:0,letterSpacing:-0.5}}>{(tot/1000).toFixed(0)}K</p>
-                          <p style={{fontSize:8,color:T.textM,margin:'2px 0 0'}}>Total Super Area · Carpet: {(kpiEx.carpetAreaSqft/1000).toFixed(0)}K</p>
+                          <p style={{fontSize:8,color:T.textM,fontWeight:700,margin:'0 0 2px',textTransform:'uppercase'}}>Saleable Area</p>
+                          <p style={{fontSize:20,fontWeight:900,color:T.navy,margin:0,letterSpacing:-0.5}}>{(tot/1000).toFixed(0)}K sqft</p>
+                          <p style={{fontSize:8,color:T.textM,margin:'2px 0 0'}}>Booked carpet: {(kpiEx.carpetAreaSqft/1000).toFixed(0)}K sqft</p>
                         </div>
                         <div style={{display:'flex',gap:8}}>
                           <div style={{flex:1,background:`${T.teal}0d`,borderRadius:6,padding:'5px 8px'}}>
@@ -1832,7 +1832,8 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                   const installmentTotal = dkAll.totalInstallment || 0;
                   const totalReceived    = dkAll.totalReceivedWoT || 0;
                   const upcomingAmt      = dkAll.totalOutstanding || 0;
-                  const collectedPct     = installmentTotal>0?Math.min(Math.round(totalReceived/installmentTotal*100),100):0;
+                  const collectedPct     = installmentTotal>0?Math.round(totalReceived/installmentTotal*100):0;
+                  const collectedDisplay = collectedPct>100?`${collectedPct}% (incl. advance)`:collectedPct+'%';
                   return(
                     <div style={{display:'flex',flexDirection:'column',gap:6}}>
                       {/* Row 1: donut + sold/unsold */}
@@ -1875,7 +1876,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                       <div style={{background:'rgba(0,100,140,0.04)',borderRadius:7,padding:'5px 8px'}}>
                         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:4}}>
                           <span style={{fontSize:7,color:T.textM,fontWeight:700,textTransform:'uppercase'}}>Collection Progress</span>
-                          <span style={{fontSize:9,fontWeight:900,color:T.tealD}}>{collectedPct}% collected</span>
+                          <span style={{fontSize:9,fontWeight:900,color:collectedPct>100?T.amber:T.tealD}}>{collectedDisplay} collected</span>
                         </div>
                         <div style={{height:6,background:'rgba(0,100,140,0.1)',borderRadius:3,overflow:'hidden',marginBottom:5}}>
                           <div style={{width:Math.min(collectedPct,100)+'%',height:'100%',background:`linear-gradient(90deg,${T.teal},${T.tealD})`,borderRadius:3,transition:'width 0.6s ease'}}/>
