@@ -590,10 +590,11 @@ const CollectionsTab = ({T, GC, SH}) => {
   const advGst = adv.gstCr || 0;
 
   const allMilestones = dk.milestonesUpcoming || [];
-  const milestones    = planType==='all' ? allMilestones
+  const milestones    = (planType==='all' ? allMilestones
     : planType==='hybrid_earlier' ? allMilestones.filter(m=>m.type==='hybrid_earlier')
     : planType==='hybrid_later'   ? allMilestones.filter(m=>m.type==='hybrid_later')
-    : allMilestones.filter(m=>m.type===planType);
+    : allMilestones.filter(m=>m.type===planType)
+  ).slice().sort((a,b)=>b.totalCr - a.totalCr);
   const allMonthly    = dk.monthlyTrend || [];
   const towers        = dk.towerKpi || [];
 
