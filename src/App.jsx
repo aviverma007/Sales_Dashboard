@@ -773,8 +773,19 @@ const CollectionsTab = ({T, GC, SH, filters={}, raw}) => {
         <ComposedChart data={upcomingMonthArr} margin={{top:24,right:20,bottom:20,left:0}}>
           <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.07)" vertical={false}/>
           <XAxis dataKey="label" tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false}/>
-          <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} tickFormatter={v=>'₹'+v+'Cr'} width={46}/>
-          <Tooltip formatter={(v,n)=>[`₹${v} Cr`,n]}/>
+          <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} tickFormatter={v=>v>=1?'₹'+v+'Cr':v>0?'₹'+(v*100).toFixed(0)+'L':''} width={50}/>
+          <Tooltip content={({active,payload,label})=>{
+            if(!active||!payload?.length) return null;
+            const fmt=v=>v===0?null:v>=1?`₹${v.toFixed(2)} Cr`:`₹${(v*100).toFixed(1)} L`;
+            return(
+              <div style={{background:'#fff',border:'1px solid #e5e7eb',borderRadius:8,padding:'8px 12px',fontSize:10,boxShadow:'0 2px 8px rgba(0,0,0,0.1)'}}>
+                <p style={{margin:'0 0 5px',fontWeight:800,color:T.navy,fontSize:11}}>{label}</p>
+                {payload.filter(p=>p.name&&(p.value||0)>0).map(p=>(
+                  <p key={p.name} style={{margin:'0 0 2px',color:p.fill,fontWeight:700}}>{p.name} : {fmt(p.value)}</p>
+                ))}
+              </div>
+            );
+          }}/>
           <Legend wrapperStyle={{fontSize:9,fontWeight:700}} iconSize={8}/>
           {(planType==='all'||planType==='tlp')&&<Bar dataKey="tlp" name="TLP" fill={T.amber} radius={[3,3,0,0]} stackId="a" minPointSize={3}/>}
           {(planType==='all'||planType==='clp')&&<Bar dataKey="clp" name="CLP" fill="#2e7d32" radius={[3,3,0,0]} stackId="a" minPointSize={3}>
