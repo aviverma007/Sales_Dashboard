@@ -738,7 +738,7 @@ const CollectionsTab = ({T, GC, SH, filters={}, raw}) => {
     <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:10}}>
       <GC style={{padding:13}} cls="kc">
         <p style={{fontSize:8,color:T.textM,fontWeight:700,textTransform:'uppercase',margin:'0 0 4px',letterSpacing:0.5}}>Total Sales Value (TCV)</p>
-        <p style={{fontSize:24,fontWeight:900,color:'#1d4ed8',margin:'0 0 4px',letterSpacing:-0.5}}>₹{((filters?.project?.includes('SKY ARC') ? raw?.skyarcKpiExtra?.totalTCVCr : raw?.kpiExtra?.totalTCVCr)||0).toFixed(0)} Cr</p>
+        <p style={{fontSize:24,fontWeight:900,color:'#1d4ed8',margin:'0 0 4px',letterSpacing:-0.5}}>₹{((filters?.project?.includes('SKY ARC') ? raw?.skyarcKpiExtra?.totalTCVCr : filters?.project?.includes('TRUMP') ? raw?.trumpKpiExtra?.totalTCVCr : raw?.kpiExtra?.totalTCVCr)||0).toFixed(0)} Cr</p>
         <p style={{fontSize:8,color:T.textL,margin:0}}>Booked TCV incl. tax</p>
         <div style={{position:'absolute',bottom:0,left:0,right:0,height:3,background:'linear-gradient(90deg,#1d4ed8,transparent)',borderRadius:'0 0 14px 14px'}}/>
       </GC>
@@ -1296,7 +1296,8 @@ export default function App({overviewOnly=false}) {
 
 
 const getProjectFiles = (project) => {
-  if(project && project.includes('SKY ARC')) return {dapp:'/data/skyarc_dapp_kpi.json', pnl:'/data/skyarc_pnl.json'};
+  if(project && project.includes('SKY ARC'))  return {dapp:'/data/skyarc_dapp_kpi.json', pnl:'/data/skyarc_pnl.json'};
+  if(project && project.includes('TRUMP'))    return {dapp:'/data/trump_dapp_kpi.json',  pnl:'/data/trump_pnl.json'};
   return {dapp:'/data/dapp_kpi.json', pnl:'/data/pnl_data.json'};
 };
 
@@ -1544,6 +1545,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
     // Use project-specific kpiExtra when a single project is selected
     const selProj = filters.project || '';
     const dk = selProj.includes('SKY ARC') ? (raw?.skyarcKpiExtra || {})
+             : selProj.includes('TRUMP')   ? (raw?.trumpKpiExtra  || {})
              : (raw?.kpiExtra || {});
     // Areas from kpiExtra (pre-computed from actual Excel)
     const bookedAreaSqft = dk.bookedAreaSqft || pAAll.reduce((s,r)=>s+(r.superArea||0),0);
@@ -1677,7 +1679,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
         targetAreaSqft:target.areaSqft||null,
         isFuture:labelNum>today,
         isCurrent:label===TODAY_LABEL,
-        actualRate:(filters.project?.includes('SKY ARC')?(raw?.skyarcMonthlyRates||{}):(raw?.monthlyActualRates||{}))[label]||null,
+        actualRate:(filters.project?.includes('SKY ARC')?(raw?.skyarcMonthlyRates||{}):filters.project?.includes('TRUMP')?(raw?.trumpMonthlyRates||{}):(raw?.monthlyActualRates||{}))[label]||null,
         // Continuous lines — show on ALL months that have target data
         targetUnitsLine:target.units||null,
         targetTsvLine:target.tsvCr||null,
@@ -2481,7 +2483,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const pastCqmR=cqmObjR.filter(o=>o.ym<todayYMR).map(o=>o.label);
                     const futureCqmR=cqmObjR.filter(o=>o.ym>=todayYMR).map(o=>o.label);
                     // Rate projection: use RAW (unfiltered) actual rates so FY filter doesn't break projection
-                    const rawActualRatesMap=filters.project?.includes('SKY ARC')?(raw?.skyarcMonthlyRates||{}):(raw?.monthlyActualRates||{});
+                    const rawActualRatesMap=filters.project?.includes('SKY ARC')?(raw?.skyarcMonthlyRates||{}):filters.project?.includes('TRUMP')?(raw?.trumpMonthlyRates||{}):(raw?.monthlyActualRates||{});
                     const allActualRates=Object.entries(rawActualRatesMap).filter(([,v])=>v>0).map(([label,rate])=>({label,actualRate:rate,ym:lblYmR(label)})).filter(d=>d.ym>0&&d.ym<=todayYMR).sort((a,b)=>a.ym-b.ym);
                     const recentRates=allActualRates.slice(-3);
                     const lastKnownRate=recentRates.length>0?recentRates[recentRates.length-1].actualRate:0;

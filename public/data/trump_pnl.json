@@ -1,0 +1,354 @@
+{
+  "kpi": {
+    "totalRevenue": -30.92,
+    "totalReceipt": 6.56,
+    "totalJV": 0.15,
+    "totalPayment": -37.63,
+    "totalExpenditure": 480.14,
+    "surplus": -511.06
+  },
+  "monthlyData": [
+    {
+      "month": "2025-02",
+      "label": "Feb'25",
+      "revenue": 0.0,
+      "receipt": 0.0,
+      "jv": 0.0,
+      "payment": 0.0,
+      "expenditure": 0.17,
+      "surplus": -0.17
+    },
+    {
+      "month": "2025-03",
+      "label": "Mar'25",
+      "revenue": 0.0,
+      "receipt": 0.0,
+      "jv": 0.0,
+      "payment": 0.0,
+      "expenditure": 1.47,
+      "surplus": -1.47
+    },
+    {
+      "month": "2025-04",
+      "label": "Apr'25",
+      "revenue": 0.0,
+      "receipt": 0.0,
+      "jv": 0.0,
+      "payment": 0.0,
+      "expenditure": 159.88,
+      "surplus": -159.88
+    },
+    {
+      "month": "2025-05",
+      "label": "May'25",
+      "revenue": 0.0,
+      "receipt": 0.0,
+      "jv": 0.0,
+      "payment": 0.0,
+      "expenditure": 10.43,
+      "surplus": -10.43
+    },
+    {
+      "month": "2025-06",
+      "label": "Jun'25",
+      "revenue": -18.3,
+      "receipt": 0.0,
+      "jv": 0.1,
+      "payment": -18.4,
+      "expenditure": 41.26,
+      "surplus": -59.56
+    },
+    {
+      "month": "2025-07",
+      "label": "Jul'25",
+      "revenue": -5.57,
+      "receipt": -0.01,
+      "jv": 0.0,
+      "payment": -5.56,
+      "expenditure": 5.54,
+      "surplus": -11.11
+    },
+    {
+      "month": "2025-08",
+      "label": "Aug'25",
+      "revenue": 1.25,
+      "receipt": 2.88,
+      "jv": 0.0,
+      "payment": -1.63,
+      "expenditure": 2.04,
+      "surplus": -0.79
+    },
+    {
+      "month": "2025-09",
+      "label": "Sep'25",
+      "revenue": -2.69,
+      "receipt": 0.06,
+      "jv": 0.0,
+      "payment": -2.75,
+      "expenditure": 0.43,
+      "surplus": -3.12
+    },
+    {
+      "month": "2025-10",
+      "label": "Oct'25",
+      "revenue": -2.02,
+      "receipt": 0.05,
+      "jv": 0.0,
+      "payment": -2.07,
+      "expenditure": 187.53,
+      "surplus": -189.55
+    },
+    {
+      "month": "2025-11",
+      "label": "Nov'25",
+      "revenue": -3.13,
+      "receipt": 0.12,
+      "jv": 0.0,
+      "payment": -3.25,
+      "expenditure": 9.9,
+      "surplus": -13.03
+    },
+    {
+      "month": "2025-12",
+      "label": "Dec'25",
+      "revenue": -1.01,
+      "receipt": 0.13,
+      "jv": 0.0,
+      "payment": -1.14,
+      "expenditure": 3.62,
+      "surplus": -4.63
+    },
+    {
+      "month": "2026-01",
+      "label": "Jan'26",
+      "revenue": -0.9,
+      "receipt": 0.54,
+      "jv": 0.0,
+      "payment": -1.44,
+      "expenditure": 4.69,
+      "surplus": -5.59
+    },
+    {
+      "month": "2026-02",
+      "label": "Feb'26",
+      "revenue": -0.07,
+      "receipt": 0.0,
+      "jv": 0.0,
+      "payment": -0.07,
+      "expenditure": 14.77,
+      "surplus": -14.84
+    },
+    {
+      "month": "2026-03",
+      "label": "Mar'26",
+      "revenue": 0.07,
+      "receipt": 0.07,
+      "jv": 0.0,
+      "payment": 0.0,
+      "expenditure": 17.89,
+      "surplus": -17.82
+    },
+    {
+      "month": "2026-04",
+      "label": "Apr'26",
+      "revenue": -0.05,
+      "receipt": 0.03,
+      "jv": 0.0,
+      "payment": -0.07,
+      "expenditure": 8.59,
+      "surplus": -8.64
+    },
+    {
+      "month": "2026-05",
+      "label": "May'26",
+      "revenue": -0.11,
+      "receipt": 0.0,
+      "jv": 0.0,
+      "payment": -0.11,
+      "expenditure": 5.67,
+      "surplus": -5.78
+    },
+    {
+      "month": "2026-06",
+      "label": "Jun'26",
+      "revenue": 1.61,
+      "receipt": 2.7,
+      "jv": 0.05,
+      "payment": -1.15,
+      "expenditure": 6.26,
+      "surplus": -4.65
+    }
+  ],
+  "monthlyCollection": [
+    {
+      "month": "2025-02",
+      "label": "Feb'25",
+      "revenue": 0.0,
+      "receipt": 0.0,
+      "jv": 0.0,
+      "payment": 0.0,
+      "expenditure": 0.17,
+      "surplus": -0.17
+    },
+    {
+      "month": "2025-03",
+      "label": "Mar'25",
+      "revenue": 0.0,
+      "receipt": 0.0,
+      "jv": 0.0,
+      "payment": 0.0,
+      "expenditure": 1.47,
+      "surplus": -1.47
+    },
+    {
+      "month": "2025-04",
+      "label": "Apr'25",
+      "revenue": 0.0,
+      "receipt": 0.0,
+      "jv": 0.0,
+      "payment": 0.0,
+      "expenditure": 159.88,
+      "surplus": -159.88
+    },
+    {
+      "month": "2025-05",
+      "label": "May'25",
+      "revenue": 0.0,
+      "receipt": 0.0,
+      "jv": 0.0,
+      "payment": 0.0,
+      "expenditure": 10.43,
+      "surplus": -10.43
+    },
+    {
+      "month": "2025-06",
+      "label": "Jun'25",
+      "revenue": -18.3,
+      "receipt": 0.0,
+      "jv": 0.1,
+      "payment": -18.4,
+      "expenditure": 41.26,
+      "surplus": -59.56
+    },
+    {
+      "month": "2025-07",
+      "label": "Jul'25",
+      "revenue": -5.57,
+      "receipt": -0.01,
+      "jv": 0.0,
+      "payment": -5.56,
+      "expenditure": 5.54,
+      "surplus": -11.11
+    },
+    {
+      "month": "2025-08",
+      "label": "Aug'25",
+      "revenue": 1.25,
+      "receipt": 2.88,
+      "jv": 0.0,
+      "payment": -1.63,
+      "expenditure": 2.04,
+      "surplus": -0.79
+    },
+    {
+      "month": "2025-09",
+      "label": "Sep'25",
+      "revenue": -2.69,
+      "receipt": 0.06,
+      "jv": 0.0,
+      "payment": -2.75,
+      "expenditure": 0.43,
+      "surplus": -3.12
+    },
+    {
+      "month": "2025-10",
+      "label": "Oct'25",
+      "revenue": -2.02,
+      "receipt": 0.05,
+      "jv": 0.0,
+      "payment": -2.07,
+      "expenditure": 187.53,
+      "surplus": -189.55
+    },
+    {
+      "month": "2025-11",
+      "label": "Nov'25",
+      "revenue": -3.13,
+      "receipt": 0.12,
+      "jv": 0.0,
+      "payment": -3.25,
+      "expenditure": 9.9,
+      "surplus": -13.03
+    },
+    {
+      "month": "2025-12",
+      "label": "Dec'25",
+      "revenue": -1.01,
+      "receipt": 0.13,
+      "jv": 0.0,
+      "payment": -1.14,
+      "expenditure": 3.62,
+      "surplus": -4.63
+    },
+    {
+      "month": "2026-01",
+      "label": "Jan'26",
+      "revenue": -0.9,
+      "receipt": 0.54,
+      "jv": 0.0,
+      "payment": -1.44,
+      "expenditure": 4.69,
+      "surplus": -5.59
+    },
+    {
+      "month": "2026-02",
+      "label": "Feb'26",
+      "revenue": -0.07,
+      "receipt": 0.0,
+      "jv": 0.0,
+      "payment": -0.07,
+      "expenditure": 14.77,
+      "surplus": -14.84
+    },
+    {
+      "month": "2026-03",
+      "label": "Mar'26",
+      "revenue": 0.07,
+      "receipt": 0.07,
+      "jv": 0.0,
+      "payment": 0.0,
+      "expenditure": 17.89,
+      "surplus": -17.82
+    },
+    {
+      "month": "2026-04",
+      "label": "Apr'26",
+      "revenue": -0.05,
+      "receipt": 0.03,
+      "jv": 0.0,
+      "payment": -0.07,
+      "expenditure": 8.59,
+      "surplus": -8.64
+    },
+    {
+      "month": "2026-05",
+      "label": "May'26",
+      "revenue": -0.11,
+      "receipt": 0.0,
+      "jv": 0.0,
+      "payment": -0.11,
+      "expenditure": 5.67,
+      "surplus": -5.78
+    },
+    {
+      "month": "2026-06",
+      "label": "Jun'26",
+      "revenue": 1.61,
+      "receipt": 2.7,
+      "jv": 0.05,
+      "payment": -1.15,
+      "expenditure": 6.26,
+      "surplus": -4.65
+    }
+  ]
+}

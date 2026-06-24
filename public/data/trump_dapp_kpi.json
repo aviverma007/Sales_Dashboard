@@ -1,0 +1,471 @@
+{
+  "kpi": {
+    "all": {
+      "totalInstallment": 641.39,
+      "totalReceivedBank": 821.31,
+      "totalReceivedWoT": 781.64,
+      "totalOutstanding": 8.02,
+      "totalDemandWoTax": 641.39,
+      "advanceAmt": 159.73,
+      "advanceNet": 152.13,
+      "advanceGst": 7.61
+    },
+    "tlp": {
+      "totalInstallment": 528.15,
+      "totalReceivedBank": 562.29,
+      "totalReceivedWoT": 535.11,
+      "totalOutstanding": 4.96,
+      "totalDemandWoTax": 528.15,
+      "advanceAmt": 16.08,
+      "advanceNet": 15.32,
+      "advanceGst": 0.77
+    },
+    "clp": {
+      "totalInstallment": 113.24,
+      "totalReceivedBank": 259.02,
+      "totalReceivedWoT": 246.52,
+      "totalOutstanding": 3.06,
+      "totalDemandWoTax": 113.24,
+      "advanceAmt": 143.65,
+      "advanceNet": 136.81,
+      "advanceGst": 6.84
+    }
+  },
+  "gstRate": 0.05,
+  "advanceNote": "\u26a0\ufe0f Advance: \u20b9159.7Cr before demand raised.",
+  "advance": {
+    "all": {
+      "rawCr": 159.73,
+      "netCr": 152.13,
+      "gstCr": 7.61
+    }
+  },
+  "advance_all": {
+    "rawCr": 159.73,
+    "netCr": 152.13,
+    "gstCr": 7.61
+  },
+  "milestonesUpcoming": [
+    {
+      "name": " Within 60 Days of Booking Or Start of Excavation (whichever is later)",
+      "shortName": "TLP \u2014 On Booking",
+      "type": "clp",
+      "totalCr": 2.87,
+      "T1": 0,
+      "T2": 0,
+      "T3": 0,
+      "T4": 0,
+      "T5": 0,
+      "T6": 0,
+      "expectedDate": "2025-07"
+    },
+    {
+      "name": "Within 240 Days of Booking",
+      "shortName": "TLP \u2014 On Booking",
+      "type": "tlp",
+      "totalCr": 2.03,
+      "T1": 0,
+      "T2": 0,
+      "T3": 0,
+      "T4": 0,
+      "T5": 0,
+      "T6": 0,
+      "expectedDate": "2026-01"
+    },
+    {
+      "name": "WITHIN 12 MONTHS OF BOOKING",
+      "shortName": "TLP \u2014 On Booking",
+      "type": "tlp",
+      "totalCr": 1.16,
+      "T1": 0,
+      "T2": 0,
+      "T3": 0,
+      "T4": 0,
+      "T5": 0,
+      "T6": 0,
+      "expectedDate": "2026-07"
+    },
+    {
+      "name": "Within 21 Days of Booking",
+      "shortName": "TLP \u2014 On Booking",
+      "type": "tlp",
+      "totalCr": 0.79,
+      "T1": 0,
+      "T2": 0,
+      "T3": 0,
+      "T4": 0,
+      "T5": 0,
+      "T6": 0,
+      "expectedDate": "2026-06"
+    },
+    {
+      "name": "On Or before 14th-Sep-2025",
+      "shortName": "On Or before 14th-Sep-2025",
+      "type": "tlp",
+      "totalCr": 0.46,
+      "T1": 0,
+      "T2": 0,
+      "T3": 0,
+      "T4": 0,
+      "T5": 0,
+      "T6": 0,
+      "expectedDate": "2025-09"
+    },
+    {
+      "name": "Within 120 Days of Booking",
+      "shortName": "TLP \u2014 On Booking",
+      "type": "tlp",
+      "totalCr": 0.18,
+      "T1": 0,
+      "T2": 0,
+      "T3": 0,
+      "T4": 0,
+      "T5": 0,
+      "T6": 0,
+      "expectedDate": "2025-09"
+    },
+    {
+      "name": " On or Before 7th July or Start of Excavation(Whichever is Later)",
+      "shortName": "CLP \u2014 Excavation",
+      "type": "clp",
+      "totalCr": 0.1,
+      "T1": 0,
+      "T2": 0,
+      "T3": 0,
+      "T4": 0,
+      "T5": 0,
+      "T6": 0,
+      "expectedDate": "2025-07"
+    },
+    {
+      "name": "On Or before 14th-Nov-2025",
+      "shortName": "On Or before 14th-Nov-2025",
+      "type": "tlp",
+      "totalCr": 0.09,
+      "T1": 0,
+      "T2": 0,
+      "T3": 0,
+      "T4": 0,
+      "T5": 0,
+      "T6": 0,
+      "expectedDate": "2025-11"
+    },
+    {
+      "name": " On or Before 14th-Sep-2025",
+      "shortName": " On or Before 14th-Sep-2025",
+      "type": "tlp",
+      "totalCr": 0.08,
+      "T1": 0,
+      "T2": 0,
+      "T3": 0,
+      "T4": 0,
+      "T5": 0,
+      "T6": 0,
+      "expectedDate": "2025-09"
+    },
+    {
+      "name": " Within 60 Days of Booking Or Start of Excavation(whichever is later)",
+      "shortName": "TLP \u2014 On Booking",
+      "type": "clp",
+      "totalCr": 0.06,
+      "T1": 0,
+      "T2": 0,
+      "T3": 0,
+      "T4": 0,
+      "T5": 0,
+      "T6": 0,
+      "expectedDate": "2025-08"
+    },
+    {
+      "name": "Within 5 days of Booking",
+      "shortName": "TLP \u2014 On Booking",
+      "type": "tlp",
+      "totalCr": 0.05,
+      "T1": 0,
+      "T2": 0,
+      "T3": 0,
+      "T4": 0,
+      "T5": 0,
+      "T6": 0,
+      "expectedDate": "2026-04"
+    },
+    {
+      "name": "On or Before 9th May 2026",
+      "shortName": "TLP \u2014 May'26",
+      "type": "tlp",
+      "totalCr": 0.04,
+      "T1": 0,
+      "T2": 0,
+      "T3": 0,
+      "T4": 0,
+      "T5": 0,
+      "T6": 0,
+      "expectedDate": "2026-05"
+    },
+    {
+      "name": "On or Before 31st Jan 2026 or Start of Excavation (Whichever is later)",
+      "shortName": "CLP \u2014 Excavation",
+      "type": "clp",
+      "totalCr": 0.04,
+      "T1": 0,
+      "T2": 0,
+      "T3": 0,
+      "T4": 0,
+      "T5": 0,
+      "T6": 0,
+      "expectedDate": "2026-01"
+    },
+    {
+      "name": "On or Before 08th June 2026",
+      "shortName": "TLP \u2014 Jun'26",
+      "type": "tlp",
+      "totalCr": 0.02,
+      "T1": 0,
+      "T2": 0,
+      "T3": 0,
+      "T4": 0,
+      "T5": 0,
+      "T6": 0,
+      "expectedDate": "2026-06"
+    },
+    {
+      "name": "On or Before 10th May 2026",
+      "shortName": "TLP \u2014 May'26",
+      "type": "tlp",
+      "totalCr": 0.02,
+      "T1": 0,
+      "T2": 0,
+      "T3": 0,
+      "T4": 0,
+      "T5": 0,
+      "T6": 0,
+      "expectedDate": "2026-05"
+    },
+    {
+      "name": "Within 150 Days of Booking",
+      "shortName": "TLP \u2014 On Booking",
+      "type": "tlp",
+      "totalCr": 0.02,
+      "T1": 0,
+      "T2": 0,
+      "T3": 0,
+      "T4": 0,
+      "T5": 0,
+      "T6": 0,
+      "expectedDate": "2025-10"
+    },
+    {
+      "name": "WITHIN 150 DAYS OF BOOKING",
+      "shortName": "TLP \u2014 On Booking",
+      "type": "tlp",
+      "totalCr": 0.01,
+      "T1": 0,
+      "T2": 0,
+      "T3": 0,
+      "T4": 0,
+      "T5": 0,
+      "T6": 0,
+      "expectedDate": "2025-12"
+    },
+    {
+      "name": "Within 30 Days of Booking",
+      "shortName": "TLP \u2014 On Booking",
+      "type": "tlp",
+      "totalCr": 0.01,
+      "T1": 0,
+      "T2": 0,
+      "T3": 0,
+      "T4": 0,
+      "T5": 0,
+      "T6": 0,
+      "expectedDate": "2026-02"
+    },
+    {
+      "name": "On or Before 20th Oct 2025",
+      "shortName": "CLP \u2014 OC Application",
+      "type": "tlp",
+      "totalCr": 0.01,
+      "T1": 0,
+      "T2": 0,
+      "T3": 0,
+      "T4": 0,
+      "T5": 0,
+      "T6": 0,
+      "expectedDate": "2025-10"
+    },
+    {
+      "name": "On or Before 5th Sep 2025",
+      "shortName": "TLP \u2014 Sep'25",
+      "type": "tlp",
+      "totalCr": 0.0,
+      "T1": 0,
+      "T2": 0,
+      "T3": 0,
+      "T4": 0,
+      "T5": 0,
+      "T6": 0,
+      "expectedDate": "2025-09"
+    }
+  ],
+  "monthlyTrend": [
+    {
+      "month": "2025-05",
+      "label": "May'25",
+      "tlp_dem": 116.91,
+      "clp_dem": 0.0,
+      "tlp_rec": 116.91,
+      "clp_rec": 0.0,
+      "dem": 116.91,
+      "rec": 116.91
+    },
+    {
+      "month": "2025-06",
+      "label": "Jun'25",
+      "tlp_dem": 106.98,
+      "clp_dem": 78.69,
+      "tlp_rec": 103.43,
+      "clp_rec": 78.31,
+      "dem": 185.67,
+      "rec": 181.74
+    },
+    {
+      "month": "2025-07",
+      "label": "Jul'25",
+      "tlp_dem": 9.17,
+      "clp_dem": 7.12,
+      "tlp_rec": 9.16,
+      "clp_rec": 6.92,
+      "dem": 16.29,
+      "rec": 16.08
+    },
+    {
+      "month": "2025-08",
+      "label": "Aug'25",
+      "tlp_dem": 12.83,
+      "clp_dem": 3.44,
+      "tlp_rec": 12.82,
+      "clp_rec": 3.39,
+      "dem": 16.27,
+      "rec": 16.21
+    },
+    {
+      "month": "2025-09",
+      "label": "Sep'25",
+      "tlp_dem": 233.6,
+      "clp_dem": 9.55,
+      "tlp_rec": 233.06,
+      "clp_rec": 9.55,
+      "dem": 243.15,
+      "rec": 242.61
+    },
+    {
+      "month": "2025-10",
+      "label": "Oct'25",
+      "tlp_dem": 25.75,
+      "clp_dem": 0.0,
+      "tlp_rec": 25.63,
+      "clp_rec": 0.0,
+      "dem": 25.75,
+      "rec": 25.63
+    },
+    {
+      "month": "2025-11",
+      "label": "Nov'25",
+      "tlp_dem": 3.18,
+      "clp_dem": 5.9,
+      "tlp_rec": 3.18,
+      "clp_rec": 5.85,
+      "dem": 9.08,
+      "rec": 9.03
+    },
+    {
+      "month": "2025-12",
+      "label": "Dec'25",
+      "tlp_dem": 5.57,
+      "clp_dem": 0.0,
+      "tlp_rec": 3.55,
+      "clp_rec": 0.0,
+      "dem": 5.57,
+      "rec": 3.55
+    },
+    {
+      "month": "2026-01",
+      "label": "Jan'26",
+      "tlp_dem": 0.0,
+      "clp_dem": 3.55,
+      "tlp_rec": 0.0,
+      "clp_rec": 3.51,
+      "dem": 3.55,
+      "rec": 3.51
+    },
+    {
+      "month": "2026-02",
+      "label": "Feb'26",
+      "tlp_dem": 3.65,
+      "clp_dem": 4.99,
+      "tlp_rec": 3.63,
+      "clp_rec": 2.18,
+      "dem": 8.64,
+      "rec": 5.8
+    },
+    {
+      "month": "2026-04",
+      "label": "Apr'26",
+      "tlp_dem": 0.1,
+      "clp_dem": 0.0,
+      "tlp_rec": 0.05,
+      "clp_rec": 0.0,
+      "dem": 0.1,
+      "rec": 0.05
+    },
+    {
+      "month": "2026-05",
+      "label": "May'26",
+      "tlp_dem": 9.33,
+      "clp_dem": 0.0,
+      "tlp_rec": 8.46,
+      "clp_rec": 0.0,
+      "dem": 9.33,
+      "rec": 8.46
+    },
+    {
+      "month": "2026-06",
+      "label": "Jun'26",
+      "tlp_dem": 1.1,
+      "clp_dem": 0.0,
+      "tlp_rec": -0.06,
+      "clp_rec": 0.0,
+      "dem": 1.1,
+      "rec": -0.06
+    }
+  ],
+  "towerKpi": [
+    {
+      "tower": "Tower-1",
+      "tlp_dem": 252.48,
+      "clp_dem": 62.69,
+      "tlp_rec": 250.43,
+      "clp_rec": 62.24,
+      "tlp_out": 0.61,
+      "clp_out": 0.17
+    },
+    {
+      "tower": "Tower-1 & 2",
+      "tlp_dem": 22.28,
+      "clp_dem": 5.6,
+      "tlp_rec": 22.28,
+      "clp_rec": 5.6,
+      "tlp_out": 0.0,
+      "clp_out": 0.0
+    },
+    {
+      "tower": "Tower-2",
+      "tlp_dem": 253.4,
+      "clp_dem": 44.95,
+      "tlp_rec": 247.08,
+      "clp_rec": 41.87,
+      "tlp_out": 4.35,
+      "clp_out": 2.9
+    }
+  ]
+}
