@@ -532,7 +532,8 @@ const SummaryBar = ({raw, filters, T, GC}) => {
   const [pnlKpi, setPnlKpi] = React.useState(null);
 
   React.useEffect(()=>{
-    fetch('/data/pnl_data.json').then(r=>r.json()).then(d=>setPnlKpi(d?.kpi||{})).catch(()=>{});
+    const pf3=getProjectFiles(filters?.project?.split('||')[0]||'');
+    fetch(pf3.pnl).then(r=>r.json()).then(d=>setPnlKpi(d?.kpi||{})).catch(()=>{});
   },[]);
 
   const selProjs = filters.project ? filters.project.split('||').filter(Boolean) : [];
@@ -576,7 +577,8 @@ const CollectionsTab = ({T, GC, SH, filters={}, raw}) => {
   const [sortBy, setSortBy] = React.useState('amount'); // 'amount' | 'date'
 
   React.useEffect(()=>{
-    fetch('/data/dapp_kpi.json').then(r=>r.json()).then(setDk).catch(()=>{});
+    const pf=getProjectFiles(filters?.project?.split('||')[0]||'');
+    fetch(pf.dapp).then(r=>r.json()).then(setDk).catch(()=>{});
   },[]);
 
   if(!dk) return <div style={{textAlign:'center',padding:40,color:T.textL,fontSize:12}}>Loading Demand & Collection data…</div>;
@@ -1016,7 +1018,8 @@ const PnLTab = ({T, GC, SH, filters, sf, raw}) => {
   const moFilter = filters.month||'';
 
   React.useEffect(()=>{
-    fetch('/data/pnl_data.json').then(r=>r.json()).then(d=>setPnlRaw(d)).catch(()=>{});
+    const pf2=getProjectFiles(filters?.project?.split('||')[0]||'');
+    fetch(pf2.pnl).then(r=>r.json()).then(d=>setPnlRaw(d)).catch(()=>{});
   },[]);
 
   const kpi = pnlRaw?.kpi || {};
@@ -1277,6 +1280,12 @@ export default function App() {
   return <AppErrorBoundary><AppInner/></AppErrorBoundary>;
 }
 
+
+const getProjectFiles = (project) => {
+  if(project && project.includes('SKY ARC')) return {dapp:'/data/skyarc_dapp_kpi.json', pnl:'/data/skyarc_pnl.json'};
+  return {dapp:'/data/dapp_kpi.json', pnl:'/data/pnl_data.json'};
+};
+
 function AppInner() {
   const [authed, setAuthed] = useState(()=>sessionStorage.getItem('sd_auth')==='1');
   const [raw,setRaw]=useState(null);
@@ -1362,6 +1371,7 @@ function AppInner() {
       fetch('/data/dashboard_data.json').then(r=>r.json()),
       fetch('/data/dapp_kpi.json').then(r=>r.json()).catch(()=>({})),
       fetch('/data/pnl_data.json').then(r=>r.json()).catch(()=>({})),
+      // project-specific files loaded dynamically in CollectionsTab/PnLTab
     ]).then(([d, dappKpi, pnlData])=>{
       d.dappKpi = dappKpi;
       window.__dappKpi  = dappKpi;
