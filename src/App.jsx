@@ -1581,14 +1581,14 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
   const cancelledUnitStatus=useMemo(()=>{
     const base=raw?.cancelledUnitStatus||{summary:{},buckets:[],byProject:[],vacantUnits:[],rebookedUnits:[]};
     if(!filters.project) return base;
-    const label={'Smartworld Sky Arc':'Sky Arc','SMARTWORLD THE EDITION':'Edition','Trump Residences Gurgaon':'Trump','Smartworld Le Courtyard':'Le Courtyard','Smartworld Suites':'Suites','Smartworld Residencies':'Residencies'};
+    const label={'Smartworld Sky Arc':'Sky Arc','SMARTWORLD SKY ARC':'Sky Arc','SMARTWORLD THE EDITION':'Edition','Trump Residences Gurgaon':'Trump','Smartworld Le Courtyard':'Le Courtyard','Smartworld Suites':'Suites','Smartworld Residencies':'Residencies'};
     const projs=filters.project.split('||').filter(Boolean);
     const projLabels=projs.map(p=>label[p]||p);
     const vacant=(base.vacantUnits||[]).filter(u=>projs.includes(u.project)||projLabels.includes(u.projectLabel));
     const rebooked=(base.rebookedUnits||[]).filter(u=>projs.includes(u.project)||projLabels.includes(u.projectLabel));
     const byProject=(base.byProject||[]).filter(u=>projLabels.includes(u.project));
     const bucketMap={'0–30 days':0,'31–90 days':0,'91–180 days':0,'180+ days':0};
-    vacant.forEach(u=>{const d=u.daysVacant||0;if(d<=30)bucketMap['0–30 days']++;else if(d<=90)bucketMap['31–90 days']++;else if(d<=180)bucketMap['91–180 days']++;else bucketMap['180+ days']++;});
+    vacant.forEach(u=>{const dd=u.vacantDays||u.daysVacant||0;if(dd<=30)bucketMap['0–30 days']++;else if(dd<=90)bucketMap['31–90 days']++;else if(dd<=180)bucketMap['91–180 days']++;else bucketMap['180+ days']++;});
     const total=vacant.length+rebooked.length;
     return{summary:{totalCancelled:total,rebooked:rebooked.length,stillVacant:vacant.length,rebookedPct:total>0?Math.round(rebooked.length/total*100):0},buckets:(base.buckets||[]).map(b=>({...b,count:bucketMap[b.label]||0})),byProject,vacantUnits:vacant,rebookedUnits:rebooked};
   },[raw,filters.project]);
