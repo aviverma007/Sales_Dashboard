@@ -1677,7 +1677,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
         targetAreaSqft:target.areaSqft||null,
         isFuture:labelNum>today,
         isCurrent:label===TODAY_LABEL,
-        actualRate:(raw?.monthlyActualRates||{})[label]||null,
+        actualRate:(filters.project?.includes('SKY ARC')?(raw?.skyarcMonthlyRates||{}):(raw?.monthlyActualRates||{}))[label]||null,
         // Continuous lines — show on ALL months that have target data
         targetUnitsLine:target.units||null,
         targetTsvLine:target.tsvCr||null,
@@ -2480,7 +2480,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const pastCqmR=cqmObjR.filter(o=>o.ym<todayYMR).map(o=>o.label);
                     const futureCqmR=cqmObjR.filter(o=>o.ym>=todayYMR).map(o=>o.label);
                     // Rate projection: use RAW (unfiltered) actual rates so FY filter doesn't break projection
-                    const rawActualRatesMap=raw?.monthlyActualRates||{};
+                    const rawActualRatesMap=filters.project?.includes('SKY ARC')?(raw?.skyarcMonthlyRates||{}):(raw?.monthlyActualRates||{});
                     const allActualRates=Object.entries(rawActualRatesMap).filter(([,v])=>v>0).map(([label,rate])=>({label,actualRate:rate,ym:lblYmR(label)})).filter(d=>d.ym>0&&d.ym<=todayYMR).sort((a,b)=>a.ym-b.ym);
                     const recentRates=allActualRates.slice(-3);
                     const lastKnownRate=recentRates.length>0?recentRates[recentRates.length-1].actualRate:0;
@@ -2501,8 +2501,9 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     // i.e. what rate must be achieved on remaining inventory to hit overall target TSV
                     const soldTCVVal=(kpiEx.totalTCVCr||0)*1e7;
                     const availAreaR=kpiEx.availAreaSqft||0;
-                    // AOP target rate = average of ALL monthly target rates (from raw targets)
-                    const allRawTargets=(raw?.monthlyTargets||[]).filter(t=>t.targetRate>0);
+                    // AOP target rate = average of ALL monthly target rates for current project
+                    const selProjR=filters.project||'';
+                    const allRawTargets=(raw?.monthlyTargets||[]).filter(t=>t.targetRate>0&&(!t.projectFilter||t.projectFilter===selProjR||selProjR===''));
                     const aopTargetRate=allRawTargets.length>0?Math.round(allRawTargets.reduce((s,t)=>s+t.targetRate,0)/allRawTargets.length):lastKnownRate;
                     // Target TSV = soldTCV + (available area × AOP target rate)
                     const targetTSVVal=soldTCVVal+(availAreaR*aopTargetRate);
@@ -2579,12 +2580,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                           </div>
                         ))}
                         {/* % achieved badge */}
-                        {(()=>{
-                          const bookedU=kpiEx.bookedAreaSqft>0?pAAll.length:0;
-                          const totalU=kpiEx.totalSuperArea>0?Math.round(kpiEx.totalSuperArea/(kpiEx.bookedAreaSqft/Math.max(bookedU,1))):0;
-                          const pctSold=totalU>0?Math.round(bookedU/totalU*100):Math.round((kpiEx.bookedAreaSqft/(kpiEx.totalSuperArea||1))*100);
-                          return <div style={{marginLeft:'auto',background:'#fff9c4',border:'2px solid #f9a825',borderRadius:6,padding:'2px 10px',fontSize:14,fontWeight:900,color:'#e65100'}}>{pctSold}%</div>;
-                        })()}
+                        <div style={{marginLeft:'auto',background:'#fff9c4',border:'2px solid #f9a825',borderRadius:6,padding:'2px 10px',fontSize:14,fontWeight:900,color:'#e65100'}}>{kpiEx.soldPctValue||0}%</div>
                       </div>
                       <div style={{display:'flex',gap:12}}>
                         {/* Main dual-axis chart */}
