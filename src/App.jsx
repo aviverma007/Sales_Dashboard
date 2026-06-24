@@ -2234,7 +2234,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                         if(dParts){
                           const moN={Jan:1,Feb:2,Mar:3,Apr:4,May:5,Jun:6,Jul:7,Aug:8,Sep:9,Oct:10,Nov:11,Dec:12};
                           const dYm=(2000+parseInt(dParts[2]))*100+(moN[dParts[1]]||0);
-                          if(dYm<todayYMn) return null; // past month — no grey dot/line
+                          if(dYm<todayYMn&&d.label!==TODAY_LABEL) return null; // past month — no grey dot/line
                         }
                         return d.targetUnitsLine||null;
                       })(),
@@ -2326,7 +2326,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const rawDataTsv=monthlyWithTargets.map(d=>({label:d.label,isFuture:d.isFuture,isCurrent:d.label===TODAY_LABEL,
                       achieved:d.isFuture?null:(d.bspCr||0),
                       target:d.targetTsvLine||null,
-                      targetLine:(()=>{if(tsvProjMap[d.label]!=null)return null;const p=d.label.match(/([A-Za-z]{3})'(\d{2})/);if(p&&(2000+parseInt(p[2]))*100+(moNT[p[1]]||0)<todayYMT&&d.label!==TODAY_LABEL)return null;return d.targetTsvLine||null;})(),
+                      targetLine:(!d.isFuture&&!d.isCurrent||tsvProjMap[d.label]!=null)?null:(d.targetTsvLine||null),
                       projection:tsvProjMap[d.label]||null,
                       bridge:(d.label===lastTsvLbl?tsvProjMap[lastTsvLbl]:d.label===nqBLblT?(monthlyWithTargets.find(r=>r.label===nqBLblT)?.targetTsvLine||null):null),
                     }));
@@ -2403,7 +2403,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                       label:d.label,isFuture:d.isFuture,isCurrent:d.label===TODAY_LABEL,
                       achieved:d.isFuture?null:(d.bookedAreaSqft!=null&&d.bookedAreaSqft>0?+(d.bookedAreaSqft/100000).toFixed(2):0),
                       target:d.targetAreaSqft?+(d.targetAreaSqft/100000).toFixed(2):null,
-                      targetLine:(()=>{if(areaProjMap2[d.label]!=null)return null;const p=d.label.match(/([A-Za-z]{3})'(\d{2})/);if(p&&(2000+parseInt(p[2]))*100+(moNA2[p[1]]||0)<todayYMA3&&d.label!==TODAY_LABEL)return null;return d.targetAreaSqft?+(d.targetAreaSqft/100000).toFixed(2):null;})(),
+                      targetLine:(!d.isFuture&&!d.isCurrent||areaProjMap2[d.label]!=null)?null:(d.targetAreaSqft?+(d.targetAreaSqft/100000).toFixed(2):null),
                       projection:areaProjMap2[d.label]!=null?+(areaProjMap2[d.label]/100000).toFixed(2):null,
                       bridge:(d.label===lastALbl2?+(areaProjMap2[lastALbl2]/100000).toFixed(2):d.label===nqBLblA2?(monthlyWithTargets.find(r=>r.label===nqBLblA2)?.targetAreaSqft?+(monthlyWithTargets.find(r=>r.label===nqBLblA2).targetAreaSqft/100000).toFixed(2):null):null),
                     }));
@@ -2534,7 +2534,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const rawDataR=monthlyWithTargets.map(d=>({label:d.label,isFuture:d.isFuture,isCurrent:d.label===TODAY_LABEL,
                       achieved:d.actualRate>0?d.actualRate:null,
                       target:d.targetRateLine||null,
-                      targetLine:(()=>{if(futureCqmR.includes(d.label)&&rateProjMap[d.label]!=null)return null;const p=d.label.match(/([A-Za-z]{3})'(\d{2})/);if(p&&(2000+parseInt(p[2]))*100+(moNR[p[1]]||0)<todayYMR&&d.label!==TODAY_LABEL)return null;return d.targetRateLine||null;})(),
+                      targetLine:(!d.isFuture&&!d.isCurrent||rateProjMap[d.label]!=null)?null:(d.targetRateLine||null),
                       // Current quarter short-term projection
                       projection:(()=>{
                         if(!futureCqmR.includes(d.label))return null;
