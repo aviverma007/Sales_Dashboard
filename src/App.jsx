@@ -311,11 +311,12 @@ const SH = ({title,sub,light=false,compact=false}) => (
 
 // ─── FILTER SELECT ────────────────────────────────────────────────────────────
 const FSel = ({label,options,value,onChange,multi=false,openId='',activeOpen=null,setActiveOpen=()=>{},mandatory=false}) => {
+  const open    = activeOpen===openId;
+  const setOpen = ()=>setActiveOpen(open?null:openId);
+
   if(multi){
     const vals=value?value.split('||').filter(Boolean):[];
     const toggle=v=>{const n=vals.includes(v)?vals.filter(x=>x!==v):[...vals,v];onChange(n.join('||'));};
-    const open=activeOpen===openId;
-    const setOpen=()=>setActiveOpen(open?null:openId);
     return(
       <div style={{display:'flex',flexDirection:'column',gap:2,position:'relative'}}>
         <label style={{color:T.textM,fontSize:9,fontWeight:800,letterSpacing:1,textTransform:'uppercase'}}>{label}</label>
@@ -325,7 +326,6 @@ const FSel = ({label,options,value,onChange,multi=false,openId='',activeOpen=nul
         </div>
         {open&&(
           <div onClick={e=>e.stopPropagation()} style={{position:'absolute',top:'100%',left:0,zIndex:999,background:'#fff',border:`1px solid ${T.teal}30`,borderRadius:8,boxShadow:'0 8px 24px rgba(0,80,120,0.15)',minWidth:200,maxHeight:260,overflowY:'auto',padding:4,marginTop:2}}>
-            {/* Select All / Clear All row */}
             <div style={{display:'flex',gap:4,padding:'5px 8px 6px',borderBottom:'1px solid rgba(0,151,167,0.1)',marginBottom:3}}>
               <button onClick={()=>onChange(options.join('||'))} style={{flex:1,padding:'3px 8px',borderRadius:6,border:`1px solid ${T.teal}40`,background:`${T.teal}0d`,color:T.tealD,fontSize:9,fontWeight:800,cursor:'pointer'}}>✓ All</button>
               {!mandatory&&<button onClick={()=>onChange('')} style={{flex:1,padding:'3px 8px',borderRadius:6,border:'1px solid rgba(200,40,40,0.3)',background:'rgba(200,40,40,0.06)',color:'#c62828',fontSize:9,fontWeight:800,cursor:'pointer'}}>✕ Clear</button>}
@@ -350,17 +350,31 @@ const FSel = ({label,options,value,onChange,multi=false,openId='',activeOpen=nul
       </div>
     );
   }
+
+  // Single select — styled custom dropdown
   return(
-    <div style={{display:'flex',flexDirection:'column',gap:2}}>
+    <div style={{display:'flex',flexDirection:'column',gap:2,position:'relative'}}>
       <label style={{color:T.textM,fontSize:9,fontWeight:800,letterSpacing:1,textTransform:'uppercase'}}>{label}</label>
-      <select value={value} onChange={e=>onChange(e.target.value)} style={{
-        background:'rgba(255,255,255,0.88)',border:`1px solid ${value?T.teal:'rgba(0,100,140,0.25)'}`,borderRadius:7,
-        color:value?T.tealD:T.textM,padding:'5px 10px',fontSize:11,fontFamily:'Inter,sans-serif',
-        minWidth:120,cursor:'pointer',outline:'none',appearance:'none',fontWeight:value?600:400,
-      }}>
-        <option value="">All</option>
-        {options.map(o=><option key={o} value={o}>{o}</option>)}
-      </select>
+      <div onClick={setOpen} style={{background:'rgba(255,255,255,0.88)',border:`1px solid ${value?T.teal:'rgba(0,100,140,0.25)'}`,borderRadius:7,color:value?T.tealD:T.textM,padding:'5px 10px',fontSize:11,fontFamily:'Inter,sans-serif',minWidth:140,cursor:'pointer',fontWeight:value?600:400,userSelect:'none',display:'flex',justifyContent:'space-between',alignItems:'center',gap:6}}>
+        <span style={{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:160}}>{value||'All'}</span>
+        <span style={{fontSize:8,opacity:0.6}}>{open?'▲':'▼'}</span>
+      </div>
+      {open&&(
+        <div onClick={e=>e.stopPropagation()} style={{position:'absolute',top:'100%',left:0,zIndex:999,background:'#fff',border:`1px solid ${T.teal}30`,borderRadius:8,boxShadow:'0 8px 24px rgba(0,80,120,0.15)',minWidth:220,maxHeight:260,overflowY:'auto',padding:4,marginTop:2}}>
+          {options.map(o=>(
+            <div key={o} onClick={()=>{if(mandatory&&value===o)return;onChange(o);setActiveOpen(null);}}
+              style={{display:'flex',alignItems:'center',gap:8,padding:'8px 12px',borderRadius:6,cursor:'pointer',
+                background:value===o?`${T.teal}12`:'transparent',
+                fontSize:11,fontWeight:value===o?700:400,
+                color:value===o?T.tealD:T.text,transition:'background 0.1s'}}
+            >
+              <div style={{width:8,height:8,borderRadius:'50%',background:value===o?T.teal:'rgba(0,100,140,0.2)',flexShrink:0,transition:'all 0.1s'}}/>
+              <span>{o}</span>
+              {value===o&&<span style={{marginLeft:'auto',color:T.teal,fontSize:10}}>✓</span>}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
@@ -1780,7 +1794,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
 
         {/* Filter strip */}
         <div onClick={e=>e.stopPropagation()} style={{maxWidth:1440,margin:'0 auto',padding:'4px 24px 8px',display:'flex',alignItems:'flex-end',gap:10,flexWrap:'wrap'}}>
-          <FSel label="Project"    options={availProj}                           value={filters.project}  onChange={v=>sf('project',v)}   multi={true} openId="project"    activeOpen={activeFilter} setActiveOpen={setActiveFilter} mandatory={true}/>
+          <FSel label="Project"    options={availProj}                           value={filters.project}  onChange={v=>sf('project',v)}   multi={false} openId="project"    activeOpen={activeFilter} setActiveOpen={setActiveFilter} mandatory={true}/>
           <FSel label="Fin. Year"  options={fo.financialYears||[]}               value={filters.fy}       onChange={v=>sf('fy',v)}         multi={true} openId="fy"         activeOpen={activeFilter} setActiveOpen={setActiveFilter}/>
           <FSel label="Quarter"       options={FY_QUARTERS}                              value={filters.quarter}  onChange={v=>sf('quarter',v)}    multi={true} openId="quarter"    activeOpen={activeFilter} setActiveOpen={setActiveFilter}/>
           <FSel label="Month"        options={MONTHS_LIST}                              value={filters.month}    onChange={v=>sf('month',v)}      multi={true} openId="month"      activeOpen={activeFilter} setActiveOpen={setActiveFilter}/>
