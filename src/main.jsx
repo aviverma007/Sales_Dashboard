@@ -8,20 +8,22 @@ import PRPOApp from './PRPOApp';
 import './index.css';
 
 const USERS = {
-  'Sales': { password: 'Smart@2026', profile: 'sales',  sessionKey: 'sd_auth' },
-  'Cost':  { password: 'Smart@2026', profile: 'cost',   sessionKey: 'cost_auth' },
-  'Cost2': { password: 'Smart@2026', profile: 'cost2',  sessionKey: 'cost2_auth' },
-  'CRM':   { password: 'Smart@2026', profile: 'crm',    sessionKey: 'crm_auth' },
-  'PRPO':  { password: 'Smart@2026', profile: 'prpo',   sessionKey: 'prpo_auth' },
+  'Sales':   { password: 'Smart@2026', profile: 'sales',    sessionKey: 'sd_auth' },
+  'Swsales': { password: 'Smart@2026', profile: 'swsales',  sessionKey: 'swsales_auth' },
+  'Cost':    { password: 'Smart@2026', profile: 'cost',     sessionKey: 'cost_auth' },
+  'Cost2':   { password: 'Smart@2026', profile: 'cost2',    sessionKey: 'cost2_auth' },
+  'CRM':     { password: 'Smart@2026', profile: 'crm',      sessionKey: 'crm_auth' },
+  'PRPO':    { password: 'Smart@2026', profile: 'prpo',     sessionKey: 'prpo_auth' },
 };
 
 function Portal() {
   const [profile, setProfile] = useState(() => {
-    if (sessionStorage.getItem('sd_auth')    === '1') return 'sales';
-    if (sessionStorage.getItem('cost_auth')  === '1') return 'cost';
-    if (sessionStorage.getItem('cost2_auth') === '1') return 'cost2';
-    if (sessionStorage.getItem('crm_auth')   === '1') return 'crm';
-    if (sessionStorage.getItem('prpo_auth')  === '1') return 'prpo';
+    if (sessionStorage.getItem('sd_auth')      === '1') return 'sales';
+    if (sessionStorage.getItem('swsales_auth') === '1') return 'swsales';
+    if (sessionStorage.getItem('cost_auth')    === '1') return 'cost';
+    if (sessionStorage.getItem('cost2_auth')   === '1') return 'cost2';
+    if (sessionStorage.getItem('crm_auth')     === '1') return 'crm';
+    if (sessionStorage.getItem('prpo_auth')    === '1') return 'prpo';
     return null;
   });
 
@@ -42,8 +44,9 @@ function Portal() {
     }
   };
 
-  if (profile === 'sales') return <App />;
-  if (profile === 'cost')  return <CostApp />;
+  if (profile === 'sales')   return <App />;
+  if (profile === 'swsales') return <App overviewOnly={true} />;
+  if (profile === 'cost')    return <CostApp />;
   if (profile === 'cost2') return <Cost2App />;
   if (profile === 'crm')   return <CRMApp />;
   if (profile === 'prpo')  return <PRPOApp />;

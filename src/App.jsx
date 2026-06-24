@@ -1290,8 +1290,8 @@ const PnLTab = ({T, GC, SH, filters, sf, raw}) => {
   );
 };
 
-export default function App() {
-  return <AppErrorBoundary><AppInner/></AppErrorBoundary>;
+export default function App({overviewOnly=false}) {
+  return <AppErrorBoundary><AppInner overviewOnly={overviewOnly}/></AppErrorBoundary>;
 }
 
 
@@ -1300,7 +1300,7 @@ const getProjectFiles = (project) => {
   return {dapp:'/data/dapp_kpi.json', pnl:'/data/pnl_data.json'};
 };
 
-function AppInner() {
+function AppInner({overviewOnly=false}) {
   const [authed, setAuthed] = useState(()=>sessionStorage.getItem('sd_auth')==='1');
   const [raw,setRaw]=useState(null);
   const [loading,setLoading]=useState(true);
@@ -1725,7 +1725,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
   );
 
   // Tab labels
-  const tabs=[{k:'overview',l:'Overview'},{k:'collections',l:'Demands & Collections'},{k:'pnl',l:'P&L'}];
+  const tabs=overviewOnly?[{k:'overview',l:'Overview'}]:[{k:'overview',l:'Overview'},{k:'collections',l:'Demands & Collections'},{k:'pnl',l:'P&L'}];
 
   return (
     <div style={{minHeight:'100vh',backgroundImage:'url(/bg.jpg)',backgroundSize:'cover',backgroundPosition:'center',backgroundAttachment:'fixed',fontFamily:'Inter,sans-serif',color:T.text}}>
