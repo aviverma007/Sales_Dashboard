@@ -1,4 +1,4 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { font-size: 14px; }
+html { font-size: 15px; }
 body { background: #030712; color: #e2e8f0; font-family: 'Rajdhani', sans-serif; -webkit-font-smoothing: antialiased; }
 #root { min-height: 100vh; }

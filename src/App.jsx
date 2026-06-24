@@ -19,7 +19,7 @@ const T = {
   amber:  '#f57c00', amberL:'#ffb300',
   green:  '#2e7d32', greenL:'#43a047',
   gray:   '#546e7a',
-  text:   '#0a1628', textM:'#1a2f45', textL:'#2d4a66', textW:'rgba(255,255,255,0.97)',
+  text:   '#040d1a', textM:'#0d1f3c', textD:'#000d1f', textL:'#1a3352', textW:'rgba(255,255,255,1.0)',
 };
 const CC = ['#0097a7','#1565c0','#2e7d32','#f57c00','#d32f2f','#6a1b9a','#00838f','#37474f'];
 
@@ -157,12 +157,12 @@ const useChartFlip = (id) => {
 const TableView = ({title, headers, rows, onFlipBack}) => (
   <div style={{height:'100%',display:'flex',flexDirection:'column',padding:14}}>
     <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8,flexShrink:0}}>
-      <span style={{fontSize:13,fontWeight:900,color:T.tealD,textTransform:'uppercase',letterSpacing:0.5}}>{title}</span>
-      <button onClick={onFlipBack} style={{padding:'3px 10px',borderRadius:16,border:'1px solid rgba(0,151,167,0.3)',background:T.teal,color:'#fff',fontSize:9,fontWeight:800,cursor:'pointer'}}>📊 Chart</button>
+      <span style={{fontSize:15,fontWeight:900,color:T.tealD,textTransform:'uppercase',letterSpacing:0.5}}>{title}</span>
+      <button onClick={onFlipBack} style={{padding:'3px 10px',borderRadius:16,border:'1px solid rgba(0,151,167,0.3)',background:T.teal,color:'#fff',fontSize:10,fontWeight:800,cursor:'pointer'}}>📊 Chart</button>
     </div>
     <div style={{flex:1,overflowY:'auto'}}>
       <table style={{width:'100%',borderCollapse:'collapse',fontSize:10}}>
-        <thead><tr style={{borderBottom:'2px solid rgba(0,151,167,0.15)'}}>{headers.map((h,i)=><th key={i} style={{padding:'5px 8px',textAlign:'left',fontSize:9,fontWeight:800,color:'#546e7a',textTransform:'uppercase',whiteSpace:'nowrap'}}>{h}</th>)}</tr></thead>
+        <thead><tr style={{borderBottom:'2px solid rgba(0,151,167,0.15)'}}>{headers.map((h,i)=><th key={i} style={{padding:'5px 8px',textAlign:'left',fontSize:10,fontWeight:800,color:'#546e7a',textTransform:'uppercase',whiteSpace:'nowrap'}}>{h}</th>)}</tr></thead>
         <tbody>{rows.map((row,i)=><tr key={i} style={{borderBottom:'1px solid rgba(0,100,140,0.06)'}}>{row.map((cell,j)=><td key={j} style={{padding:'5px 8px',color:'#0d2137',fontWeight:600}}>{cell}</td>)}</tr>)}</tbody>
       </table>
     </div>
@@ -279,7 +279,7 @@ const MonthRangeSlider = ({months, rangeIdx, setRangeIdx, onReset}) => {
 const CTip = ({active,payload,label,fmt}) => {
   if(!active||!payload?.length) return null;
   return (
-    <div style={{background:'rgba(255,255,255,0.97)',border:'1px solid rgba(0,151,167,0.3)',borderRadius:10,padding:'8px 12px',boxShadow:'0 8px 32px rgba(0,80,120,0.18)',fontFamily:'Inter,sans-serif',fontSize:11}}>
+    <div style={{background:'rgba(255,255,255,0.97)',border:'1px solid rgba(0,151,167,0.3)',borderRadius:10,padding:'8px 12px',boxShadow:'0 8px 32px rgba(0,80,120,0.18)',fontFamily:'Inter,sans-serif',fontSize:12}}>
       <p style={{color:T.tealD,fontWeight:700,marginBottom:4}}>{label}</p>
       {payload.map((p,i)=>(<p key={i} style={{color:p.color||T.text,margin:'2px 0'}}><span style={{color:T.textL}}>{p.name}: </span>{fmt?fmt(p.value,p.name):(typeof p.value==='number'?p.value.toLocaleString('en-IN'):p.value)}</p>))}
     </div>
@@ -320,15 +320,15 @@ const FSel = ({label,options,value,onChange,multi=false,openId='',activeOpen=nul
     return(
       <div style={{display:'flex',flexDirection:'column',gap:2,position:'relative'}}>
         <label style={{color:T.textM,fontSize:10,fontWeight:800,letterSpacing:1,textTransform:'uppercase'}}>{label}</label>
-        <div onClick={setOpen} style={{background:'rgba(255,255,255,0.88)',border:`1px solid ${vals.length?T.teal:'rgba(0,100,140,0.25)'}`,borderRadius:7,color:vals.length?T.tealD:T.textM,padding:'5px 10px',fontSize:11,fontFamily:'Inter,sans-serif',minWidth:120,cursor:'pointer',fontWeight:vals.length?600:400,userSelect:'none',display:'flex',justifyContent:'space-between',alignItems:'center',gap:6}}>
+        <div onClick={setOpen} style={{background:'rgba(255,255,255,0.88)',border:`1px solid ${vals.length?T.teal:'rgba(0,100,140,0.25)'}`,borderRadius:7,color:vals.length?T.tealD:T.textM,padding:'5px 10px',fontSize:12,fontFamily:'Inter,sans-serif',minWidth:120,cursor:'pointer',fontWeight:vals.length?600:400,userSelect:'none',display:'flex',justifyContent:'space-between',alignItems:'center',gap:6}}>
           <span style={{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:130}}>{vals.length?vals.join(', '):'All'}</span>
           <span style={{fontSize:8,opacity:0.6}}>{open?'▲':'▼'}</span>
         </div>
         {open&&(
           <div onClick={e=>e.stopPropagation()} style={{position:'absolute',top:'100%',left:0,zIndex:999,background:'#fff',border:`1px solid ${T.teal}30`,borderRadius:8,boxShadow:'0 8px 24px rgba(0,80,120,0.15)',minWidth:200,maxHeight:260,overflowY:'auto',padding:4,marginTop:2}}>
             <div style={{display:'flex',gap:4,padding:'5px 8px 6px',borderBottom:'1px solid rgba(0,151,167,0.1)',marginBottom:3}}>
-              <button onClick={()=>onChange(options.join('||'))} style={{flex:1,padding:'3px 8px',borderRadius:6,border:`1px solid ${T.teal}40`,background:`${T.teal}0d`,color:T.tealD,fontSize:9,fontWeight:800,cursor:'pointer'}}>✓ All</button>
-              {!mandatory&&<button onClick={()=>onChange('')} style={{flex:1,padding:'3px 8px',borderRadius:6,border:'1px solid rgba(200,40,40,0.3)',background:'rgba(200,40,40,0.06)',color:'#c62828',fontSize:9,fontWeight:800,cursor:'pointer'}}>✕ Clear</button>}
+              <button onClick={()=>onChange(options.join('||'))} style={{flex:1,padding:'3px 8px',borderRadius:6,border:`1px solid ${T.teal}40`,background:`${T.teal}0d`,color:T.tealD,fontSize:10,fontWeight:800,cursor:'pointer'}}>✓ All</button>
+              {!mandatory&&<button onClick={()=>onChange('')} style={{flex:1,padding:'3px 8px',borderRadius:6,border:'1px solid rgba(200,40,40,0.3)',background:'rgba(200,40,40,0.06)',color:'#c62828',fontSize:10,fontWeight:800,cursor:'pointer'}}>✕ Clear</button>}
             </div>
             {options.map(o=>(
               <div key={o}
@@ -355,7 +355,7 @@ const FSel = ({label,options,value,onChange,multi=false,openId='',activeOpen=nul
   return(
     <div style={{display:'flex',flexDirection:'column',gap:2,position:'relative'}}>
       <label style={{color:T.textM,fontSize:10,fontWeight:800,letterSpacing:1,textTransform:'uppercase'}}>{label}</label>
-      <div onClick={setOpen} style={{background:'rgba(255,255,255,0.88)',border:`1px solid ${value?T.teal:'rgba(0,100,140,0.25)'}`,borderRadius:7,color:value?T.tealD:T.textM,padding:'5px 10px',fontSize:11,fontFamily:'Inter,sans-serif',minWidth:140,cursor:'pointer',fontWeight:value?600:400,userSelect:'none',display:'flex',justifyContent:'space-between',alignItems:'center',gap:6}}>
+      <div onClick={setOpen} style={{background:'rgba(255,255,255,0.88)',border:`1px solid ${value?T.teal:'rgba(0,100,140,0.25)'}`,borderRadius:7,color:value?T.tealD:T.textM,padding:'5px 10px',fontSize:12,fontFamily:'Inter,sans-serif',minWidth:140,cursor:'pointer',fontWeight:value?600:400,userSelect:'none',display:'flex',justifyContent:'space-between',alignItems:'center',gap:6}}>
         <span style={{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:160}}>{value||'All'}</span>
         <span style={{fontSize:8,opacity:0.6}}>{open?'▲':'▼'}</span>
       </div>
@@ -390,7 +390,7 @@ const Chip = ({label,value,color=T.teal,small=false}) => (
 
 // ─── BADGE ───────────────────────────────────────────────────────────────────
 const Badge = ({label,color=T.teal}) => (
-  <span style={{display:'inline-flex',padding:'1px 7px',borderRadius:10,fontSize:9,fontWeight:700,background:`${color}18`,border:`1px solid ${color}33`,color}}>{label}</span>
+  <span style={{display:'inline-flex',padding:'1px 7px',borderRadius:10,fontSize:10,fontWeight:700,background:`${color}18`,border:`1px solid ${color}33`,color}}>{label}</span>
 );
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -404,16 +404,16 @@ const ChartCardCP = ({topCP,cpExpanded,setCpExpanded,CC,T,CTip,SH}) => {
   if(flipped) return <TableView title="Top Channel Partners" headers={['#','Partner','Units','Sales']} rows={rows} onFlipBack={()=>setFlipped(false)}/>;
   const barH=22, chartH=Math.max(160, visible.length*barH+40);
   return (<div style={{padding:16,position:'relative',height:'100%'}}>
-    <button onClick={()=>setFlipped(true)} style={{position:'absolute',top:8,right:8,zIndex:20,padding:'3px 10px',borderRadius:16,border:'1px solid rgba(0,151,167,0.25)',background:'rgba(255,255,255,0.9)',color:'#006978',fontSize:9,fontWeight:800,cursor:'pointer'}}>⊞ Table</button>
+    <button onClick={()=>setFlipped(true)} style={{position:'absolute',top:8,right:8,zIndex:20,padding:'3px 10px',borderRadius:16,border:'1px solid rgba(0,151,167,0.25)',background:'rgba(255,255,255,0.9)',color:'#006978',fontSize:10,fontWeight:800,cursor:'pointer'}}>⊞ Table</button>
     <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:4,paddingRight:54}}>
       <SH title={`Top CP-${cpExpanded?topCP.length:Math.min(10,topCP.length)}`} sub="Channel Partners by Units Booked · Sales Value"/>
-      {topCP.length>10&&(<button onClick={()=>setCpExpanded(e=>!e)} style={{flexShrink:0,padding:'3px 12px',background:'rgba(0,151,167,0.07)',border:'1px solid rgba(0,151,167,0.2)',borderRadius:16,cursor:'pointer',fontSize:10,fontWeight:700,color:T.tealD,whiteSpace:'nowrap'}}>{cpExpanded?'▲ Show less':'▼ +'+String(topCP.length-10)+' more'}</button>)}
+      {topCP.length>10&&(<button onClick={()=>setCpExpanded(e=>!e)} style={{flexShrink:0,padding:'3px 12px',background:'rgba(0,151,167,0.07)',border:'1px solid rgba(0,151,167,0.2)',borderRadius:16,cursor:'pointer',fontSize:11,fontWeight:700,color:T.tealD,whiteSpace:'nowrap'}}>{cpExpanded?'▲ Show less':'▼ +'+String(topCP.length-10)+' more'}</button>)}
     </div>
     <ResponsiveContainer width="100%" height={chartH}>
       <BarChart data={visible} layout="vertical" margin={{top:0,right:80,bottom:0,left:0}}>
         <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.2)" horizontal={false}/>
         <XAxis type="number" tick={{fill:T.textM,fontSize:11,fontWeight:700}} axisLine={false} tickLine={false}/>
-        <YAxis type="category" dataKey="name" tick={{fill:T.text,fontSize:10,fontWeight:700}} axisLine={false} tickLine={false} width={145} tickFormatter={v=>v?.length>20?v.slice(0,20)+'…':v}/>
+        <YAxis type="category" dataKey="name" tick={{fill:T.text,fontSize:11,fontWeight:700}} axisLine={false} tickLine={false} width={145} tickFormatter={v=>v?.length>20?v.slice(0,20)+'…':v}/>
         <Tooltip content={<CTip fmt={(v,n)=>n==='Sales (₹Cr)'?'₹'+v+' Cr':v?.toLocaleString?.('en-IN')}/>}/>
         <Bar dataKey="units" name="Units" radius={[0,4,4,0]}><LabelList dataKey="units" position="right" style={{fill:T.navy,fontSize:8,fontWeight:800}}/>
           {visible.map((_,i)=><Cell key={i} fill={CC[i%CC.length]}/>)}
@@ -438,7 +438,7 @@ const ChartCardBvC = ({bvc,bMode,setBMode,bOff,setBOff,toQuarterly,ChartControls
   const amberCap=Math.ceil(maxBooked*0.18);
   const sliceWithCap=slice.map(d=>({...d,targetTopper:d.remaining>0?amberCap:0}));
   return (<div style={{padding:16,position:'relative'}}>
-    <button onClick={()=>setFlipped(true)} style={{position:'absolute',top:8,right:8,zIndex:20,padding:'3px 10px',borderRadius:16,border:'1px solid rgba(0,151,167,0.25)',background:'rgba(255,255,255,0.9)',color:'#006978',fontSize:9,fontWeight:800,cursor:'pointer'}}>⊞ Table</button>
+    <button onClick={()=>setFlipped(true)} style={{position:'absolute',top:8,right:8,zIndex:20,padding:'3px 10px',borderRadius:16,border:'1px solid rgba(0,151,167,0.25)',background:'rgba(255,255,255,0.9)',color:'#006978',fontSize:10,fontWeight:800,cursor:'pointer'}}>⊞ Table</button>
     <SH title="Booking vs. Cancelled" sub="Monthly Comparison"/>
     <ChartControls mode={bMode} setMode={setBMode} offset={bOff} setOffset={setBOff} total={base.length} window={WIN}/>
     <ResponsiveContainer width="100%" height={240}>
@@ -447,7 +447,7 @@ const ChartCardBvC = ({bvc,bMode,setBMode,bOff,setBOff,toQuarterly,ChartControls
         <XAxis dataKey="label" tick={{fill:T.textM,fontSize:11,fontWeight:700}} axisLine={false} tickLine={false} angle={-25} dy={6} interval={0}/>
         <YAxis tick={{fill:T.textM,fontSize:11,fontWeight:700}} axisLine={false} tickLine={false} width={28} domain={[0,'dataMax+5']}/>
         <Tooltip content={<CTip fmt={(v,n)=>{if(n==='Target Remaining')return(slice.find(s=>s.targetTopper===v)?.remaining||v)+' units left';return v;}}/>}/>
-        <Legend wrapperStyle={{color:T.text,fontSize:10,fontWeight:700}} iconSize={8}/>
+        <Legend wrapperStyle={{color:T.text,fontSize:11,fontWeight:700}} iconSize={8}/>
         <Bar dataKey="booked" name="Booked" stackId="a" fill={T.teal} fillOpacity={0.9} radius={[0,0,2,2]}>
           <LabelList dataKey="booked" position="insideTop" style={{fill:'#fff',fontSize:8,fontWeight:800}} formatter={v=>v>0?v:''}/>
         </Bar>
@@ -470,7 +470,7 @@ const ChartCardTrend = ({monthly,tMode,setTMode,tOff,setTOff,toQuarterly,ChartCo
   const rows=base.map(d=>[d.label, d.bspCr?'₹'+d.bspCr+'Cr':'-', d.demCr?'₹'+d.demCr+'Cr':'-', d.recCr?'₹'+d.recCr+'Cr':'-']);
   if(flipped) return <TableView title="Monthly Sales Trend" headers={['Month','Sales BSP','Demand','Received']} rows={rows} onFlipBack={()=>setFlipped(false)}/>;
   return (<div style={{padding:16,position:'relative'}}>
-    <button onClick={()=>setFlipped(true)} style={{position:'absolute',top:8,right:8,zIndex:20,padding:'3px 10px',borderRadius:16,border:'1px solid rgba(0,151,167,0.25)',background:'rgba(255,255,255,0.9)',color:'#006978',fontSize:9,fontWeight:800,cursor:'pointer'}}>⊞ Table</button>
+    <button onClick={()=>setFlipped(true)} style={{position:'absolute',top:8,right:8,zIndex:20,padding:'3px 10px',borderRadius:16,border:'1px solid rgba(0,151,167,0.25)',background:'rgba(255,255,255,0.9)',color:'#006978',fontSize:10,fontWeight:800,cursor:'pointer'}}>⊞ Table</button>
     <SH title="Monthly Sales Trend" sub="BSP · Demand · Collections — ₹ Crores"/>
     <ChartControls mode={tMode} setMode={setTMode} offset={tOff} setOffset={setTOff} total={base.length} window={WIN}/>
     <ResponsiveContainer width="100%" height={200}>
@@ -484,7 +484,7 @@ const ChartCardTrend = ({monthly,tMode,setTMode,tOff,setTOff,toQuarterly,ChartCo
         <XAxis dataKey="label" tick={{fill:T.textM,fontSize:11,fontWeight:700}} axisLine={false} tickLine={false} interval={0} angle={-25} dy={6}/>
         <YAxis tick={{fill:T.textM,fontSize:11,fontWeight:700}} axisLine={false} tickLine={false} tickFormatter={v=>v+'Cr'} width={38}/>
         <Tooltip content={<CTip fmt={v=>'₹'+v+' Cr'}/>}/>
-        <Legend wrapperStyle={{color:T.text,fontSize:10,fontWeight:700}} iconSize={8}/>
+        <Legend wrapperStyle={{color:T.text,fontSize:11,fontWeight:700}} iconSize={8}/>
         <Area type="monotone" dataKey="bspCr" name="Sales(BSP)" stroke={T.teal} fill="url(#a1)" strokeWidth={2} dot={{r:3,fill:T.teal}} activeDot={{r:4}}>
           <LabelList dataKey="bspCr" position="top" style={{fill:T.tealD,fontSize:7,fontWeight:700}} formatter={v=>v>0?v+'Cr':''}/>
         </Area>
@@ -504,14 +504,14 @@ const ChartCardBHK = ({bhkS,CC,T,SH}) => {
   const rows=bhkS.map(d=>[d.bhk, d.booked, d.total, d.available, d.total>0?Math.round((d.booked/d.total)*100)+'%':'0%']);
   if(flipped) return <TableView title="Product-wise (BHK)" headers={['Type','Booked','Total','Available','% Sold']} rows={rows} onFlipBack={()=>setFlipped(false)}/>;
   return (<div style={{padding:16,position:'relative'}}>
-    <button onClick={()=>setFlipped(true)} style={{position:'absolute',top:8,right:8,zIndex:20,padding:'3px 10px',borderRadius:16,border:'1px solid rgba(0,151,167,0.25)',background:'rgba(255,255,255,0.9)',color:'#006978',fontSize:9,fontWeight:800,cursor:'pointer'}}>⊞ Table</button>
+    <button onClick={()=>setFlipped(true)} style={{position:'absolute',top:8,right:8,zIndex:20,padding:'3px 10px',borderRadius:16,border:'1px solid rgba(0,151,167,0.25)',background:'rgba(255,255,255,0.9)',color:'#006978',fontSize:10,fontWeight:800,cursor:'pointer'}}>⊞ Table</button>
     <SH title="Product-wise" sub="BHK — Booked vs Total Inventory"/>
     <ResponsiveContainer width="100%" height={200}>
       <BarChart data={bhkS} layout="vertical" margin={{top:4,right:70,bottom:4,left:0}} barCategoryGap="30%">
         <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.1)" horizontal={false}/>
         <XAxis type="number" tick={{fill:T.textM,fontSize:11,fontWeight:700}} axisLine={false} tickLine={false}/>
-        <YAxis type="category" dataKey="bhk" tick={{fill:T.text,fontSize:10,fontWeight:700}} axisLine={false} tickLine={false} width={85}/>
-        <Tooltip content={({active,payload,label})=>{if(!active||!payload?.length)return null;return(<div style={{background:'rgba(255,255,255,0.97)',border:'1px solid rgba(0,151,167,0.3)',borderRadius:10,padding:'8px 12px',boxShadow:'0 8px 32px rgba(0,80,120,0.18)',fontFamily:'Inter,sans-serif',fontSize:11}}><p style={{color:T.tealD,fontWeight:700,margin:'0 0 4px'}}>{label}</p>{payload.map((p,i)=>(<div key={i} style={{display:'flex',justifyContent:'space-between',gap:16,marginBottom:2}}><span style={{color:T.textM,fontWeight:600,fontSize:10}}>{p.name}</span><span style={{color:T.navy,fontWeight:800,fontSize:10}}>{p.value}</span></div>))}</div>);}}/>
+        <YAxis type="category" dataKey="bhk" tick={{fill:T.text,fontSize:11,fontWeight:700}} axisLine={false} tickLine={false} width={85}/>
+        <Tooltip content={({active,payload,label})=>{if(!active||!payload?.length)return null;return(<div style={{background:'rgba(255,255,255,0.97)',border:'1px solid rgba(0,151,167,0.3)',borderRadius:10,padding:'8px 12px',boxShadow:'0 8px 32px rgba(0,80,120,0.18)',fontFamily:'Inter,sans-serif',fontSize:12}}><p style={{color:T.tealD,fontWeight:700,margin:'0 0 4px'}}>{label}</p>{payload.map((p,i)=>(<div key={i} style={{display:'flex',justifyContent:'space-between',gap:16,marginBottom:2}}><span style={{color:T.textM,fontWeight:600,fontSize:10}}>{p.name}</span><span style={{color:T.navy,fontWeight:800,fontSize:10}}>{p.value}</span></div>))}</div>);}}/>
         <Legend iconSize={10} formatter={(value)=>(<span style={{color:T.navy,fontSize:10,fontWeight:800}}>{value}</span>)}/>
         <Bar dataKey="booked" name="Booked" stackId="s" radius={[0,0,0,0]}>
           {bhkS.map((_,i)=><Cell key={i} fill={CC[i%CC.length]}/>)}
@@ -573,8 +573,8 @@ const SummaryBar = ({raw, filters, T, GC}) => {
       {cards.map(({label,value,sub,color})=>(
         <GC key={label} style={{padding:'13px 16px'}} cls="kc">
           <div style={{position:'absolute',top:0,left:0,right:0,height:3,background:color,borderRadius:'14px 14px 0 0'}}/>
-          <p style={{fontSize:9,fontWeight:800,color:'#94a3b8',textTransform:'uppercase',letterSpacing:.7,margin:'2px 0 6px'}}>{label}</p>
-          <p style={{fontSize:23,fontWeight:900,color:T.navy,margin:'0 0 3px',lineHeight:1,letterSpacing:-0.5}}>{value}</p>
+          <p style={{fontSize:10,fontWeight:800,color:'#94a3b8',textTransform:'uppercase',letterSpacing:.7,margin:'2px 0 6px'}}>{label}</p>
+          <p style={{fontSize:26,fontWeight:900,color:T.navy,margin:'0 0 3px',lineHeight:1,letterSpacing:-0.5}}>{value}</p>
           <p style={{fontSize:10,color:T.textL,margin:0}}>{sub}</p>
         </GC>
       ))}
@@ -720,7 +720,7 @@ const CollectionsTab = ({T, GC, SH, filters={}, raw}) => {
         <div style={{position:'relative',display:'inline-flex',alignItems:'center',gap:6,background:'rgba(245,158,11,0.1)',border:'1px solid rgba(245,158,11,0.3)',borderRadius:20,padding:'4px 12px',cursor:'pointer'}}
           onMouseEnter={()=>setShowNote(true)} onMouseLeave={()=>setShowNote(false)}>
           <span style={{fontSize:12}}>⚠️</span>
-          <span style={{fontSize:9,fontWeight:800,color:'#92400e',letterSpacing:0.4}}>
+          <span style={{fontSize:10,fontWeight:800,color:'#92400e',letterSpacing:0.4}}>
             Advance: ₹{advRaw.toFixed(1)} Cr received · GST −₹{advGst.toFixed(2)} Cr · Net ₹{advNet.toFixed(1)} Cr
           </span>
           <span style={{fontSize:8,color:'#b45309',borderLeft:'1px solid rgba(180,87,9,0.3)',paddingLeft:8,opacity:0.7}}>hover for details</span>
@@ -738,25 +738,25 @@ const CollectionsTab = ({T, GC, SH, filters={}, raw}) => {
     <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:10}}>
       <GC style={{padding:13}} cls="kc">
         <p style={{fontSize:8,color:T.textM,fontWeight:700,textTransform:'uppercase',margin:'0 0 4px',letterSpacing:0.5}}>Total Sales Value (TCV)</p>
-        <p style={{fontSize:20,fontWeight:900,color:'#1d4ed8',margin:'0 0 4px',letterSpacing:-0.5}}>₹{((filters?.project?.includes('SKY ARC') ? raw?.skyarcKpiExtra?.totalTCVCr : raw?.kpiExtra?.totalTCVCr)||0).toFixed(0)} Cr</p>
+        <p style={{fontSize:24,fontWeight:900,color:'#1d4ed8',margin:'0 0 4px',letterSpacing:-0.5}}>₹{((filters?.project?.includes('SKY ARC') ? raw?.skyarcKpiExtra?.totalTCVCr : raw?.kpiExtra?.totalTCVCr)||0).toFixed(0)} Cr</p>
         <p style={{fontSize:8,color:T.textL,margin:0}}>Booked TCV incl. tax</p>
         <div style={{position:'absolute',bottom:0,left:0,right:0,height:3,background:'linear-gradient(90deg,#1d4ed8,transparent)',borderRadius:'0 0 14px 14px'}}/>
       </GC>
       <GC style={{padding:13}} cls="kc">
         <p style={{fontSize:8,color:T.textM,fontWeight:700,textTransform:'uppercase',margin:'0 0 4px',letterSpacing:0.5}}>Total Demand (W/O GST)</p>
-        <p style={{fontSize:20,fontWeight:900,color:T.amber,margin:'0 0 4px',letterSpacing:-0.5}}>{fmtC(instCr)}</p>
+        <p style={{fontSize:24,fontWeight:900,color:T.amber,margin:'0 0 4px',letterSpacing:-0.5}}>{fmtC(instCr)}</p>
         <p style={{fontSize:8,color:T.textL,margin:0}}>Total demand raised to date</p>
         <div style={{position:'absolute',bottom:0,left:0,right:0,height:3,background:`linear-gradient(90deg,${T.amber},transparent)`,borderRadius:'0 0 14px 14px'}}/>
       </GC>
       <GC style={{padding:13}} cls="kc">
         <p style={{fontSize:8,color:T.textM,fontWeight:700,textTransform:'uppercase',margin:'0 0 4px',letterSpacing:0.5}}>Total Received (W/O GST)</p>
-        <p style={{fontSize:20,fontWeight:900,color:T.tealD,margin:'0 0 4px',letterSpacing:-0.5}}>{fmtC(recCr)}</p>
+        <p style={{fontSize:24,fontWeight:900,color:T.tealD,margin:'0 0 4px',letterSpacing:-0.5}}>{fmtC(recCr)}</p>
         <p style={{fontSize:8,color:T.textL,margin:0}}>Bank received − CGST − SGST</p>
         <div style={{position:'absolute',bottom:0,left:0,right:0,height:3,background:`linear-gradient(90deg,${T.tealD},${T.teal})`,borderRadius:'0 0 14px 14px'}}/>
       </GC>
       <GC style={{padding:13}} cls="kc">
         <p style={{fontSize:8,color:T.textM,fontWeight:700,textTransform:'uppercase',margin:'0 0 4px',letterSpacing:0.5}}>Outstanding (Outstanding 1)</p>
-        <p style={{fontSize:20,fontWeight:900,color:T.red,margin:'0 0 4px',letterSpacing:-0.5}}>{fmtC(outCr)}</p>
+        <p style={{fontSize:24,fontWeight:900,color:T.red,margin:'0 0 4px',letterSpacing:-0.5}}>{fmtC(outCr)}</p>
         <p style={{fontSize:8,color:T.textL,margin:0}}>Unpaid from raised demands</p>
         <div style={{position:'absolute',bottom:0,left:0,right:0,height:3,background:`linear-gradient(90deg,${T.red},transparent)`,borderRadius:'0 0 14px 14px'}}/>
       </GC>
@@ -788,7 +788,7 @@ const CollectionsTab = ({T, GC, SH, filters={}, raw}) => {
         }))} margin={{top:28,right:20,bottom:20,left:0}}>
           <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.07)" vertical={false}/>
           <XAxis dataKey="label" tick={{fill:T.textM,fontSize:11,fontWeight:700}} axisLine={false} tickLine={false}/>
-          <YAxis tick={{fill:T.textM,fontSize:11}} axisLine={false} tickLine={false}
+          <YAxis tick={{fill:T.textM,fontSize:12}} axisLine={false} tickLine={false}
             tickFormatter={v=>v>=1?'₹'+v+'Cr':v>0?'₹'+(v*100).toFixed(0)+'L':''} width={50}/>
           <Tooltip content={({active,payload,label})=>{
             if(!active||!payload?.length) return null;
@@ -796,8 +796,8 @@ const CollectionsTab = ({T, GC, SH, filters={}, raw}) => {
             const total=(d.tlp||0)+(d.clp||0);
             const fmt=v=>v>=1?`₹${v.toFixed(2)} Cr`:`₹${(v*100).toFixed(1)} L`;
             return(
-              <div style={{background:'#fff',border:'1px solid #e5e7eb',borderRadius:8,padding:'8px 12px',fontSize:10,boxShadow:'0 2px 8px rgba(0,0,0,0.1)'}}>
-                <p style={{margin:'0 0 5px',fontWeight:800,color:T.navy,fontSize:11}}>{label}</p>
+              <div style={{background:'#fff',border:'1px solid #e5e7eb',borderRadius:8,padding:'8px 12px',fontSize:12,boxShadow:'0 2px 8px rgba(0,0,0,0.1)'}}>
+                <p style={{margin:'0 0 5px',fontWeight:800,color:T.navy,fontSize:12}}>{label}</p>
                 <p style={{margin:'0 0 2px',color:T.tealD,fontWeight:800}}>Total: {fmt(total)}</p>
                 {d.clp>0&&<p style={{margin:'0 0 1px',color:'#2e7d32'}}>CLP: {fmt(d.clp)}</p>}
                 {d.tlp>0&&<p style={{margin:'0 0 1px',color:T.amber}}>TLP: {fmt(d.tlp)}</p>}
@@ -806,7 +806,7 @@ const CollectionsTab = ({T, GC, SH, filters={}, raw}) => {
             );
           }}/>
           <Bar dataKey="total" name="Collection" fill={T.tealD} radius={[4,4,0,0]} minPointSize={4}>
-            <LabelList dataKey="total" position="top" style={{fontSize:9,fontWeight:800,fill:T.tealD}}
+            <LabelList dataKey="total" position="top" style={{fontSize:10,fontWeight:800,fill:T.tealD}}
               formatter={v=>v>0?(v>=1?'₹'+v.toFixed(1)+'Cr':'₹'+(v*100).toFixed(0)+'L'):''}/>
           </Bar>
         </ComposedChart>
@@ -831,7 +831,7 @@ const CollectionsTab = ({T, GC, SH, filters={}, raw}) => {
           <GC key={i} style={{padding:14}} cls="kc">
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:6}}>
               <div>
-                <p style={{fontSize:13,fontWeight:900,color:T.tealD,margin:0}}>{tw.tower}</p>
+                <p style={{fontSize:15,fontWeight:900,color:T.tealD,margin:0}}>{tw.tower}</p>
                 <p style={{fontSize:9,color:T.textL,margin:'1px 0 0'}}>{units} booked · {avail} avail · ₹{rate.toLocaleString('en-IN')}/sqft</p>
               </div>
               <span style={{fontSize:10,fontWeight:800,color:eff>=100?'#059669':eff>=80?T.tealD:T.amber,background:eff>=100?'rgba(5,150,105,0.1)':'rgba(0,151,167,0.1)',borderRadius:6,padding:'2px 8px'}}>{eff}% eff</span>
@@ -868,9 +868,9 @@ const CollectionsTab = ({T, GC, SH, filters={}, raw}) => {
             <ComposedChart data={milestones} margin={{top:32,right:20,bottom:60,left:0}}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.07)" vertical={false}/>
               <XAxis dataKey="name" tick={{fill:T.textM,fontSize:7,fontWeight:600}} angle={-35} textAnchor="end" height={70} axisLine={false} tickLine={false} tickFormatter={v=>{const m=milestones.find(x=>x.name===v);const n=m?.shortName||v;return n.length>20?n.slice(0,20)+'…':n;}}/>
-              <YAxis tick={{fill:T.textM,fontSize:11}} axisLine={false} tickLine={false} tickFormatter={v=>'₹'+v+'Cr'} width={48}/>
+              <YAxis tick={{fill:T.textM,fontSize:12}} axisLine={false} tickLine={false} tickFormatter={v=>'₹'+v+'Cr'} width={48}/>
               <Tooltip formatter={(v,n)=>[`₹${v} Cr`,n]} labelFormatter={l=>{const m=milestones.find(x=>x.name===l);const n=m?.shortName||l;return `${n}${m?.expectedDate?' ('+m.expectedDate+')':''}`;}}/>
-              <Legend wrapperStyle={{fontSize:9,fontWeight:700}} iconSize={8}/>
+              <Legend wrapperStyle={{fontSize:10,fontWeight:700}} iconSize={8}/>
               <Bar dataKey="totalCr" name={planType==='clp'?'CLP Amount':'TLP Amount'}
                 fill={planType==='clp'?'#2e7d32':T.amber}
                 radius={[3,3,0,0]} maxBarSize={40}>
@@ -896,12 +896,12 @@ const CollectionsTab = ({T, GC, SH, filters={}, raw}) => {
           <thead>
             <tr style={{background:'rgba(0,100,140,0.06)'}}>
               {['Milestone','Type','Expected Date','T-1','T-2','T-3','T-4','T-5','T-6','Total (Cr)'].map(h=>(
-                <th key={h} style={{padding:'8px 10px',textAlign:h==='Milestone'?'left':'right',color:T.textM,fontWeight:800,textTransform:'uppercase',fontSize:10,letterSpacing:0.4,borderBottom:'2px solid rgba(0,100,140,0.12)'}}>
+                <th key={h} style={{padding:'8px 10px',textAlign:h==='Milestone'?'left':'right',color:T.textM,fontWeight:800,textTransform:'uppercase',fontSize:11,letterSpacing:0.4,borderBottom:'2px solid rgba(0,100,140,0.12)'}}>
                   {h==='Expected Date'
                     ? <div style={{display:'flex',alignItems:'center',justifyContent:'flex-end',gap:6}}>
                         <span>{h}</span>
                         <button onClick={()=>setSortBy(s=>s==='date'?'amount':'date')}
-                          style={{fontSize:9,fontWeight:800,cursor:'pointer',border:'none',borderRadius:5,padding:'2px 7px',
+                          style={{fontSize:10,fontWeight:800,cursor:'pointer',border:'none',borderRadius:5,padding:'2px 7px',
                             background:sortBy==='date'?T.tealD:'rgba(0,100,140,0.1)',
                             color:sortBy==='date'?'#fff':T.tealD}}>
                           {sortBy==='date'?'↕ Date':'↕ Amount'}
@@ -919,7 +919,7 @@ const CollectionsTab = ({T, GC, SH, filters={}, raw}) => {
           <tbody>
             {milestones.map((m,i)=>(
               <tr key={i} style={{borderBottom:'1px solid rgba(0,100,140,0.07)',background:i%2===0?'transparent':'rgba(0,100,140,0.02)'}}>
-                <td style={{padding:'8px 10px',color:T.textD,fontWeight:600,fontSize:12,maxWidth:260}}>{m.shortName||m.name}</td>
+                <td style={{padding:'8px 10px',color:T.textD,fontWeight:600,fontSize:13,maxWidth:280}}>{m.shortName||m.name}</td>
                 <td style={{padding:'8px 10px',textAlign:'right'}}>
                   <span style={{background:m.type==='tlp'?'rgba(245,158,11,0.12)':'rgba(0,151,167,0.12)',color:m.type==='tlp'?T.amber:T.tealD,borderRadius:4,padding:'3px 8px',fontSize:10,fontWeight:800}}>{m.type.toUpperCase()}</span>
                 </td>
@@ -951,9 +951,9 @@ const CollectionsTab = ({T, GC, SH, filters={}, raw}) => {
             <ComposedChart data={filteredMonthly} margin={{top:14,right:20,bottom:28,left:0}}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.07)" vertical={false}/>
               <XAxis dataKey="label" tick={{fill:T.textM,fontSize:8,fontWeight:600}} angle={-30} textAnchor="end" height={36} axisLine={false} tickLine={false}/>
-              <YAxis tick={{fill:T.textM,fontSize:11}} axisLine={false} tickLine={false} tickFormatter={v=>'₹'+v+'Cr'} width={46}/>
+              <YAxis tick={{fill:T.textM,fontSize:12}} axisLine={false} tickLine={false} tickFormatter={v=>'₹'+v+'Cr'} width={46}/>
               <Tooltip formatter={(v,n)=>[`₹${v} Cr`,n]}/>
-              <Legend wrapperStyle={{fontSize:9,fontWeight:700}} iconSize={8}/>
+              <Legend wrapperStyle={{fontSize:10,fontWeight:700}} iconSize={8}/>
               {(planType==='all'||planType==='tlp')&&<Bar dataKey="tlp_dem" name="TLP Demand" fill={T.amber} fillOpacity={0.7} radius={[3,3,0,0]} stackId="dem"/>}
               {(planType==='all'||planType==='clp')&&<Bar dataKey="clp_dem" name="CLP Demand" fill="#2e7d32" fillOpacity={0.6} radius={[3,3,0,0]} stackId="dem"/>}
               {(planType==='all'||planType==='hybrid_later')&&<Bar dataKey="hl_dem" name="Hybrid(Later) Demand" fill="#7c3aed" fillOpacity={0.6} radius={[3,3,0,0]} stackId="dem"/>}
@@ -1095,8 +1095,8 @@ const PnLTab = ({T, GC, SH, filters, sf, raw}) => {
   const KpiCard = ({label,value,sub,color='#0097a7',icon}) => (
     <GC style={{padding:'14px 18px'}}>
       <div style={{position:'absolute',top:0,left:0,right:0,height:3,background:color,borderRadius:'14px 14px 0 0'}}/>
-      <p style={{fontSize:9,fontWeight:800,color:'#94a3b8',textTransform:'uppercase',letterSpacing:.7,margin:'4px 0 6px'}}>{label}</p>
-      <p style={{fontSize:20,fontWeight:900,color:T.navy,margin:'0 0 3px',lineHeight:1}}>{value}</p>
+      <p style={{fontSize:10,fontWeight:800,color:'#94a3b8',textTransform:'uppercase',letterSpacing:.7,margin:'4px 0 6px'}}>{label}</p>
+      <p style={{fontSize:24,fontWeight:900,color:T.navy,margin:'0 0 3px',lineHeight:1}}>{value}</p>
       {sub&&<p style={{fontSize:10,color:T.gray,margin:0}}>{sub}</p>}
     </GC>
   );
@@ -1118,7 +1118,7 @@ const PnLTab = ({T, GC, SH, filters, sf, raw}) => {
         <div style={{position:'relative',overflow:'hidden',background:'rgba(255,255,255,0.92)',backdropFilter:'blur(12px)',borderRadius:14,padding:'16px 18px',boxShadow:'0 2px 16px rgba(0,80,120,0.08)',border:`2px solid ${pnl>=0?'#10b981':'#ef4444'}`}}>
           <div style={{position:'absolute',top:0,left:0,right:0,height:4,background:pnl>=0?'linear-gradient(90deg,#10b981,#34d399)':'linear-gradient(90deg,#ef4444,#f87171)',borderRadius:'14px 14px 0 0'}}/>
           <div style={{position:'absolute',right:12,top:12,fontSize:32,opacity:0.12}}>{pnl>=0?'📈':'📉'}</div>
-          <p style={{fontSize:9,fontWeight:800,color:'#94a3b8',textTransform:'uppercase',letterSpacing:.7,margin:'4px 0 6px'}}>Surplus / Deficit</p>
+          <p style={{fontSize:10,fontWeight:800,color:'#94a3b8',textTransform:'uppercase',letterSpacing:.7,margin:'4px 0 6px'}}>Surplus / Deficit</p>
           <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
             <span style={{fontSize:22,fontWeight:900,color:pnl>=0?'#065f46':'#991b1b',lineHeight:1}}>{pnl>=0?'▲':'▼'} ₹{Math.abs(pnl).toLocaleString('en-IN',{maximumFractionDigits:1})} Cr</span>
           </div>
@@ -1149,9 +1149,9 @@ const PnLTab = ({T, GC, SH, filters, sf, raw}) => {
                 </PieChart>
               </ResponsiveContainer>
               <div style={{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',textAlign:'center',pointerEvents:'none',whiteSpace:'nowrap'}}>
-                <p style={{fontSize:10,fontWeight:700,color:T.gray,margin:0,textTransform:'uppercase',letterSpacing:.4}}>Total</p>
+                <p style={{fontSize:11,fontWeight:700,color:T.gray,margin:0,textTransform:'uppercase',letterSpacing:.4}}>Total</p>
                 <p style={{fontSize:16,fontWeight:900,color:T.navy,margin:'2px 0',lineHeight:1}}>₹{projTotal.toFixed(1)}</p>
-                <p style={{fontSize:10,fontWeight:700,color:T.gray,margin:0}}>Cr</p>
+                <p style={{fontSize:11,fontWeight:700,color:T.gray,margin:0}}>Cr</p>
               </div>
             </div>
             <div style={{flex:1}}>
@@ -1186,9 +1186,9 @@ const PnLTab = ({T, GC, SH, filters, sf, raw}) => {
                 </PieChart>
               </ResponsiveContainer>
               <div style={{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',textAlign:'center',pointerEvents:'none',whiteSpace:'nowrap'}}>
-                <p style={{fontSize:10,fontWeight:700,color:T.gray,margin:0,textTransform:'uppercase',letterSpacing:.4}}>Total</p>
+                <p style={{fontSize:11,fontWeight:700,color:T.gray,margin:0,textTransform:'uppercase',letterSpacing:.4}}>Total</p>
                 <p style={{fontSize:16,fontWeight:900,color:T.navy,margin:'2px 0',lineHeight:1}}>₹{npTotal.toFixed(1)}</p>
-                <p style={{fontSize:10,fontWeight:700,color:T.gray,margin:0}}>Cr</p>
+                <p style={{fontSize:11,fontWeight:700,color:T.gray,margin:0}}>Cr</p>
               </div>
             </div>
             <div style={{flex:1}}>
@@ -1213,7 +1213,7 @@ const PnLTab = ({T, GC, SH, filters, sf, raw}) => {
       <GC style={{padding:20,marginBottom:16}}>
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:12,flexWrap:'wrap',gap:8}}>
           <div>
-            <p style={{fontSize:14,fontWeight:800,color:T.tealD,letterSpacing:.4,margin:0,textTransform:'uppercase'}}>Revenue vs Expenditure vs Surplus / Deficit</p>
+            <p style={{fontSize:15,fontWeight:800,color:T.tealD,letterSpacing:.4,margin:0,textTransform:'uppercase'}}>Revenue vs Expenditure vs Surplus / Deficit</p>
             <p style={{fontSize:10,color:T.gray,margin:'2px 0 0'}}>Monthly comparison · ₹ Cr · Mar 2025 onwards</p>
           </div>
           <div style={{display:'flex',gap:16}}>
@@ -1257,7 +1257,7 @@ const PnLTab = ({T, GC, SH, filters, sf, raw}) => {
 
           return (
             <GC style={{padding:'16px 18px'}}>
-              <p style={{fontSize:13,fontWeight:900,color:T.tealD,margin:'0 0 14px',textTransform:'uppercase',letterSpacing:0.5}}>
+              <p style={{fontSize:15,fontWeight:900,color:T.tealD,margin:'0 0 14px',textTransform:'uppercase',letterSpacing:0.5}}>
                 Project at a Glance
               </p>
               <div style={{display:'flex',alignItems:'flex-end',gap:10,height:140,padding:'0 4px'}}>
@@ -1794,9 +1794,9 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
 
             <div style={{display:'flex',alignItems:'center',gap:5,background:'rgba(46,125,50,0.1)',border:'1px solid rgba(46,125,50,0.3)',borderRadius:16,padding:'3px 10px'}}>
               <div style={{width:6,height:6,borderRadius:'50%',background:T.greenL,animation:'pulse 2s ease infinite'}}/>
-              <span style={{color:T.green,fontSize:9,fontWeight:700}}>LIVE</span>
+              <span style={{color:T.green,fontSize:10,fontWeight:700}}>LIVE</span>
             </div>
-            <span style={{color:T.textM,fontSize:10,fontWeight:700}}>{new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})}</span>
+            <span style={{color:T.textM,fontSize:11,fontWeight:700}}>{new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})}</span>
             <button onClick={()=>{sessionStorage.removeItem('sd_auth');window.location.reload();}} style={{display:'flex',alignItems:'center',gap:6,padding:'6px 14px',borderRadius:10,border:'1px solid rgba(200,40,40,0.25)',background:'rgba(211,47,47,0.07)',cursor:'pointer',fontSize:11,fontWeight:700,color:T.red,fontFamily:'Inter,sans-serif',transition:'all 0.15s'}} onMouseOver={e=>{e.currentTarget.style.background='rgba(211,47,47,0.14)';}} onMouseOut={e=>{e.currentTarget.style.background='rgba(211,47,47,0.07)';}}>
               🔒 Logout
             </button>
@@ -1957,7 +1957,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                       <div style={{flex:1,display:'flex',flexDirection:'column',gap:6}}>
                         <div>
                           <p style={{fontSize:8,color:T.textM,fontWeight:700,margin:'0 0 2px',textTransform:'uppercase'}}>Saleable Area</p>
-                          <p style={{fontSize:20,fontWeight:900,color:T.navy,margin:0,letterSpacing:-0.5}}>{(tot/100000).toFixed(2)} L sqft</p>
+                          <p style={{fontSize:24,fontWeight:900,color:T.navy,margin:0,letterSpacing:-0.5}}>{(tot/100000).toFixed(2)} L sqft</p>
                           <p style={{fontSize:8,color:T.textM,margin:'2px 0 0'}}>Booked carpet: {(kpiEx.carpetAreaSqft/100000).toFixed(2)} L sqft</p>
                         </div>
                         <div style={{display:'flex',gap:8}}>
@@ -2137,7 +2137,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     <div style={{
                       position:'absolute',bottom:'calc(100% + 8px)',left:'50%',transform:'translateX(-50%)',
                       background:'linear-gradient(135deg,#0097a7,#00bcd4)',
-                      color:'#fff',fontSize:9,fontWeight:800,letterSpacing:0.5,
+                      color:'#fff',fontSize:10,fontWeight:800,letterSpacing:0.5,
                       padding:'4px 10px',borderRadius:12,whiteSpace:'nowrap',
                       boxShadow:'0 4px 14px rgba(0,151,167,0.4)',
                       animation:'pulse 1.8s ease-in-out infinite',
@@ -2278,9 +2278,9 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                         <ComposedChart data={sl} margin={{top:26,right:8,bottom:18,left:0}} barGap={4} barCategoryGap="30%">
                           <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.1)" vertical={false}/>
                           <XAxis dataKey="label" tick={({x,y,payload})=>{const d=sl.find(s=>s.label===payload.value);return <text x={x} y={y+10} textAnchor="middle" fontSize={9} fill={d?.isCurrent?T.tealD:d?.isFuture?'#90a4ae':T.textM} fontWeight={d?.isCurrent?900:600}>{payload.value}</text>;}} axisLine={false} tickLine={false}/>
-                          <YAxis tick={{fill:T.textM,fontSize:11}} axisLine={false} tickLine={false} width={32}/>
+                          <YAxis tick={{fill:T.textM,fontSize:12}} axisLine={false} tickLine={false} width={32}/>
                           <Tooltip content={({active,payload,label})=>{if(!active||!payload?.length)return null;const d=sl.find(s=>s.label===label);return(<div style={{background:'rgba(255,255,255,0.97)',border:'1px solid rgba(0,151,167,0.3)',borderRadius:10,padding:'8px 12px',fontSize:10}}><p style={{color:T.tealD,fontWeight:800,margin:'0 0 4px'}}>{label}</p>{d?.achieved!=null&&<p style={{color:T.tealD,margin:0,fontWeight:700}}>Achieved: {d.achieved} units</p>}{d?.target!=null&&<p style={{color:'#607d8b',margin:0}}>Target: {d.target} units</p>}{d?.projection!=null&&<p style={{color:'#22c55e',margin:0,fontWeight:700}}>▲ Projection: {d.projection} units<br/><span style={{fontSize:9,color:'#86efac'}}>incl. catch-up from missed targets</span></p>}</div>);}}/>
-                          <Legend wrapperStyle={{fontSize:9,fontWeight:700}} iconSize={8} payload={[{value:"Target",type:"rect",color:"#b0bec5"},{value:"Achieved",type:"rect",color:T.teal},{value:"Projection (next Q)",type:"line",color:"#22c55e"}]}/>
+                          <Legend wrapperStyle={{fontSize:10,fontWeight:700}} iconSize={8} payload={[{value:"Target",type:"rect",color:"#b0bec5"},{value:"Achieved",type:"rect",color:T.teal},{value:"Projection (next Q)",type:"line",color:"#22c55e"}]}/>
                           <Bar dataKey="target" name="Target" fill="#b0bec5" fillOpacity={0.75} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={1000} animationEasing="ease-out">
                             <LabelList dataKey="target" position="top" style={{fill:'#607d8b',fontSize:8,fontWeight:800}} formatter={v=>v>0?v:''}/>
                           </Bar>
@@ -2354,15 +2354,15 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                         <ComposedChart data={sl} margin={{top:26,right:8,bottom:18,left:0}} barGap={4} barCategoryGap="30%">
                           <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.1)" vertical={false}/>
                           <XAxis dataKey="label" tick={({x,y,payload})=>{const d=sl.find(s=>s.label===payload.value);return <text x={x} y={y+10} textAnchor="middle" fontSize={9} fill={d?.isCurrent?T.tealD:d?.isFuture?'#90a4ae':T.textM} fontWeight={d?.isCurrent?900:600}>{payload.value}</text>;}} axisLine={false} tickLine={false}/>
-                          <YAxis tick={{fill:T.textM,fontSize:11}} axisLine={false} tickLine={false} width={40} tickFormatter={v=>v+'Cr'}/>
+                          <YAxis tick={{fill:T.textM,fontSize:12}} axisLine={false} tickLine={false} width={40} tickFormatter={v=>v+'Cr'}/>
                           <Tooltip content={({active,payload,label})=>{if(!active||!payload?.length)return null;const d=sl.find(s=>s.label===label);return(<div style={{background:'rgba(255,255,255,0.97)',border:'1px solid rgba(0,151,167,0.3)',borderRadius:10,padding:'8px 12px',fontSize:10}}><p style={{color:T.tealD,fontWeight:800,margin:'0 0 4px'}}>{label}</p>{d?.achieved!=null&&<p style={{color:T.tealD,margin:0}}>Achieved: ₹{d.achieved}Cr</p>}{d?.target!=null&&<p style={{color:'#607d8b',margin:0}}>Target: ₹{d.target}Cr</p>}</div>);}}/>
-                          <Legend wrapperStyle={{fontSize:9,fontWeight:700}} iconSize={8}/>
+                          <Legend wrapperStyle={{fontSize:10,fontWeight:700}} iconSize={8}/>
                           <Bar dataKey="target" name="Target TSV" fill="#b0bec5" fillOpacity={0.75} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={1000} animationEasing="ease-out">
-                            <LabelList dataKey="target" position="top" style={{fill:'#607d8b',fontSize:9,fontWeight:700}} formatter={v=>v>0?v+'Cr':''}/>
+                            <LabelList dataKey="target" position="top" style={{fill:'#607d8b',fontSize:10,fontWeight:700}} formatter={v=>v>0?v+'Cr':''}/>
                           </Bar>
                           <Bar dataKey="achieved" name="Actual BSP" fill={T.teal} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={800} animationEasing="ease-out">
                             {sl.map((d,i)=><Cell key={i} fill={d.isCurrent?'#ef4444':T.teal} fillOpacity={d.isCurrent?1:0.85}/>)}
-                            <LabelList dataKey="achieved" position="top" style={{fill:T.tealD,fontSize:9,fontWeight:800}} formatter={v=>v>0?'₹'+v+'Cr':''}/>
+                            <LabelList dataKey="achieved" position="top" style={{fill:T.tealD,fontSize:10,fontWeight:800}} formatter={v=>v>0?'₹'+v+'Cr':''}/>
                           </Bar>
 
                           <Line type="monotone" dataKey="targetLine" stroke="#607d8b" strokeWidth={2} strokeDasharray="5 3" dot={{r:3,fill:'#607d8b',stroke:'#fff',strokeWidth:1.5}} activeDot={{r:4}} legendType="none" connectNulls={false}/>
@@ -2434,7 +2434,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                         <ComposedChart data={sl} margin={{top:26,right:8,bottom:18,left:0}} barGap={4} barCategoryGap="30%">
                           <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.1)" vertical={false}/>
                           <XAxis dataKey="label" tick={({x,y,payload})=>{const d=sl.find(s=>s.label===payload.value);return<text x={x} y={y+10} textAnchor="middle" fontSize={9} fill={d?.isCurrent?T.tealD:T.textM} fontWeight={d?.isCurrent?900:600}>{payload.value}</text>;}} axisLine={false} tickLine={false}/>
-                          <YAxis tick={{fill:T.textM,fontSize:11}} axisLine={false} tickLine={false} width={34} tickFormatter={v=>v+'L'}/>
+                          <YAxis tick={{fill:T.textM,fontSize:12}} axisLine={false} tickLine={false} width={34} tickFormatter={v=>v+'L'}/>
                           <Tooltip content={({active,payload,label})=>{
                             if(!active||!payload?.length)return null;
                             const d=sl.find(s=>s.label===label);
@@ -2445,7 +2445,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                               {d?.projection!=null&&<p style={{color:'#22c55e',margin:0,fontWeight:700}}>▲ Projection: {d.projection} L sqft</p>}
                             </div>);
                           }}/>
-                          <Legend wrapperStyle={{fontSize:9,fontWeight:700}} iconSize={8} payload={[{value:'Target',type:'rect',color:'#b0bec5'},{value:'Achieved',type:'rect',color:T.teal},{value:'Projection',type:'line',color:'#22c55e'}]}/>
+                          <Legend wrapperStyle={{fontSize:10,fontWeight:700}} iconSize={8} payload={[{value:'Target',type:'rect',color:'#b0bec5'},{value:'Achieved',type:'rect',color:T.teal},{value:'Projection',type:'line',color:'#22c55e'}]}/>
                           <Bar dataKey="target" name="Target" fill="#b0bec5" fillOpacity={0.75} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={1000}>
                             <LabelList dataKey="target" position="top" style={{fill:'#607d8b',fontSize:8,fontWeight:700}} formatter={v=>v>0?v+'L':''}/>
                           </Bar>
@@ -2608,7 +2608,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                             </div>
                             <div style={{background:'rgba(255,255,255,0.9)',border:'1.5px solid rgba(0,100,140,0.15)',borderRadius:8,padding:'8px 10px',flex:1}}>
                               <p style={{fontSize:10,fontWeight:800,color:'#1a237e',margin:'0 0 6px'}}>Rate (Target Vs Actual)</p>
-                              <p style={{fontSize:9,fontWeight:700,color:'#e65100',margin:'0 0 2px'}}>New Rate of {requiredRate.toLocaleString('en-IN')}</p>
+                              <p style={{fontSize:10,fontWeight:700,color:'#e65100',margin:'0 0 2px'}}>New Rate of {requiredRate.toLocaleString('en-IN')}</p>
                               <p style={{fontSize:9,color:'#37474f',margin:0}}>required against ₹{currentAvgRate.toLocaleString('en-IN')} (current avg rate) to maintain AOP TSV of ₹{((soldTCVVal+(availAreaR*requiredRate))/1e7).toFixed(0)} Cr</p>
                             </div>
                           </div>
@@ -2674,18 +2674,18 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                         <BarChart data={twData} margin={{top:24,right:8,bottom:24,left:0}} barGap={4} barCategoryGap="25%">
                           <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.08)" vertical={false}/>
                           <XAxis dataKey="tower" tick={{fill:T.text,fontSize:11,fontWeight:700}} axisLine={false} tickLine={false}/>
-                          <YAxis domain={[0,100]} tickFormatter={v=>v+'%'} tick={{fill:T.textM,fontSize:11}} axisLine={false} tickLine={false} width={32}/>
+                          <YAxis domain={[0,100]} tickFormatter={v=>v+'%'} tick={{fill:T.textM,fontSize:12}} axisLine={false} tickLine={false} width={32}/>
                           <Tooltip content={({active,payload,label})=>{
                             if(!active||!payload?.length)return null;
                             const d=twData.find(r=>r.tower===label);
-                            return(<div style={{background:'#fff',border:'1px solid #e5e7eb',borderRadius:8,padding:'8px 12px',fontSize:10,boxShadow:'0 2px 8px rgba(0,0,0,0.1)'}}>
+                            return(<div style={{background:'#fff',border:'1px solid #e5e7eb',borderRadius:8,padding:'8px 12px',fontSize:12,boxShadow:'0 2px 8px rgba(0,0,0,0.1)'}}>
                               <p style={{margin:'0 0 4px',fontWeight:800,color:T.navy}}>{label}</p>
                               <p style={{margin:'0 0 2px',color:T.tealD,fontWeight:700}}>Units: {d?.booked}/{d?.total} ({d?.unitPct}%)</p>
                               <p style={{margin:'0 0 2px',color:T.amber,fontWeight:700}}>TSV: ₹{d?.bspCr?.toFixed(1)} Cr ({d?.tsvPct}%)</p>
                               <p style={{margin:0,color:'#9ca3af',fontSize:9}}>Avg Rate: ₹{d?.avgRate?.toLocaleString('en-IN')}/sqft</p>
                             </div>);
                           }}/>
-                          <Legend wrapperStyle={{fontSize:9,fontWeight:700}} iconSize={8}/>
+                          <Legend wrapperStyle={{fontSize:10,fontWeight:700}} iconSize={8}/>
                           <Bar dataKey="unitPct" name="Unit % Sold" fill={T.tealD} radius={[3,3,0,0]} maxBarSize={32}>
                             <LabelList dataKey="unitPct" position="top" formatter={v=>v+'%'} style={{fill:T.tealD,fontSize:10,fontWeight:800}}/>
                           </Bar>
@@ -2732,10 +2732,10 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                       <ResponsiveContainer width="100%" height={240}>
                         <ComposedChart data={data} margin={{top:24,right:12,bottom:24,left:0}} barGap={2}>
                           <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.08)" vertical={false}/>
-                          <XAxis dataKey="tower" tick={{fill:T.textM,fontSize:10,fontWeight:700}} axisLine={false} tickLine={false}/>
-                          <YAxis tick={{fill:T.textM,fontSize:11}} axisLine={false} tickLine={false} width={40} tickFormatter={v=>v?v.toLocaleString('en-IN'):''} domain={['auto','auto']}/>
+                          <XAxis dataKey="tower" tick={{fill:T.textM,fontSize:11,fontWeight:700}} axisLine={false} tickLine={false}/>
+                          <YAxis tick={{fill:T.textM,fontSize:12}} axisLine={false} tickLine={false} width={40} tickFormatter={v=>v?v.toLocaleString('en-IN'):''} domain={['auto','auto']}/>
                           <Tooltip content={<CTip fmt={v=>v?'₹'+v.toLocaleString('en-IN')+'/sqft':'N/A'}/>}/>
-                          <Legend wrapperStyle={{fontSize:9,fontWeight:700}} iconSize={8} formatter={v=>FY_LABELS[v]||v}/>
+                          <Legend wrapperStyle={{fontSize:10,fontWeight:700}} iconSize={8} formatter={v=>FY_LABELS[v]||v}/>
                           {FYS.map(fy=>(
                             <Bar key={fy} dataKey={fy} name={fy} fill={FY_COLORS[fy]} radius={[3,3,0,0]} barSize={18}>
                               <LabelList dataKey={fy} position="top" style={{fill:FY_COLORS[fy],fontSize:7,fontWeight:700}} formatter={v=>v?v.toLocaleString('en-IN'):''}/>
@@ -2797,13 +2797,13 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                                 <XAxis dataKey="ts" type="number" domain={[pts[0].ts,pts[n-1].ts]} scale="time"
                                   tickFormatter={fmt} tick={{fill:T.textM,fontSize:11,fontWeight:700}} axisLine={false} tickLine={false}
                                   angle={-35} textAnchor="end" height={44} ticks={Array.from({length:Math.ceil((pts[n-1].ts-pts[0].ts)/(30*86400000))+1},(_,i)=>pts[0].ts+i*30*86400000).filter(t=>t<=pts[n-1].ts)}/>
-                                <YAxis tick={{fill:T.textM,fontSize:11}} axisLine={false} tickLine={false} width={48}
+                                <YAxis tick={{fill:T.textM,fontSize:12}} axisLine={false} tickLine={false} width={48}
                                   tickFormatter={v=>v.toLocaleString('en-IN')} domain={['auto','auto']}/>
                                 <Tooltip content={({active,payload})=>{
                                   if(!active||!payload?.length)return null;
                                   const d=payload[0]?.payload;
                                   if(!d?.rate)return null;
-                                  return(<div style={{background:'#fff',border:'1px solid #e5e7eb',borderRadius:8,padding:'8px 12px',fontSize:10,boxShadow:'0 2px 8px rgba(0,0,0,0.1)'}}>
+                                  return(<div style={{background:'#fff',border:'1px solid #e5e7eb',borderRadius:8,padding:'8px 12px',fontSize:12,boxShadow:'0 2px 8px rgba(0,0,0,0.1)'}}>
                                     
                                     <p style={{margin:'3px 0',color:T.tealD,fontWeight:800}}>₹{d.rate.toLocaleString('en-IN')}/sqft</p>
                                     <p style={{margin:0,color:T.textM}}>{d.date} · {d.tower}</p>
@@ -2813,7 +2813,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                                   {pts.map((p,i)=><Cell key={i} fill={TOWER_COLOR[p.tower]||T.teal} fillOpacity={0.8}/>)}
                                 </Scatter>
                                 <Line data={trendData} type="linear" dataKey="trend" stroke="#22c55e" strokeWidth={2.5} dot={false} strokeDasharray="6 3" name="Trend"/>
-                                <Legend wrapperStyle={{fontSize:9,fontWeight:700}} iconSize={8}
+                                <Legend wrapperStyle={{fontSize:10,fontWeight:700}} iconSize={8}
                                   payload={[...towerKeys.map(t=>({value:t,type:'circle',color:TOWER_COLOR[t]})),{value:'Trend',type:'line',color:'#22c55e'}]}/>
                               </ComposedChart>
                             </ResponsiveContainer>
@@ -2872,19 +2872,19 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                                   );
                                 }}
                               />
-                              <YAxis yAxisId="left" tick={{fill:T.textM,fontSize:11}} axisLine={false} tickLine={false} width={30}/>
+                              <YAxis yAxisId="left" tick={{fill:T.textM,fontSize:12}} axisLine={false} tickLine={false} width={30}/>
                               <YAxis yAxisId="right" orientation="right" tickFormatter={v=>v+'%'} domain={[0,120]} tick={{fill:T.tealD,fontSize:9}} axisLine={false} tickLine={false} width={32}/>
                               <Tooltip content={({active,payload,label})=>{
                                 if(!active||!payload?.length)return null;
                                 const d=data.find(r=>r.label===label);
                                 return(<div style={{background:'rgba(255,255,255,0.97)',border:'1px solid rgba(0,151,167,0.3)',borderRadius:10,padding:'8px 12px',fontSize:10}}>
-                                  <p style={{margin:'0 0 4px',fontWeight:800,color:T.navy,fontSize:11}}>{label}</p>
+                                  <p style={{margin:'0 0 4px',fontWeight:800,color:T.navy,fontSize:12}}>{label}</p>
                                   <p style={{margin:'0 0 2px',color:T.tealD,fontWeight:700}}>Sold: {d?.sold} / {d?.total} units ({d?.pct}%)</p>
                                   <p style={{margin:'0 0 2px',color:T.textM}}>Unsold: {d?.unsold} units</p>
                                   {d?.avgAreaSqft>0&&<p style={{margin:0,color:T.textM}}>Avg Area: {Math.round(d.avgAreaSqft).toLocaleString('en-IN')} sq ft</p>}
                                 </div>);
                               }}/>
-                              <Legend wrapperStyle={{fontSize:9,fontWeight:700,paddingTop:4}} iconSize={8}/>
+                              <Legend wrapperStyle={{fontSize:10,fontWeight:700,paddingTop:4}} iconSize={8}/>
                               <Bar yAxisId="left" dataKey="sold" name="Units Sold" stackId="s" fill={T.tealD} fillOpacity={0.9} radius={[0,0,3,3]}>
                                 <LabelList dataKey="pct" position="insideTop" offset={6} formatter={v=>v+'%'} style={{fill:'#fff',fontSize:8,fontWeight:800}}/>
                               </Bar>
@@ -2918,7 +2918,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                   const sp=filters.project?filters.project.split('||').filter(Boolean):[];
                   const rows=Object.values(tMap).filter(r=>sp.length===0||sp.includes(r.project)).map(r=>({...r,successPct:r.booked+r.cancelled>0?Math.round(r.booked/(r.booked+r.cancelled)*100):0,avgRate:r.bookedArea>0?Math.round(r.bookedBsp/r.bookedArea):0,totalSalesCr:+(r.bookedBsp/1e7).toFixed(1)})).sort((a,b)=>b.booked-a.booked);
                   const visible=showAllT?rows:rows.slice(0,INIT);
-                  const TH={padding:'8px 10px',fontSize:9,fontWeight:800,color:T.textM,textTransform:'uppercase',letterSpacing:0.5,borderBottom:'1px solid rgba(0,100,140,0.12)',background:'rgba(0,100,140,0.03)',whiteSpace:'nowrap'};
+                  const TH={padding:'8px 10px',fontSize:10,fontWeight:800,color:T.textM,textTransform:'uppercase',letterSpacing:0.5,borderBottom:'1px solid rgba(0,100,140,0.12)',background:'rgba(0,100,140,0.03)',whiteSpace:'nowrap'};
                   const TD={padding:'7px 10px',fontSize:11,borderBottom:'1px solid rgba(0,100,140,0.06)',verticalAlign:'middle'};
                   return(<>
                     <div style={{overflowX:'auto'}}>
@@ -2951,7 +2951,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                         </tbody>
                       </table>
                     </div>
-                    {rows.length>INIT&&<div style={{textAlign:'center',marginTop:12}}><button onClick={()=>setShowAllT(v=>!v)} style={{padding:'6px 20px',borderRadius:20,border:'1px solid '+T.teal,background:'rgba(0,151,167,0.06)',color:T.tealD,fontSize:10,fontWeight:700,cursor:'pointer'}}>{showAllT?'▲ Show less':'▼ Show '+String(rows.length-INIT)+' more towers'}</button></div>}
+                    {rows.length>INIT&&<div style={{textAlign:'center',marginTop:12}}><button onClick={()=>setShowAllT(v=>!v)} style={{padding:'6px 20px',borderRadius:20,border:'1px solid '+T.teal,background:'rgba(0,151,167,0.06)',color:T.tealD,fontSize:11,fontWeight:700,cursor:'pointer'}}>{showAllT?'▲ Show less':'▼ Show '+String(rows.length-INIT)+' more towers'}</button></div>}
                   </>);
                 })()}
               </GC>
@@ -2982,12 +2982,12 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                               <ComposedChart data={slice} margin={{top:28,right:12,bottom:56,left:0}}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.08)" vertical={false}/>
                                 <XAxis dataKey="name" tick={{fill:T.textM,fontSize:8,fontWeight:600}} axisLine={false} tickLine={false} angle={-35} textAnchor="end" interval={0} height={60} tickFormatter={v=>v?.length>14?v.slice(0,14)+'…':v}/>
-                                <YAxis tick={{fill:T.textM,fontSize:11}} axisLine={false} tickLine={false} width={24} domain={[0,maxU+10]}/>
+                                <YAxis tick={{fill:T.textM,fontSize:12}} axisLine={false} tickLine={false} width={24} domain={[0,maxU+10]}/>
                                 <Tooltip content={({active,payload,label})=>{
                                   if(!active||!payload?.length)return null;
                                   const d=slice.find(r=>r.name===label)||{};
-                                  return(<div style={{background:'#fff',border:'1px solid #e5e7eb',borderRadius:8,padding:'8px 12px',fontSize:10,boxShadow:'0 2px 8px rgba(0,0,0,0.1)'}}>
-                                    <p style={{margin:'0 0 4px',fontWeight:800,color:T.navy,fontSize:11}}>{label}</p>
+                                  return(<div style={{background:'#fff',border:'1px solid #e5e7eb',borderRadius:8,padding:'8px 12px',fontSize:12,boxShadow:'0 2px 8px rgba(0,0,0,0.1)'}}>
+                                    <p style={{margin:'0 0 4px',fontWeight:800,color:T.navy,fontSize:12}}>{label}</p>
                                     <p style={{margin:'0 0 2px',color:T.tealD}}>Units: <strong>{d.units}</strong></p>
                                     <p style={{margin:'0 0 2px',color:T.amber}}>BSP: <strong>₹{d.bspCr} Cr</strong></p>
                                     <p style={{margin:0,color:'#7c3aed'}}>Avg Rate: <strong>₹{(d.avgRate||0).toLocaleString('en-IN')}/sqft</strong></p>
@@ -3003,7 +3003,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                                 <Line type="monotone" dataKey="units" name="Units" stroke={T.tealD} strokeWidth={2.5} dot={({cx,cy,index})=>(
                                   <circle key={index} cx={cx} cy={cy} r={index===0?6:4} fill={index===0?T.tealD:T.teal} stroke="#fff" strokeWidth={1.5}/>
                                 )} activeDot={{r:7,fill:T.tealD,stroke:'#fff',strokeWidth:2}}>
-                                  <LabelList dataKey="units" position="top" style={{fill:T.navy,fontSize:9,fontWeight:800}}/>
+                                  <LabelList dataKey="units" position="top" style={{fill:T.navy,fontSize:10,fontWeight:800}}/>
                                 </Line>
                                 <Line type="monotone" dataKey="bspCr" name="₹Cr" stroke={T.amber} strokeWidth={1.5} strokeDasharray="4 3" dot={{r:3,fill:T.amber,stroke:'#fff',strokeWidth:1}} activeDot={{r:5}}>
                                   <LabelList dataKey="bspCr" position="insideTopRight" style={{fill:T.amber,fontSize:7,fontWeight:700}} formatter={v=>'₹'+v}/>
@@ -3041,20 +3041,20 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                               <ComposedChart data={dataWithPct} margin={{top:28,right:36,bottom:56,left:0}} barSize={18}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.08)" vertical={false}/>
                                 <XAxis dataKey="name" tick={{fill:T.textM,fontSize:8,fontWeight:600}} axisLine={false} tickLine={false} angle={-35} textAnchor="end" interval={0} height={60} tickFormatter={v=>v?.length>14?v.slice(0,14)+'…':v}/>
-                                <YAxis yAxisId="l" tick={{fill:T.textM,fontSize:11}} axisLine={false} tickLine={false} width={32} tickFormatter={v=>v+'Cr'}/>
+                                <YAxis yAxisId="l" tick={{fill:T.textM,fontSize:12}} axisLine={false} tickLine={false} width={32} tickFormatter={v=>v+'Cr'}/>
                                 <YAxis yAxisId="r" orientation="right" tickFormatter={v=>v+'%'} domain={[0,Math.max(...dataWithPct.map(d=>d.pct),10)+5]} tick={{fill:T.amber,fontSize:9}} axisLine={false} tickLine={false} width={28}/>
                                 <YAxis yAxisId="rate" orientation="right" hide={true}/>
                                 <Tooltip content={({active,payload,label})=>{
                                   if(!active||!payload?.length)return null;
                                   const d=dataWithPct.find(r=>r.name===label)||{};
-                                  return(<div style={{background:'#fff',border:'1px solid #e5e7eb',borderRadius:8,padding:'8px 12px',fontSize:10,boxShadow:'0 2px 8px rgba(0,0,0,0.1)'}}>
-                                    <p style={{margin:'0 0 4px',fontWeight:800,color:T.navy,fontSize:11}}>{label}</p>
+                                  return(<div style={{background:'#fff',border:'1px solid #e5e7eb',borderRadius:8,padding:'8px 12px',fontSize:12,boxShadow:'0 2px 8px rgba(0,0,0,0.1)'}}>
+                                    <p style={{margin:'0 0 4px',fontWeight:800,color:T.navy,fontSize:12}}>{label}</p>
                                     <p style={{margin:'0 0 2px',color:T.navy}}>BSP: <strong>₹{d.bspCr} Cr</strong></p>
                                     <p style={{margin:'0 0 2px',color:T.amber}}>% of Total: <strong>{d.pct}%</strong></p>
                                     <p style={{margin:0,color:'#7c3aed'}}>Avg Rate: <strong>₹{(d.avgRate||0).toLocaleString('en-IN')}/sqft</strong></p>
                                   </div>);
                                 }}/>
-                                <Legend wrapperStyle={{fontSize:9,fontWeight:700}} iconSize={8}/>
+                                <Legend wrapperStyle={{fontSize:10,fontWeight:700}} iconSize={8}/>
                                 <Bar yAxisId="l" dataKey="bspCr" name="₹Cr" radius={[3,3,0,0]}>
                                   {dataWithPct.map((d,i)=><Cell key={i} fill={i===0?T.navy:i<3?'#1a4a6b':'#2a6a8b'}/>)}
                                   <LabelList dataKey="bspCr" position="top" style={{fill:T.navy,fontSize:8,fontWeight:800}} formatter={v=>'₹'+v}/>
@@ -3102,7 +3102,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                       ].map((d,i)=>(
                         <div key={i} style={{background:`${d.color}0d`,border:`1px solid ${d.color}25`,borderRadius:10,padding:'10px 14px'}}>
                           <p style={{fontSize:8,color:T.textM,fontWeight:800,margin:'0 0 4px',textTransform:'uppercase'}}>{d.icon} {d.label}</p>
-                          <p style={{fontSize:20,fontWeight:900,color:d.color,margin:0}}>{d.val}</p>
+                          <p style={{fontSize:24,fontWeight:900,color:d.color,margin:0}}>{d.val}</p>
                         </div>
                       ))}
                     </div>
@@ -3110,7 +3110,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     {/* Tab switcher */}
                     <div style={{display:'flex',gap:6,marginBottom:12}}>
                       {[['overview','📊 Overview'],['vacant','🏚️ Vacant Units'],['rebooked','✅ Rebooked']].map(([k,l])=>(
-                        <button key={k} onClick={()=>setActiveTab(k)} style={{padding:'4px 12px',borderRadius:20,border:'none',cursor:'pointer',fontSize:10,fontWeight:700,background:activeTab===k?T.teal:'rgba(0,100,140,0.08)',color:activeTab===k?'#fff':T.textM,transition:'all 0.15s'}}>
+                        <button key={k} onClick={()=>setActiveTab(k)} style={{padding:'4px 12px',borderRadius:20,border:'none',cursor:'pointer',fontSize:11,fontWeight:700,background:activeTab===k?T.teal:'rgba(0,100,140,0.08)',color:activeTab===k?'#fff':T.textM,transition:'all 0.15s'}}>
                           {l}
                         </button>
                       ))}
@@ -3120,13 +3120,13 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
                         {/* Vacancy duration buckets */}
                         <div>
-                          <p style={{fontSize:9,fontWeight:800,color:T.textM,textTransform:'uppercase',margin:'0 0 8px',letterSpacing:0.4}}>Vacancy Duration (Still Vacant Units)</p>
+                          <p style={{fontSize:10,fontWeight:800,color:T.textM,textTransform:'uppercase',margin:'0 0 8px',letterSpacing:0.4}}>Vacancy Duration (Still Vacant Units)</p>
                           {buckets.map((b,i)=>{
                             const max=Math.max(...buckets.map(x=>x.count),1);
                             return(
                               <div key={i} style={{marginBottom:8}}>
                                 <div style={{display:'flex',justifyContent:'space-between',marginBottom:3}}>
-                                  <span style={{fontSize:10,fontWeight:700,color:T.text}}>{b.label}</span>
+                                  <span style={{fontSize:11,fontWeight:700,color:T.text}}>{b.label}</span>
                                   <span style={{fontSize:11,fontWeight:800,color:bucketColors[i]}}>{b.count} units</span>
                                 </div>
                                 <div style={{width:'100%',height:7,background:'rgba(0,100,140,0.08)',borderRadius:4,overflow:'hidden'}}>
@@ -3138,7 +3138,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                         </div>
                         {/* Per-project breakdown */}
                         <div>
-                          <p style={{fontSize:9,fontWeight:800,color:T.textM,textTransform:'uppercase',margin:'0 0 8px',letterSpacing:0.4}}>Project-wise Rebooking</p>
+                          <p style={{fontSize:10,fontWeight:800,color:T.textM,textTransform:'uppercase',margin:'0 0 8px',letterSpacing:0.4}}>Project-wise Rebooking</p>
                           {byProject.map((d,i)=>{
                             const total=d.rebooked+d.vacant;
                             const pct=total>0?Math.round((d.rebooked/total)*100):0;
@@ -3170,7 +3170,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                         {/* Urgency legend */}
                         <div style={{display:'flex',gap:10,marginBottom:10,flexWrap:'wrap'}}>
                           {[['🟢','0–90 days',T.greenL],['🟡','91–180 days',T.amber],['🔴','180+ days',T.red]].map(([ic,lbl,col])=>(
-                            <span key={lbl} style={{fontSize:9,fontWeight:700,color:col,background:`${col}12`,border:`1px solid ${col}30`,borderRadius:20,padding:'2px 10px'}}>{ic} {lbl}</span>
+                            <span key={lbl} style={{fontSize:10,fontWeight:700,color:col,background:`${col}12`,border:`1px solid ${col}30`,borderRadius:20,padding:'2px 10px'}}>{ic} {lbl}</span>
                           ))}
                           <span style={{fontSize:9,color:T.textM,marginLeft:'auto',fontWeight:600}}>{vacantUnits.length} units still vacant</span>
                         </div>
@@ -3198,7 +3198,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                                 <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',paddingTop:5,borderTop:'1px solid rgba(0,100,140,0.07)'}}>
                                   <div>
                                     <p style={{fontSize:8,color:T.textL,margin:0}}>Cancelled</p>
-                                    <p style={{fontSize:9,fontWeight:700,color:T.textM,margin:0}}>{u.cancelDate}</p>
+                                    <p style={{fontSize:10,fontWeight:700,color:T.textM,margin:0}}>{u.cancelDate}</p>
                                   </div>
                                   <div style={{textAlign:'right'}}>
                                     <p style={{fontSize:8,color:T.textL,margin:0}}>BSP Value</p>
@@ -3260,7 +3260,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                   <GC key={i} cls="kc" style={{padding:16,display:'flex',alignItems:'center',gap:14}}>
                     <div style={{width:44,height:44,borderRadius:12,background:`${d.color}14`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:22,flexShrink:0}}>{d.icon}</div>
                     <div>
-                      <p style={{fontSize:9,fontWeight:800,color:T.textM,textTransform:'uppercase',letterSpacing:0.5,margin:'0 0 3px'}}>{d.label}</p>
+                      <p style={{fontSize:10,fontWeight:800,color:T.textM,textTransform:'uppercase',letterSpacing:0.5,margin:'0 0 3px'}}>{d.label}</p>
                       <p style={{fontSize:22,fontWeight:900,color:d.color,margin:'0 0 2px',letterSpacing:-0.5}}>{d.value} <span style={{fontSize:11,fontWeight:600,color:T.textL}}>{d.sub.split(' ')[0]}</span></p>
                       {d.sub.includes('Range')&&<p style={{fontSize:9,color:T.textM,margin:0,fontWeight:600}}>{d.sub}</p>}
                     </div>
@@ -3343,10 +3343,10 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
           </div>
           <div style={{display:'flex',flexDirection:'column',alignItems:'flex-end',gap:1}}>
             <div style={{display:'flex',alignItems:'center',gap:10}}>
-              <span style={{color:T.text,fontSize:9,fontWeight:700,letterSpacing:1}}>SMARTWORLD DASHBOARD v2.0</span>
+              <span style={{color:T.text,fontSize:10,fontWeight:700,letterSpacing:1}}>SMARTWORLD DASHBOARD v2.0</span>
 
             </div>
-            <span style={{color:T.tealD,fontSize:9,fontWeight:700,letterSpacing:0.5}}>✦ Created &amp; Developed by ANIRUDH VERMA</span>
+            <span style={{color:T.tealD,fontSize:10,fontWeight:700,letterSpacing:0.5}}>✦ Created &amp; Developed by ANIRUDH VERMA</span>
           </div>
         </div>
       </div>
