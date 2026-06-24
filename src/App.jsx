@@ -1357,7 +1357,7 @@ function AppInner() {
   // Sales & Pricing Trend chart offsets (must be at component level — hooks rules)
   const TODAY_LABEL=(()=>{const d=new Date();return d.toLocaleString('en-US',{month:'short'}).slice(0,3)+"'"+String(d.getFullYear()).slice(2);})();
   // Reset chart offsets to -1 (auto-center) whenever filters change
-  useEffect(()=>{setAllOff(-1);setChartOff(-1);setCpScroll(0);setCpScroll2(0);setChartRangeIdx([0,999]);},[filters.project,filters.fy,filters.quarter,filters.month,filters.broker]);
+  useEffect(()=>{setAllOff(0);setChartOff(0);setCpScroll(0);setCpScroll2(0);setChartRangeIdx([0,999]);},[filters.project,filters.fy,filters.quarter,filters.month,filters.broker]);
   // Initialize offset so current month is bar #2 (index 1 in view), show 1 past + current + 11 future
   const _initOff=(data,WIN=13)=>{const idx=data.findIndex(d=>d.label===TODAY_LABEL);return idx>=1?idx-1:Math.max(0,idx);};
   const [uOff,setUOff]=useState(-1);
@@ -2192,7 +2192,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                 <GC style={{padding:16}}>
                   <SH title="Units — Booked vs Target" sub="Achieved (teal) · Target (grey) · Lines connect both"/>
                   {(()=>{
-                    const WIN=10;
+                    const WIN=14;
                     // Projection: redistribute MISSED targets from past months this quarter
                     // into remaining months of SAME quarter as a revised target line
                     const todayD=new Date();
@@ -2303,7 +2303,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                 <GC style={{padding:16}}>
                   <SH title="TSV — Achieved vs Target" sub="Actual BSP (teal) · Target TSV (grey)"/>
                   {(()=>{
-                    const WIN=10;
+                    const WIN=14;
                     // TSV projection — same quarter logic
                     const todayT=new Date();
                     const tQS=Math.floor((todayT.getMonth())/3)*3+1;
@@ -2379,7 +2379,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                 <GC style={{padding:16}}>
                   <SH title="Area (Lakh sq ft) — Booked vs Target"/>
                   {(()=>{
-                    const WIN=10;
+                    const WIN=14;
                     // Build from monthlyWithTargets — same source as other 3 charts
                     const todayA=new Date();
                     const aQS2=Math.floor((todayA.getMonth())/3)*3+1;
@@ -2468,7 +2468,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                 <GC style={{padding:16}}>
                   <SH title="Avg Rate — Achieved vs Target" sub="Actual ₹/sqft (teal) · Target rate (grey)"/>
                   {(()=>{
-                    const WIN=10;
+                    const WIN=14;
                     // Rate projection — project avg rate for next quarter
                     const todayR=new Date();
                     const rQS=Math.floor((todayR.getMonth())/3)*3+1;
@@ -2974,7 +2974,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                   <SH title="Top CP — Units Booked" sub="Top 10 channel partners by units · scroll for more · ₹Cr on line"/>
                   {(()=>{
                     const all=topCP;
-                    const WIN=10;
+                    const WIN=14;
                     const slice=all.slice(cpScroll,cpScroll+WIN);
                     const maxU=Math.max(...slice.map(d=>d.units),1);
                     return(
@@ -3032,7 +3032,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                   <SH title="Top CP — Sales Value (₹Cr)" sub="BSP value by channel partner · top 10 · scroll for more"/>
                   {(()=>{
                     const all=topCP;
-                    const WIN=10;
+                    const WIN=14;
                     const slice=all.slice(cpScroll2,cpScroll2+WIN);
                     const totalBSP=all.reduce((s,r)=>s+r.bspCr,0)||1;
                     const dataWithPct=slice.map(r=>({...r,pct:+((r.bspCr/totalBSP)*100).toFixed(1)}));
