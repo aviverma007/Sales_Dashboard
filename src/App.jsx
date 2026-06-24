@@ -2111,22 +2111,6 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                           </div>
                         </div>
                       )}
-                      {/* Per-project breakdown */}
-                      {filters.project&&projRates.map((d,i)=>{
-                        const pct=Math.round((d.avgPricePerSqft/maxProjRate)*100);
-                        const col=d.avgPricePerSqft>25000?T.amber:d.avgPricePerSqft>20000?T.tealD:T.teal;
-                        return(
-                          <div key={i}>
-                            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:2}}>
-                              <span style={{fontSize:8,fontWeight:700,color:T.textM}}>{SHORT[d.project]||d.project}</span>
-                              <span style={{fontSize:9,fontWeight:900,color:col}}>₹{d.avgPricePerSqft.toLocaleString('en-IN')}</span>
-                            </div>
-                            <div style={{height:4,background:'rgba(0,100,140,0.1)',borderRadius:2,overflow:'hidden'}}>
-                              <div style={{width:pct+'%',height:'100%',background:col,borderRadius:2,transition:'width 0.6s ease'}}/>
-                            </div>
-                          </div>
-                        );
-                      })}
                     </>);
                   })()}
                 </div>
