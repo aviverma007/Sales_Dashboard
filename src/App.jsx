@@ -157,7 +157,7 @@ const useChartFlip = (id) => {
 const TableView = ({title, headers, rows, onFlipBack}) => (
   <div style={{height:'100%',display:'flex',flexDirection:'column',padding:14}}>
     <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8,flexShrink:0}}>
-      <span style={{fontSize:11,fontWeight:900,color:T.tealD,textTransform:'uppercase',letterSpacing:0.5}}>{title}</span>
+      <span style={{fontSize:13,fontWeight:900,color:T.tealD,textTransform:'uppercase',letterSpacing:0.5}}>{title}</span>
       <button onClick={onFlipBack} style={{padding:'3px 10px',borderRadius:16,border:'1px solid rgba(0,151,167,0.3)',background:T.teal,color:'#fff',fontSize:9,fontWeight:800,cursor:'pointer'}}>📊 Chart</button>
     </div>
     <div style={{flex:1,overflowY:'auto'}}>
@@ -257,7 +257,7 @@ const MonthRangeSlider = ({months, rangeIdx, setRangeIdx, onReset}) => {
           </svg>
         </div>
         {/* Left label tooltip */}
-        <div style={{position:'absolute',left:leftPct+'%',top:'calc(50% - 26px)',transform:'translateX(-50%)',background:T.tealD,color:'#fff',fontSize:7.5,fontWeight:800,borderRadius:4,padding:'1px 5px',whiteSpace:'nowrap',pointerEvents:'none',boxShadow:'0 1px 4px rgba(0,151,167,0.3)',letterSpacing:0.2}}>
+        <div style={{position:'absolute',left:leftPct+'%',top:'calc(50% - 26px)',transform:'translateX(-50%)',background:'#ef4444',color:'#fff',fontSize:7.5,fontWeight:800,borderRadius:4,padding:'1px 5px',whiteSpace:'nowrap',pointerEvents:'none',boxShadow:'0 1px 4px rgba(0,151,167,0.3)',letterSpacing:0.2}}>
           {fromLabel}
         </div>
         {/* Right handle */}
@@ -268,7 +268,7 @@ const MonthRangeSlider = ({months, rangeIdx, setRangeIdx, onReset}) => {
           </svg>
         </div>
         {/* Right label tooltip */}
-        <div style={{position:'absolute',left:rightPct+'%',top:'calc(50% - 26px)',transform:'translateX(-50%)',background:T.tealD,color:'#fff',fontSize:7.5,fontWeight:800,borderRadius:4,padding:'1px 5px',whiteSpace:'nowrap',pointerEvents:'none',boxShadow:'0 1px 4px rgba(0,151,167,0.3)',letterSpacing:0.2}}>
+        <div style={{position:'absolute',left:rightPct+'%',top:'calc(50% - 26px)',transform:'translateX(-50%)',background:'#ef4444',color:'#fff',fontSize:7.5,fontWeight:800,borderRadius:4,padding:'1px 5px',whiteSpace:'nowrap',pointerEvents:'none',boxShadow:'0 1px 4px rgba(0,151,167,0.3)',letterSpacing:0.2}}>
           {toLabel}
         </div>
       </div>
@@ -319,7 +319,7 @@ const FSel = ({label,options,value,onChange,multi=false,openId='',activeOpen=nul
     const toggle=v=>{const n=vals.includes(v)?vals.filter(x=>x!==v):[...vals,v];onChange(n.join('||'));};
     return(
       <div style={{display:'flex',flexDirection:'column',gap:2,position:'relative'}}>
-        <label style={{color:T.textM,fontSize:9,fontWeight:800,letterSpacing:1,textTransform:'uppercase'}}>{label}</label>
+        <label style={{color:T.textM,fontSize:10,fontWeight:800,letterSpacing:1,textTransform:'uppercase'}}>{label}</label>
         <div onClick={setOpen} style={{background:'rgba(255,255,255,0.88)',border:`1px solid ${vals.length?T.teal:'rgba(0,100,140,0.25)'}`,borderRadius:7,color:vals.length?T.tealD:T.textM,padding:'5px 10px',fontSize:11,fontFamily:'Inter,sans-serif',minWidth:120,cursor:'pointer',fontWeight:vals.length?600:400,userSelect:'none',display:'flex',justifyContent:'space-between',alignItems:'center',gap:6}}>
           <span style={{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:130}}>{vals.length?vals.join(', '):'All'}</span>
           <span style={{fontSize:8,opacity:0.6}}>{open?'▲':'▼'}</span>
@@ -354,7 +354,7 @@ const FSel = ({label,options,value,onChange,multi=false,openId='',activeOpen=nul
   // Single select — styled custom dropdown
   return(
     <div style={{display:'flex',flexDirection:'column',gap:2,position:'relative'}}>
-      <label style={{color:T.textM,fontSize:9,fontWeight:800,letterSpacing:1,textTransform:'uppercase'}}>{label}</label>
+      <label style={{color:T.textM,fontSize:10,fontWeight:800,letterSpacing:1,textTransform:'uppercase'}}>{label}</label>
       <div onClick={setOpen} style={{background:'rgba(255,255,255,0.88)',border:`1px solid ${value?T.teal:'rgba(0,100,140,0.25)'}`,borderRadius:7,color:value?T.tealD:T.textM,padding:'5px 10px',fontSize:11,fontFamily:'Inter,sans-serif',minWidth:140,cursor:'pointer',fontWeight:value?600:400,userSelect:'none',display:'flex',justifyContent:'space-between',alignItems:'center',gap:6}}>
         <span style={{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:160}}>{value||'All'}</span>
         <span style={{fontSize:8,opacity:0.6}}>{open?'▲':'▼'}</span>
@@ -412,7 +412,7 @@ const ChartCardCP = ({topCP,cpExpanded,setCpExpanded,CC,T,CTip,SH}) => {
     <ResponsiveContainer width="100%" height={chartH}>
       <BarChart data={visible} layout="vertical" margin={{top:0,right:80,bottom:0,left:0}}>
         <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.2)" horizontal={false}/>
-        <XAxis type="number" tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false}/>
+        <XAxis type="number" tick={{fill:T.textM,fontSize:11,fontWeight:700}} axisLine={false} tickLine={false}/>
         <YAxis type="category" dataKey="name" tick={{fill:T.text,fontSize:10,fontWeight:700}} axisLine={false} tickLine={false} width={145} tickFormatter={v=>v?.length>20?v.slice(0,20)+'…':v}/>
         <Tooltip content={<CTip fmt={(v,n)=>n==='Sales (₹Cr)'?'₹'+v+' Cr':v?.toLocaleString?.('en-IN')}/>}/>
         <Bar dataKey="units" name="Units" radius={[0,4,4,0]}><LabelList dataKey="units" position="right" style={{fill:T.navy,fontSize:8,fontWeight:800}}/>
@@ -444,8 +444,8 @@ const ChartCardBvC = ({bvc,bMode,setBMode,bOff,setBOff,toQuarterly,ChartControls
     <ResponsiveContainer width="100%" height={240}>
       <BarChart data={sliceWithCap} margin={{top:18,right:8,bottom:18,left:0}} barSize={18}>
         <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.2)" vertical={false}/>
-        <XAxis dataKey="label" tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false} angle={-25} dy={6} interval={0}/>
-        <YAxis tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false} width={28} domain={[0,'dataMax+5']}/>
+        <XAxis dataKey="label" tick={{fill:T.textM,fontSize:11,fontWeight:700}} axisLine={false} tickLine={false} angle={-25} dy={6} interval={0}/>
+        <YAxis tick={{fill:T.textM,fontSize:11,fontWeight:700}} axisLine={false} tickLine={false} width={28} domain={[0,'dataMax+5']}/>
         <Tooltip content={<CTip fmt={(v,n)=>{if(n==='Target Remaining')return(slice.find(s=>s.targetTopper===v)?.remaining||v)+' units left';return v;}}/>}/>
         <Legend wrapperStyle={{color:T.text,fontSize:10,fontWeight:700}} iconSize={8}/>
         <Bar dataKey="booked" name="Booked" stackId="a" fill={T.teal} fillOpacity={0.9} radius={[0,0,2,2]}>
@@ -481,8 +481,8 @@ const ChartCardTrend = ({monthly,tMode,setTMode,tOff,setTOff,toQuarterly,ChartCo
           ))}
         </defs>
         <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.2)" vertical={false}/>
-        <XAxis dataKey="label" tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false} interval={0} angle={-25} dy={6}/>
-        <YAxis tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false} tickFormatter={v=>v+'Cr'} width={38}/>
+        <XAxis dataKey="label" tick={{fill:T.textM,fontSize:11,fontWeight:700}} axisLine={false} tickLine={false} interval={0} angle={-25} dy={6}/>
+        <YAxis tick={{fill:T.textM,fontSize:11,fontWeight:700}} axisLine={false} tickLine={false} tickFormatter={v=>v+'Cr'} width={38}/>
         <Tooltip content={<CTip fmt={v=>'₹'+v+' Cr'}/>}/>
         <Legend wrapperStyle={{color:T.text,fontSize:10,fontWeight:700}} iconSize={8}/>
         <Area type="monotone" dataKey="bspCr" name="Sales(BSP)" stroke={T.teal} fill="url(#a1)" strokeWidth={2} dot={{r:3,fill:T.teal}} activeDot={{r:4}}>
@@ -509,7 +509,7 @@ const ChartCardBHK = ({bhkS,CC,T,SH}) => {
     <ResponsiveContainer width="100%" height={200}>
       <BarChart data={bhkS} layout="vertical" margin={{top:4,right:70,bottom:4,left:0}} barCategoryGap="30%">
         <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.1)" horizontal={false}/>
-        <XAxis type="number" tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false}/>
+        <XAxis type="number" tick={{fill:T.textM,fontSize:11,fontWeight:700}} axisLine={false} tickLine={false}/>
         <YAxis type="category" dataKey="bhk" tick={{fill:T.text,fontSize:10,fontWeight:700}} axisLine={false} tickLine={false} width={85}/>
         <Tooltip content={({active,payload,label})=>{if(!active||!payload?.length)return null;return(<div style={{background:'rgba(255,255,255,0.97)',border:'1px solid rgba(0,151,167,0.3)',borderRadius:10,padding:'8px 12px',boxShadow:'0 8px 32px rgba(0,80,120,0.18)',fontFamily:'Inter,sans-serif',fontSize:11}}><p style={{color:T.tealD,fontWeight:700,margin:'0 0 4px'}}>{label}</p>{payload.map((p,i)=>(<div key={i} style={{display:'flex',justifyContent:'space-between',gap:16,marginBottom:2}}><span style={{color:T.textM,fontWeight:600,fontSize:10}}>{p.name}</span><span style={{color:T.navy,fontWeight:800,fontSize:10}}>{p.value}</span></div>))}</div>);}}/>
         <Legend iconSize={10} formatter={(value)=>(<span style={{color:T.navy,fontSize:10,fontWeight:800}}>{value}</span>)}/>
@@ -573,9 +573,9 @@ const SummaryBar = ({raw, filters, T, GC}) => {
       {cards.map(({label,value,sub,color})=>(
         <GC key={label} style={{padding:'13px 16px'}} cls="kc">
           <div style={{position:'absolute',top:0,left:0,right:0,height:3,background:color,borderRadius:'14px 14px 0 0'}}/>
-          <p style={{fontSize:8,fontWeight:800,color:'#94a3b8',textTransform:'uppercase',letterSpacing:.7,margin:'2px 0 5px'}}>{label}</p>
-          <p style={{fontSize:21,fontWeight:900,color:T.navy,margin:'0 0 3px',lineHeight:1,letterSpacing:-0.5}}>{value}</p>
-          <p style={{fontSize:9,color:T.textL,margin:0}}>{sub}</p>
+          <p style={{fontSize:9,fontWeight:800,color:'#94a3b8',textTransform:'uppercase',letterSpacing:.7,margin:'2px 0 6px'}}>{label}</p>
+          <p style={{fontSize:23,fontWeight:900,color:T.navy,margin:'0 0 3px',lineHeight:1,letterSpacing:-0.5}}>{value}</p>
+          <p style={{fontSize:10,color:T.textL,margin:0}}>{sub}</p>
         </GC>
       ))}
     </div>
@@ -692,7 +692,7 @@ const CollectionsTab = ({T, GC, SH, filters={}, raw}) => {
   const fmtC=v=>v>=100?`₹${v.toFixed(0)} Cr`:`₹${v.toFixed(2)} Cr`;
   const SH2=({title,sub})=>(<div style={{marginBottom:12}}><p style={{fontSize:12,fontWeight:900,color:T.tealD,margin:0,textTransform:'uppercase',letterSpacing:0.5}}>{title}</p>{sub&&<p style={{fontSize:10,color:T.textL,margin:'2px 0 0'}}>{sub}</p>}</div>);
   const SectionHead=({title,icon})=>(<div style={{display:'flex',alignItems:'center',gap:10,margin:'4px 0 12px',background:'linear-gradient(135deg,#0d2136,#0f3a5a)',borderRadius:10,padding:'8px 16px',boxShadow:'0 2px 10px rgba(0,0,0,0.2)'}}><span style={{fontSize:14}}>{icon}</span><span style={{fontSize:11,fontWeight:900,color:'#fff',letterSpacing:1,textTransform:'uppercase'}}>{title}</span><div style={{flex:1,height:1,background:'rgba(255,255,255,0.15)',marginLeft:8}}/></div>);
-  const TEAL_BTN={background:T.tealD,color:'#fff',border:'none',borderRadius:8,padding:'7px 20px',fontWeight:800,fontSize:11,cursor:'pointer',letterSpacing:0.5};
+  const TEAL_BTN={background:'#ef4444',color:'#fff',border:'none',borderRadius:8,padding:'7px 20px',fontWeight:800,fontSize:11,cursor:'pointer',letterSpacing:0.5};
   const GREY_BTN={background:'rgba(0,100,140,0.08)',color:T.textM,border:'1px solid rgba(0,100,140,0.15)',borderRadius:8,padding:'7px 20px',fontWeight:700,fontSize:11,cursor:'pointer',letterSpacing:0.5};
 
   return (<>
@@ -787,8 +787,8 @@ const CollectionsTab = ({T, GC, SH, filters={}, raw}) => {
           total: +((d.tlp||0)+(d.clp||0)).toFixed(2)
         }))} margin={{top:28,right:20,bottom:20,left:0}}>
           <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.07)" vertical={false}/>
-          <XAxis dataKey="label" tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false}/>
-          <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false}
+          <XAxis dataKey="label" tick={{fill:T.textM,fontSize:11,fontWeight:700}} axisLine={false} tickLine={false}/>
+          <YAxis tick={{fill:T.textM,fontSize:11}} axisLine={false} tickLine={false}
             tickFormatter={v=>v>=1?'₹'+v+'Cr':v>0?'₹'+(v*100).toFixed(0)+'L':''} width={50}/>
           <Tooltip content={({active,payload,label})=>{
             if(!active||!payload?.length) return null;
@@ -868,7 +868,7 @@ const CollectionsTab = ({T, GC, SH, filters={}, raw}) => {
             <ComposedChart data={milestones} margin={{top:32,right:20,bottom:60,left:0}}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.07)" vertical={false}/>
               <XAxis dataKey="name" tick={{fill:T.textM,fontSize:7,fontWeight:600}} angle={-35} textAnchor="end" height={70} axisLine={false} tickLine={false} tickFormatter={v=>{const m=milestones.find(x=>x.name===v);const n=m?.shortName||v;return n.length>20?n.slice(0,20)+'…':n;}}/>
-              <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} tickFormatter={v=>'₹'+v+'Cr'} width={48}/>
+              <YAxis tick={{fill:T.textM,fontSize:11}} axisLine={false} tickLine={false} tickFormatter={v=>'₹'+v+'Cr'} width={48}/>
               <Tooltip formatter={(v,n)=>[`₹${v} Cr`,n]} labelFormatter={l=>{const m=milestones.find(x=>x.name===l);const n=m?.shortName||l;return `${n}${m?.expectedDate?' ('+m.expectedDate+')':''}`;}}/>
               <Legend wrapperStyle={{fontSize:9,fontWeight:700}} iconSize={8}/>
               <Bar dataKey="totalCr" name={planType==='clp'?'CLP Amount':'TLP Amount'}
@@ -951,7 +951,7 @@ const CollectionsTab = ({T, GC, SH, filters={}, raw}) => {
             <ComposedChart data={filteredMonthly} margin={{top:14,right:20,bottom:28,left:0}}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.07)" vertical={false}/>
               <XAxis dataKey="label" tick={{fill:T.textM,fontSize:8,fontWeight:600}} angle={-30} textAnchor="end" height={36} axisLine={false} tickLine={false}/>
-              <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} tickFormatter={v=>'₹'+v+'Cr'} width={46}/>
+              <YAxis tick={{fill:T.textM,fontSize:11}} axisLine={false} tickLine={false} tickFormatter={v=>'₹'+v+'Cr'} width={46}/>
               <Tooltip formatter={(v,n)=>[`₹${v} Cr`,n]}/>
               <Legend wrapperStyle={{fontSize:9,fontWeight:700}} iconSize={8}/>
               {(planType==='all'||planType==='tlp')&&<Bar dataKey="tlp_dem" name="TLP Demand" fill={T.amber} fillOpacity={0.7} radius={[3,3,0,0]} stackId="dem"/>}
@@ -1213,7 +1213,7 @@ const PnLTab = ({T, GC, SH, filters, sf, raw}) => {
       <GC style={{padding:20,marginBottom:16}}>
         <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:12,flexWrap:'wrap',gap:8}}>
           <div>
-            <p style={{fontSize:12,fontWeight:800,color:T.tealD,letterSpacing:.4,margin:0,textTransform:'uppercase'}}>Revenue vs Expenditure vs Surplus / Deficit</p>
+            <p style={{fontSize:14,fontWeight:800,color:T.tealD,letterSpacing:.4,margin:0,textTransform:'uppercase'}}>Revenue vs Expenditure vs Surplus / Deficit</p>
             <p style={{fontSize:10,color:T.gray,margin:'2px 0 0'}}>Monthly comparison · ₹ Cr · Mar 2025 onwards</p>
           </div>
           <div style={{display:'flex',gap:16}}>
@@ -1257,7 +1257,7 @@ const PnLTab = ({T, GC, SH, filters, sf, raw}) => {
 
           return (
             <GC style={{padding:'16px 18px'}}>
-              <p style={{fontSize:11,fontWeight:900,color:T.tealD,margin:'0 0 14px',textTransform:'uppercase',letterSpacing:0.5}}>
+              <p style={{fontSize:13,fontWeight:900,color:T.tealD,margin:'0 0 14px',textTransform:'uppercase',letterSpacing:0.5}}>
                 Project at a Glance
               </p>
               <div style={{display:'flex',alignItems:'flex-end',gap:10,height:140,padding:'0 4px'}}>
@@ -2191,7 +2191,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
 
                 {/* ── CHART 1: UNITS ─────────────────────────────────── */}
                 <GC style={{padding:16}}>
-                  <SH title="Units — Booked vs Target" sub="Achieved (teal) · Target (grey) · Lines connect both"/>
+                  <SH title="Units — Target vs Achieved" sub="Achieved (teal) · Target (grey) · Lines connect both"/>
                   {(()=>{
                     const WIN=14;
                     // Projection: redistribute MISSED targets from past months this quarter
@@ -2278,15 +2278,15 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                         <ComposedChart data={sl} margin={{top:26,right:8,bottom:18,left:0}} barGap={4} barCategoryGap="30%">
                           <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.1)" vertical={false}/>
                           <XAxis dataKey="label" tick={({x,y,payload})=>{const d=sl.find(s=>s.label===payload.value);return <text x={x} y={y+10} textAnchor="middle" fontSize={9} fill={d?.isCurrent?T.tealD:d?.isFuture?'#90a4ae':T.textM} fontWeight={d?.isCurrent?900:600}>{payload.value}</text>;}} axisLine={false} tickLine={false}/>
-                          <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={32}/>
+                          <YAxis tick={{fill:T.textM,fontSize:11}} axisLine={false} tickLine={false} width={32}/>
                           <Tooltip content={({active,payload,label})=>{if(!active||!payload?.length)return null;const d=sl.find(s=>s.label===label);return(<div style={{background:'rgba(255,255,255,0.97)',border:'1px solid rgba(0,151,167,0.3)',borderRadius:10,padding:'8px 12px',fontSize:10}}><p style={{color:T.tealD,fontWeight:800,margin:'0 0 4px'}}>{label}</p>{d?.achieved!=null&&<p style={{color:T.tealD,margin:0,fontWeight:700}}>Achieved: {d.achieved} units</p>}{d?.target!=null&&<p style={{color:'#607d8b',margin:0}}>Target: {d.target} units</p>}{d?.projection!=null&&<p style={{color:'#22c55e',margin:0,fontWeight:700}}>▲ Projection: {d.projection} units<br/><span style={{fontSize:9,color:'#86efac'}}>incl. catch-up from missed targets</span></p>}</div>);}}/>
                           <Legend wrapperStyle={{fontSize:9,fontWeight:700}} iconSize={8} payload={[{value:"Target",type:"rect",color:"#b0bec5"},{value:"Achieved",type:"rect",color:T.teal},{value:"Projection (next Q)",type:"line",color:"#22c55e"}]}/>
                           <Bar dataKey="target" name="Target" fill="#b0bec5" fillOpacity={0.75} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={1000} animationEasing="ease-out">
                             <LabelList dataKey="target" position="top" style={{fill:'#607d8b',fontSize:8,fontWeight:800}} formatter={v=>v>0?v:''}/>
                           </Bar>
                           <Bar dataKey="achieved" name="Achieved" fill={T.teal} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={800} animationEasing="ease-out">
-                            {sl.map((d,i)=><Cell key={i} fill={d.isCurrent?T.tealD:T.teal} fillOpacity={d.isCurrent?1:0.85}/>)}
-                            <LabelList dataKey="achieved" position="top" style={{fill:T.tealD,fontSize:8,fontWeight:800}} formatter={v=>v>0?v:''}/>
+                            {sl.map((d,i)=><Cell key={i} fill={d.isCurrent?'#ef4444':T.teal} fillOpacity={d.isCurrent?1:0.85}/>)}
+                            <LabelList dataKey="achieved" position="top" style={{fill:T.tealD,fontSize:10,fontWeight:800}} formatter={v=>v>0?v:''}/>
                           </Bar>
 
                           <Line type="monotone" dataKey="targetLine" stroke="#607d8b" strokeWidth={2} strokeDasharray="5 3" dot={{r:3,fill:'#607d8b',stroke:'#fff',strokeWidth:1.5}} activeDot={{r:4}} legendType="none" connectNulls={false}/>
@@ -2302,7 +2302,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
 
                 {/* ── CHART 2: TSV ─────────────────────────────────────── */}
                 <GC style={{padding:16}}>
-                  <SH title="TSV — Achieved vs Target" sub="Actual BSP (teal) · Target TSV (grey)"/>
+                  <SH title="TSV — Target vs Achieved" sub="Actual BSP (teal) · Target TSV (grey)"/>
                   {(()=>{
                     const WIN=14;
                     // TSV projection — same quarter logic
@@ -2354,15 +2354,15 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                         <ComposedChart data={sl} margin={{top:26,right:8,bottom:18,left:0}} barGap={4} barCategoryGap="30%">
                           <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.1)" vertical={false}/>
                           <XAxis dataKey="label" tick={({x,y,payload})=>{const d=sl.find(s=>s.label===payload.value);return <text x={x} y={y+10} textAnchor="middle" fontSize={9} fill={d?.isCurrent?T.tealD:d?.isFuture?'#90a4ae':T.textM} fontWeight={d?.isCurrent?900:600}>{payload.value}</text>;}} axisLine={false} tickLine={false}/>
-                          <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={40} tickFormatter={v=>v+'Cr'}/>
+                          <YAxis tick={{fill:T.textM,fontSize:11}} axisLine={false} tickLine={false} width={40} tickFormatter={v=>v+'Cr'}/>
                           <Tooltip content={({active,payload,label})=>{if(!active||!payload?.length)return null;const d=sl.find(s=>s.label===label);return(<div style={{background:'rgba(255,255,255,0.97)',border:'1px solid rgba(0,151,167,0.3)',borderRadius:10,padding:'8px 12px',fontSize:10}}><p style={{color:T.tealD,fontWeight:800,margin:'0 0 4px'}}>{label}</p>{d?.achieved!=null&&<p style={{color:T.tealD,margin:0}}>Achieved: ₹{d.achieved}Cr</p>}{d?.target!=null&&<p style={{color:'#607d8b',margin:0}}>Target: ₹{d.target}Cr</p>}</div>);}}/>
                           <Legend wrapperStyle={{fontSize:9,fontWeight:700}} iconSize={8}/>
                           <Bar dataKey="target" name="Target TSV" fill="#b0bec5" fillOpacity={0.75} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={1000} animationEasing="ease-out">
-                            <LabelList dataKey="target" position="top" style={{fill:'#607d8b',fontSize:7,fontWeight:700}} formatter={v=>v>0?v+'Cr':''}/>
+                            <LabelList dataKey="target" position="top" style={{fill:'#607d8b',fontSize:9,fontWeight:700}} formatter={v=>v>0?v+'Cr':''}/>
                           </Bar>
                           <Bar dataKey="achieved" name="Actual BSP" fill={T.teal} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={800} animationEasing="ease-out">
-                            {sl.map((d,i)=><Cell key={i} fill={d.isCurrent?T.tealD:T.teal} fillOpacity={d.isCurrent?1:0.85}/>)}
-                            <LabelList dataKey="achieved" position="top" style={{fill:T.tealD,fontSize:7,fontWeight:800}} formatter={v=>v>0?'₹'+v+'Cr':''}/>
+                            {sl.map((d,i)=><Cell key={i} fill={d.isCurrent?'#ef4444':T.teal} fillOpacity={d.isCurrent?1:0.85}/>)}
+                            <LabelList dataKey="achieved" position="top" style={{fill:T.tealD,fontSize:9,fontWeight:800}} formatter={v=>v>0?'₹'+v+'Cr':''}/>
                           </Bar>
 
                           <Line type="monotone" dataKey="targetLine" stroke="#607d8b" strokeWidth={2} strokeDasharray="5 3" dot={{r:3,fill:'#607d8b',stroke:'#fff',strokeWidth:1.5}} activeDot={{r:4}} legendType="none" connectNulls={false}/>
@@ -2378,7 +2378,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
 
                 {/* ── CHART 4: AREA Booked vs Target ── */}
                 <GC style={{padding:16}}>
-                  <SH title="Area (Lakh sq ft) — Booked vs Target"/>
+                  <SH title="Area — Target vs Achieved (Lakh sqft)"/>
                   {(()=>{
                     const WIN=14;
                     // Build from monthlyWithTargets — same source as other 3 charts
@@ -2434,7 +2434,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                         <ComposedChart data={sl} margin={{top:26,right:8,bottom:18,left:0}} barGap={4} barCategoryGap="30%">
                           <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.1)" vertical={false}/>
                           <XAxis dataKey="label" tick={({x,y,payload})=>{const d=sl.find(s=>s.label===payload.value);return<text x={x} y={y+10} textAnchor="middle" fontSize={9} fill={d?.isCurrent?T.tealD:T.textM} fontWeight={d?.isCurrent?900:600}>{payload.value}</text>;}} axisLine={false} tickLine={false}/>
-                          <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={34} tickFormatter={v=>v+'L'}/>
+                          <YAxis tick={{fill:T.textM,fontSize:11}} axisLine={false} tickLine={false} width={34} tickFormatter={v=>v+'L'}/>
                           <Tooltip content={({active,payload,label})=>{
                             if(!active||!payload?.length)return null;
                             const d=sl.find(s=>s.label===label);
@@ -2450,8 +2450,8 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                             <LabelList dataKey="target" position="top" style={{fill:'#607d8b',fontSize:8,fontWeight:700}} formatter={v=>v>0?v+'L':''}/>
                           </Bar>
                           <Bar dataKey="achieved" name="Achieved" fill={T.teal} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={800}>
-                            {sl.map((d,i)=><Cell key={i} fill={d.isCurrent?T.tealD:T.teal} fillOpacity={d.isCurrent?1:0.85}/>)}
-                            <LabelList dataKey="achieved" position="top" style={{fill:T.tealD,fontSize:8,fontWeight:800}} formatter={v=>v!=null&&v>0?v+'L':''}/>
+                            {sl.map((d,i)=><Cell key={i} fill={d.isCurrent?'#ef4444':T.teal} fillOpacity={d.isCurrent?1:0.85}/>)}
+                            <LabelList dataKey="achieved" position="top" style={{fill:T.tealD,fontSize:10,fontWeight:800}} formatter={v=>v!=null&&v>0?v+'L':''}/>
                           </Bar>
 
                           <Line type="monotone" dataKey="targetLine" stroke="#607d8b" strokeWidth={2} strokeDasharray="5 3" dot={{r:3,fill:'#607d8b',stroke:'#fff',strokeWidth:1.5}} activeDot={{r:4}} legendType="none" connectNulls={false}/>
@@ -2467,7 +2467,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
 
                 {/* ── CHART 3: AVG RATE ────────────────────────────────── */}
                 <GC style={{padding:16}}>
-                  <SH title="Avg Rate — Achieved vs Target" sub="Actual ₹/sqft (teal) · Target rate (grey)"/>
+                  <SH title="Avg Rate — Target vs Achieved" sub="Actual ₹/sqft (teal) · Target rate (grey)"/>
                   {(()=>{
                     const WIN=14;
                     // Rate projection — project avg rate for next quarter
@@ -2673,8 +2673,8 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                       <ResponsiveContainer width="100%" height={240}>
                         <BarChart data={twData} margin={{top:24,right:8,bottom:24,left:0}} barGap={4} barCategoryGap="25%">
                           <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.08)" vertical={false}/>
-                          <XAxis dataKey="tower" tick={{fill:T.text,fontSize:9,fontWeight:700}} axisLine={false} tickLine={false}/>
-                          <YAxis domain={[0,100]} tickFormatter={v=>v+'%'} tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={32}/>
+                          <XAxis dataKey="tower" tick={{fill:T.text,fontSize:11,fontWeight:700}} axisLine={false} tickLine={false}/>
+                          <YAxis domain={[0,100]} tickFormatter={v=>v+'%'} tick={{fill:T.textM,fontSize:11}} axisLine={false} tickLine={false} width={32}/>
                           <Tooltip content={({active,payload,label})=>{
                             if(!active||!payload?.length)return null;
                             const d=twData.find(r=>r.tower===label);
@@ -2687,7 +2687,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                           }}/>
                           <Legend wrapperStyle={{fontSize:9,fontWeight:700}} iconSize={8}/>
                           <Bar dataKey="unitPct" name="Unit % Sold" fill={T.tealD} radius={[3,3,0,0]} maxBarSize={32}>
-                            <LabelList dataKey="unitPct" position="top" formatter={v=>v+'%'} style={{fill:T.tealD,fontSize:8,fontWeight:800}}/>
+                            <LabelList dataKey="unitPct" position="top" formatter={v=>v+'%'} style={{fill:T.tealD,fontSize:10,fontWeight:800}}/>
                           </Bar>
                           <Bar dataKey="tsvPct" name="TSV % Sold" fill={T.amber} radius={[3,3,0,0]} maxBarSize={32}>
                             <LabelList dataKey="tsvPct" position="top" formatter={v=>v+'%'} style={{fill:T.amber,fontSize:8,fontWeight:800}}/>
@@ -2733,7 +2733,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                         <ComposedChart data={data} margin={{top:24,right:12,bottom:24,left:0}} barGap={2}>
                           <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.08)" vertical={false}/>
                           <XAxis dataKey="tower" tick={{fill:T.textM,fontSize:10,fontWeight:700}} axisLine={false} tickLine={false}/>
-                          <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={40} tickFormatter={v=>v?v.toLocaleString('en-IN'):''} domain={['auto','auto']}/>
+                          <YAxis tick={{fill:T.textM,fontSize:11}} axisLine={false} tickLine={false} width={40} tickFormatter={v=>v?v.toLocaleString('en-IN'):''} domain={['auto','auto']}/>
                           <Tooltip content={<CTip fmt={v=>v?'₹'+v.toLocaleString('en-IN')+'/sqft':'N/A'}/>}/>
                           <Legend wrapperStyle={{fontSize:9,fontWeight:700}} iconSize={8} formatter={v=>FY_LABELS[v]||v}/>
                           {FYS.map(fy=>(
@@ -2795,9 +2795,9 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                               <ComposedChart margin={{top:8,right:20,bottom:48,left:0}}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.06)"/>
                                 <XAxis dataKey="ts" type="number" domain={[pts[0].ts,pts[n-1].ts]} scale="time"
-                                  tickFormatter={fmt} tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false}
+                                  tickFormatter={fmt} tick={{fill:T.textM,fontSize:11,fontWeight:700}} axisLine={false} tickLine={false}
                                   angle={-35} textAnchor="end" height={44} ticks={Array.from({length:Math.ceil((pts[n-1].ts-pts[0].ts)/(30*86400000))+1},(_,i)=>pts[0].ts+i*30*86400000).filter(t=>t<=pts[n-1].ts)}/>
-                                <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={48}
+                                <YAxis tick={{fill:T.textM,fontSize:11}} axisLine={false} tickLine={false} width={48}
                                   tickFormatter={v=>v.toLocaleString('en-IN')} domain={['auto','auto']}/>
                                 <Tooltip content={({active,payload})=>{
                                   if(!active||!payload?.length)return null;
@@ -2872,7 +2872,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                                   );
                                 }}
                               />
-                              <YAxis yAxisId="left" tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={30}/>
+                              <YAxis yAxisId="left" tick={{fill:T.textM,fontSize:11}} axisLine={false} tickLine={false} width={30}/>
                               <YAxis yAxisId="right" orientation="right" tickFormatter={v=>v+'%'} domain={[0,120]} tick={{fill:T.tealD,fontSize:9}} axisLine={false} tickLine={false} width={32}/>
                               <Tooltip content={({active,payload,label})=>{
                                 if(!active||!payload?.length)return null;
@@ -2982,7 +2982,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                               <ComposedChart data={slice} margin={{top:28,right:12,bottom:56,left:0}}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.08)" vertical={false}/>
                                 <XAxis dataKey="name" tick={{fill:T.textM,fontSize:8,fontWeight:600}} axisLine={false} tickLine={false} angle={-35} textAnchor="end" interval={0} height={60} tickFormatter={v=>v?.length>14?v.slice(0,14)+'…':v}/>
-                                <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={24} domain={[0,maxU+10]}/>
+                                <YAxis tick={{fill:T.textM,fontSize:11}} axisLine={false} tickLine={false} width={24} domain={[0,maxU+10]}/>
                                 <Tooltip content={({active,payload,label})=>{
                                   if(!active||!payload?.length)return null;
                                   const d=slice.find(r=>r.name===label)||{};
@@ -3041,7 +3041,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                               <ComposedChart data={dataWithPct} margin={{top:28,right:36,bottom:56,left:0}} barSize={18}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.08)" vertical={false}/>
                                 <XAxis dataKey="name" tick={{fill:T.textM,fontSize:8,fontWeight:600}} axisLine={false} tickLine={false} angle={-35} textAnchor="end" interval={0} height={60} tickFormatter={v=>v?.length>14?v.slice(0,14)+'…':v}/>
-                                <YAxis yAxisId="l" tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={32} tickFormatter={v=>v+'Cr'}/>
+                                <YAxis yAxisId="l" tick={{fill:T.textM,fontSize:11}} axisLine={false} tickLine={false} width={32} tickFormatter={v=>v+'Cr'}/>
                                 <YAxis yAxisId="r" orientation="right" tickFormatter={v=>v+'%'} domain={[0,Math.max(...dataWithPct.map(d=>d.pct),10)+5]} tick={{fill:T.amber,fontSize:9}} axisLine={false} tickLine={false} width={28}/>
                                 <YAxis yAxisId="rate" orientation="right" hide={true}/>
                                 <Tooltip content={({active,payload,label})=>{
