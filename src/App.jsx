@@ -1508,7 +1508,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
     return{
       totalUnits:       iFAll.length,
       bookedUnits:      iFAll.filter(r=>r.status==='Booked').length,
-      availableUnits:   iFAll.filter(r=>r.status==='Available').length,
+      availableUnits:   iFAll.filter(r=>r.status==='Available').length + (raw?.cancelledUnitStatus?.vacantUnits||[]).filter(u=>{const selP=filters.project||'';return !selP||u.project===selP;}).length,
       inProgressUnits:  iFAll.filter(r=>r.status==='In Progress').length,
       totalSales:       tS,
       // Demand/collection from dapp_kpi.json (most accurate)
@@ -1986,7 +1986,13 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                   const unsoldBSP      = +kpiEx.unsoldValueCr;
                   const totalPotential = +kpiEx.totalProjCr;
                   const soldPct        = kpiEx.soldPctValue || 0;
-                  const availUnits     = iFAll.filter(r=>r.status==='Available').length;
+                  const availUnitsInvr   = iFAll.filter(r=>r.status==='Available').length;
+                  // Add cancelled units not yet rebooked (still physically vacant)
+                  const cancelledVacant  = (raw?.cancelledUnitStatus?.vacantUnits||[]).filter(u=>{
+                    const selP=filters.project||'';
+                    return !selP || u.project===selP;
+                  }).length;
+                  const availUnits       = availUnitsInvr + cancelledVacant;
                   const installmentTotal = dkAll.totalInstallment || 0;
                   const totalReceived    = dkAll.totalReceivedWoT || 0;
                   const upcomingAmt      = dkAll.totalOutstanding || 0;
