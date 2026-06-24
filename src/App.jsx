@@ -738,7 +738,7 @@ const CollectionsTab = ({T, GC, SH, filters={}, raw}) => {
     <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:10}}>
       <GC style={{padding:13}} cls="kc">
         <p style={{fontSize:8,color:T.textM,fontWeight:700,textTransform:'uppercase',margin:'0 0 4px',letterSpacing:0.5}}>Total Sales Value (TCV)</p>
-        <p style={{fontSize:20,fontWeight:900,color:'#1d4ed8',margin:'0 0 4px',letterSpacing:-0.5}}>₹{((raw?.kpiExtra?.totalTCVCr)||0).toFixed(0)} Cr</p>
+        <p style={{fontSize:20,fontWeight:900,color:'#1d4ed8',margin:'0 0 4px',letterSpacing:-0.5}}>₹{((filters?.project?.includes('SKY ARC') ? raw?.skyarcKpiExtra?.totalTCVCr : raw?.kpiExtra?.totalTCVCr)||0).toFixed(0)} Cr</p>
         <p style={{fontSize:8,color:T.textL,margin:0}}>Booked TCV incl. tax</p>
         <div style={{position:'absolute',bottom:0,left:0,right:0,height:3,background:'linear-gradient(90deg,#1d4ed8,transparent)',borderRadius:'0 0 14px 14px'}}/>
       </GC>
@@ -1380,12 +1380,20 @@ function AppInner() {
   const [cpScroll2,setCpScroll2]=useState(0);
   const [showAllT,setShowAllT]=useState(false);
 
+  // Reload project-specific dapp_kpi when project changes
+  useEffect(()=>{
+    if(!filters.project) return;
+    const pf = getProjectFiles(filters.project);
+    fetch(pf.dapp).then(r=>r.json()).then(dappKpi=>{
+      setRaw(prev=>prev?{...prev, dappKpi}:prev);
+    }).catch(()=>{});
+  },[filters.project]);
+
   useEffect(()=>{
     Promise.all([
       fetch('/data/dashboard_data.json').then(r=>r.json()),
       fetch('/data/dapp_kpi.json').then(r=>r.json()).catch(()=>({})),
       fetch('/data/pnl_data.json').then(r=>r.json()).catch(()=>({})),
-      // project-specific files loaded dynamically in CollectionsTab/PnLTab
     ]).then(([d, dappKpi, pnlData])=>{
       d.dappKpi = dappKpi;
       window.__dappKpi  = dappKpi;
@@ -1533,7 +1541,10 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
     });
   },[pA,pC,raw,iF]);
   const kpiEx=useMemo(()=>{
-    const dk = raw?.kpiExtra || {};
+    // Use project-specific kpiExtra when a single project is selected
+    const selProj = filters.project || '';
+    const dk = selProj.includes('SKY ARC') ? (raw?.skyarcKpiExtra || {})
+             : (raw?.kpiExtra || {});
     // Areas from kpiExtra (pre-computed from actual Excel)
     const bookedAreaSqft = dk.bookedAreaSqft || pAAll.reduce((s,r)=>s+(r.superArea||0),0);
     const carpetAreaSqft = dk.carpetAreaSqft || pAAll.reduce((s,r)=>s+(r.carpet||r.carpetArea||0),0);
