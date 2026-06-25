@@ -126,9 +126,8 @@ export default function CRMApp() {
   // "Number of cases by" dimension toggle
   const [byDim, setByDim] = useState('owner'); // owner | hod | tl
 
-  // Area/Sub Area table — excluded rows (excluded from totals only)
-  const [excluded, setExcluded] = useState(()=>new Set());
-  const toggleRow = (k) => setExcluded(prev=>{ const n=new Set(prev); n.has(k)?n.delete(k):n.add(k); return n; });
+  // Case Applicability filter — '' (all) | 'Inclusion' | 'Exclusion'
+  const [applic, setApplic] = useState('');
 
   const logout = () => { sessionStorage.removeItem('crm_auth'); window.location.reload(); };
 
@@ -158,6 +157,7 @@ export default function CRMApp() {
         resCat:      g(row,'Resolution Time Category')||'',
         openedStr:   g(row,'Date/Time Opened')||'',
         closedStr:   g(row,'Closed Date')||'',
+        applicability: g(row,'Case Applicability')||'',
       }));
       setData(parsed);
       setLoading(false);
@@ -177,9 +177,10 @@ export default function CRMApp() {
       if(fCaseType!=='All' && r.caseType!==fCaseType)      return false;
       if(fStatus!=='All'   && r.status!==fStatus)          return false;
       if(fOwner!=='All'    && r.owner!==fOwner)            return false;
+      if(applic && r.applicability!==applic)               return false;
       return true;
     });
-  }, [data,fCategory,fSubCat,fCaseType,fStatus,fOwner]);
+  }, [data,fCategory,fSubCat,fCaseType,fStatus,fOwner,applic]);
 
   // Narrow by page scope (status)
   const pageRows = useMemo(() => {
@@ -265,11 +266,8 @@ export default function CRMApp() {
   const closedT = filtered.filter(isClosed).length;
   const openT   = totalT - closedT;
 
-  // Area table totals over INCLUDED (checked) rows only
-  const includedRows = areaTable.filter(r=>!excluded.has(r.area+'||'+r.subArea));
-  const areaTot = includedRows.reduce((a,r)=>({total:a.total+r.total,open:a.open+r.open,closed:a.closed+r.closed}),{total:0,open:0,closed:0});
-  const allKeys = areaTable.map(r=>r.area+'||'+r.subArea);
-  const allIncluded = excluded.size===0;
+  // Area table totals (all rows)
+  const areaTot = areaTable.reduce((a,r)=>({total:a.total+r.total,open:a.open+r.open,closed:a.closed+r.closed}),{total:0,open:0,closed:0});
   const maxTot = byData[0]?.total || 1;
   // End-of-bar label: total (with open count beside it)
   const barEndLabel = (props) => {
@@ -342,6 +340,21 @@ export default function CRMApp() {
 
             {tab==='overall' ? (
               <>
+                {/* Case Applicability buttons */}
+                <div style={{display:'flex',gap:10,alignItems:'center'}}>
+                  <span style={{fontSize:11,fontWeight:800,color:T.textM,textTransform:'uppercase',letterSpacing:0.4}}>Case Applicability:</span>
+                  {[{k:'Inclusion',c:T.green},{k:'Exclusion',c:T.red}].map(b=>(
+                    <button key={b.k} onClick={()=>setApplic(applic===b.k?'':b.k)} style={{
+                      background:applic===b.k?b.c:'#fff',
+                      color:applic===b.k?'#fff':b.c,
+                      border:`1.5px solid ${b.c}`,
+                      borderRadius:8,padding:'7px 20px',fontSize:12,fontWeight:800,cursor:'pointer',transition:'all 0.15s'}}>
+                      {b.k}
+                    </button>
+                  ))}
+                  {applic && <span style={{fontSize:11,color:T.gray,fontWeight:600}}>showing {applic} only · click again to clear</span>}
+                </div>
+
                 {/* Summary cards */}
                 <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:14}}>
                   {[
@@ -453,11 +466,6 @@ export default function CRMApp() {
                     <table style={{width:'100%',borderCollapse:'collapse',fontSize:12}}>
                       <thead>
                         <tr style={{background:'linear-gradient(135deg,#1565c0,#0d47a1)',position:'sticky',top:0,zIndex:1}}>
-                          <th style={{padding:'11px 10px',color:'#fff',fontWeight:800,textAlign:'center',width:34}}>
-                            <input type="checkbox" checked={allIncluded} title="Include / exclude all"
-                              onChange={()=>setExcluded(allIncluded ? new Set(allKeys) : new Set())}
-                              style={{cursor:'pointer',width:14,height:14}}/>
-                          </th>
                           <th style={{padding:'11px 14px',color:'#fff',fontWeight:800,textAlign:'left',letterSpacing:0.3}}>Area</th>
                           <th style={{padding:'11px 14px',color:'#fff',fontWeight:800,textAlign:'left',letterSpacing:0.3}}>Sub Area</th>
                           <th style={{padding:'11px 14px',color:'#fff',fontWeight:800,textAlign:'right',letterSpacing:0.3}}>No of Cases</th>
@@ -465,30 +473,22 @@ export default function CRMApp() {
                           <th style={{padding:'11px 14px',color:'#fff',fontWeight:800,textAlign:'right',letterSpacing:0.3}}>Closed</th>
                         </tr>
                         <tr style={{background:'#e8eef5',position:'sticky',top:42,zIndex:1,borderBottom:'2px solid #1565c0'}}>
-                          <td style={{padding:'8px 10px'}}></td>
-                          <td style={{padding:'8px 14px',fontWeight:900,color:T.navy}} colSpan={2}>TOTAL ({includedRows.length} of {areaTable.length} rows)</td>
+                          <td style={{padding:'8px 14px',fontWeight:900,color:T.navy}} colSpan={2}>TOTAL ({areaTable.length} rows)</td>
                           <td style={{padding:'8px 14px',textAlign:'right',fontWeight:900,color:T.tealD}}>{areaTot.total.toLocaleString()}</td>
                           <td style={{padding:'8px 14px',textAlign:'right',fontWeight:900,color:T.amber}}>{areaTot.open.toLocaleString()}</td>
                           <td style={{padding:'8px 14px',textAlign:'right',fontWeight:900,color:T.green}}>{areaTot.closed.toLocaleString()}</td>
                         </tr>
                       </thead>
                       <tbody>
-                        {areaTable.map((r,i)=>{
-                          const k=r.area+'||'+r.subArea;
-                          const inc=!excluded.has(k);
-                          return (
-                          <tr key={i} onClick={()=>toggleRow(k)} style={{borderBottom:'1px solid rgba(0,60,100,0.06)',background:i%2?'rgba(0,151,167,0.03)':'#fff',opacity:inc?1:0.4,cursor:'pointer'}}>
-                            <td style={{padding:'7px 10px',textAlign:'center'}}>
-                              <input type="checkbox" checked={inc} onChange={()=>toggleRow(k)} onClick={e=>e.stopPropagation()} style={{cursor:'pointer',width:13,height:13}}/>
-                            </td>
-                            <td style={{padding:'7px 14px',fontWeight:700,color:T.navy,textDecoration:inc?'none':'line-through'}}>{r.area}</td>
-                            <td style={{padding:'7px 14px',color:T.textM,textDecoration:inc?'none':'line-through'}}>{r.subArea}</td>
+                        {areaTable.map((r,i)=>(
+                          <tr key={i} style={{borderBottom:'1px solid rgba(0,60,100,0.06)',background:i%2?'rgba(0,151,167,0.03)':'#fff'}}>
+                            <td style={{padding:'7px 14px',fontWeight:700,color:T.navy}}>{r.area}</td>
+                            <td style={{padding:'7px 14px',color:T.textM}}>{r.subArea}</td>
                             <td style={{padding:'7px 14px',textAlign:'right',fontWeight:800,color:T.text}}>{r.total.toLocaleString()}</td>
                             <td style={{padding:'7px 14px',textAlign:'right',fontWeight:700,color:T.amber}}>{r.open.toLocaleString()}</td>
                             <td style={{padding:'7px 14px',textAlign:'right',fontWeight:700,color:T.green}}>{r.closed.toLocaleString()}</td>
                           </tr>
-                          );
-                        })}
+                        ))}
                       </tbody>
                     </table>
                   </div>
