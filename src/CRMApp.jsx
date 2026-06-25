@@ -121,6 +121,7 @@ export default function CRMApp() {
   const [fCaseType, setFCaseType] = useState('All');
   const [fStatus,   setFStatus]   = useState('All');
   const [fOwner,    setFOwner]    = useState('All');
+  const [fOrigin,   setFOrigin]   = useState('All');
 
   // "Number of cases by" dimension toggle
   const [byDim, setByDim] = useState('owner'); // owner | hod | tl
@@ -176,10 +177,11 @@ export default function CRMApp() {
       if(fCaseType!=='All' && r.caseType!==fCaseType)      return false;
       if(fStatus!=='All'   && r.status!==fStatus)          return false;
       if(fOwner!=='All'    && r.owner!==fOwner)            return false;
+      if(fOrigin!=='All'   && r.origin!==fOrigin)          return false;
       if(applic && r.applicability!==applic)               return false;
       return true;
     });
-  }, [data,fCategory,fSubCat,fCaseType,fStatus,fOwner,applic]);
+  }, [data,fCategory,fSubCat,fCaseType,fStatus,fOwner,fOrigin,applic]);
 
   // Narrow by page scope (status)
   const pageRows = useMemo(() => {
@@ -246,11 +248,11 @@ export default function CRMApp() {
   const opts = useMemo(() => {
     if(!data) return {};
     const u = k => [...new Set(data.map(r=>r[k]).filter(v=>v&&v.toString().trim()))].sort();
-    return { category:u('area'), subCategory:u('subArea'), caseType:u('caseType'), status:u('status'), owner:u('owner') };
+    return { category:u('area'), subCategory:u('subArea'), caseType:u('caseType'), status:u('status'), owner:u('owner'), origin:u('origin') };
   }, [data]);
 
-  const resetFilters = () => { setFCategory('All');setFSubCat('All');setFCaseType('All');setFStatus('All');setFOwner('All'); };
-  const hasFilters = [fCategory,fSubCat,fCaseType,fStatus,fOwner].some(v=>v!=='All');
+  const resetFilters = () => { setFCategory('All');setFSubCat('All');setFCaseType('All');setFStatus('All');setFOwner('All');setFOrigin('All'); };
+  const hasFilters = [fCategory,fSubCat,fCaseType,fStatus,fOwner,fOrigin].some(v=>v!=='All');
 
   if(loading) return <Loading/>;
 
@@ -358,6 +360,7 @@ export default function CRMApp() {
               <SFilter label="Sub Category" value={fSubCat}   onChange={setFSubCat}   options={opts.subCategory||[]}/>
               <SFilter label="Case Type"    value={fCaseType} onChange={setFCaseType} options={opts.caseType||[]}/>
               <SFilter label="Case Status"  value={fStatus}   onChange={setFStatus}   options={opts.status||[]}/>
+              <SFilter label="Case Origin"  value={fOrigin}   onChange={setFOrigin}   options={opts.origin||[]}/>
               <SFilter label="Case Owner"   value={fOwner}    onChange={setFOwner}    options={opts.owner||[]}/>
 
               {hasFilters && (
