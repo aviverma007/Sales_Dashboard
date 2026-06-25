@@ -286,21 +286,21 @@ export default function CRMApp() {
         @keyframes crmUp   { from{opacity:0;transform:translateY(18px) scale(.97);} to{opacity:1;transform:translateY(0) scale(1);} }
         @keyframes crmFloat{ 0%,100%{transform:translateY(0);} 50%{transform:translateY(-3px);} }
         .crm-stat{
-          position:relative;border-radius:16px;padding:14px 18px;color:#fff;overflow:hidden;
-          display:flex;align-items:center;gap:14px;transform-style:preserve-3d;
-          box-shadow:0 2px 4px rgba(13,40,70,.12),0 10px 22px rgba(13,40,70,.16),inset 0 1px 0 rgba(255,255,255,.25);
+          position:relative;border-radius:14px;padding:10px 14px;color:#fff;overflow:hidden;
+          display:flex;align-items:center;gap:11px;transform-style:preserve-3d;
+          box-shadow:0 2px 4px rgba(13,40,70,.12),0 8px 18px rgba(13,40,70,.16),inset 0 1px 0 rgba(255,255,255,.25);
           transition:transform .4s cubic-bezier(.2,.8,.2,1),box-shadow .4s ease;
           animation:crmUp .6s cubic-bezier(.2,.8,.2,1) both;
         }
         .crm-stat:hover{
-          transform:translateY(-7px) perspective(700px) rotateX(7deg) rotateY(-3deg) scale(1.03);
-          box-shadow:0 8px 14px rgba(13,40,70,.16),0 26px 50px rgba(13,40,70,.30),inset 0 1px 0 rgba(255,255,255,.35);
+          transform:translateY(-5px) perspective(700px) rotateX(6deg) rotateY(-3deg) scale(1.025);
+          box-shadow:0 6px 12px rgba(13,40,70,.16),0 20px 40px rgba(13,40,70,.28),inset 0 1px 0 rgba(255,255,255,.35);
         }
         .crm-stat::after{content:'';position:absolute;top:0;left:0;right:0;height:46%;
           background:linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,0));pointer-events:none;}
-        .crm-stat .ic{font-size:30px;filter:drop-shadow(0 3px 5px rgba(0,0,0,.25));animation:crmFloat 3.5s ease-in-out infinite;}
-        .crm-stat .num{font-size:27px;font-weight:900;letter-spacing:-1px;line-height:1;text-shadow:0 2px 6px rgba(0,0,0,.22);}
-        .crm-stat .lbl{font-size:10.5px;font-weight:800;letter-spacing:.6px;opacity:.92;margin-top:5px;text-transform:uppercase;}
+        .crm-stat .ic{font-size:24px;filter:drop-shadow(0 3px 5px rgba(0,0,0,.25));animation:crmFloat 3.5s ease-in-out infinite;}
+        .crm-stat .num{font-size:22px;font-weight:900;letter-spacing:-1px;line-height:1;text-shadow:0 2px 6px rgba(0,0,0,.22);}
+        .crm-stat .lbl{font-size:10px;font-weight:800;letter-spacing:.5px;opacity:.92;margin-top:3px;text-transform:uppercase;}
         .crm-rise{animation:crmUp .55s cubic-bezier(.2,.8,.2,1) both;}
         .crm-lift{transition:transform .35s cubic-bezier(.2,.8,.2,1),box-shadow .35s ease;}
         .crm-lift:hover{transform:translateY(-4px);box-shadow:0 16px 36px rgba(0,80,120,.20);}
@@ -371,7 +371,7 @@ export default function CRMApp() {
           {/* ── MAIN CONTENT ── */}
           <main style={{flex:1,minWidth:0,display:'flex',flexDirection:'column',gap:14}}>
 
-            <div key={tab} className="crm-page" style={{display:'flex',flexDirection:'column',gap:14}}>
+            <div key={tab} className="crm-page" style={{display:'flex',flexDirection:'column',gap:10}}>
             {tab==='overall' ? (
               <>
                 {/* Case Applicability buttons */}
@@ -390,7 +390,7 @@ export default function CRMApp() {
                 </div>
 
                 {/* Summary cards */}
-                <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:14}}>
+                <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10}}>
                   {[
                     {v:totalT,  l:'Total Tickets',  g:'linear-gradient(135deg,#00bcd4 0%,#0097a7 55%,#006978 100%)', ic:'🎫'},
                     {v:openT,   l:'Open Tickets',   g:'linear-gradient(135deg,#ffb74d 0%,#fb8c00 55%,#e65100 100%)', ic:'🔓'},
@@ -406,11 +406,11 @@ export default function CRMApp() {
                   ))}
                 </div>
 
-                <div style={{display:'grid',gridTemplateColumns:'1fr 1.1fr 1.2fr',gap:14,alignItems:'start'}}>
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1.1fr 1.2fr',gap:10,alignItems:'start'}}>
 
                   {/* Case Type */}
                   <Panel title="Case Type">
-                    <ResponsiveContainer width="100%" height={210}>
+                    <ResponsiveContainer width="100%" height={170}>
                       <PieChart>
                         <defs>
                           <radialGradient id="pieQuery" cx="35%" cy="35%" r="75%"><stop offset="0%" stopColor="#e8cf5c"/><stop offset="100%" stopColor="#a8851a"/></radialGradient>
@@ -419,7 +419,7 @@ export default function CRMApp() {
                           <radialGradient id="pieOther" cx="35%" cy="35%" r="75%"><stop offset="0%" stopColor="#26c6da"/><stop offset="100%" stopColor="#00838f"/></radialGradient>
                           <filter id="pieShadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="4" stdDeviation="5" floodColor="#003c5a" floodOpacity="0.35"/></filter>
                         </defs>
-                        <Pie data={ovCharts.caseType} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} innerRadius={20}
+                        <Pie data={ovCharts.caseType} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={62} innerRadius={16}
                           paddingAngle={3} stroke="#fff" strokeWidth={2} style={{filter:'url(#pieShadow)'}}
                           isAnimationActive animationDuration={900} animationBegin={150}
                           label={({value})=>value.toLocaleString()} labelLine={true}>
@@ -442,12 +442,12 @@ export default function CRMApp() {
                         const w = Math.max(2, s.value/max*100);
                         const big = s.name==='Closed';
                         return (
-                          <div key={i} style={{display:'flex',alignItems:'center',gap:8,marginBottom:10}}>
-                            <div style={{width:150,fontSize:11,fontWeight:800,color:T.textM}}>{s.name}</div>
-                            <div style={{flex:1,position:'relative',height:26,background:'#eef1f4',borderRadius:6,overflow:'hidden',boxShadow:'inset 0 1px 3px rgba(0,40,80,.12)'}}>
+                          <div key={i} style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
+                            <div style={{width:140,fontSize:10.5,fontWeight:800,color:T.textM}}>{s.name}</div>
+                            <div style={{flex:1,position:'relative',height:21,background:'#eef1f4',borderRadius:5,overflow:'hidden',boxShadow:'inset 0 1px 3px rgba(0,40,80,.12)'}}>
                               <div className="crm-bar" style={{position:'absolute',top:0,left:0,bottom:0,width:`${w}%`,
-                                background:big?'linear-gradient(90deg,#f6b08a,#ef7f4f)':'linear-gradient(90deg,#fce3d6,#f7c4ab)',borderRadius:6}}/>
-                              <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'flex-end',paddingRight:10,fontSize:12,fontWeight:800,color:T.text}}>{s.value.toLocaleString()}</div>
+                                background:big?'linear-gradient(90deg,#f6b08a,#ef7f4f)':'linear-gradient(90deg,#fce3d6,#f7c4ab)',borderRadius:5}}/>
+                              <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'flex-end',paddingRight:9,fontSize:11,fontWeight:800,color:T.text}}>{s.value.toLocaleString()}</div>
                             </div>
                           </div>
                         );
@@ -461,11 +461,11 @@ export default function CRMApp() {
                       {ovCharts.origin.slice(0,8).map((o,i)=>{
                         const c1=CC[i%CC.length];
                         return (
-                        <div key={i} style={{display:'flex',alignItems:'center',gap:8,marginBottom:9}}>
-                          <div style={{width:120,fontSize:10,fontWeight:700,color:T.textM,textAlign:'right',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{o.name}</div>
+                        <div key={i} style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
+                          <div style={{width:115,fontSize:10,fontWeight:700,color:T.textM,textAlign:'right',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{o.name}</div>
                           <div style={{flex:1,display:'flex',alignItems:'center',gap:7}}>
-                            <div className="crm-bar" style={{height:20,width:`${o.pct}%`,minWidth:4,background:`linear-gradient(90deg,${c1},${c1}cc)`,borderRadius:5}}/>
-                            <span style={{fontSize:11,fontWeight:800,color:T.text,whiteSpace:'nowrap'}}>{o.pct}%</span>
+                            <div className="crm-bar" style={{height:16,width:`${o.pct}%`,minWidth:4,background:`linear-gradient(90deg,${c1},${c1}cc)`,borderRadius:4}}/>
+                            <span style={{fontSize:10.5,fontWeight:800,color:T.text,whiteSpace:'nowrap'}}>{o.pct}%</span>
                           </div>
                         </div>
                         );
@@ -489,7 +489,7 @@ export default function CRMApp() {
                     ))}
                   </div>
                   {byData.length>0 ? (
-                    <ResponsiveContainer width="100%" height={Math.max(260, byData.length*30)}>
+                    <ResponsiveContainer width="100%" height={Math.max(200, byData.length*24)}>
                       <BarChart data={byData} layout="vertical" margin={{top:5,right:55,left:10,bottom:5}}>
                         <defs>
                           <linearGradient id="barClosed" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stopColor="#66bb6a"/><stop offset="100%" stopColor="#2e7d32"/></linearGradient>
@@ -520,15 +520,15 @@ export default function CRMApp() {
 
                 {/* Cases by Area / Sub Area */}
                 <GC className="crm-rise" style={{padding:0,overflow:'hidden'}}>
-                  <div style={{maxHeight:460,overflowY:'auto'}}>
+                  <div style={{maxHeight:320,overflowY:'auto'}}>
                     <table style={{width:'100%',borderCollapse:'collapse',fontSize:12}}>
                       <thead>
                         <tr style={{background:'linear-gradient(135deg,#1565c0,#0d47a1)',position:'sticky',top:0,zIndex:1}}>
-                          <th style={{padding:'11px 14px',color:'#fff',fontWeight:800,textAlign:'left',letterSpacing:0.3}}>Area</th>
-                          <th style={{padding:'11px 14px',color:'#fff',fontWeight:800,textAlign:'left',letterSpacing:0.3}}>Sub Area</th>
-                          <th style={{padding:'11px 14px',color:'#fff',fontWeight:800,textAlign:'right',letterSpacing:0.3}}>No of Cases</th>
-                          <th style={{padding:'11px 14px',color:'#fff',fontWeight:800,textAlign:'right',letterSpacing:0.3}}>Open</th>
-                          <th style={{padding:'11px 14px',color:'#fff',fontWeight:800,textAlign:'right',letterSpacing:0.3}}>Closed</th>
+                          <th style={{padding:'9px 14px',color:'#fff',fontWeight:800,textAlign:'left',letterSpacing:0.3}}>Area</th>
+                          <th style={{padding:'9px 14px',color:'#fff',fontWeight:800,textAlign:'left',letterSpacing:0.3}}>Sub Area</th>
+                          <th style={{padding:'9px 14px',color:'#fff',fontWeight:800,textAlign:'right',letterSpacing:0.3}}>No of Cases</th>
+                          <th style={{padding:'9px 14px',color:'#fff',fontWeight:800,textAlign:'right',letterSpacing:0.3}}>Open</th>
+                          <th style={{padding:'9px 14px',color:'#fff',fontWeight:800,textAlign:'right',letterSpacing:0.3}}>Closed</th>
                         </tr>
                         <tr style={{background:'#e8eef5',position:'sticky',top:42,zIndex:1,borderBottom:'2px solid #1565c0'}}>
                           <td style={{padding:'8px 14px',fontWeight:900,color:T.navy}} colSpan={2}>TOTAL ({areaTable.length} rows)</td>
@@ -540,11 +540,11 @@ export default function CRMApp() {
                       <tbody>
                         {areaTable.map((r,i)=>(
                           <tr key={i} style={{borderBottom:'1px solid rgba(0,60,100,0.06)',background:i%2?'rgba(0,151,167,0.03)':'#fff'}}>
-                            <td style={{padding:'7px 14px',fontWeight:700,color:T.navy}}>{r.area}</td>
-                            <td style={{padding:'7px 14px',color:T.textM}}>{r.subArea}</td>
-                            <td style={{padding:'7px 14px',textAlign:'right',fontWeight:800,color:T.text}}>{r.total.toLocaleString()}</td>
-                            <td style={{padding:'7px 14px',textAlign:'right',fontWeight:700,color:T.amber}}>{r.open.toLocaleString()}</td>
-                            <td style={{padding:'7px 14px',textAlign:'right',fontWeight:700,color:T.green}}>{r.closed.toLocaleString()}</td>
+                            <td style={{padding:'5px 14px',fontWeight:700,color:T.navy}}>{r.area}</td>
+                            <td style={{padding:'5px 14px',color:T.textM}}>{r.subArea}</td>
+                            <td style={{padding:'5px 14px',textAlign:'right',fontWeight:800,color:T.text}}>{r.total.toLocaleString()}</td>
+                            <td style={{padding:'5px 14px',textAlign:'right',fontWeight:700,color:T.amber}}>{r.open.toLocaleString()}</td>
+                            <td style={{padding:'5px 14px',textAlign:'right',fontWeight:700,color:T.green}}>{r.closed.toLocaleString()}</td>
                           </tr>
                         ))}
                       </tbody>
