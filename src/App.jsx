@@ -1727,7 +1727,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
   );
 
   // Tab labels
-  const tabs=overviewOnly?[{k:'overview',l:'Overview'}]:[{k:'overview',l:'Overview'},{k:'collections',l:'Demands & Collections'},{k:'pnl',l:'P&L'}];
+  const tabs=overviewOnly?[{k:'overview',l:'Overview'},{k:'collections',l:'Demands & Collections'}]:[{k:'overview',l:'Overview'},{k:'collections',l:'Demands & Collections'},{k:'pnl',l:'P&L'}];
 
   return (
     <div style={{minHeight:'100vh',backgroundImage:'url(/bg.jpg)',backgroundSize:'cover',backgroundPosition:'center',backgroundAttachment:'fixed',fontFamily:'Inter,sans-serif',color:T.text}}>
