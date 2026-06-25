@@ -2981,9 +2981,9 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                         <div style={{overflowX:'auto',overflowY:'hidden'}}>
                           <div style={{minWidth:slice.length*52+60+'px'}}>
                             <ResponsiveContainer width="100%" height={280}>
-                              <ComposedChart data={dataWithPct} margin={{top:36,right:36,bottom:56,left:0}} barSize={18}>
+                              <ComposedChart data={dataWithPct} margin={{top:36,right:36,bottom:72,left:0}} barSize={18}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.08)" vertical={false}/>
-                                <XAxis dataKey="name" tick={{fill:T.textM,fontSize:8,fontWeight:600}} axisLine={false} tickLine={false} angle={-35} textAnchor="end" interval={0} height={60} tickFormatter={v=>v?.length>14?v.slice(0,14)+'…':v}/>
+                                <XAxis dataKey="name" tick={{fill:T.textM,fontSize:8,fontWeight:600}} axisLine={false} tickLine={false} angle={-40} textAnchor="end" interval={0} height={80} tickFormatter={v=>v?.length>22?v.slice(0,22)+'…':v}/>
                                 <YAxis yAxisId="l" tick={{fill:T.textM,fontSize:12}} axisLine={false} tickLine={false} width={32} tickFormatter={v=>v+'Cr'}/>
                                 <YAxis yAxisId="r" orientation="right" tickFormatter={v=>v+'%'} domain={[0,Math.max(...dataWithPct.map(d=>d.pct),10)+5]} tick={{fill:T.amber,fontSize:9}} axisLine={false} tickLine={false} width={28}/>
                                 <YAxis yAxisId="rate" orientation="right" hide={true}/>
@@ -3047,7 +3047,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                             <ResponsiveContainer width="100%" height={220}>
                               <ComposedChart data={slice} margin={{top:28,right:12,bottom:56,left:0}}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.08)" vertical={false}/>
-                                <XAxis dataKey="name" tick={{fill:T.textM,fontSize:8,fontWeight:600}} axisLine={false} tickLine={false} angle={-35} textAnchor="end" interval={0} height={60} tickFormatter={v=>v?.length>14?v.slice(0,14)+'…':v}/>
+                                <XAxis dataKey="name" tick={{fill:T.textM,fontSize:8,fontWeight:600}} axisLine={false} tickLine={false} angle={-40} textAnchor="end" interval={0} height={80} tickFormatter={v=>v?.length>22?v.slice(0,22)+'…':v}/>
                                 <YAxis tick={{fill:T.textM,fontSize:12}} axisLine={false} tickLine={false} width={24} domain={[0,maxU+10]}/>
                                 <Tooltip content={({active,payload,label})=>{
                                   if(!active||!payload?.length)return null;
