@@ -2965,8 +2965,64 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                 </div>
                 <div style={{flex:1,height:1,background:'rgba(26,58,92,0.15)',borderRadius:1}}/>
               </div>
-              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+              <div style={{display:'flex',flexDirection:'column',gap:12}}>
 
+                {/* ── CP: Sales Value ₹Cr (bar) + % line ───────── */}
+                <GC style={{padding:16}}>
+                  <SH title="Top CP — Sales Value (₹Cr)" sub="BSP value by channel partner · % of total sales on orange line · scroll for more"/>
+                  {(()=>{
+                    const all=topCP;
+                    const WIN=14;
+                    const slice=all.slice(cpScroll2,cpScroll2+WIN);
+                    const totalBSP=all.reduce((s,r)=>s+r.bspCr,0)||1;
+                    const dataWithPct=slice.map(r=>({...r,pct:+((r.bspCr/totalBSP)*100).toFixed(1)}));
+                    return(
+                      <>
+                        <div style={{overflowX:'auto',overflowY:'hidden'}}>
+                          <div style={{minWidth:slice.length*52+60+'px'}}>
+                            <ResponsiveContainer width="100%" height={280}>
+                              <ComposedChart data={dataWithPct} margin={{top:28,right:36,bottom:56,left:0}} barSize={18}>
+                                <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.08)" vertical={false}/>
+                                <XAxis dataKey="name" tick={{fill:T.textM,fontSize:8,fontWeight:600}} axisLine={false} tickLine={false} angle={-35} textAnchor="end" interval={0} height={60} tickFormatter={v=>v?.length>14?v.slice(0,14)+'…':v}/>
+                                <YAxis yAxisId="l" tick={{fill:T.textM,fontSize:12}} axisLine={false} tickLine={false} width={32} tickFormatter={v=>v+'Cr'}/>
+                                <YAxis yAxisId="r" orientation="right" tickFormatter={v=>v+'%'} domain={[0,Math.max(...dataWithPct.map(d=>d.pct),10)+5]} tick={{fill:T.amber,fontSize:9}} axisLine={false} tickLine={false} width={28}/>
+                                <YAxis yAxisId="rate" orientation="right" hide={true}/>
+                                <Tooltip content={({active,payload,label})=>{
+                                  if(!active||!payload?.length)return null;
+                                  const d=dataWithPct.find(r=>r.name===label)||{};
+                                  return(<div style={{background:'#fff',border:'1px solid #e5e7eb',borderRadius:8,padding:'8px 12px',fontSize:12,boxShadow:'0 2px 8px rgba(0,0,0,0.1)'}}>
+                                    <p style={{margin:'0 0 4px',fontWeight:800,color:T.navy,fontSize:12}}>{label}</p>
+                                    <p style={{margin:'0 0 2px',color:T.navy}}>BSP: <strong>₹{d.bspCr} Cr</strong></p>
+                                    <p style={{margin:'0 0 2px',color:T.amber}}>% of Total: <strong>{d.pct}%</strong></p>
+                                    <p style={{margin:0,color:'#7c3aed'}}>Avg Rate: <strong>₹{(d.avgRate||0).toLocaleString('en-IN')}/sqft</strong></p>
+                                  </div>);
+                                }}/>
+                                <Legend wrapperStyle={{fontSize:10,fontWeight:700}} iconSize={8}/>
+                                <Bar yAxisId="l" dataKey="bspCr" name="₹Cr" radius={[3,3,0,0]}>
+                                  {dataWithPct.map((d,i)=><Cell key={i} fill={i===0?T.navy:i<3?'#1a4a6b':'#2a6a8b'}/>)}
+                                  <LabelList dataKey="bspCr" position="top" style={{fill:T.navy,fontSize:8,fontWeight:800}} formatter={v=>'₹'+v}/>
+                                </Bar>
+                                <Line yAxisId="r" type="monotone" dataKey="pct" name="% of Total" stroke={T.amber} strokeWidth={2} dot={{r:3,fill:T.amber}} activeDot={{r:5}}/>
+                                <Line yAxisId="rate" type="monotone" dataKey="avgRate" name="Avg ₹/sqft" stroke="#7c3aed" strokeWidth={1.5} strokeDasharray="3 3" dot={{r:3,fill:'#7c3aed',stroke:'#fff',strokeWidth:1}} activeDot={{r:5}}>
+                                  <LabelList dataKey="avgRate" position="top" style={{fill:'#7c3aed',fontSize:7,fontWeight:700}} formatter={v=>v?'₹'+Math.round(v/1000)+'K':''}/>
+                                </Line>
+                              </ComposedChart>
+                            </ResponsiveContainer>
+                          </div>
+                        </div>
+                        {all.length>WIN&&(
+                          <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:8,marginTop:4}}>
+                            <button onClick={()=>setCpScroll2(s=>Math.max(0,s-WIN))} disabled={cpScroll2===0} style={{padding:'2px 10px',borderRadius:12,border:'1px solid rgba(0,151,167,0.3)',background:'rgba(0,151,167,0.06)',cursor:cpScroll2===0?'default':'pointer',fontSize:10,color:cpScroll2===0?T.textL:T.tealD,fontWeight:700}}>‹ Prev</button>
+                            <span style={{fontSize:9,color:T.textL}}>{cpScroll2+1}–{Math.min(cpScroll2+WIN,all.length)} of {all.length}</span>
+                            <button onClick={()=>setCpScroll2(s=>Math.min(all.length-WIN,s+WIN))} disabled={cpScroll2+WIN>=all.length} style={{padding:'2px 10px',borderRadius:12,border:'1px solid rgba(0,151,167,0.3)',background:'rgba(0,151,167,0.06)',cursor:cpScroll2+WIN>=all.length?'default':'pointer',fontSize:10,color:cpScroll2+WIN>=all.length?T.textL:T.tealD,fontWeight:700}}>Next ›</button>
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
+                </GC>
+
+    
                 {/* ── CP: Top 10 Units Booked (line) ─────────────── */}
                 <GC style={{padding:16}}>
                   <SH title="Top CP — Units Booked" sub="Top 10 channel partners by units · scroll for more · ₹Cr on line"/>
@@ -3025,62 +3081,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                   })()}
                 </GC>
 
-                {/* ── CP: Sales Value ₹Cr (bar) + % line ───────── */}
-                <GC style={{padding:16}}>
-                  <SH title="Top CP — Sales Value (₹Cr)" sub="BSP value by channel partner · top 10 · scroll for more"/>
-                  {(()=>{
-                    const all=topCP;
-                    const WIN=14;
-                    const slice=all.slice(cpScroll2,cpScroll2+WIN);
-                    const totalBSP=all.reduce((s,r)=>s+r.bspCr,0)||1;
-                    const dataWithPct=slice.map(r=>({...r,pct:+((r.bspCr/totalBSP)*100).toFixed(1)}));
-                    return(
-                      <>
-                        <div style={{overflowX:'auto',overflowY:'hidden'}}>
-                          <div style={{minWidth:slice.length*52+60+'px'}}>
-                            <ResponsiveContainer width="100%" height={220}>
-                              <ComposedChart data={dataWithPct} margin={{top:28,right:36,bottom:56,left:0}} barSize={18}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.08)" vertical={false}/>
-                                <XAxis dataKey="name" tick={{fill:T.textM,fontSize:8,fontWeight:600}} axisLine={false} tickLine={false} angle={-35} textAnchor="end" interval={0} height={60} tickFormatter={v=>v?.length>14?v.slice(0,14)+'…':v}/>
-                                <YAxis yAxisId="l" tick={{fill:T.textM,fontSize:12}} axisLine={false} tickLine={false} width={32} tickFormatter={v=>v+'Cr'}/>
-                                <YAxis yAxisId="r" orientation="right" tickFormatter={v=>v+'%'} domain={[0,Math.max(...dataWithPct.map(d=>d.pct),10)+5]} tick={{fill:T.amber,fontSize:9}} axisLine={false} tickLine={false} width={28}/>
-                                <YAxis yAxisId="rate" orientation="right" hide={true}/>
-                                <Tooltip content={({active,payload,label})=>{
-                                  if(!active||!payload?.length)return null;
-                                  const d=dataWithPct.find(r=>r.name===label)||{};
-                                  return(<div style={{background:'#fff',border:'1px solid #e5e7eb',borderRadius:8,padding:'8px 12px',fontSize:12,boxShadow:'0 2px 8px rgba(0,0,0,0.1)'}}>
-                                    <p style={{margin:'0 0 4px',fontWeight:800,color:T.navy,fontSize:12}}>{label}</p>
-                                    <p style={{margin:'0 0 2px',color:T.navy}}>BSP: <strong>₹{d.bspCr} Cr</strong></p>
-                                    <p style={{margin:'0 0 2px',color:T.amber}}>% of Total: <strong>{d.pct}%</strong></p>
-                                    <p style={{margin:0,color:'#7c3aed'}}>Avg Rate: <strong>₹{(d.avgRate||0).toLocaleString('en-IN')}/sqft</strong></p>
-                                  </div>);
-                                }}/>
-                                <Legend wrapperStyle={{fontSize:10,fontWeight:700}} iconSize={8}/>
-                                <Bar yAxisId="l" dataKey="bspCr" name="₹Cr" radius={[3,3,0,0]}>
-                                  {dataWithPct.map((d,i)=><Cell key={i} fill={i===0?T.navy:i<3?'#1a4a6b':'#2a6a8b'}/>)}
-                                  <LabelList dataKey="bspCr" position="top" style={{fill:T.navy,fontSize:8,fontWeight:800}} formatter={v=>'₹'+v}/>
-                                </Bar>
-                                <Line yAxisId="r" type="monotone" dataKey="pct" name="% of Total" stroke={T.amber} strokeWidth={2} dot={{r:3,fill:T.amber}} activeDot={{r:5}}/>
-                                <Line yAxisId="rate" type="monotone" dataKey="avgRate" name="Avg ₹/sqft" stroke="#7c3aed" strokeWidth={1.5} strokeDasharray="3 3" dot={{r:3,fill:'#7c3aed',stroke:'#fff',strokeWidth:1}} activeDot={{r:5}}>
-                                  <LabelList dataKey="avgRate" position="top" style={{fill:'#7c3aed',fontSize:7,fontWeight:700}} formatter={v=>v?'₹'+Math.round(v/1000)+'K':''}/>
-                                </Line>
-                              </ComposedChart>
-                            </ResponsiveContainer>
-                          </div>
-                        </div>
-                        {all.length>WIN&&(
-                          <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:8,marginTop:4}}>
-                            <button onClick={()=>setCpScroll2(s=>Math.max(0,s-WIN))} disabled={cpScroll2===0} style={{padding:'2px 10px',borderRadius:12,border:'1px solid rgba(0,151,167,0.3)',background:'rgba(0,151,167,0.06)',cursor:cpScroll2===0?'default':'pointer',fontSize:10,color:cpScroll2===0?T.textL:T.tealD,fontWeight:700}}>‹ Prev</button>
-                            <span style={{fontSize:9,color:T.textL}}>{cpScroll2+1}–{Math.min(cpScroll2+WIN,all.length)} of {all.length}</span>
-                            <button onClick={()=>setCpScroll2(s=>Math.min(all.length-WIN,s+WIN))} disabled={cpScroll2+WIN>=all.length} style={{padding:'2px 10px',borderRadius:12,border:'1px solid rgba(0,151,167,0.3)',background:'rgba(0,151,167,0.06)',cursor:cpScroll2+WIN>=all.length?'default':'pointer',fontSize:10,color:cpScroll2+WIN>=all.length?T.textL:T.tealD,fontWeight:700}}>Next ›</button>
-                          </div>
-                        )}
-                      </>
-                    );
-                  })()}
-                </GC>
-
-              </div>{/* end CP wise grid */}
+          </div>{/* end CP wise grid */}
 
             </div>{/* end ROW 2 */}
 
