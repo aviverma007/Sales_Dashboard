@@ -271,6 +271,17 @@ export default function CRMApp() {
   const allKeys = areaTable.map(r=>r.area+'||'+r.subArea);
   const allIncluded = excluded.size===0;
   const maxTot = byData[0]?.total || 1;
+  // End-of-bar label: total (with open count beside it)
+  const barEndLabel = (props) => {
+    const {x,y,width,height,index} = props;
+    const d = byData[index]; if(!d) return null;
+    return (
+      <text x={x+width+6} y={y+height/2} dominantBaseline="middle" fontSize={10} fontWeight={800}>
+        <tspan fill={T.text}>{d.total.toLocaleString()}</tspan>
+        <tspan fill={T.amber} dx={6} fontSize={9} fontWeight={800}>({d.open.toLocaleString()} open)</tspan>
+      </text>
+    );
+  };
 
   return (
     <div style={{minHeight:'100vh',backgroundImage:'url(/bg.jpg)',backgroundSize:'cover',backgroundPosition:'center',backgroundAttachment:'fixed',fontFamily:'Inter,sans-serif'}}>
@@ -423,7 +434,8 @@ export default function CRMApp() {
                           <LabelList dataKey="closed" position="center" style={{fontSize:9,fontWeight:800,fill:'#fff'}} formatter={v=>v>maxTot*0.06?v.toLocaleString():''}/>
                         </Bar>
                         <Bar dataKey="open" name="Open" stackId="a" fill={T.amber} radius={[0,4,4,0]}>
-                          <LabelList dataKey="open" position="right" style={{fontSize:10,fontWeight:800,fill:T.amber}} formatter={v=>v.toLocaleString()}/>
+                          <LabelList dataKey="open" position="center" style={{fontSize:9,fontWeight:800,fill:'#fff'}} formatter={v=>v>maxTot*0.06?v.toLocaleString():''}/>
+                          <LabelList content={barEndLabel}/>
                         </Bar>
                       </BarChart>
                     </ResponsiveContainer>
