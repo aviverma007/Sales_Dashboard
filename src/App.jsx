@@ -1832,7 +1832,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
           const sumBuiltup=allMeta.reduce((s,m)=>s+parseFloat(m.builtup),0).toFixed(1);
           const sumSaleable=allMeta.reduce((s,m)=>s+parseFloat(m.saleableArea),0).toFixed(1);
           const m=isSingle?allMeta[0]:null;
-          const label=isSingle?m.label:`${allMeta.length} Projects`;
+          const label=isSingle?(m?.name||m?.label||projs[0]):`${allMeta.length} Projects`;
           const fields=[
             {icon:'🌍',label:'Land Area',val:`${sumBuiltup} Acres`,color:T.teal},
             {icon:'🏗️',label:'Builtup Area',val:isSingle&&m?m.builtupSqft:`${(parseFloat(sumBuiltup)*100000).toLocaleString('en-IN')} sq ft`,color:'#7c3aed'},
