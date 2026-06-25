@@ -126,6 +126,10 @@ export default function CRMApp() {
   // "Number of cases by" dimension toggle
   const [byDim, setByDim] = useState('owner'); // owner | hod | tl
 
+  // Area/Sub Area table — excluded rows (excluded from totals only)
+  const [excluded, setExcluded] = useState(()=>new Set());
+  const toggleRow = (k) => setExcluded(prev=>{ const n=new Set(prev); n.has(k)?n.delete(k):n.add(k); return n; });
+
   const logout = () => { sessionStorage.removeItem('crm_auth'); window.location.reload(); };
 
   // Fast lean-JSON loader (columnar {cols,rows} -> row objects). ~0.7MB gzipped, sub-second parse.
@@ -255,6 +259,12 @@ export default function CRMApp() {
   const totalT  = filtered.length;
   const closedT = filtered.filter(isClosed).length;
   const openT   = totalT - closedT;
+
+  // Area table totals over INCLUDED (checked) rows only
+  const includedRows = areaTable.filter(r=>!excluded.has(r.area+'||'+r.subArea));
+  const areaTot = includedRows.reduce((a,r)=>({total:a.total+r.total,open:a.open+r.open,closed:a.closed+r.closed}),{total:0,open:0,closed:0});
+  const allKeys = areaTable.map(r=>r.area+'||'+r.subArea);
+  const allIncluded = excluded.size===0;
 
   return (
     <div style={{minHeight:'100vh',backgroundImage:'url(/bg.jpg)',backgroundSize:'cover',backgroundPosition:'center',backgroundAttachment:'fixed',fontFamily:'Inter,sans-serif'}}>
@@ -421,23 +431,42 @@ export default function CRMApp() {
                     <table style={{width:'100%',borderCollapse:'collapse',fontSize:12}}>
                       <thead>
                         <tr style={{background:'linear-gradient(135deg,#1565c0,#0d47a1)',position:'sticky',top:0,zIndex:1}}>
+                          <th style={{padding:'11px 10px',color:'#fff',fontWeight:800,textAlign:'center',width:34}}>
+                            <input type="checkbox" checked={allIncluded} title="Include / exclude all"
+                              onChange={()=>setExcluded(allIncluded ? new Set(allKeys) : new Set())}
+                              style={{cursor:'pointer',width:14,height:14}}/>
+                          </th>
                           <th style={{padding:'11px 14px',color:'#fff',fontWeight:800,textAlign:'left',letterSpacing:0.3}}>Area</th>
                           <th style={{padding:'11px 14px',color:'#fff',fontWeight:800,textAlign:'left',letterSpacing:0.3}}>Sub Area</th>
                           <th style={{padding:'11px 14px',color:'#fff',fontWeight:800,textAlign:'right',letterSpacing:0.3}}>No of Cases</th>
                           <th style={{padding:'11px 14px',color:'#fff',fontWeight:800,textAlign:'right',letterSpacing:0.3}}>Open</th>
                           <th style={{padding:'11px 14px',color:'#fff',fontWeight:800,textAlign:'right',letterSpacing:0.3}}>Closed</th>
                         </tr>
+                        <tr style={{background:'#e8eef5',position:'sticky',top:42,zIndex:1,borderBottom:'2px solid #1565c0'}}>
+                          <td style={{padding:'8px 10px'}}></td>
+                          <td style={{padding:'8px 14px',fontWeight:900,color:T.navy}} colSpan={2}>TOTAL ({includedRows.length} of {areaTable.length} rows)</td>
+                          <td style={{padding:'8px 14px',textAlign:'right',fontWeight:900,color:T.tealD}}>{areaTot.total.toLocaleString()}</td>
+                          <td style={{padding:'8px 14px',textAlign:'right',fontWeight:900,color:T.amber}}>{areaTot.open.toLocaleString()}</td>
+                          <td style={{padding:'8px 14px',textAlign:'right',fontWeight:900,color:T.green}}>{areaTot.closed.toLocaleString()}</td>
+                        </tr>
                       </thead>
                       <tbody>
-                        {areaTable.map((r,i)=>(
-                          <tr key={i} style={{borderBottom:'1px solid rgba(0,60,100,0.06)',background:i%2?'rgba(0,151,167,0.03)':'#fff'}}>
-                            <td style={{padding:'7px 14px',fontWeight:700,color:T.navy}}>{r.area}</td>
-                            <td style={{padding:'7px 14px',color:T.textM}}>{r.subArea}</td>
+                        {areaTable.map((r,i)=>{
+                          const k=r.area+'||'+r.subArea;
+                          const inc=!excluded.has(k);
+                          return (
+                          <tr key={i} onClick={()=>toggleRow(k)} style={{borderBottom:'1px solid rgba(0,60,100,0.06)',background:i%2?'rgba(0,151,167,0.03)':'#fff',opacity:inc?1:0.4,cursor:'pointer'}}>
+                            <td style={{padding:'7px 10px',textAlign:'center'}}>
+                              <input type="checkbox" checked={inc} onChange={()=>toggleRow(k)} onClick={e=>e.stopPropagation()} style={{cursor:'pointer',width:13,height:13}}/>
+                            </td>
+                            <td style={{padding:'7px 14px',fontWeight:700,color:T.navy,textDecoration:inc?'none':'line-through'}}>{r.area}</td>
+                            <td style={{padding:'7px 14px',color:T.textM,textDecoration:inc?'none':'line-through'}}>{r.subArea}</td>
                             <td style={{padding:'7px 14px',textAlign:'right',fontWeight:800,color:T.text}}>{r.total.toLocaleString()}</td>
                             <td style={{padding:'7px 14px',textAlign:'right',fontWeight:700,color:T.amber}}>{r.open.toLocaleString()}</td>
                             <td style={{padding:'7px 14px',textAlign:'right',fontWeight:700,color:T.green}}>{r.closed.toLocaleString()}</td>
                           </tr>
-                        ))}
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>
