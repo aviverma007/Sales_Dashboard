@@ -213,7 +213,6 @@ export default function CRMApp() {
 
   // Number of cases by Owner / HOD / Team Leader
   const byData = useMemo(() => {
-    if(byDim==='hod') return [];                 // HOD not present in current export
     const key = byDim==='tl' ? 'tl' : 'owner';
     const m = {};
     pageRows.forEach(r=>{ const v=(r[key]||'').trim(); if(v) m[v]=(m[v]||0)+1; });
@@ -370,9 +369,9 @@ export default function CRMApp() {
                 </div>
 
                 {/* Number of cases by Owner / HOD / Team Leader */}
-                <Panel title={`Number of Cases by ${byDim==='owner'?'Case Owner':byDim==='hod'?'HOD':'Team Leader'}`}>
+                <Panel title={`Number of Cases by ${byDim==='owner'?'Case Owner':'Team Leader'}`}>
                   <div style={{display:'flex',gap:8,marginBottom:14,justifyContent:'center'}}>
-                    {[{k:'owner',l:'By Case Owner'},{k:'hod',l:'By HOD'},{k:'tl',l:'By Team Leader'}].map(b=>(
+                    {[{k:'owner',l:'By Case Owner'},{k:'tl',l:'By Team Leader'}].map(b=>(
                       <button key={b.k} onClick={()=>setByDim(b.k)} style={{
                         background:byDim===b.k?'linear-gradient(135deg,#1565c0,#0d47a1)':'#fff',
                         color:byDim===b.k?'#fff':T.textM,
@@ -396,9 +395,8 @@ export default function CRMApp() {
                     </ResponsiveContainer>
                   ) : (
                     <div style={{minHeight:200,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:8,textAlign:'center'}}>
-                      <div style={{fontSize:32,opacity:0.3}}>🏢</div>
-                      <div style={{fontSize:12,fontWeight:700,color:T.textM}}>HOD data isn't in the current export</div>
-                      <div style={{fontSize:10,color:T.gray,maxWidth:360}}>The file has no Head-of-Department column. Provide a Team Leader → HOD mapping (or add an HOD column to the export) and this view will populate.</div>
+                      <div style={{fontSize:32,opacity:0.3}}>📭</div>
+                      <div style={{fontSize:12,fontWeight:700,color:T.textM}}>No cases match the current filters</div>
                     </div>
                   )}
                 </Panel>
