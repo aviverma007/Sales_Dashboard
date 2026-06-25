@@ -845,7 +845,7 @@ const CollectionsTab = ({T, GC, SH, filters={}, raw}) => {
               {[['Demand',dem,T.amber],['Received',rec,T.tealD],['Outstanding',out,T.red]].map(([l,v,c])=>(
                 <div key={l} style={{background:'rgba(0,100,140,0.04)',borderRadius:6,padding:'5px 7px'}}>
                   <p style={{fontSize:7,color:T.textM,fontWeight:700,textTransform:'uppercase',margin:'0 0 2px'}}>{l}</p>
-                  <p style={{fontSize:11,fontWeight:900,color:c,margin:0}}>₹{v.toFixed(1)}Cr</p>
+                  <p style={{fontSize:13,fontWeight:900,color:c,margin:0}}>₹{v.toFixed(1)}Cr</p>
                 </div>
               ))}
             </div>
@@ -2009,25 +2009,25 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                             </PieChart>
                           </ResponsiveContainer>
                           <div style={{position:'absolute',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',pointerEvents:'none'}}>
-                            <span style={{fontSize:9,fontWeight:900,color:T.tealD,lineHeight:1}}>{soldPct}%</span>
+                            <span style={{fontSize:11,fontWeight:900,color:T.tealD,lineHeight:1}}>{soldPct}%</span>
                             <span style={{fontSize:5,fontWeight:700,color:T.textM}}>Sold</span>
                           </div>
                         </div>
                         <div style={{flex:1,display:'flex',flexDirection:'column',gap:3}}>
                           <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline'}}>
-                            <span style={{fontSize:7,color:T.textM,fontWeight:700}}>TOTAL PROJECT SALES VALUE</span>
-                            <span style={{fontSize:11,fontWeight:900,color:T.navy}}>₹{totalPotential.toFixed(0)} Cr</span>
+                            <span style={{fontSize:9,color:T.textM,fontWeight:700}}>TOTAL PROJECT SALES VALUE</span>
+                            <span style={{fontSize:15,fontWeight:900,color:T.navy}}>₹{totalPotential.toFixed(0)} Cr</span>
                           </div>
                           <div style={{display:'flex',gap:4}}>
-                            <div style={{flex:1,background:`${T.teal}0d`,borderRadius:4,padding:'3px 5px'}}>
-                              <p style={{fontSize:6,color:T.textM,fontWeight:700,margin:0}}>SOLD</p>
-                              <p style={{fontSize:10,fontWeight:900,color:T.tealD,margin:0}}>₹{bookedTCV.toFixed(0)} Cr</p>
-                              <p style={{fontSize:6,color:T.textM,margin:0}}>Total Unit Cost</p>
+                            <div style={{flex:1,background:`${T.teal}0d`,borderRadius:4,padding:'5px 7px'}}>
+                              <p style={{fontSize:8,color:T.textM,fontWeight:700,margin:0}}>SOLD</p>
+                              <p style={{fontSize:14,fontWeight:900,color:T.tealD,margin:0}}>₹{bookedTCV.toFixed(0)} Cr</p>
+                              <p style={{fontSize:8,color:T.textM,margin:0}}>Total Unit Cost</p>
                             </div>
-                            <div style={{flex:1,background:'rgba(245,158,11,0.07)',borderRadius:4,padding:'3px 5px'}}>
-                              <p style={{fontSize:6,color:T.textM,fontWeight:700,margin:0}}>UNSOLD</p>
-                              <p style={{fontSize:10,fontWeight:900,color:T.amber,margin:0}}>₹{unsoldBSP.toFixed(0)} Cr</p>
-                              <p style={{fontSize:6,color:T.textM,margin:0}}>{availUnits} units</p>
+                            <div style={{flex:1,background:'rgba(245,158,11,0.07)',borderRadius:4,padding:'5px 7px'}}>
+                              <p style={{fontSize:8,color:T.textM,fontWeight:700,margin:0}}>UNSOLD</p>
+                              <p style={{fontSize:14,fontWeight:900,color:T.amber,margin:0}}>₹{unsoldBSP.toFixed(0)} Cr</p>
+                              <p style={{fontSize:8,color:T.textM,margin:0}}>{availUnits} units</p>
                             </div>
                           </div>
                         </div>
@@ -2035,8 +2035,8 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                       {/* Row 2: Collection Progress */}
                       <div style={{background:'rgba(0,100,140,0.04)',borderRadius:7,padding:'6px 8px'}}>
                         <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:4}}>
-                          <p style={{fontSize:6,fontWeight:900,color:T.tealD,textTransform:'uppercase',margin:0,letterSpacing:0.5}}>Collection Progress</p>
-                          <span style={{fontSize:8,fontWeight:900,color:collectedPct>100?T.amber:T.tealD}}>{collectedDisplay}</span>
+                          <p style={{fontSize:9,fontWeight:900,color:T.tealD,textTransform:'uppercase',margin:0,letterSpacing:0.5}}>Collection Progress</p>
+                          <span style={{fontSize:11,fontWeight:900,color:collectedPct>100?T.amber:T.tealD}}>{collectedDisplay}</span>
                         </div>
                         <div style={{height:5,background:'rgba(0,100,140,0.1)',borderRadius:3,overflow:'hidden',marginBottom:5}}>
                           <div style={{width:Math.min(collectedPct,100)+'%',height:'100%',background:`linear-gradient(90deg,${T.teal},${T.tealD})`,borderRadius:3,transition:'width 0.6s ease'}}/>
@@ -2047,10 +2047,10 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                             {l:'Collected',     v:totalReceived.toFixed(0),    c:'#059669', sub:'W/O GST'},
                             {l:'Outstanding',   v:upcomingAmt.toFixed(0),      c:'#ef4444', sub:'Still due'},
                           ].map(({l,v,c,sub})=>(
-                            <div key={l} style={{background:'rgba(255,255,255,0.7)',borderRadius:5,padding:'4px 6px',textAlign:'center'}}>
-                              <p style={{fontSize:5.5,color:'#94a3b8',fontWeight:700,margin:'0 0 2px',textTransform:'uppercase'}}>{l}</p>
-                              <p style={{fontSize:10,fontWeight:900,color:c,margin:'0 0 1px'}}>₹{v}Cr</p>
-                              <p style={{fontSize:5.5,color:T.textL,margin:0}}>{sub}</p>
+                            <div key={l} style={{background:'rgba(255,255,255,0.7)',borderRadius:5,padding:'5px 7px',textAlign:'center'}}>
+                              <p style={{fontSize:8,color:'#94a3b8',fontWeight:700,margin:'0 0 2px',textTransform:'uppercase'}}>{l}</p>
+                              <p style={{fontSize:13,fontWeight:900,color:c,margin:'0 0 1px'}}>₹{v}Cr</p>
+                              <p style={{fontSize:8,color:T.textL,margin:0}}>{sub}</p>
                             </div>
                           ))}
                         </div>
