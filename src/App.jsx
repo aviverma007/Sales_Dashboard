@@ -1583,7 +1583,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
   const cancelledUnitStatus=useMemo(()=>{
     const base=raw?.cancelledUnitStatus||{summary:{},buckets:[],byProject:[],vacantUnits:[],rebookedUnits:[]};
     if(!filters.project) return base;
-    const label={'Smartworld Sky Arc':'Sky Arc','SMARTWORLD SKY ARC':'Sky Arc','SMARTWORLD THE EDITION':'Edition','Trump Residences Gurgaon':'Trump','Smartworld Le Courtyard':'Le Courtyard','Smartworld Suites':'Suites','Smartworld Residencies':'Residencies'};
+    const label={'Smartworld Sky Arc':'Sky Arc','SMARTWORLD SKY ARC':'Sky Arc','SMARTWORLD THE EDITION':'Edition','TRUMP RESIDENCES GURGAON':'Trump','Trump Residences Gurgaon':'Trump','Smartworld Le Courtyard':'Le Courtyard','Smartworld Suites':'Suites','Smartworld Residencies':'Residencies'};
     const projs=filters.project.split('||').filter(Boolean);
     const projLabels=projs.map(p=>label[p]||p);
     const vacant=(base.vacantUnits||[]).filter(u=>projs.includes(u.project)||projLabels.includes(u.projectLabel));
