@@ -331,122 +331,10 @@ export default function CRMApp() {
               TAB: OVERVIEW
           ══════════════════════════════════════════ */}
           {tab==='overview' && (
-            <div style={{display:'flex',flexDirection:'column',gap:14}}>
-
-              {/* KPI Grid — cleared, to be redesigned */}
-
-              {/* Monthly Trend + Status Distribution */}
-              <div style={{display:'grid',gridTemplateColumns:'2fr 1fr',gap:12}}>
-                <GC style={{padding:18}}>
-                  <SH title="Monthly Ticket Volume — Opened vs Closed" sub="All time trend from analytics"/>
-                  <div style={{overflowX:'auto'}}>
-                    <div style={{minWidth:Math.max(monthlyTrend.length*52,600)+'px'}}>
-                      <ResponsiveContainer width="100%" height={220}>
-                        <ComposedChart data={monthlyTrend} margin={{top:14,right:16,bottom:28,left:0}}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.07)" vertical={false}/>
-                          <XAxis dataKey="label" tick={{fill:T.textM,fontSize:8,fontWeight:600}} axisLine={false} tickLine={false} angle={-30} textAnchor="end" height={36}/>
-                          <YAxis tick={{fill:T.textM,fontSize:9}} axisLine={false} tickLine={false} width={40}/>
-                          <Tooltip content={<CTip/>}/>
-                          <Legend wrapperStyle={{fontSize:9,fontWeight:700}} iconSize={8}/>
-                          <Bar dataKey="opened" name="Opened" fill={T.amber} radius={[3,3,0,0]} opacity={0.85} barSize={16}/>
-                          <Bar dataKey="closed" name="Closed" fill={T.green} radius={[3,3,0,0]} opacity={0.85} barSize={16}/>
-                          <Line dataKey="opened" hide/>
-                        </ComposedChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </div>
-                </GC>
-                <GC style={{padding:18}}>
-                  <SH title="Ticket Status Distribution"/>
-                  <ResponsiveContainer width="100%" height={160}>
-                    <PieChart>
-                      <Pie data={charts.statusDist||[]} cx="40%" cy="50%" innerRadius={45} outerRadius={70} paddingAngle={2} dataKey="value" strokeWidth={1.5} stroke="#fff">
-                        {(charts.statusDist||[]).map((_,i)=><Cell key={i} fill={CC[i%CC.length]}/>)}
-                      </Pie>
-                      <Tooltip content={<CTip/>}/>
-                    </PieChart>
-                  </ResponsiveContainer>
-                  <div style={{display:'flex',flexDirection:'column',gap:5,marginTop:4}}>
-                    {(charts.statusDist||[]).slice(0,6).map((d,i)=>(
-                      <div key={i} style={{display:'flex',alignItems:'center',gap:6}}>
-                        <div style={{width:9,height:9,borderRadius:2,background:CC[i%CC.length],flexShrink:0}}/>
-                        <span style={{fontSize:9,color:T.textM,flex:1,fontWeight:600}}>{d.name}</span>
-                        <span style={{fontSize:10,fontWeight:800,color:CC[i%CC.length]}}>{d.value.toLocaleString()}</span>
-                      </div>
-                    ))}
-                  </div>
-                </GC>
-              </div>
-
-              {/* Origin + Case Type + Response Time */}
-              <div style={{display:'grid',gridTemplateColumns:'2fr 1fr 1fr',gap:12}}>
-                <GC style={{padding:18}}>
-                  <SH title="Case Origin Breakdown"/>
-                  <div style={{display:'flex',flexDirection:'column',gap:7}}>
-                    {(charts.originData||[]).map((d,i)=>{
-                      const pct = kpi.total>0?(d.count/kpi.total*100).toFixed(1):0;
-                      return (
-                        <div key={i}>
-                          <div style={{display:'flex',justifyContent:'space-between',marginBottom:3}}>
-                            <div style={{display:'flex',alignItems:'center',gap:6}}>
-                              <div style={{width:8,height:8,borderRadius:2,background:CC[i%CC.length],flexShrink:0}}/>
-                              <span style={{fontSize:10,fontWeight:700,color:T.text}}>{d.name}</span>
-                            </div>
-                            <div style={{display:'flex',gap:8}}>
-                              <span style={{fontSize:9,color:T.textL}}>{pct}%</span>
-                              <span style={{fontSize:10,fontWeight:800,color:CC[i%CC.length]}}>{d.count.toLocaleString()}</span>
-                            </div>
-                          </div>
-                          <div style={{height:5,background:'rgba(0,60,100,0.07)',borderRadius:3}}>
-                            <div style={{width:`${Math.min(+pct*2,100)}%`,height:'100%',background:CC[i%CC.length],borderRadius:3,opacity:0.8}}/>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </GC>
-                <GC style={{padding:18}}>
-                  <SH title="Case Type"/>
-                  <ResponsiveContainer width="100%" height={150}>
-                    <PieChart>
-                      <Pie data={charts.typeData||[]} cx="50%" cy="50%" innerRadius={35} outerRadius={60} paddingAngle={3} dataKey="value" strokeWidth={1.5} stroke="#fff">
-                        {(charts.typeData||[]).map((_,i)=><Cell key={i} fill={CC[i]}/>)}
-                      </Pie>
-                      <Tooltip content={<CTip/>}/>
-                    </PieChart>
-                  </ResponsiveContainer>
-                  <div style={{display:'flex',flexDirection:'column',gap:5}}>
-                    {(charts.typeData||[]).map((d,i)=>(
-                      <div key={i} style={{display:'flex',alignItems:'center',gap:6}}>
-                        <div style={{width:8,height:8,borderRadius:2,background:CC[i],flexShrink:0}}/>
-                        <span style={{fontSize:9,flex:1,color:T.textM,fontWeight:600}}>{d.name}</span>
-                        <span style={{fontSize:10,fontWeight:800,color:CC[i]}}>{d.value.toLocaleString()}</span>
-                      </div>
-                    ))}
-                  </div>
-                </GC>
-                <GC style={{padding:18}}>
-                  <SH title="Response Time"/>
-                  <div style={{display:'flex',flexDirection:'column',gap:8}}>
-                    {[{label:'First Response',data:charts.respData||[],colors:[T.green,T.red]},
-                      {label:'Resolution Time',data:charts.resData||[],colors:[T.teal,T.amber]}].map((s,si)=>(
-                      <div key={si}>
-                        <p style={{fontSize:9,fontWeight:700,color:T.textM,textTransform:'uppercase',margin:'0 0 6px'}}>{s.label}</p>
-                        {s.data.map((d,i)=>(
-                          <div key={i} style={{display:'flex',alignItems:'center',gap:6,marginBottom:4}}>
-                            <div style={{width:8,height:8,borderRadius:2,background:s.colors[i],flexShrink:0}}/>
-                            <span style={{fontSize:9,flex:1,color:T.textM,fontWeight:600}}>{d.name}</span>
-                            <span style={{fontSize:10,fontWeight:800,color:s.colors[i]}}>{d.value.toLocaleString()}</span>
-                          </div>
-                        ))}
-                      </div>
-                    ))}
-                    <div style={{marginTop:8,padding:'8px 12px',background:'rgba(0,151,167,0.07)',borderRadius:8}}>
-                      <p style={{fontSize:9,color:T.textM,margin:0,fontWeight:700}}>AVG RESOLUTION</p>
-                      <p style={{fontSize:20,fontWeight:900,color:T.tealD,margin:0}}>2.9 <span style={{fontSize:11}}>days</span></p>
-                    </div>
-                  </div>
-                </GC>
+            <div style={{display:'flex',flexDirection:'column',gap:14,minHeight:340,alignItems:'center',justifyContent:'center'}}>
+              {/* Overview cleared — blank canvas. KPIs & charts to be redesigned. */}
+              <div style={{color:T.textM,fontSize:13,fontWeight:700,opacity:0.45,letterSpacing:0.5,padding:'100px 0'}}>
+                CRM OVERVIEW — REDESIGN IN PROGRESS
               </div>
             </div>
           )}
@@ -619,13 +507,7 @@ export default function CRMApp() {
           ══════════════════════════════════════════ */}
           {tab==='risk' && (
             <div style={{display:'flex',flexDirection:'column',gap:14}}>
-              {/* Risk KPIs */}
-              <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12}}>
-                <KpiCard icon="⚠️" label="Beyond TAT"         value={kpi.beyondTAT}  color={T.red}    sub="Past SLA deadline"                    pct={kpi.total>0?+(kpi.beyondTAT/kpi.total*100).toFixed(1):0}/>
-                <KpiCard icon="📈" label="In Escalation"      value={kpi.escalated}  color={T.orange} sub="Active escalation levels"              pct={kpi.total>0?+(kpi.escalated/kpi.total*100).toFixed(1):0}/>
-                <KpiCard icon="⚖️" label="Active Legal"       value={kpi.legal}      color={T.red}    sub="Legal flag + open status"              pct={null}/>
-                <KpiCard icon="👑" label="HNI Escalations"    value={filtered.filter(r=>r.hni&&(r.tatStatus==='Beyond TAT'||r.tatStatus?.includes('Escalation'))).length} color="#b45309" sub="HNI tickets past SLA" pct={null}/>
-              </div>
+              {/* Risk KPIs — cleared, to be redesigned */}
 
               {/* TAT chart + escalation breakdown */}
               <div style={{display:'grid',gridTemplateColumns:'2fr 1fr',gap:12}}>
