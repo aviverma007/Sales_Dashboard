@@ -90,6 +90,16 @@ const KpiCard = ({icon,label,value,sub,color,pct}) => (
   </div>
 );
 
+// Panel with blue header bar (matches requested KPI design)
+const Panel = ({title,children,style={}}) => (
+  <div style={{background:T.glass,border:`1px solid ${T.border}`,borderRadius:12,overflow:'hidden',boxShadow:'0 4px 20px rgba(0,80,120,0.10)',...style}}>
+    <div style={{background:'linear-gradient(135deg,#1565c0,#0d47a1)',color:'#fff',fontWeight:800,fontSize:13,textAlign:'center',padding:'8px 0',letterSpacing:0.5}}>{title}</div>
+    <div style={{padding:14}}>{children}</div>
+  </div>
+);
+
+const typeColor = (n) => n==='Query'?'#c9a227':n==='Complaint'?'#d32f2f':n==='SPAM'?'#607d8b':'#0097a7';
+
 const Loading = () => (
   <div style={{minHeight:'100vh',backgroundImage:'url(/bg.jpg)',backgroundSize:'cover',backgroundPosition:'center',
     backgroundAttachment:'fixed',display:'flex',alignItems:'center',justifyContent:'center'}}>
@@ -171,6 +181,33 @@ export default function CRMApp() {
     return filtered;
   }, [filtered,tab]);
 
+  // Overall-page chart data (Case Type / Status / Origin) — live from pageRows
+  const ovCharts = useMemo(() => {
+    if(!pageRows.length) return {caseType:[],statusList:[],origin:[]};
+    const cnt = (key) => pageRows.reduce((o,r)=>{const v=r[key]||'Unknown';o[v]=(o[v]||0)+1;return o;},{});
+
+    // Case Type — exclude blanks
+    const caseType = Object.entries(cnt('caseType'))
+      .filter(([k])=>k && k!=='Unknown')
+      .map(([k,v])=>({name:k,value:v})).sort((a,b)=>b.value-a.value);
+
+    // Status — group closed-type statuses into 'Closed'
+    const sMap = {};
+    pageRows.forEach(r=>{
+      const k = isClosed(r) ? 'Closed' : (r.status||'Unknown');
+      if(k==='Unknown') return;
+      sMap[k]=(sMap[k]||0)+1;
+    });
+    const statusList = Object.entries(sMap).map(([k,v])=>({name:k,value:v})).sort((a,b)=>b.value-a.value);
+
+    // Case Origin — share %
+    const oEntries = Object.entries(cnt('origin')).filter(([k])=>k && k!=='Unknown').map(([k,v])=>({name:k,value:v})).sort((a,b)=>b.value-a.value);
+    const oTotal = oEntries.reduce((s,o)=>s+o.value,0) || 1;
+    const origin = oEntries.map(o=>({...o,pct:+(o.value/oTotal*100).toFixed(2)}));
+
+    return {caseType,statusList,origin};
+  }, [pageRows]);
+
   // Filter dropdown options (from full dataset)
   const opts = useMemo(() => {
     if(!data) return {};
@@ -247,14 +284,73 @@ export default function CRMApp() {
 
           {/* ── MAIN CONTENT ── */}
           <main style={{flex:1,minWidth:0,display:'flex',flexDirection:'column',gap:14}}>
-            <GC style={{padding:18}}>
-              <SH title={pageLabel} sub={`${pageRows.length.toLocaleString()} tickets in view · ${(data||[]).length.toLocaleString()} total`}/>
-              <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',minHeight:280,gap:8}}>
-                <div style={{fontSize:48,fontWeight:900,color:T.tealD,letterSpacing:-1,lineHeight:1}}>{pageRows.length.toLocaleString()}</div>
-                <div style={{fontSize:12,fontWeight:700,color:T.textM,textTransform:'uppercase',letterSpacing:0.5}}>{pageLabel}</div>
-                <div style={{fontSize:11,color:T.gray,marginTop:12,opacity:0.7}}>KPIs coming soon — page & filters ready</div>
-              </div>
-            </GC>
+
+            {tab==='overall' ? (
+              <>
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1.1fr 1.2fr',gap:14,alignItems:'start'}}>
+
+                  {/* Case Type */}
+                  <Panel title="Case Type">
+                    <ResponsiveContainer width="100%" height={210}>
+                      <PieChart>
+                        <Pie data={ovCharts.caseType} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={78}
+                          label={({value})=>value.toLocaleString()} labelLine={true}>
+                          {ovCharts.caseType.map((e,i)=><Cell key={i} fill={typeColor(e.name)}/>)}
+                        </Pie>
+                        <Tooltip content={<CTip/>}/>
+                        <Legend iconType="circle" wrapperStyle={{fontSize:11,fontWeight:700}}/>
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </Panel>
+
+                  {/* Status */}
+                  <Panel title="Status">
+                    <div style={{padding:'4px 2px'}}>
+                      {ovCharts.statusList.map((s,i)=>{
+                        const max = ovCharts.statusList[0]?.value || 1;
+                        const w = Math.max(2, s.value/max*100);
+                        const big = s.name==='Closed';
+                        return (
+                          <div key={i} style={{display:'flex',alignItems:'center',gap:8,marginBottom:10}}>
+                            <div style={{width:150,fontSize:11,fontWeight:800,color:T.textM}}>{s.name}</div>
+                            <div style={{flex:1,position:'relative',height:26,background:'#f3f4f6',borderRadius:5,overflow:'hidden'}}>
+                              <div style={{position:'absolute',top:0,left:0,bottom:0,width:`${w}%`,background:big?'#f4a582':'#fbe0d2',borderRadius:5,transition:'width 0.3s'}}/>
+                              <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'flex-end',paddingRight:10,fontSize:12,fontWeight:800,color:T.text}}>{s.value.toLocaleString()}</div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </Panel>
+
+                  {/* Case Origin */}
+                  <Panel title="Case Origin">
+                    <div style={{padding:'4px 2px'}}>
+                      {ovCharts.origin.slice(0,8).map((o,i)=>(
+                        <div key={i} style={{display:'flex',alignItems:'center',gap:8,marginBottom:9}}>
+                          <div style={{width:120,fontSize:10,fontWeight:700,color:T.textM,textAlign:'right',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{o.name}</div>
+                          <div style={{flex:1,display:'flex',alignItems:'center',gap:7}}>
+                            <div style={{height:18,width:`${o.pct}%`,minWidth:4,background:CC[i%CC.length],borderRadius:3,transition:'width 0.3s'}}/>
+                            <span style={{fontSize:11,fontWeight:800,color:T.text,whiteSpace:'nowrap'}}>{o.pct}%</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </Panel>
+
+                </div>
+              </>
+            ) : (
+              <GC style={{padding:18}}>
+                <SH title={pageLabel} sub={`${pageRows.length.toLocaleString()} tickets in view · ${(data||[]).length.toLocaleString()} total`}/>
+                <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',minHeight:280,gap:8}}>
+                  <div style={{fontSize:48,fontWeight:900,color:T.tealD,letterSpacing:-1,lineHeight:1}}>{pageRows.length.toLocaleString()}</div>
+                  <div style={{fontSize:12,fontWeight:700,color:T.textM,textTransform:'uppercase',letterSpacing:0.5}}>{pageLabel}</div>
+                  <div style={{fontSize:11,color:T.gray,marginTop:12,opacity:0.7}}>KPIs coming soon — page & filters ready</div>
+                </div>
+              </GC>
+            )}
+
           </main>
 
         </div>
