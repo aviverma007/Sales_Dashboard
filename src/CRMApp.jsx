@@ -122,6 +122,7 @@ export default function CRMApp() {
   const [fStatus,   setFStatus]   = useState('All');
   const [fOwner,    setFOwner]    = useState('All');
   const [fOrigin,   setFOrigin]   = useState('All');
+  const [search,    setSearch]    = useState('');
 
   // "Number of cases by" dimension toggle
   const [byDim, setByDim] = useState('owner'); // owner | hod | tl
@@ -171,6 +172,7 @@ export default function CRMApp() {
   // filters are wired to the populated Area / Sub Area columns (which hold the categorisation).
   const filtered = useMemo(() => {
     if(!data) return [];
+    const q = search.trim().toLowerCase();
     return data.filter(r => {
       if(fCategory!=='All' && r.area!==fCategory)         return false;
       if(fSubCat!=='All'   && r.subArea!==fSubCat)        return false;
@@ -179,9 +181,13 @@ export default function CRMApp() {
       if(fOwner!=='All'    && r.owner!==fOwner)            return false;
       if(fOrigin!=='All'   && r.origin!==fOrigin)          return false;
       if(applic && r.applicability!==applic)               return false;
+      if(q){
+        const hay = `${r.caseNum} ${r.account} ${r.owner} ${r.tl} ${r.area} ${r.subArea} ${r.origin} ${r.status} ${r.caseType}`.toLowerCase();
+        if(!hay.includes(q)) return false;
+      }
       return true;
     });
-  }, [data,fCategory,fSubCat,fCaseType,fStatus,fOwner,fOrigin,applic]);
+  }, [data,fCategory,fSubCat,fCaseType,fStatus,fOwner,fOrigin,applic,search]);
 
   // Narrow by page scope (status)
   const pageRows = useMemo(() => {
@@ -251,8 +257,8 @@ export default function CRMApp() {
     return { category:u('area'), subCategory:u('subArea'), caseType:u('caseType'), status:u('status'), owner:u('owner'), origin:u('origin') };
   }, [data]);
 
-  const resetFilters = () => { setFCategory('All');setFSubCat('All');setFCaseType('All');setFStatus('All');setFOwner('All');setFOrigin('All'); };
-  const hasFilters = [fCategory,fSubCat,fCaseType,fStatus,fOwner,fOrigin].some(v=>v!=='All');
+  const resetFilters = () => { setFCategory('All');setFSubCat('All');setFCaseType('All');setFStatus('All');setFOwner('All');setFOrigin('All');setSearch(''); };
+  const hasFilters = [fCategory,fSubCat,fCaseType,fStatus,fOwner,fOrigin].some(v=>v!=='All') || search.trim()!=='';
 
   if(loading) return <Loading/>;
 
@@ -354,6 +360,13 @@ export default function CRMApp() {
                 <img src="/swd-logo.png" alt="" style={{width:30,height:30,objectFit:'contain',marginBottom:4}}/>
                 <div style={{color:'#fff',fontWeight:900,fontSize:13,letterSpacing:1}}>SMARTWORLD</div>
                 <div style={{color:'rgba(255,255,255,0.7)',fontSize:7,letterSpacing:1,fontWeight:600}}>CASE MANAGEMENT</div>
+              </div>
+
+              <div style={{position:'relative',marginBottom:14}}>
+                <span style={{position:'absolute',left:10,top:'50%',transform:'translateY(-50%)',fontSize:13,opacity:0.5,pointerEvents:'none'}}>🔍</span>
+                <input className="crm-sel" type="text" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search cases…"
+                  style={{width:'100%',fontSize:12,fontWeight:600,color:T.text,background:'#fff',border:'1px solid #cfd8dc',borderRadius:8,padding:'8px 26px 8px 30px',boxSizing:'border-box'}}/>
+                {search && <span onClick={()=>setSearch('')} style={{position:'absolute',right:8,top:'50%',transform:'translateY(-50%)',fontSize:14,cursor:'pointer',color:T.gray,fontWeight:800}}>×</span>}
               </div>
 
               <SFilter label="Category"     value={fCategory} onChange={setFCategory} options={opts.category||[]}/>
