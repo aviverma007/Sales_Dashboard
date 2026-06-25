@@ -61,10 +61,9 @@ const FSelect = ({label,value,onChange,options}) => (
 // Sidebar filter — blue pill label + white dropdown (matches CRM sidebar design)
 const SFilter = ({label,value,onChange,options}) => (
   <div style={{marginBottom:14}}>
-    <div style={{background:'linear-gradient(135deg,#1565c0,#0d47a1)',color:'#fff',fontSize:11,fontWeight:800,
-      textAlign:'center',borderRadius:8,padding:'5px 0',marginBottom:6,letterSpacing:0.3,
-      boxShadow:'0 2px 8px rgba(13,71,161,0.25)'}}>{label}</div>
-    <select value={value} onChange={e=>onChange(e.target.value)}
+    <div className="crm-pill" style={{background:'linear-gradient(135deg,#1e88e5,#0d47a1)',color:'#fff',fontSize:11,fontWeight:800,
+      textAlign:'center',borderRadius:8,padding:'6px 0',marginBottom:6,letterSpacing:0.3}}>{label}</div>
+    <select className="crm-sel" value={value} onChange={e=>onChange(e.target.value)}
       style={{width:'100%',fontSize:12,fontWeight:600,color:T.text,background:'#fff',
         border:'1px solid #cfd8dc',borderRadius:8,padding:'7px 9px',cursor:'pointer'}}>
       <option value="All">All</option>
@@ -305,6 +304,17 @@ export default function CRMApp() {
         .crm-rise{animation:crmUp .55s cubic-bezier(.2,.8,.2,1) both;}
         .crm-lift{transition:transform .35s cubic-bezier(.2,.8,.2,1),box-shadow .35s ease;}
         .crm-lift:hover{transform:translateY(-4px);box-shadow:0 16px 36px rgba(0,80,120,.20);}
+        @keyframes crmPage{from{opacity:0;transform:translateX(28px) scale(.99);} to{opacity:1;transform:translateX(0) scale(1);}}
+        .crm-page{animation:crmPage .45s cubic-bezier(.2,.8,.2,1) both;}
+        .crm-bar{box-shadow:0 2px 5px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.35);transition:width .55s cubic-bezier(.2,.8,.2,1),filter .2s ease,transform .2s ease;}
+        .crm-bar:hover{filter:brightness(1.1) saturate(1.1);transform:scaleY(1.12);}
+        .crm-btn{transition:transform .18s cubic-bezier(.2,.8,.2,1),box-shadow .2s ease,background .2s ease,color .2s ease;box-shadow:0 2px 6px rgba(13,40,70,.12);}
+        .crm-btn:hover{transform:translateY(-2px);box-shadow:0 8px 18px rgba(13,71,161,.28);}
+        .crm-btn:active{transform:translateY(0) scale(.97);}
+        .crm-sel{transition:box-shadow .2s ease,border-color .2s ease,transform .15s ease;box-shadow:0 1px 3px rgba(0,40,80,.08);}
+        .crm-sel:hover{box-shadow:0 4px 12px rgba(13,71,161,.16);transform:translateY(-1px);}
+        .crm-sel:focus{outline:none;border-color:#1565c0;box-shadow:0 0 0 3px rgba(21,101,192,.20);}
+        .crm-pill{box-shadow:0 3px 8px rgba(13,71,161,.30),inset 0 1px 0 rgba(255,255,255,.4);}
       `}</style>
       <div style={{minHeight:'100vh',background:'rgba(255,255,255,0.04)',backdropFilter:'blur(1px)'}}>
 
@@ -319,7 +329,7 @@ export default function CRMApp() {
           </div>
           <div style={{display:'flex',gap:4}}>
             {TABS.map(t=>(
-              <button key={t.k} onClick={()=>setTab(t.k)} style={{background:tab===t.k?'rgba(255,255,255,0.18)':'transparent',
+              <button key={t.k} className="crm-btn" onClick={()=>setTab(t.k)} style={{background:tab===t.k?'rgba(255,255,255,0.18)':'transparent',
                 color:'#fff',border:tab===t.k?'1px solid rgba(255,255,255,0.35)':'1px solid transparent',
                 borderRadius:8,padding:'5px 16px',fontSize:11,fontWeight:700,cursor:'pointer',transition:'all 0.15s'}}>
                 {t.l}
@@ -361,14 +371,15 @@ export default function CRMApp() {
           {/* ── MAIN CONTENT ── */}
           <main style={{flex:1,minWidth:0,display:'flex',flexDirection:'column',gap:14}}>
 
+            <div key={tab} className="crm-page" style={{display:'flex',flexDirection:'column',gap:14}}>
             {tab==='overall' ? (
               <>
                 {/* Case Applicability buttons */}
                 <div style={{display:'flex',gap:10,alignItems:'center'}}>
                   <span style={{fontSize:11,fontWeight:800,color:T.textM,textTransform:'uppercase',letterSpacing:0.4}}>Case Applicability:</span>
                   {[{k:'Inclusion',c:T.green},{k:'Exclusion',c:T.red}].map(b=>(
-                    <button key={b.k} onClick={()=>setApplic(applic===b.k?'':b.k)} style={{
-                      background:applic===b.k?b.c:'#fff',
+                    <button key={b.k} className="crm-btn" onClick={()=>setApplic(applic===b.k?'':b.k)} style={{
+                      background:applic===b.k?`linear-gradient(135deg,${b.c},${b.c}cc)`:'#fff',
                       color:applic===b.k?'#fff':b.c,
                       border:`1.5px solid ${b.c}`,
                       borderRadius:8,padding:'7px 20px',fontSize:12,fontWeight:800,cursor:'pointer',transition:'all 0.15s'}}>
@@ -401,9 +412,21 @@ export default function CRMApp() {
                   <Panel title="Case Type">
                     <ResponsiveContainer width="100%" height={210}>
                       <PieChart>
-                        <Pie data={ovCharts.caseType} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={78}
+                        <defs>
+                          <radialGradient id="pieQuery" cx="35%" cy="35%" r="75%"><stop offset="0%" stopColor="#e8cf5c"/><stop offset="100%" stopColor="#a8851a"/></radialGradient>
+                          <radialGradient id="pieComplaint" cx="35%" cy="35%" r="75%"><stop offset="0%" stopColor="#ef5350"/><stop offset="100%" stopColor="#b71c1c"/></radialGradient>
+                          <radialGradient id="pieSPAM" cx="35%" cy="35%" r="75%"><stop offset="0%" stopColor="#78909c"/><stop offset="100%" stopColor="#455a64"/></radialGradient>
+                          <radialGradient id="pieOther" cx="35%" cy="35%" r="75%"><stop offset="0%" stopColor="#26c6da"/><stop offset="100%" stopColor="#00838f"/></radialGradient>
+                          <filter id="pieShadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="4" stdDeviation="5" floodColor="#003c5a" floodOpacity="0.35"/></filter>
+                        </defs>
+                        <Pie data={ovCharts.caseType} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} innerRadius={20}
+                          paddingAngle={3} stroke="#fff" strokeWidth={2} style={{filter:'url(#pieShadow)'}}
+                          isAnimationActive animationDuration={900} animationBegin={150}
                           label={({value})=>value.toLocaleString()} labelLine={true}>
-                          {ovCharts.caseType.map((e,i)=><Cell key={i} fill={typeColor(e.name)}/>)}
+                          {ovCharts.caseType.map((e,i)=>{
+                            const gid = e.name==='Query'?'pieQuery':e.name==='Complaint'?'pieComplaint':e.name==='SPAM'?'pieSPAM':'pieOther';
+                            return <Cell key={i} fill={`url(#${gid})`}/>;
+                          })}
                         </Pie>
                         <Tooltip content={<CTip/>}/>
                         <Legend iconType="circle" wrapperStyle={{fontSize:11,fontWeight:700}}/>
@@ -421,8 +444,9 @@ export default function CRMApp() {
                         return (
                           <div key={i} style={{display:'flex',alignItems:'center',gap:8,marginBottom:10}}>
                             <div style={{width:150,fontSize:11,fontWeight:800,color:T.textM}}>{s.name}</div>
-                            <div style={{flex:1,position:'relative',height:26,background:'#f3f4f6',borderRadius:5,overflow:'hidden'}}>
-                              <div style={{position:'absolute',top:0,left:0,bottom:0,width:`${w}%`,background:big?'#f4a582':'#fbe0d2',borderRadius:5,transition:'width 0.3s'}}/>
+                            <div style={{flex:1,position:'relative',height:26,background:'#eef1f4',borderRadius:6,overflow:'hidden',boxShadow:'inset 0 1px 3px rgba(0,40,80,.12)'}}>
+                              <div className="crm-bar" style={{position:'absolute',top:0,left:0,bottom:0,width:`${w}%`,
+                                background:big?'linear-gradient(90deg,#f6b08a,#ef7f4f)':'linear-gradient(90deg,#fce3d6,#f7c4ab)',borderRadius:6}}/>
                               <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'flex-end',paddingRight:10,fontSize:12,fontWeight:800,color:T.text}}>{s.value.toLocaleString()}</div>
                             </div>
                           </div>
@@ -434,15 +458,18 @@ export default function CRMApp() {
                   {/* Case Origin */}
                   <Panel title="Case Origin">
                     <div style={{padding:'4px 2px'}}>
-                      {ovCharts.origin.slice(0,8).map((o,i)=>(
+                      {ovCharts.origin.slice(0,8).map((o,i)=>{
+                        const c1=CC[i%CC.length];
+                        return (
                         <div key={i} style={{display:'flex',alignItems:'center',gap:8,marginBottom:9}}>
                           <div style={{width:120,fontSize:10,fontWeight:700,color:T.textM,textAlign:'right',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{o.name}</div>
                           <div style={{flex:1,display:'flex',alignItems:'center',gap:7}}>
-                            <div style={{height:18,width:`${o.pct}%`,minWidth:4,background:CC[i%CC.length],borderRadius:3,transition:'width 0.3s'}}/>
+                            <div className="crm-bar" style={{height:20,width:`${o.pct}%`,minWidth:4,background:`linear-gradient(90deg,${c1},${c1}cc)`,borderRadius:5}}/>
                             <span style={{fontSize:11,fontWeight:800,color:T.text,whiteSpace:'nowrap'}}>{o.pct}%</span>
                           </div>
                         </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </Panel>
 
@@ -452,7 +479,7 @@ export default function CRMApp() {
                 <Panel title={`Number of Cases by ${byDim==='owner'?'Case Owner':'Team Leader'}`}>
                   <div style={{display:'flex',gap:8,marginBottom:14,justifyContent:'center'}}>
                     {[{k:'owner',l:'By Case Owner'},{k:'tl',l:'By Team Leader'}].map(b=>(
-                      <button key={b.k} onClick={()=>setByDim(b.k)} style={{
+                      <button key={b.k} className="crm-btn" onClick={()=>setByDim(b.k)} style={{
                         background:byDim===b.k?'linear-gradient(135deg,#1565c0,#0d47a1)':'#fff',
                         color:byDim===b.k?'#fff':T.textM,
                         border:`1.5px solid ${byDim===b.k?'#0d47a1':'#cfd8dc'}`,
@@ -464,15 +491,20 @@ export default function CRMApp() {
                   {byData.length>0 ? (
                     <ResponsiveContainer width="100%" height={Math.max(260, byData.length*30)}>
                       <BarChart data={byData} layout="vertical" margin={{top:5,right:55,left:10,bottom:5}}>
+                        <defs>
+                          <linearGradient id="barClosed" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stopColor="#66bb6a"/><stop offset="100%" stopColor="#2e7d32"/></linearGradient>
+                          <linearGradient id="barOpen" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stopColor="#ffb74d"/><stop offset="100%" stopColor="#ef6c00"/></linearGradient>
+                          <filter id="barSh" x="-10%" y="-30%" width="120%" height="160%"><feDropShadow dx="0" dy="2" stdDeviation="2.5" floodColor="#003c5a" floodOpacity="0.30"/></filter>
+                        </defs>
                         <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="rgba(0,60,100,0.08)"/>
                         <XAxis type="number" tick={{fontSize:10,fill:T.textL}}/>
                         <YAxis type="category" dataKey="name" width={150} tick={{fontSize:10,fill:T.textM,fontWeight:600}}/>
-                        <Tooltip content={<CTip/>}/>
+                        <Tooltip content={<CTip/>} cursor={{fill:'rgba(21,101,192,0.06)'}}/>
                         <Legend iconType="circle" wrapperStyle={{fontSize:11,fontWeight:700}}/>
-                        <Bar dataKey="closed" name="Closed" stackId="a" fill={T.green}>
+                        <Bar dataKey="closed" name="Closed" stackId="a" fill="url(#barClosed)" style={{filter:'url(#barSh)'}} isAnimationActive animationDuration={800}>
                           <LabelList dataKey="closed" position="center" style={{fontSize:9,fontWeight:800,fill:'#fff'}} formatter={v=>v>maxTot*0.06?v.toLocaleString():''}/>
                         </Bar>
-                        <Bar dataKey="open" name="Open" stackId="a" fill={T.amber} radius={[0,4,4,0]}>
+                        <Bar dataKey="open" name="Open" stackId="a" fill="url(#barOpen)" radius={[0,5,5,0]} style={{filter:'url(#barSh)'}} isAnimationActive animationDuration={800}>
                           <LabelList dataKey="open" position="center" style={{fontSize:9,fontWeight:800,fill:'#fff'}} formatter={v=>v>maxTot*0.06?v.toLocaleString():''}/>
                           <LabelList content={barEndLabel}/>
                         </Bar>
@@ -530,6 +562,7 @@ export default function CRMApp() {
                 </div>
               </GC>
             )}
+            </div>
 
           </main>
 
