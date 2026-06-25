@@ -90,7 +90,7 @@ const Loading = () => (
 export default function CRMApp() {
   const [data, setData]       = useState(null);
   const [analytics, setAna]   = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [tab, setTab]         = useState('overview');
 
   // Global filters
@@ -105,44 +105,9 @@ export default function CRMApp() {
 
   const logout = () => { sessionStorage.removeItem('crm_auth'); window.location.reload(); };
 
-  useEffect(() => {
-    Promise.all([
-      fetch('/data/crm_analytics.json').then(r=>r.json()).catch(()=>null),
-      fetch('/data/crm_case_management.xlsx').then(r=>r.arrayBuffer()),
-    ]).then(([ana, buf]) => {
-      if(ana) setAna(ana);
-      const wb = XLSX.read(buf, {type:'array'});
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      const raw = XLSX.utils.sheet_to_json(ws, {defval:null, range:14});
-      const parsed = raw.map(r=>({
-        account:    r['Account Name']||'',
-        caseNum:    r['Case Number']||'',
-        subject:    r['Subject']||'',
-        priority:   r['Priority']||'',
-        origin:     r['Case Origin']||'',
-        caseType:   r['Case Type']||'',
-        status:     r['Status']||'',
-        tatStatus:  r['TAT Status']||'',
-        area:       r['Area']||'',
-        subArea:    r['Sub Area']||'',
-        owner:      r['Case Owner']||'',
-        tl:         r['Team Leader name']||'',
-        hni:        r['HNI Customer']==1||String(r['HNI Customer']).toUpperCase()==='YES',
-        legal:      r['Active Legal Case']==1||String(r['Active Legal Case']).toUpperCase()==='YES',
-        reopened:   r['Status']==='Re-Open',
-        reassigns:  r['Number of Reassigns']||0,
-        age:        r['Age']||0,
-        respCat:    r['Response Time Category']||'',
-        resCat:     r['Resolution Time Category']||'',
-        openedStr:  r['Date/Time Opened']||'',
-        closedStr:  r['Closed Date']||'',
-        project:    r['Project']||'',
-        property:   r['Property']||'',
-      }));
-      setData(parsed);
-      setLoading(false);
-    }).catch(()=>setLoading(false));
-  }, []);
+  // Data loading removed for blank profile.
+  // TODO: re-add fast lean-JSON loader (Option B) when rebuilding KPIs.
+  useEffect(() => {}, []);
 
   // Filtered data
   const filtered = useMemo(() => {
