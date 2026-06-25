@@ -422,14 +422,18 @@ export default function CRMApp() {
                         <Pie data={ovCharts.caseType} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={62} innerRadius={16}
                           paddingAngle={3} stroke="#fff" strokeWidth={2} style={{filter:'url(#pieShadow)'}}
                           isAnimationActive animationDuration={900} animationBegin={150}
-                          label={({value})=>value.toLocaleString()} labelLine={true}>
+                          labelLine={true} label={({cx,cy,midAngle,outerRadius,value})=>{
+                            const RAD=Math.PI/180, r=outerRadius+16;
+                            const x=cx+r*Math.cos(-midAngle*RAD), y=cy+r*Math.sin(-midAngle*RAD);
+                            return <text x={x} y={y} fill="#000" fontSize={11} fontWeight={800} textAnchor={x>cx?'start':'end'} dominantBaseline="central">{value.toLocaleString()}</text>;
+                          }}>
                           {ovCharts.caseType.map((e,i)=>{
                             const gid = e.name==='Query'?'pieQuery':e.name==='Complaint'?'pieComplaint':e.name==='SPAM'?'pieSPAM':'pieOther';
                             return <Cell key={i} fill={`url(#${gid})`}/>;
                           })}
                         </Pie>
                         <Tooltip content={<CTip/>}/>
-                        <Legend iconType="circle" wrapperStyle={{fontSize:11,fontWeight:700}}/>
+                        <Legend iconType="circle" wrapperStyle={{fontSize:11,fontWeight:700}} formatter={(v)=><span style={{color:"#000"}}>{v}</span>}/>
                       </PieChart>
                     </ResponsiveContainer>
                   </Panel>
@@ -500,7 +504,7 @@ export default function CRMApp() {
                         <XAxis type="number" tick={{fontSize:10,fill:T.textL}}/>
                         <YAxis type="category" dataKey="name" width={150} tick={{fontSize:10,fill:T.textM,fontWeight:600}}/>
                         <Tooltip content={<CTip/>} cursor={{fill:'rgba(21,101,192,0.06)'}}/>
-                        <Legend iconType="circle" wrapperStyle={{fontSize:11,fontWeight:700}}/>
+                        <Legend iconType="circle" wrapperStyle={{fontSize:11,fontWeight:700}} formatter={(v)=><span style={{color:"#000"}}>{v}</span>}/>
                         <Bar dataKey="closed" name="Closed" stackId="a" fill="url(#barClosed)" style={{filter:'url(#barSh)'}} isAnimationActive animationDuration={800}>
                           <LabelList dataKey="closed" position="center" style={{fontSize:9,fontWeight:800,fill:'#fff'}} formatter={v=>v>maxTot*0.06?v.toLocaleString():''}/>
                         </Bar>
