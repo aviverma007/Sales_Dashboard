@@ -16,10 +16,10 @@ const T = {
 };
 const CC = ['#0097a7','#1565c0','#2e7d32','#f57c00','#d32f2f','#6a1b9a','#00838f','#37474f','#e65100','#00695c','#558b2f','#ad1457'];
 
-const GC = ({ children, style={} }) => {
+const GC = ({ children, style={}, className='' }) => {
   const [h,sH] = useState(false);
   return (
-    <div onMouseEnter={()=>sH(true)} onMouseLeave={()=>sH(false)}
+    <div className={className} onMouseEnter={()=>sH(true)} onMouseLeave={()=>sH(false)}
       style={{background:h?T.glassH:T.glass,border:`1px solid ${T.border}`,borderRadius:14,
         boxShadow:'0 4px 24px rgba(0,80,120,0.10)',transition:'all 0.2s',position:'relative',overflow:'hidden',...style}}>
       <div style={{position:'absolute',top:0,left:0,right:0,height:1,background:'rgba(255,255,255,0.95)'}}/>
@@ -92,8 +92,8 @@ const KpiCard = ({icon,label,value,sub,color,pct}) => (
 
 // Panel with blue header bar (matches requested KPI design)
 const Panel = ({title,children,style={}}) => (
-  <div style={{background:T.glass,border:`1px solid ${T.border}`,borderRadius:12,overflow:'hidden',boxShadow:'0 4px 20px rgba(0,80,120,0.10)',...style}}>
-    <div style={{background:'linear-gradient(135deg,#1565c0,#0d47a1)',color:'#fff',fontWeight:800,fontSize:13,textAlign:'center',padding:'8px 0',letterSpacing:0.5}}>{title}</div>
+  <div className="crm-lift crm-rise" style={{background:T.glass,border:`1px solid ${T.border}`,borderRadius:14,overflow:'hidden',boxShadow:'0 4px 20px rgba(0,80,120,0.10)',...style}}>
+    <div style={{background:'linear-gradient(135deg,#1e88e5,#1565c0 55%,#0d47a1)',color:'#fff',fontWeight:800,fontSize:13,textAlign:'center',padding:'9px 0',letterSpacing:0.5,boxShadow:'inset 0 -2px 6px rgba(0,0,0,0.12)'}}>{title}</div>
     <div style={{padding:14}}>{children}</div>
   </div>
 );
@@ -283,6 +283,29 @@ export default function CRMApp() {
 
   return (
     <div style={{minHeight:'100vh',backgroundImage:'url(/bg.jpg)',backgroundSize:'cover',backgroundPosition:'center',backgroundAttachment:'fixed',fontFamily:'Inter,sans-serif'}}>
+      <style>{`
+        @keyframes crmUp   { from{opacity:0;transform:translateY(18px) scale(.97);} to{opacity:1;transform:translateY(0) scale(1);} }
+        @keyframes crmFloat{ 0%,100%{transform:translateY(0);} 50%{transform:translateY(-3px);} }
+        .crm-stat{
+          position:relative;border-radius:16px;padding:14px 18px;color:#fff;overflow:hidden;
+          display:flex;align-items:center;gap:14px;transform-style:preserve-3d;
+          box-shadow:0 2px 4px rgba(13,40,70,.12),0 10px 22px rgba(13,40,70,.16),inset 0 1px 0 rgba(255,255,255,.25);
+          transition:transform .4s cubic-bezier(.2,.8,.2,1),box-shadow .4s ease;
+          animation:crmUp .6s cubic-bezier(.2,.8,.2,1) both;
+        }
+        .crm-stat:hover{
+          transform:translateY(-7px) perspective(700px) rotateX(7deg) rotateY(-3deg) scale(1.03);
+          box-shadow:0 8px 14px rgba(13,40,70,.16),0 26px 50px rgba(13,40,70,.30),inset 0 1px 0 rgba(255,255,255,.35);
+        }
+        .crm-stat::after{content:'';position:absolute;top:0;left:0;right:0;height:46%;
+          background:linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,0));pointer-events:none;}
+        .crm-stat .ic{font-size:30px;filter:drop-shadow(0 3px 5px rgba(0,0,0,.25));animation:crmFloat 3.5s ease-in-out infinite;}
+        .crm-stat .num{font-size:27px;font-weight:900;letter-spacing:-1px;line-height:1;text-shadow:0 2px 6px rgba(0,0,0,.22);}
+        .crm-stat .lbl{font-size:10.5px;font-weight:800;letter-spacing:.6px;opacity:.92;margin-top:5px;text-transform:uppercase;}
+        .crm-rise{animation:crmUp .55s cubic-bezier(.2,.8,.2,1) both;}
+        .crm-lift{transition:transform .35s cubic-bezier(.2,.8,.2,1),box-shadow .35s ease;}
+        .crm-lift:hover{transform:translateY(-4px);box-shadow:0 16px 36px rgba(0,80,120,.20);}
+      `}</style>
       <div style={{minHeight:'100vh',background:'rgba(255,255,255,0.04)',backdropFilter:'blur(1px)'}}>
 
         {/* ── TOP NAV (3 pages) ── */}
@@ -358,13 +381,16 @@ export default function CRMApp() {
                 {/* Summary cards */}
                 <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:14}}>
                   {[
-                    {v:totalT,  l:'TOTAL TICKETS',  c:T.tealD},
-                    {v:openT,   l:'Open TICKETS',   c:T.amber},
-                    {v:closedT, l:'Closed TICKETS', c:T.green},
+                    {v:totalT,  l:'Total Tickets',  g:'linear-gradient(135deg,#00bcd4 0%,#0097a7 55%,#006978 100%)', ic:'🎫'},
+                    {v:openT,   l:'Open Tickets',   g:'linear-gradient(135deg,#ffb74d 0%,#fb8c00 55%,#e65100 100%)', ic:'🔓'},
+                    {v:closedT, l:'Closed Tickets', g:'linear-gradient(135deg,#66bb6a 0%,#43a047 55%,#2e7d32 100%)', ic:'✅'},
                   ].map((c,i)=>(
-                    <div key={i} style={{background:'#fff',border:`1.5px solid #cfd8dc`,borderTop:`4px solid ${c.c}`,borderRadius:10,padding:'16px 12px',textAlign:'center',boxShadow:'0 4px 16px rgba(0,80,120,0.08)'}}>
-                      <div style={{fontSize:26,fontWeight:900,color:c.c,letterSpacing:-0.5,lineHeight:1}}>{c.v.toLocaleString()}</div>
-                      <div style={{fontSize:12,fontWeight:800,color:T.text,marginTop:6}}>{c.l}</div>
+                    <div key={i} className="crm-stat" style={{background:c.g,animationDelay:`${i*0.09}s`}}>
+                      <div className="ic">{c.ic}</div>
+                      <div>
+                        <div className="num">{c.v.toLocaleString()}</div>
+                        <div className="lbl">{c.l}</div>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -461,7 +487,7 @@ export default function CRMApp() {
                 </Panel>
 
                 {/* Cases by Area / Sub Area */}
-                <GC style={{padding:0,overflow:'hidden'}}>
+                <GC className="crm-rise" style={{padding:0,overflow:'hidden'}}>
                   <div style={{maxHeight:460,overflowY:'auto'}}>
                     <table style={{width:'100%',borderCollapse:'collapse',fontSize:12}}>
                       <thead>
