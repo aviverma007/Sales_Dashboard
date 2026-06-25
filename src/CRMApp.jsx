@@ -123,6 +123,9 @@ export default function CRMApp() {
   const [fStatus,   setFStatus]   = useState('All');
   const [fOwner,    setFOwner]    = useState('All');
 
+  // "Number of cases by" dimension toggle
+  const [byDim, setByDim] = useState('owner'); // owner | hod | tl
+
   const logout = () => { sessionStorage.removeItem('crm_auth'); window.location.reload(); };
 
   // Fast lean-JSON loader (columnar {cols,rows} -> row objects). ~0.7MB gzipped, sub-second parse.
@@ -207,6 +210,15 @@ export default function CRMApp() {
 
     return {caseType,statusList,origin};
   }, [pageRows]);
+
+  // Number of cases by Owner / HOD / Team Leader
+  const byData = useMemo(() => {
+    if(byDim==='hod') return [];                 // HOD not present in current export
+    const key = byDim==='tl' ? 'tl' : 'owner';
+    const m = {};
+    pageRows.forEach(r=>{ const v=(r[key]||'').trim(); if(v) m[v]=(m[v]||0)+1; });
+    return Object.entries(m).map(([name,count])=>({name,count})).sort((a,b)=>b.count-a.count).slice(0,12);
+  }, [pageRows,byDim]);
 
   // Filter dropdown options (from full dataset)
   const opts = useMemo(() => {
@@ -356,6 +368,40 @@ export default function CRMApp() {
                   </Panel>
 
                 </div>
+
+                {/* Number of cases by Owner / HOD / Team Leader */}
+                <Panel title={`Number of Cases by ${byDim==='owner'?'Case Owner':byDim==='hod'?'HOD':'Team Leader'}`}>
+                  <div style={{display:'flex',gap:8,marginBottom:14,justifyContent:'center'}}>
+                    {[{k:'owner',l:'By Case Owner'},{k:'hod',l:'By HOD'},{k:'tl',l:'By Team Leader'}].map(b=>(
+                      <button key={b.k} onClick={()=>setByDim(b.k)} style={{
+                        background:byDim===b.k?'linear-gradient(135deg,#1565c0,#0d47a1)':'#fff',
+                        color:byDim===b.k?'#fff':T.textM,
+                        border:`1.5px solid ${byDim===b.k?'#0d47a1':'#cfd8dc'}`,
+                        borderRadius:8,padding:'7px 16px',fontSize:12,fontWeight:800,cursor:'pointer',transition:'all 0.15s'}}>
+                        {b.l}
+                      </button>
+                    ))}
+                  </div>
+                  {byData.length>0 ? (
+                    <ResponsiveContainer width="100%" height={Math.max(260, byData.length*30)}>
+                      <BarChart data={byData} layout="vertical" margin={{top:5,right:50,left:10,bottom:5}}>
+                        <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="rgba(0,60,100,0.08)"/>
+                        <XAxis type="number" tick={{fontSize:10,fill:T.textL}}/>
+                        <YAxis type="category" dataKey="name" width={150} tick={{fontSize:10,fill:T.textM,fontWeight:600}}/>
+                        <Tooltip content={<CTip/>}/>
+                        <Bar dataKey="count" name="Cases" fill={T.teal} radius={[0,4,4,0]}>
+                          <LabelList dataKey="count" position="right" style={{fontSize:10,fontWeight:800,fill:T.text}} formatter={v=>v.toLocaleString()}/>
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div style={{minHeight:200,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:8,textAlign:'center'}}>
+                      <div style={{fontSize:32,opacity:0.3}}>🏢</div>
+                      <div style={{fontSize:12,fontWeight:700,color:T.textM}}>HOD data isn't in the current export</div>
+                      <div style={{fontSize:10,color:T.gray,maxWidth:360}}>The file has no Head-of-Department column. Provide a Team Leader → HOD mapping (or add an HOD column to the export) and this view will populate.</div>
+                    </div>
+                  )}
+                </Panel>
               </>
             ) : (
               <GC style={{padding:18}}>
