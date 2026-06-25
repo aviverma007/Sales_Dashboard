@@ -333,17 +333,7 @@ export default function CRMApp() {
           {tab==='overview' && (
             <div style={{display:'flex',flexDirection:'column',gap:14}}>
 
-              {/* KPI Grid */}
-              <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12}}>
-                <KpiCard icon="🎫" label="Total Tickets"      value={kpi.total}          color={T.navy}   sub={`${kpi.open} open · ${kpi.closed?.toLocaleString()} closed`}           pct={null}/>
-                <KpiCard icon="✅" label="Resolution Rate"    value={`${kpi.resolutionRate}%`} color={T.green} sub={`${kpi.closed?.toLocaleString()} resolved of ${kpi.total?.toLocaleString()}`} pct={+kpi.resolutionRate}/>
-                <KpiCard icon="🔓" label="Open Tickets"       value={kpi.open}           color={T.amber}  sub={`${kpi.pendClar} pending clarification`}                                pct={kpi.total>0?+(kpi.open/kpi.total*100).toFixed(1):0}/>
-                <KpiCard icon="⚠️" label="Beyond TAT"         value={kpi.beyondTAT}      color={T.red}    sub={`${kpi.escalated} in escalation`}                                       pct={kpi.total>0?+(kpi.beyondTAT/kpi.total*100).toFixed(1):0}/>
-                <KpiCard icon="🔁" label="Re-Opened"          value={kpi.reopened}       color={T.orange} sub="Reopened after closure — quality signal"                                 pct={kpi.closed>0?+(kpi.reopened/kpi.closed*100).toFixed(1):0}/>
-                <KpiCard icon="👑" label="HNI Tickets"        value={kpi.hniCount}       color="#b45309"  sub="High-value customer cases"                                               pct={kpi.total>0?+(kpi.hniCount/kpi.total*100).toFixed(1):0}/>
-                <KpiCard icon="⚖️" label="Active Legal Cases" value={kpi.legal}          color={T.red}    sub="Open with legal flag — high risk"                                        pct={null}/>
-                <KpiCard icon="🔄" label="High Reassigns"     value={kpi.highReas}       color={T.purple} sub="Tickets reassigned 3+ times"                                             pct={kpi.total>0?+(kpi.highReas/kpi.total*100).toFixed(1):0}/>
-              </div>
+              {/* KPI Grid — cleared, to be redesigned */}
 
               {/* Monthly Trend + Status Distribution */}
               <div style={{display:'grid',gridTemplateColumns:'2fr 1fr',gap:12}}>
