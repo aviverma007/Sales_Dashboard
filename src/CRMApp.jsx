@@ -227,6 +227,9 @@ export default function CRMApp() {
   ];
   const navBg = 'linear-gradient(135deg,#0d2137 0%,#1a3a5c 60%,#006978 100%)';
   const pageLabel = tab==='open'?'Open Tickets':tab==='closed'?'Closed Tickets':'Overall Tickets';
+  const totalT  = filtered.length;
+  const closedT = filtered.filter(isClosed).length;
+  const openT   = totalT - closedT;
 
   return (
     <div style={{minHeight:'100vh',backgroundImage:'url(/bg.jpg)',backgroundSize:'cover',backgroundPosition:'center',backgroundAttachment:'fixed',fontFamily:'Inter,sans-serif'}}>
@@ -287,6 +290,20 @@ export default function CRMApp() {
 
             {tab==='overall' ? (
               <>
+                {/* Summary cards */}
+                <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:14}}>
+                  {[
+                    {v:totalT,  l:'TOTAL TICKETS',  c:T.tealD},
+                    {v:openT,   l:'Open TICKETS',   c:T.amber},
+                    {v:closedT, l:'Closed TICKETS', c:T.green},
+                  ].map((c,i)=>(
+                    <div key={i} style={{background:'#fff',border:`1.5px solid #cfd8dc`,borderTop:`4px solid ${c.c}`,borderRadius:10,padding:'16px 12px',textAlign:'center',boxShadow:'0 4px 16px rgba(0,80,120,0.08)'}}>
+                      <div style={{fontSize:26,fontWeight:900,color:c.c,letterSpacing:-0.5,lineHeight:1}}>{c.v.toLocaleString()}</div>
+                      <div style={{fontSize:12,fontWeight:800,color:T.text,marginTop:6}}>{c.l}</div>
+                    </div>
+                  ))}
+                </div>
+
                 <div style={{display:'grid',gridTemplateColumns:'1fr 1.1fr 1.2fr',gap:14,alignItems:'start'}}>
 
                   {/* Case Type */}
