@@ -423,8 +423,7 @@ export default function CRMApp() {
                           <LabelList dataKey="closed" position="center" style={{fontSize:9,fontWeight:800,fill:'#fff'}} formatter={v=>v>maxTot*0.06?v.toLocaleString():''}/>
                         </Bar>
                         <Bar dataKey="open" name="Open" stackId="a" fill={T.amber} radius={[0,4,4,0]}>
-                          <LabelList dataKey="open" position="center" style={{fontSize:9,fontWeight:800,fill:'#fff'}} formatter={v=>v>maxTot*0.06?v.toLocaleString():''}/>
-                          <LabelList dataKey="total" position="right" style={{fontSize:10,fontWeight:800,fill:T.text}} formatter={v=>v.toLocaleString()}/>
+                          <LabelList dataKey="open" position="right" style={{fontSize:10,fontWeight:800,fill:T.amber}} formatter={v=>v.toLocaleString()}/>
                         </Bar>
                       </BarChart>
                     </ResponsiveContainer>
