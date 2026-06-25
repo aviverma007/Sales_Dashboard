@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend,
@@ -58,19 +58,51 @@ const FSelect = ({label,value,onChange,options}) => (
   </div>
 );
 
-// Sidebar filter — blue pill label + white dropdown (matches CRM sidebar design)
-const SFilter = ({label,value,onChange,options}) => (
-  <div style={{marginBottom:14}}>
-    <div className="crm-pill" style={{background:'linear-gradient(135deg,#1e88e5,#0d47a1)',color:'#fff',fontSize:11,fontWeight:800,
-      textAlign:'center',borderRadius:8,padding:'6px 0',marginBottom:6,letterSpacing:0.3}}>{label}</div>
-    <select className="crm-sel" value={value} onChange={e=>onChange(e.target.value)}
-      style={{width:'100%',fontSize:12,fontWeight:600,color:T.text,background:'#fff',
-        border:'1px solid #cfd8dc',borderRadius:8,padding:'7px 9px',cursor:'pointer'}}>
-      <option value="All">All</option>
-      {options.map(o=><option key={o} value={o}>{o}</option>)}
-    </select>
-  </div>
-);
+// Sidebar filter — searchable dropdown (blue pill label + own search box)
+const SFilter = ({label,value,onChange,options}) => {
+  const [open,setOpen] = useState(false);
+  const [q,setQ] = useState('');
+  const ref = useRef(null);
+  useEffect(()=>{
+    if(!open) return;
+    const h=(e)=>{ if(ref.current && !ref.current.contains(e.target)){ setOpen(false); setQ(''); } };
+    document.addEventListener('mousedown',h);
+    return ()=>document.removeEventListener('mousedown',h);
+  },[open]);
+  const list = ['All',...options];
+  const shown = q ? list.filter(o=>String(o).toLowerCase().includes(q.toLowerCase())) : list;
+  const pick = (o)=>{ onChange(o); setOpen(false); setQ(''); };
+  return (
+    <div ref={ref} style={{marginBottom:14}}>
+      <div className="crm-pill" style={{background:'linear-gradient(135deg,#1e88e5,#0d47a1)',color:'#fff',fontSize:11,fontWeight:800,
+        textAlign:'center',borderRadius:8,padding:'6px 0',marginBottom:6,letterSpacing:0.3}}>{label}</div>
+      <div className="crm-sel" onClick={()=>setOpen(o=>!o)} style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:6,
+        fontSize:12,fontWeight:600,color:value==='All'?T.gray:T.text,background:'#fff',border:`1px solid ${open?'#1565c0':'#cfd8dc'}`,borderRadius:8,padding:'7px 9px',cursor:'pointer'}}>
+        <span style={{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{value}</span>
+        <span style={{fontSize:9,color:T.gray,transform:open?'rotate(180deg)':'none',transition:'transform .2s'}}>▼</span>
+      </div>
+      {open && (
+        <div style={{marginTop:5,background:'#fff',border:'1px solid #cfd8dc',borderRadius:8,boxShadow:'0 8px 22px rgba(0,40,80,.18)',overflow:'hidden'}}>
+          <div style={{position:'relative',padding:6,borderBottom:'1px solid #eef1f4'}}>
+            <span style={{position:'absolute',left:13,top:'50%',transform:'translateY(-50%)',fontSize:11,opacity:0.5,pointerEvents:'none'}}>🔍</span>
+            <input autoFocus value={q} onChange={e=>setQ(e.target.value)} onClick={e=>e.stopPropagation()} placeholder="Search…"
+              style={{width:'100%',boxSizing:'border-box',fontSize:11,fontWeight:600,color:T.text,background:'#f7f9fb',border:'1px solid #e0e6ec',borderRadius:6,padding:'5px 8px 5px 26px',outline:'none'}}/>
+          </div>
+          <div style={{maxHeight:170,overflowY:'auto'}}>
+            {shown.length ? shown.map(o=>(
+              <div key={o} onClick={()=>pick(o)} style={{padding:'6px 10px',fontSize:11.5,fontWeight:o===value?800:600,cursor:'pointer',
+                color:o===value?'#0d47a1':T.textM,background:o===value?'rgba(21,101,192,0.08)':'transparent'}}
+                onMouseEnter={e=>e.currentTarget.style.background='rgba(0,151,167,0.06)'}
+                onMouseLeave={e=>e.currentTarget.style.background=o===value?'rgba(21,101,192,0.08)':'transparent'}>
+                {o}
+              </div>
+            )) : <div style={{padding:'8px 10px',fontSize:11,color:T.gray}}>No matches</div>}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 const KpiCard = ({icon,label,value,sub,color,pct}) => (
   <div style={{background:'rgba(255,255,255,0.97)',backdropFilter:'blur(20px)',WebkitBackdropFilter:'blur(20px)',
@@ -122,7 +154,6 @@ export default function CRMApp() {
   const [fStatus,   setFStatus]   = useState('All');
   const [fOwner,    setFOwner]    = useState('All');
   const [fOrigin,   setFOrigin]   = useState('All');
-  const [search,    setSearch]    = useState('');
 
   // "Number of cases by" dimension toggle
   const [byDim, setByDim] = useState('owner'); // owner | hod | tl
@@ -172,7 +203,6 @@ export default function CRMApp() {
   // filters are wired to the populated Area / Sub Area columns (which hold the categorisation).
   const filtered = useMemo(() => {
     if(!data) return [];
-    const q = search.trim().toLowerCase();
     return data.filter(r => {
       if(fCategory!=='All' && r.area!==fCategory)         return false;
       if(fSubCat!=='All'   && r.subArea!==fSubCat)        return false;
@@ -181,13 +211,9 @@ export default function CRMApp() {
       if(fOwner!=='All'    && r.owner!==fOwner)            return false;
       if(fOrigin!=='All'   && r.origin!==fOrigin)          return false;
       if(applic && r.applicability!==applic)               return false;
-      if(q){
-        const hay = `${r.caseNum} ${r.account} ${r.owner} ${r.tl} ${r.area} ${r.subArea} ${r.origin} ${r.status} ${r.caseType}`.toLowerCase();
-        if(!hay.includes(q)) return false;
-      }
       return true;
     });
-  }, [data,fCategory,fSubCat,fCaseType,fStatus,fOwner,fOrigin,applic,search]);
+  }, [data,fCategory,fSubCat,fCaseType,fStatus,fOwner,fOrigin,applic]);
 
   // Narrow by page scope (status)
   const pageRows = useMemo(() => {
@@ -257,8 +283,8 @@ export default function CRMApp() {
     return { category:u('area'), subCategory:u('subArea'), caseType:u('caseType'), status:u('status'), owner:u('owner'), origin:u('origin') };
   }, [data]);
 
-  const resetFilters = () => { setFCategory('All');setFSubCat('All');setFCaseType('All');setFStatus('All');setFOwner('All');setFOrigin('All');setSearch(''); };
-  const hasFilters = [fCategory,fSubCat,fCaseType,fStatus,fOwner,fOrigin].some(v=>v!=='All') || search.trim()!=='';
+  const resetFilters = () => { setFCategory('All');setFSubCat('All');setFCaseType('All');setFStatus('All');setFOwner('All');setFOrigin('All'); };
+  const hasFilters = [fCategory,fSubCat,fCaseType,fStatus,fOwner,fOrigin].some(v=>v!=='All');
 
   if(loading) return <Loading/>;
 
@@ -360,13 +386,6 @@ export default function CRMApp() {
                 <img src="/swd-logo.png" alt="" style={{width:30,height:30,objectFit:'contain',marginBottom:4}}/>
                 <div style={{color:'#fff',fontWeight:900,fontSize:13,letterSpacing:1}}>SMARTWORLD</div>
                 <div style={{color:'rgba(255,255,255,0.7)',fontSize:7,letterSpacing:1,fontWeight:600}}>CASE MANAGEMENT</div>
-              </div>
-
-              <div style={{position:'relative',marginBottom:14}}>
-                <span style={{position:'absolute',left:10,top:'50%',transform:'translateY(-50%)',fontSize:13,opacity:0.5,pointerEvents:'none'}}>🔍</span>
-                <input className="crm-sel" type="text" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search cases…"
-                  style={{width:'100%',fontSize:12,fontWeight:600,color:T.text,background:'#fff',border:'1px solid #cfd8dc',borderRadius:8,padding:'8px 26px 8px 30px',boxSizing:'border-box'}}/>
-                {search && <span onClick={()=>setSearch('')} style={{position:'absolute',right:8,top:'50%',transform:'translateY(-50%)',fontSize:14,cursor:'pointer',color:T.gray,fontWeight:800}}>×</span>}
               </div>
 
               <SFilter label="Category"     value={fCategory} onChange={setFCategory} options={opts.category||[]}/>
