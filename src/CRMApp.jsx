@@ -219,8 +219,13 @@ export default function CRMApp() {
   const byData = useMemo(() => {
     const key = byDim==='tl' ? 'tl' : 'owner';
     const m = {};
-    pageRows.forEach(r=>{ const v=(r[key]||'').trim(); if(v) m[v]=(m[v]||0)+1; });
-    return Object.entries(m).map(([name,count])=>({name,count})).sort((a,b)=>b.count-a.count).slice(0,12);
+    pageRows.forEach(r=>{
+      const v=(r[key]||'').trim(); if(!v) return;
+      if(!m[v]) m[v]={name:v,total:0,open:0,closed:0};
+      m[v].total++;
+      if(isClosed(r)) m[v].closed++; else m[v].open++;
+    });
+    return Object.values(m).sort((a,b)=>b.total-a.total).slice(0,12);
   }, [pageRows,byDim]);
 
   // Cases by Area / Sub Area with open & closed split
@@ -265,6 +270,7 @@ export default function CRMApp() {
   const areaTot = includedRows.reduce((a,r)=>({total:a.total+r.total,open:a.open+r.open,closed:a.closed+r.closed}),{total:0,open:0,closed:0});
   const allKeys = areaTable.map(r=>r.area+'||'+r.subArea);
   const allIncluded = excluded.size===0;
+  const maxTot = byData[0]?.total || 1;
 
   return (
     <div style={{minHeight:'100vh',backgroundImage:'url(/bg.jpg)',backgroundSize:'cover',backgroundPosition:'center',backgroundAttachment:'fixed',fontFamily:'Inter,sans-serif'}}>
@@ -407,13 +413,18 @@ export default function CRMApp() {
                   </div>
                   {byData.length>0 ? (
                     <ResponsiveContainer width="100%" height={Math.max(260, byData.length*30)}>
-                      <BarChart data={byData} layout="vertical" margin={{top:5,right:50,left:10,bottom:5}}>
+                      <BarChart data={byData} layout="vertical" margin={{top:5,right:55,left:10,bottom:5}}>
                         <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="rgba(0,60,100,0.08)"/>
                         <XAxis type="number" tick={{fontSize:10,fill:T.textL}}/>
                         <YAxis type="category" dataKey="name" width={150} tick={{fontSize:10,fill:T.textM,fontWeight:600}}/>
                         <Tooltip content={<CTip/>}/>
-                        <Bar dataKey="count" name="Cases" fill={T.teal} radius={[0,4,4,0]}>
-                          <LabelList dataKey="count" position="right" style={{fontSize:10,fontWeight:800,fill:T.text}} formatter={v=>v.toLocaleString()}/>
+                        <Legend iconType="circle" wrapperStyle={{fontSize:11,fontWeight:700}}/>
+                        <Bar dataKey="closed" name="Closed" stackId="a" fill={T.green}>
+                          <LabelList dataKey="closed" position="center" style={{fontSize:9,fontWeight:800,fill:'#fff'}} formatter={v=>v>maxTot*0.06?v.toLocaleString():''}/>
+                        </Bar>
+                        <Bar dataKey="open" name="Open" stackId="a" fill={T.amber} radius={[0,4,4,0]}>
+                          <LabelList dataKey="open" position="center" style={{fontSize:9,fontWeight:800,fill:'#fff'}} formatter={v=>v>maxTot*0.06?v.toLocaleString():''}/>
+                          <LabelList dataKey="total" position="right" style={{fontSize:10,fontWeight:800,fill:T.text}} formatter={v=>v.toLocaleString()}/>
                         </Bar>
                       </BarChart>
                     </ResponsiveContainer>
