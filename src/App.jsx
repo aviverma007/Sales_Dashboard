@@ -1935,9 +1935,8 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                 {(()=>{
                   const sold=kpiEx.bookedAreaSqft||0;
                   const avail=kpiEx.availAreaSqft||0;
-                  // Include management + other unit areas to match project saleable area
-                  const mgmtArea=iFAll.filter(r=>!['Booked','Available'].includes(r.status)).reduce((s,u)=>s+(u.superArea||0),0);
-                  const tot=sold+avail+mgmtArea;
+                  // Total saleable = ALL units in INVR (booked + available + management + everything)
+                  const tot=iFAll.reduce((s,u)=>s+(u.superArea||0),0)||sold+avail;
                   const pct=tot>0?Math.round((sold/tot)*100):0;
                   return(
                     <div style={{display:'flex',alignItems:'center',gap:12}}>
