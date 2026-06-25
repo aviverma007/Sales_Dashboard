@@ -2981,7 +2981,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                         <div style={{overflowX:'auto',overflowY:'hidden'}}>
                           <div style={{minWidth:slice.length*52+60+'px'}}>
                             <ResponsiveContainer width="100%" height={280}>
-                              <ComposedChart data={dataWithPct} margin={{top:28,right:36,bottom:56,left:0}} barSize={18}>
+                              <ComposedChart data={dataWithPct} margin={{top:36,right:36,bottom:56,left:0}} barSize={18}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.08)" vertical={false}/>
                                 <XAxis dataKey="name" tick={{fill:T.textM,fontSize:8,fontWeight:600}} axisLine={false} tickLine={false} angle={-35} textAnchor="end" interval={0} height={60} tickFormatter={v=>v?.length>14?v.slice(0,14)+'…':v}/>
                                 <YAxis yAxisId="l" tick={{fill:T.textM,fontSize:12}} axisLine={false} tickLine={false} width={32} tickFormatter={v=>v+'Cr'}/>
@@ -3000,7 +3000,16 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                                 <Legend wrapperStyle={{fontSize:10,fontWeight:700}} iconSize={8}/>
                                 <Bar yAxisId="l" dataKey="bspCr" name="₹Cr" radius={[3,3,0,0]}>
                                   {dataWithPct.map((d,i)=><Cell key={i} fill={i===0?T.navy:i<3?'#1a4a6b':'#2a6a8b'}/>)}
-                                  <LabelList dataKey="bspCr" position="top" style={{fill:T.navy,fontSize:8,fontWeight:800}} formatter={v=>'₹'+v}/>
+                                  <LabelList dataKey="bspCr" content={({x,y,width,value,index})=>{
+                                    const d=dataWithPct[index]||{};
+                                    if(!value||value<=0) return null;
+                                    return(
+                                      <g>
+                                        <text x={x+width/2} y={y-16} textAnchor="middle" fill={T.navy} fontSize={9} fontWeight={800}>₹{value}Cr</text>
+                                        <text x={x+width/2} y={y-4} textAnchor="middle" fill={T.amber} fontSize={8} fontWeight={700}>{d.pct}%</text>
+                                      </g>
+                                    );
+                                  }}/>
                                 </Bar>
                                 <Line yAxisId="r" type="monotone" dataKey="pct" name="% of Total" stroke={T.amber} strokeWidth={2} dot={{r:3,fill:T.amber}} activeDot={{r:5}}/>
                                 <Line yAxisId="rate" type="monotone" dataKey="avgRate" name="Avg ₹/sqft" stroke="#7c3aed" strokeWidth={1.5} strokeDasharray="3 3" dot={{r:3,fill:'#7c3aed',stroke:'#fff',strokeWidth:1}} activeDot={{r:5}}>
