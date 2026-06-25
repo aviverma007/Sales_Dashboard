@@ -219,6 +219,20 @@ export default function CRMApp() {
     return Object.entries(m).map(([name,count])=>({name,count})).sort((a,b)=>b.count-a.count).slice(0,12);
   }, [pageRows,byDim]);
 
+  // Cases by Area / Sub Area with open & closed split
+  const areaTable = useMemo(() => {
+    const m = {};
+    pageRows.forEach(r=>{
+      const a=(r.area||'').trim(), s=(r.subArea||'').trim();
+      if(!a && !s) return;
+      const key=a+'||'+s;
+      if(!m[key]) m[key]={area:a||'—',subArea:s||'—',total:0,open:0,closed:0};
+      m[key].total++;
+      if(isClosed(r)) m[key].closed++; else m[key].open++;
+    });
+    return Object.values(m).sort((x,y)=>y.total-x.total);
+  }, [pageRows]);
+
   // Filter dropdown options (from full dataset)
   const opts = useMemo(() => {
     if(!data) return {};
@@ -400,6 +414,34 @@ export default function CRMApp() {
                     </div>
                   )}
                 </Panel>
+
+                {/* Cases by Area / Sub Area */}
+                <GC style={{padding:0,overflow:'hidden'}}>
+                  <div style={{maxHeight:460,overflowY:'auto'}}>
+                    <table style={{width:'100%',borderCollapse:'collapse',fontSize:12}}>
+                      <thead>
+                        <tr style={{background:'linear-gradient(135deg,#1565c0,#0d47a1)',position:'sticky',top:0,zIndex:1}}>
+                          <th style={{padding:'11px 14px',color:'#fff',fontWeight:800,textAlign:'left',letterSpacing:0.3}}>Area</th>
+                          <th style={{padding:'11px 14px',color:'#fff',fontWeight:800,textAlign:'left',letterSpacing:0.3}}>Sub Area</th>
+                          <th style={{padding:'11px 14px',color:'#fff',fontWeight:800,textAlign:'right',letterSpacing:0.3}}>No of Cases</th>
+                          <th style={{padding:'11px 14px',color:'#fff',fontWeight:800,textAlign:'right',letterSpacing:0.3}}>Open</th>
+                          <th style={{padding:'11px 14px',color:'#fff',fontWeight:800,textAlign:'right',letterSpacing:0.3}}>Closed</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {areaTable.map((r,i)=>(
+                          <tr key={i} style={{borderBottom:'1px solid rgba(0,60,100,0.06)',background:i%2?'rgba(0,151,167,0.03)':'#fff'}}>
+                            <td style={{padding:'7px 14px',fontWeight:700,color:T.navy}}>{r.area}</td>
+                            <td style={{padding:'7px 14px',color:T.textM}}>{r.subArea}</td>
+                            <td style={{padding:'7px 14px',textAlign:'right',fontWeight:800,color:T.text}}>{r.total.toLocaleString()}</td>
+                            <td style={{padding:'7px 14px',textAlign:'right',fontWeight:700,color:T.amber}}>{r.open.toLocaleString()}</td>
+                            <td style={{padding:'7px 14px',textAlign:'right',fontWeight:700,color:T.green}}>{r.closed.toLocaleString()}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </GC>
               </>
             ) : (
               <GC style={{padding:18}}>
