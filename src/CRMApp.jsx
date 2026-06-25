@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import * as XLSX from 'xlsx';
 import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend,
@@ -59,6 +58,21 @@ const FSelect = ({label,value,onChange,options}) => (
   </div>
 );
 
+// Sidebar filter — blue pill label + white dropdown (matches CRM sidebar design)
+const SFilter = ({label,value,onChange,options}) => (
+  <div style={{marginBottom:14}}>
+    <div style={{background:'linear-gradient(135deg,#1565c0,#0d47a1)',color:'#fff',fontSize:11,fontWeight:800,
+      textAlign:'center',borderRadius:8,padding:'5px 0',marginBottom:6,letterSpacing:0.3,
+      boxShadow:'0 2px 8px rgba(13,71,161,0.25)'}}>{label}</div>
+    <select value={value} onChange={e=>onChange(e.target.value)}
+      style={{width:'100%',fontSize:12,fontWeight:600,color:T.text,background:'#fff',
+        border:'1px solid #cfd8dc',borderRadius:8,padding:'7px 9px',cursor:'pointer'}}>
+      <option value="All">All</option>
+      {options.map(o=><option key={o} value={o}>{o}</option>)}
+    </select>
+  </div>
+);
+
 const KpiCard = ({icon,label,value,sub,color,pct}) => (
   <div style={{background:'rgba(255,255,255,0.97)',backdropFilter:'blur(20px)',WebkitBackdropFilter:'blur(20px)',
     border:`1px solid rgba(255,255,255,0.9)`,borderLeft:`4px solid ${color}`,borderRadius:14,
@@ -89,167 +103,99 @@ const Loading = () => (
 
 export default function CRMApp() {
   const [data, setData]       = useState(null);
-  const [analytics, setAna]   = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [tab, setTab]         = useState('overview');
+  const [loading, setLoading] = useState(true);
+  const [tab, setTab]         = useState('overall'); // overall | open | closed
 
-  // Global filters
-  const [fStatus,  setFStatus]  = useState('All');
-  const [fOwner,   setFOwner]   = useState('All');
-  const [fArea,    setFArea]    = useState('All');
-  const [fOrigin,  setFOrigin]  = useState('All');
-  const [fTAT,     setFTAT]     = useState('All');
-  const [fTL,      setFTL]      = useState('All');
-  const [fHNI,     setFHNI]     = useState('All');
-  const [fMonth,   setFMonth]   = useState('All');
+  // Sidebar filters
+  const [fCategory, setFCategory] = useState('All');
+  const [fSubCat,   setFSubCat]   = useState('All');
+  const [fCaseType, setFCaseType] = useState('All');
+  const [fStatus,   setFStatus]   = useState('All');
+  const [fOwner,    setFOwner]    = useState('All');
 
   const logout = () => { sessionStorage.removeItem('crm_auth'); window.location.reload(); };
 
-  // Data loading removed for blank profile.
-  // TODO: re-add fast lean-JSON loader (Option B) when rebuilding KPIs.
-  useEffect(() => {}, []);
+  // Fast lean-JSON loader (columnar {cols,rows} -> row objects). ~0.7MB gzipped, sub-second parse.
+  useEffect(() => {
+    fetch('/data/crm_cases.json').then(r=>r.json()).then(({cols,rows})=>{
+      const I = Object.fromEntries(cols.map((c,i)=>[c,i]));
+      const g = (row,c)=>row[I[c]];
+      const parsed = rows.map(row=>({
+        account:     g(row,'Account Name')||'',
+        caseNum:     g(row,'Case Number')||'',
+        category:    g(row,'Category')||'',
+        subCategory: g(row,'Sub Category')||'',
+        caseType:    g(row,'Case Type')||'',
+        status:      g(row,'Status')||'',
+        tatStatus:   g(row,'TAT Status')||'',
+        area:        g(row,'Area')||'',
+        subArea:     g(row,'Sub Area')||'',
+        owner:       g(row,'Case Owner')||'',
+        tl:          g(row,'Team Leader name')||'',
+        origin:      g(row,'Case Origin')||'',
+        hni:         g(row,'HNI Customer')==1||String(g(row,'HNI Customer')).toUpperCase()==='YES',
+        legal:       g(row,'Active Legal Case')==1||String(g(row,'Active Legal Case')).toUpperCase()==='YES',
+        reassigns:   g(row,'Number of Reassigns')||0,
+        age:         g(row,'Age')||0,
+        respCat:     g(row,'Response Time Category')||'',
+        resCat:      g(row,'Resolution Time Category')||'',
+        openedStr:   g(row,'Date/Time Opened')||'',
+        closedStr:   g(row,'Closed Date')||'',
+      }));
+      setData(parsed);
+      setLoading(false);
+    }).catch(()=>setLoading(false));
+  }, []);
 
-  // Filtered data
+  const isClosed = r => ['Closed','Resolved','Close'].includes(r.status);
+
+  // Apply sidebar filters
+  // NOTE: 'Category'/'Sub Category' columns are empty in the export, so these two
+  // filters are wired to the populated Area / Sub Area columns (which hold the categorisation).
   const filtered = useMemo(() => {
     if(!data) return [];
     return data.filter(r => {
-      if(fStatus!=='All' && r.status!==fStatus) return false;
-      if(fOwner!=='All'  && r.owner!==fOwner)   return false;
-      if(fArea!=='All'   && r.area!==fArea)      return false;
-      if(fOrigin!=='All' && r.origin!==fOrigin)  return false;
-      if(fTAT!=='All'    && r.tatStatus!==fTAT)  return false;
-      if(fTL!=='All'     && r.tl!==fTL)          return false;
-      if(fHNI==='HNI'    && !r.hni)              return false;
-      if(fHNI==='Non-HNI'&& r.hni)               return false;
+      if(fCategory!=='All' && r.area!==fCategory)         return false;
+      if(fSubCat!=='All'   && r.subArea!==fSubCat)        return false;
+      if(fCaseType!=='All' && r.caseType!==fCaseType)      return false;
+      if(fStatus!=='All'   && r.status!==fStatus)          return false;
+      if(fOwner!=='All'    && r.owner!==fOwner)            return false;
       return true;
     });
-  }, [data,fStatus,fOwner,fArea,fOrigin,fTAT,fTL,fHNI]);
+  }, [data,fCategory,fSubCat,fCaseType,fStatus,fOwner]);
 
-  // Derived KPIs from filtered data
-  const kpi = useMemo(() => {
-    if(!filtered.length) return {};
-    const total    = filtered.length;
-    const isClosed = r => ['Closed','Resolved','Close'].includes(r.status);
-    const isOpen   = r => ['New','In Progress','Pending for Clarification','Re-Open'].includes(r.status);
-    const closed   = filtered.filter(isClosed).length;
-    const open     = filtered.filter(isOpen).length;
-    const beyondTAT= filtered.filter(r=>r.tatStatus==='Beyond TAT').length;
-    const escalated= filtered.filter(r=>r.tatStatus&&r.tatStatus.includes('Escalation')).length;
-    const reopened = filtered.filter(r=>r.reopened).length;
-    const pendClar = filtered.filter(r=>r.status==='Pending for Clarification').length;
-    const hniCount = filtered.filter(r=>r.hni).length;
-    const legal    = filtered.filter(r=>r.legal).length;
-    const highReas = filtered.filter(r=>r.reassigns>=3).length;
-    const respW24  = filtered.filter(r=>r.respCat==='Within 24 Hrs').length;
-    const resW24   = filtered.filter(r=>r.resCat==='Within 24 Hrs').length;
-    const resA24   = filtered.filter(r=>r.resCat==='Above 24 Hrs').length;
-    return { total,closed,open,beyondTAT,escalated,reopened,pendClar,hniCount,legal,highReas,respW24,resW24,resA24,
-      resolutionRate: total>0?(closed/total*100).toFixed(1):0 };
-  }, [filtered]);
+  // Narrow by page scope (status)
+  const pageRows = useMemo(() => {
+    if(tab==='open')   return filtered.filter(r=>!isClosed(r));
+    if(tab==='closed') return filtered.filter(r=>isClosed(r));
+    return filtered;
+  }, [filtered,tab]);
 
-  // Chart data from filtered
-  const charts = useMemo(() => {
-    if(!filtered.length) return {};
-    const cnt = (arr,key) => arr.reduce((o,r)=>{const v=r[key]||'Unknown';o[v]=(o[v]||0)+1;return o;},{});
-
-    // Status dist
-    const statusDist = Object.entries(cnt(filtered,'status')).map(([k,v])=>({name:k,value:v})).sort((a,b)=>b.value-a.value);
-
-    // TAT breakdown
-    const tatGrouped = {};
-    filtered.forEach(r=>{
-      const t=r.tatStatus;
-      if(!t) return;
-      let g = t.includes('Level 1')?'L1 Esc':t.includes('Level 2')?'L2 Esc':t.includes('Level 3')?'L3 Esc':
-              t.includes('Level 4')?'L4 Esc':t.includes('Level 5')?'L5 Esc':t==='Beyond TAT'?'Beyond TAT':null;
-      if(g) tatGrouped[g]=(tatGrouped[g]||0)+1;
-    });
-    const tatData = Object.entries(tatGrouped).map(([k,v])=>({name:k,count:v})).sort((a,b)=>b.count-a.count);
-
-    // Area
-    const areaData = Object.entries(cnt(filtered,'area')).map(([k,v])=>({name:k,count:v})).filter(d=>d.name!=='Unknown').sort((a,b)=>b.count-a.count).slice(0,10);
-
-    // Origin
-    const originData = Object.entries(cnt(filtered,'origin')).map(([k,v])=>({name:k,count:v})).filter(d=>d.name!=='Unknown').sort((a,b)=>b.count-a.count);
-
-    // Case type
-    const typeData = Object.entries(cnt(filtered,'caseType')).map(([k,v])=>({name:k,value:v})).filter(d=>d.name!=='Unknown');
-
-    // Response time
-    const respData = [{name:'Within 24h',value:filtered.filter(r=>r.respCat==='Within 24 Hrs').length},
-                      {name:'Above 24h', value:filtered.filter(r=>r.respCat==='Above 24 Hrs').length}];
-
-    // Resolution time
-    const resData = [{name:'Within 24h',value:filtered.filter(r=>r.resCat==='Within 24 Hrs').length},
-                     {name:'Above 24h', value:filtered.filter(r=>r.resCat==='Above 24 Hrs').length}];
-
-    // Team leader performance
-    const tlMap = {};
-    filtered.forEach(r=>{
-      const tl=(r.tl||'').trim();
-      if(!tl) return;
-      if(!tlMap[tl]) tlMap[tl]={name:tl,total:0,closed:0,open:0,beyondTAT:0};
-      tlMap[tl].total++;
-      if(['Closed','Resolved','Close'].includes(r.status)) tlMap[tl].closed++;
-      if(['New','In Progress','Pending for Clarification','Re-Open'].includes(r.status)) tlMap[tl].open++;
-      if(r.tatStatus==='Beyond TAT') tlMap[tl].beyondTAT++;
-    });
-    const tlData = Object.values(tlMap).map(t=>({...t,resRate:+(t.closed/t.total*100).toFixed(1)})).sort((a,b)=>b.total-a.total).slice(0,10);
-
-    // Top owners (closed)
-    const ownerMap = {};
-    filtered.forEach(r=>{
-      if(!['Closed','Resolved','Close'].includes(r.status)) return;
-      ownerMap[r.owner]=(ownerMap[r.owner]||0)+1;
-    });
-    const ownerData = Object.entries(ownerMap).map(([k,v])=>({name:k,closed:v})).sort((a,b)=>b.closed-a.closed).slice(0,10);
-
-    // Age buckets for open
-    const ageDist = {};
-    filtered.filter(r=>['New','In Progress','Pending for Clarification','Re-Open'].includes(r.status)).forEach(r=>{
-      const a=r.age||0;
-      const b=a<=1?'0-1d':a<=7?'2-7d':a<=30?'8-30d':a<=90?'31-90d':'90+d';
-      ageDist[b]=(ageDist[b]||0)+1;
-    });
-    const ageData = ['0-1d','2-7d','8-30d','31-90d','90+d'].filter(k=>ageDist[k]).map(k=>({name:k,count:ageDist[k]}));
-
-    // Sub area top
-    const subAreaData = Object.entries(cnt(filtered,'subArea')).filter(([k])=>k&&k!=='Unknown').map(([k,v])=>({name:k,count:v})).sort((a,b)=>b.count-a.count).slice(0,8);
-
-    return {statusDist,tatData,areaData,originData,typeData,respData,resData,tlData,ownerData,ageData,subAreaData};
-  }, [filtered]);
-
-  // Filter options
+  // Filter dropdown options (from full dataset)
   const opts = useMemo(() => {
     if(!data) return {};
     const u = k => [...new Set(data.map(r=>r[k]).filter(v=>v&&v.toString().trim()))].sort();
-    return {
-      status: [...new Set(data.map(r=>r.status).filter(Boolean))].sort(),
-      owner:  [...new Set(data.map(r=>r.owner).filter(Boolean))].sort(),
-      area:   [...new Set(data.map(r=>r.area).filter(Boolean))].sort(),
-      origin: [...new Set(data.map(r=>r.origin).filter(Boolean))].sort(),
-      tat:    [...new Set(data.map(r=>r.tatStatus).filter(Boolean))].sort(),
-      tl:     [...new Set(data.map(r=>r.tl).filter(v=>v&&v.trim()))].sort(),
-    };
+    return { category:u('area'), subCategory:u('subArea'), caseType:u('caseType'), status:u('status'), owner:u('owner') };
   }, [data]);
 
-  // Monthly trend from analytics JSON (pre-computed)
-  const monthlyTrend = analytics?.monthlyTrend || [];
-
-  const resetFilters = () => { setFStatus('All');setFOwner('All');setFArea('All');setFOrigin('All');setFTAT('All');setFTL('All');setFHNI('All');setFMonth('All'); };
-  const hasFilters = [fStatus,fOwner,fArea,fOrigin,fTAT,fTL,fHNI].some(v=>v!=='All');
+  const resetFilters = () => { setFCategory('All');setFSubCat('All');setFCaseType('All');setFStatus('All');setFOwner('All'); };
+  const hasFilters = [fCategory,fSubCat,fCaseType,fStatus,fOwner].some(v=>v!=='All');
 
   if(loading) return <Loading/>;
 
-  const TABS = [{k:'overview',l:'📊 Overview'},{k:'operations',l:'⚙️ Operations'},{k:'team',l:'👥 Team Performance'},{k:'risk',l:'🚨 Risk & Escalation'},{k:'tickets',l:'📋 Ticket Explorer'}];
-
+  const TABS = [
+    {k:'overall', l:'📋 Overall Tickets'},
+    {k:'open',    l:'🔓 Open Tickets'},
+    {k:'closed',  l:'✅ Closed Tickets'},
+  ];
   const navBg = 'linear-gradient(135deg,#0d2137 0%,#1a3a5c 60%,#006978 100%)';
+  const pageLabel = tab==='open'?'Open Tickets':tab==='closed'?'Closed Tickets':'Overall Tickets';
 
   return (
     <div style={{minHeight:'100vh',backgroundImage:'url(/bg.jpg)',backgroundSize:'cover',backgroundPosition:'center',backgroundAttachment:'fixed',fontFamily:'Inter,sans-serif'}}>
       <div style={{minHeight:'100vh',background:'rgba(255,255,255,0.04)',backdropFilter:'blur(1px)'}}>
 
-        {/* ── NAV ── */}
+        {/* ── TOP NAV (3 pages) ── */}
         <div style={{background:navBg,padding:'0 24px',display:'flex',alignItems:'center',justifyContent:'space-between',height:54,position:'sticky',top:0,zIndex:100,boxShadow:'0 2px 20px rgba(0,0,0,0.3)'}}>
           <div style={{display:'flex',alignItems:'center',gap:12}}>
             <img src="/swd-logo.png" alt="" style={{width:28,height:28,objectFit:'contain'}}/>
@@ -258,28 +204,60 @@ export default function CRMApp() {
               <p style={{color:'rgba(255,255,255,0.6)',fontSize:9,margin:0,fontWeight:600}}>SMARTWORLD GROUP · CASE MANAGEMENT</p>
             </div>
           </div>
+          <div style={{display:'flex',gap:4}}>
+            {TABS.map(t=>(
+              <button key={t.k} onClick={()=>setTab(t.k)} style={{background:tab===t.k?'rgba(255,255,255,0.18)':'transparent',
+                color:'#fff',border:tab===t.k?'1px solid rgba(255,255,255,0.35)':'1px solid transparent',
+                borderRadius:8,padding:'5px 16px',fontSize:11,fontWeight:700,cursor:'pointer',transition:'all 0.15s'}}>
+                {t.l}
+              </button>
+            ))}
+          </div>
           <button onClick={logout} style={{background:'rgba(211,47,47,0.8)',color:'#fff',border:'none',borderRadius:8,padding:'5px 14px',fontSize:11,fontWeight:700,cursor:'pointer'}}>
             🚪 Logout
           </button>
         </div>
 
-        {/* ── GLOBAL FILTER BAR — removed ── */}
+        {/* ── BODY: sidebar + content ── */}
+        <div style={{display:'flex',alignItems:'flex-start',gap:16,maxWidth:1600,margin:'0 auto',padding:'16px 20px 40px'}}>
 
-        <main style={{maxWidth:1600,margin:'0 auto',padding:'16px 20px 40px'}}>
-
-          {/* ══════════════════════════════════════════
-              TAB: OVERVIEW
-          ══════════════════════════════════════════ */}
-          {tab==='overview' && (
-            <div style={{display:'flex',flexDirection:'column',gap:14,minHeight:340,alignItems:'center',justifyContent:'center'}}>
-              {/* Overview cleared — blank canvas. KPIs & charts to be redesigned. */}
-              <div style={{color:T.textM,fontSize:13,fontWeight:700,opacity:0.45,letterSpacing:0.5,padding:'100px 0'}}>
-                CRM OVERVIEW — REDESIGN IN PROGRESS
+          {/* ── LEFT FILTER SIDEBAR ── */}
+          <aside style={{width:210,flexShrink:0,position:'sticky',top:70}}>
+            <GC style={{padding:16}}>
+              {/* logo header */}
+              <div style={{background:'linear-gradient(135deg,#0d47a1,#1565c0)',borderRadius:10,padding:'14px 8px',textAlign:'center',marginBottom:16}}>
+                <img src="/swd-logo.png" alt="" style={{width:30,height:30,objectFit:'contain',marginBottom:4}}/>
+                <div style={{color:'#fff',fontWeight:900,fontSize:13,letterSpacing:1}}>SMARTWORLD</div>
+                <div style={{color:'rgba(255,255,255,0.7)',fontSize:7,letterSpacing:1,fontWeight:600}}>CASE MANAGEMENT</div>
               </div>
-            </div>
-          )}
 
-        </main>
+              <SFilter label="Category"     value={fCategory} onChange={setFCategory} options={opts.category||[]}/>
+              <SFilter label="Sub Category" value={fSubCat}   onChange={setFSubCat}   options={opts.subCategory||[]}/>
+              <SFilter label="Case Type"    value={fCaseType} onChange={setFCaseType} options={opts.caseType||[]}/>
+              <SFilter label="Case Status"  value={fStatus}   onChange={setFStatus}   options={opts.status||[]}/>
+              <SFilter label="Case Owner"   value={fOwner}    onChange={setFOwner}    options={opts.owner||[]}/>
+
+              {hasFilters && (
+                <button onClick={resetFilters} style={{width:'100%',marginTop:4,background:'rgba(211,47,47,0.85)',color:'#fff',border:'none',borderRadius:8,padding:'7px 0',fontSize:11,fontWeight:700,cursor:'pointer'}}>
+                  ✕ Reset Filters
+                </button>
+              )}
+            </GC>
+          </aside>
+
+          {/* ── MAIN CONTENT ── */}
+          <main style={{flex:1,minWidth:0,display:'flex',flexDirection:'column',gap:14}}>
+            <GC style={{padding:18}}>
+              <SH title={pageLabel} sub={`${pageRows.length.toLocaleString()} tickets in view · ${(data||[]).length.toLocaleString()} total`}/>
+              <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',minHeight:280,gap:8}}>
+                <div style={{fontSize:48,fontWeight:900,color:T.tealD,letterSpacing:-1,lineHeight:1}}>{pageRows.length.toLocaleString()}</div>
+                <div style={{fontSize:12,fontWeight:700,color:T.textM,textTransform:'uppercase',letterSpacing:0.5}}>{pageLabel}</div>
+                <div style={{fontSize:11,color:T.gray,marginTop:12,opacity:0.7}}>KPIs coming soon — page & filters ready</div>
+              </div>
+            </GC>
+          </main>
+
+        </div>
       </div>
     </div>
   );
