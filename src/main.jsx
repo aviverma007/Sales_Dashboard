@@ -14,7 +14,51 @@ const USERS = {
   'Cost2':   { password: 'Smart@2026', profile: 'cost2',    sessionKey: 'cost2_auth' },
   'CRM':     { password: 'Smart@2026', profile: 'crm',      sessionKey: 'crm_auth' },
   'PRPO':    { password: 'Smart@2026', profile: 'prpo',     sessionKey: 'prpo_auth' },
+  'Admin':   { password: 'Smart@2026', profile: 'admin',    sessionKey: 'admin_auth' },
 };
+
+const DASHBOARDS = [
+  {key:'sales',   name:'Sales Dashboard',  desc:'Overview · Collections · P&L', icon:'📊', g:'linear-gradient(135deg,#0097a7,#006978)'},
+  {key:'swsales', name:'Sales (Overview)', desc:'Overview + Collections only',  icon:'📈', g:'linear-gradient(135deg,#26a69a,#00796b)'},
+  {key:'cost',    name:'Cost Intelligence',desc:'Cost analytics',               icon:'💰', g:'linear-gradient(135deg,#5c6bc0,#3949ab)'},
+  {key:'cost2',   name:'Cost 2',           desc:'Cost analytics II',            icon:'🧮', g:'linear-gradient(135deg,#7e57c2,#512da8)'},
+  {key:'crm',     name:'CRM Intelligence', desc:'Case management',              icon:'🎫', g:'linear-gradient(135deg,#1e88e5,#0d47a1)'},
+  {key:'prpo',    name:'PR / PO Journey',  desc:'Procurement tracking',         icon:'📦', g:'linear-gradient(135deg,#ef6c00,#e65100)'},
+];
+
+function AdminMenu({ onOpen, onLogout }) {
+  return (
+    <div style={{minHeight:'100vh',backgroundImage:'url(/bg.jpg)',backgroundSize:'cover',backgroundPosition:'center',display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'Inter,sans-serif',padding:24}}>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');`}</style>
+      <div style={{background:'rgba(255,255,255,0.97)',borderRadius:22,padding:'34px 38px',width:760,maxWidth:'100%',boxShadow:'0 24px 80px rgba(0,40,80,0.28)'}}>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:22}}>
+          <div style={{display:'flex',alignItems:'center',gap:14}}>
+            <div style={{width:56,height:56,borderRadius:16,background:'#0d1f3c',display:'flex',alignItems:'center',justifyContent:'center',overflow:'hidden'}}>
+              <img src="/swd-logo.png" alt="SWD" style={{width:40,height:40,objectFit:'contain'}}/>
+            </div>
+            <div>
+              <h2 style={{fontSize:21,fontWeight:900,color:'#0d2137',margin:'0 0 2px'}}>Admin Console</h2>
+              <p style={{fontSize:12,color:'#546e7a',margin:0,fontWeight:500}}>Smartworld Group · Open any dashboard</p>
+            </div>
+          </div>
+          <button onClick={onLogout} style={{background:'rgba(211,47,47,0.9)',color:'#fff',border:'none',borderRadius:10,padding:'9px 18px',fontSize:12,fontWeight:800,cursor:'pointer'}}>🚪 Logout</button>
+        </div>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:14}}>
+          {DASHBOARDS.map(d=>(
+            <button key={d.key} onClick={()=>onOpen(d.key)} style={{background:d.g,color:'#fff',border:'none',borderRadius:16,padding:'20px 16px',textAlign:'left',cursor:'pointer',boxShadow:'0 8px 22px rgba(0,40,70,0.18)',transition:'transform .18s ease, box-shadow .18s ease'}}
+              onMouseOver={e=>{e.currentTarget.style.transform='translateY(-4px)';e.currentTarget.style.boxShadow='0 16px 34px rgba(0,40,70,0.30)';}}
+              onMouseOut={e=>{e.currentTarget.style.transform='none';e.currentTarget.style.boxShadow='0 8px 22px rgba(0,40,70,0.18)';}}>
+              <div style={{fontSize:30,marginBottom:8,filter:'drop-shadow(0 2px 4px rgba(0,0,0,0.25))'}}>{d.icon}</div>
+              <div style={{fontSize:15,fontWeight:900,marginBottom:2}}>{d.name}</div>
+              <div style={{fontSize:10.5,fontWeight:600,opacity:0.9}}>{d.desc}</div>
+            </button>
+          ))}
+        </div>
+        <p style={{textAlign:'center',fontSize:11,color:'#90a4ae',marginTop:22,marginBottom:0}}>Smartworld Group · Confidential</p>
+      </div>
+    </div>
+  );
+}
 
 function Portal() {
   const [profile, setProfile] = useState(() => {
@@ -24,6 +68,7 @@ function Portal() {
     if (sessionStorage.getItem('cost2_auth')   === '1') return 'cost2';
     if (sessionStorage.getItem('crm_auth')     === '1') return 'crm';
     if (sessionStorage.getItem('prpo_auth')    === '1') return 'prpo';
+    if (sessionStorage.getItem('admin_auth')   === '1') return 'admin';
     return null;
   });
 
@@ -50,6 +95,7 @@ function Portal() {
   if (profile === 'cost2') return <Cost2App />;
   if (profile === 'crm')   return <CRMApp />;
   if (profile === 'prpo')  return <PRPOApp />;
+  if (profile === 'admin') return <AdminMenu onOpen={setProfile} onLogout={()=>{sessionStorage.removeItem('admin_auth');window.location.reload();}} />;
 
   return (
     <div style={{minHeight:'100vh',backgroundImage:'url(/bg.jpg)',backgroundSize:'cover',backgroundPosition:'center',display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'Inter,sans-serif'}}>
