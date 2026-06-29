@@ -168,6 +168,9 @@ export default function CRMApp() {
   // Open page TAT filter — '' (all) | 'within' | 'beyond'
   const [tatFilter, setTatFilter] = useState('');
 
+  // Summary-card filter (open/closed pages) — '' | 'overdue' | 'escalation'
+  const [cardFilter, setCardFilter] = useState('');
+
   const logout = () => { sessionStorage.removeItem('crm_auth'); window.location.reload(); };
 
   // Fast lean-JSON loader (columnar {cols,rows} -> row objects). ~0.7MB gzipped, sub-second parse.
@@ -240,10 +243,18 @@ export default function CRMApp() {
     return filtered;
   }, [filtered,tab]);
 
+  // Card filter applied below the summary cards (cards themselves keep full breakdown)
+  const pageView = useMemo(() => {
+    if(tab==='overall' || !cardFilter) return pageRows;
+    if(cardFilter==='overdue')    return pageRows.filter(r=>r.tatStatus==='Beyond TAT');
+    if(cardFilter==='escalation') return pageRows.filter(r=>r.tatStatus && r.tatStatus.includes('Escalation'));
+    return pageRows;
+  }, [pageRows,cardFilter,tab]);
+
   // Overall-page chart data (Case Type / Status / Origin) — live from pageRows
   const ovCharts = useMemo(() => {
-    if(!pageRows.length) return {caseType:[],statusList:[],origin:[]};
-    const cnt = (key) => pageRows.reduce((o,r)=>{const v=r[key]||'Unknown';o[v]=(o[v]||0)+1;return o;},{});
+    if(!pageView.length) return {caseType:[],statusList:[],origin:[]};
+    const cnt = (key) => pageView.reduce((o,r)=>{const v=r[key]||'Unknown';o[v]=(o[v]||0)+1;return o;},{});
 
     // Case Type — exclude blanks
     const caseType = Object.entries(cnt('caseType'))
@@ -252,7 +263,7 @@ export default function CRMApp() {
 
     // Status — group closed-type statuses into 'Closed'
     const sMap = {};
-    pageRows.forEach(r=>{
+    pageView.forEach(r=>{
       const k = isClosed(r) ? 'Closed' : (r.status||'Unknown');
       if(k==='Unknown') return;
       sMap[k]=(sMap[k]||0)+1;
@@ -265,7 +276,7 @@ export default function CRMApp() {
     const origin = oEntries.map(o=>({...o,pct:+(o.value/oTotal*100).toFixed(2)}));
 
     return {caseType,statusList,origin};
-  }, [pageRows]);
+  }, [pageView]);
 
   // Number of cases by Owner / HOD / Team Leader
   const byData = useMemo(() => {
@@ -283,7 +294,7 @@ export default function CRMApp() {
   // Cases by Area / Sub Area with open & closed split
   const areaTable = useMemo(() => {
     const m = {};
-    pageRows.forEach(r=>{
+    pageView.forEach(r=>{
       const a=(r.area||'').trim(), s=(r.subArea||'').trim();
       if(!a && !s) return;
       const key=a+'||'+s;
@@ -292,12 +303,12 @@ export default function CRMApp() {
       if(isClosed(r)) m[key].closed++; else m[key].open++;
     });
     return Object.values(m).sort((x,y)=>y.total-x.total);
-  }, [pageRows]);
+  }, [pageView]);
 
   // Open / Closed page data (same panels, scoped to pageRows)
   const openCharts = useMemo(() => {
     if(tab==='overall') return {byOwner:[],byOwnerTat:[],statusDonut:[],origin:[],ageing:[]};
-    const rows = pageRows;
+    const rows = pageView;
     // by owner (count)
     const oc={};
     rows.forEach(r=>{const v=(r.owner||'').trim(); if(v) oc[v]=(oc[v]||0)+1;});
@@ -324,10 +335,10 @@ export default function CRMApp() {
     rows.forEach(r=>{const a=typeof r.age==='number'?r.age:parseFloat(r.age)||0; const k=bk(a); ac[k]=(ac[k]||0)+1;});
     const ageing=order.map(k=>({name:k,count:ac[k]||0}));
     return {byOwner,byOwnerTat,statusDonut,origin,ageing};
-  }, [pageRows,tab]);
+  }, [pageView,tab]);
 
   // Worklist — sorted by age (days) desc as delay proxy (open & closed); capped for performance
-  const openList = useMemo(()=> tab!=='overall' ? [...pageRows].sort((a,b)=>(b.age||0)-(a.age||0)) : [], [pageRows,tab]);
+  const openList = useMemo(()=> tab!=='overall' ? [...pageView].sort((a,b)=>(b.age||0)-(a.age||0)) : [], [pageView,tab]);
   const WORKLIST_CAP = 200;
 
   // Filter dropdown options (from full dataset)
@@ -662,19 +673,26 @@ export default function CRMApp() {
                   {tatFilter && <span style={{fontSize:11,color:T.gray,fontWeight:600}}>showing {tatFilter==='within'?'Within TAT':'Beyond TAT'} only · click again to clear</span>}
                 </div>
 
-                {/* Summary cards */}
+                {/* Summary cards (clickable filters) */}
                 <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10}}>
                   {[
-                    {v:pageRows.length, l:pageLabel, g:tab==='open'?'linear-gradient(135deg,#ffb74d 0%,#fb8c00 55%,#e65100 100%)':'linear-gradient(135deg,#66bb6a 0%,#43a047 55%,#2e7d32 100%)', ic:tab==='open'?'🔓':'✅'},
-                    {v:pageRows.filter(r=>r.tatStatus==='Beyond TAT').length, l:'Overdue (Beyond TAT)', g:'linear-gradient(135deg,#ef5350 0%,#e53935 55%,#b71c1c 100%)', ic:'⚠️'},
-                    {v:pageRows.filter(r=>r.tatStatus&&r.tatStatus.includes('Escalation')).length, l:'In Escalation', g:'linear-gradient(135deg,#ffd54f 0%,#fbc02d 55%,#f9a825 100%)', ic:'📈'},
-                  ].map((c,i)=>(
-                    <div key={i} className="crm-stat" style={{background:c.g,animationDelay:`${i*0.09}s`}}>
+                    {f:'',           v:pageRows.length, l:pageLabel, g:tab==='open'?'linear-gradient(135deg,#ffb74d 0%,#fb8c00 55%,#e65100 100%)':'linear-gradient(135deg,#66bb6a 0%,#43a047 55%,#2e7d32 100%)', ic:tab==='open'?'🔓':'✅'},
+                    {f:'overdue',    v:pageRows.filter(r=>r.tatStatus==='Beyond TAT').length, l:'Overdue (Beyond TAT)', g:'linear-gradient(135deg,#ef5350 0%,#e53935 55%,#b71c1c 100%)', ic:'⚠️'},
+                    {f:'escalation', v:pageRows.filter(r=>r.tatStatus&&r.tatStatus.includes('Escalation')).length, l:'In Escalation', g:'linear-gradient(135deg,#ffd54f 0%,#fbc02d 55%,#f9a825 100%)', ic:'📈'},
+                  ].map((c,i)=>{
+                    const active = cardFilter===c.f;
+                    return (
+                    <div key={i} className="crm-stat" onClick={()=>setCardFilter(c.f==='' ? '' : (cardFilter===c.f?'':c.f))}
+                      style={{background:c.g,animationDelay:`${i*0.09}s`,cursor:'pointer',
+                        outline:active?'3px solid #fff':'none',outlineOffset:'-3px',
+                        boxShadow:active?'0 0 0 3px rgba(13,71,161,.35), 0 10px 26px rgba(13,40,70,.28)':undefined}}>
                       <div className="ic">{c.ic}</div>
                       <div><div className="num">{c.v.toLocaleString()}</div><div className="lbl">{c.l}</div></div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
+                {cardFilter && <div style={{fontSize:11,color:T.gray,fontWeight:600,marginTop:-4}}>Filtered to {cardFilter==='overdue'?'Overdue (Beyond TAT)':'In Escalation'} · click the card again or the first card to clear</div>}
 
                 {/* Row 1 */}
                 <div style={{display:'grid',gridTemplateColumns:'1fr 1.15fr 1fr',gap:10,alignItems:'start'}}>
