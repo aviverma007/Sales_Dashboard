@@ -318,6 +318,9 @@ export default function CRMApp() {
     return {byOwner,byOwnerTat,statusDonut,origin,ageing};
   }, [pageRows,tab]);
 
+  // Open worklist — sorted by age (days) desc as delay proxy
+  const openList = useMemo(()=> tab==='open' ? [...pageRows].sort((a,b)=>(b.age||0)-(a.age||0)) : [], [pageRows,tab]);
+
   // Filter dropdown options (from full dataset)
   const opts = useMemo(() => {
     if(!data) return {};
@@ -779,6 +782,38 @@ export default function CRMApp() {
                     </div>
                   </GC>
                 </div>
+
+                {/* Open ticket worklist */}
+                <GC className="crm-rise" style={{padding:0,overflow:'hidden'}}>
+                  <div style={{background:'linear-gradient(135deg,#1e88e5,#1565c0 55%,#0d47a1)',color:'#fff',fontWeight:800,fontSize:13,padding:'9px 14px',letterSpacing:0.4,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                    <span>Open Ticket Worklist</span>
+                    <span style={{fontSize:10,fontWeight:600,opacity:0.85}}>{openList.length.toLocaleString()} open · sorted by age</span>
+                  </div>
+                  <div style={{maxHeight:380,overflowY:'auto'}}>
+                    <table style={{width:'100%',borderCollapse:'collapse',fontSize:11.5}}>
+                      <thead>
+                        <tr style={{background:'#e8eef5',position:'sticky',top:0,zIndex:1,borderBottom:'2px solid #1565c0'}}>
+                          {['Case Number','Case Owner','Team Leader','Area','Sub Area'].map(h=>(
+                            <th key={h} style={{padding:'8px 12px',color:T.navy,fontWeight:800,textAlign:'left',whiteSpace:'nowrap'}}>{h}</th>
+                          ))}
+                          <th style={{padding:'8px 12px',color:T.navy,fontWeight:800,textAlign:'right',whiteSpace:'nowrap'}}>Age (Days)</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {openList.map((r,i)=>(
+                          <tr key={i} style={{borderBottom:'1px solid rgba(0,60,100,0.06)',background:i%2?'rgba(0,151,167,0.03)':'#fff'}}>
+                            <td style={{padding:'5px 12px',fontWeight:700,color:T.navy,whiteSpace:'nowrap'}}>{r.caseNum}</td>
+                            <td style={{padding:'5px 12px',color:T.textM,whiteSpace:'nowrap'}}>{r.owner}</td>
+                            <td style={{padding:'5px 12px',color:T.textM,whiteSpace:'nowrap'}}>{r.tl}</td>
+                            <td style={{padding:'5px 12px',color:T.textM}}>{r.area}</td>
+                            <td style={{padding:'5px 12px',color:T.textM}}>{r.subArea}</td>
+                            <td style={{padding:'5px 12px',textAlign:'right',fontWeight:800,color:(r.age||0)>30?T.red:T.text}}>{(r.age||0).toLocaleString()}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </GC>
               </>
             ) : (
               <GC style={{padding:18}}>
