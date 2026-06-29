@@ -171,6 +171,10 @@ export default function CRMApp() {
   // Summary-card filter (open/closed pages) — '' | 'overdue' | 'escalation'
   const [cardFilter, setCardFilter] = useState('');
 
+  // Age-bucket filter (from Cases By Ageing) — '' | bucket label
+  const [ageBucket, setAgeBucket] = useState('');
+  const ageOf = (a) => { a = typeof a==='number'?a:parseFloat(a)||0; return a<1?'Under 24 Hours':a<=5?'1-5 Days':a<=15?'5-15 Days':a<=30?'15-30 Days':'> 30 Days'; };
+
   const logout = () => { sessionStorage.removeItem('crm_auth'); window.location.reload(); };
 
   // Fast lean-JSON loader (columnar {cols,rows} -> row objects). ~0.7MB gzipped, sub-second parse.
@@ -226,6 +230,7 @@ export default function CRMApp() {
       if(fOwner!=='All'    && r.owner!==fOwner)            return false;
       if(fTL!=='All'       && r.tl!==fTL)                  return false;
       if(fOrigin!=='All'   && r.origin!==fOrigin)          return false;
+      if(ageBucket && ageOf(r.age)!==ageBucket)             return false;
       if(applic && r.applicability!==applic)               return false;
       if(tatFilter){
         const breached = r.tatStatus==='Beyond TAT' || (r.tatStatus && r.tatStatus.includes('Escalation'));
@@ -234,7 +239,7 @@ export default function CRMApp() {
       }
       return true;
     });
-  }, [data,fCategory,fSubCat,fCaseType,fStatus,fOwner,fTL,fOrigin,applic,tatFilter]);
+  }, [data,fCategory,fSubCat,fCaseType,fStatus,fOwner,fTL,fOrigin,ageBucket,applic,tatFilter]);
 
   // Narrow by page scope (status)
   const pageRows = useMemo(() => {
@@ -348,8 +353,8 @@ export default function CRMApp() {
     return { category:u('area'), subCategory:u('subArea'), caseType:u('caseType'), status:u('status'), owner:u('owner'), origin:u('origin') };
   }, [data]);
 
-  const resetFilters = () => { setFCategory('All');setFSubCat('All');setFCaseType('All');setFStatus('All');setFOwner('All');setFTL('All');setFOrigin('All'); };
-  const hasFilters = [fCategory,fSubCat,fCaseType,fStatus,fOwner,fTL,fOrigin].some(v=>v!=='All');
+  const resetFilters = () => { setFCategory('All');setFSubCat('All');setFCaseType('All');setFStatus('All');setFOwner('All');setFTL('All');setFOrigin('All');setAgeBucket(''); };
+  const hasFilters = [fCategory,fSubCat,fCaseType,fStatus,fOwner,fTL,fOrigin].some(v=>v!=='All') || ageBucket!=='';
 
   if(loading) return <Loading/>;
 
@@ -520,7 +525,8 @@ export default function CRMApp() {
                           <filter id="pieShadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="4" stdDeviation="5" floodColor="#003c5a" floodOpacity="0.35"/></filter>
                         </defs>
                         <Pie data={ovCharts.caseType} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={62} innerRadius={16}
-                          paddingAngle={3} stroke="#fff" strokeWidth={2} style={{filter:'url(#pieShadow)'}}
+                          paddingAngle={3} stroke="#fff" strokeWidth={2} style={{filter:'url(#pieShadow)',cursor:'pointer'}}
+                          onClick={(d)=>{const n=d?.name||d?.payload?.name; if(n) setFCaseType(fCaseType===n?'All':n);}}
                           isAnimationActive animationDuration={900} animationBegin={150}
                           labelLine={true} label={({cx,cy,midAngle,outerRadius,value})=>{
                             const RAD=Math.PI/180, r=outerRadius+16;
@@ -546,7 +552,7 @@ export default function CRMApp() {
                         const w = Math.max(2, s.value/max*100);
                         const big = s.name==='Closed';
                         return (
-                          <div key={i} style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
+                          <div key={i} onClick={()=>setFStatus(fStatus===s.name?'All':s.name)} style={{display:'flex',alignItems:'center',gap:8,marginBottom:6,cursor:'pointer'}}>
                             <div style={{width:140,fontSize:10.5,fontWeight:800,color:T.textM}}>{s.name}</div>
                             <div style={{flex:1,position:'relative',height:21,background:'#eef1f4',borderRadius:5,overflow:'hidden',boxShadow:'inset 0 1px 3px rgba(0,40,80,.12)'}}>
                               <div className="crm-bar" style={{position:'absolute',top:0,left:0,bottom:0,width:`${w}%`,
@@ -565,7 +571,7 @@ export default function CRMApp() {
                       {ovCharts.origin.slice(0,8).map((o,i)=>{
                         const c1=CC[i%CC.length];
                         return (
-                        <div key={i} style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
+                        <div key={i} onClick={()=>setFOrigin(fOrigin===o.name?'All':o.name)} style={{display:'flex',alignItems:'center',gap:8,marginBottom:6,cursor:'pointer'}}>
                           <div style={{width:115,fontSize:10,fontWeight:700,color:T.textM,textAlign:'right',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{o.name}</div>
                           <div style={{flex:1,display:'flex',alignItems:'center',gap:7}}>
                             <div className="crm-bar" style={{height:16,width:`${o.pct}%`,minWidth:4,background:`linear-gradient(90deg,${c1},${c1}cc)`,borderRadius:4}}/>
@@ -736,7 +742,8 @@ export default function CRMApp() {
                       <PieChart>
                         <filter id="donutSh" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="3" stdDeviation="4" floodColor="#003c5a" floodOpacity="0.3"/></filter>
                         <Pie data={openCharts.statusDonut} dataKey="value" nameKey="name" cx="58%" cy="50%" innerRadius={42} outerRadius={72}
-                          paddingAngle={2} stroke="#fff" strokeWidth={2} style={{filter:'url(#donutSh)'}} isAnimationActive animationDuration={900}
+                          paddingAngle={2} stroke="#fff" strokeWidth={2} style={{filter:'url(#donutSh)',cursor:'pointer'}} isAnimationActive animationDuration={900}
+                          onClick={(d)=>{const n=d?.name||d?.payload?.name; if(n) setFStatus(fStatus===n?'All':n);}}
                           labelLine={true} label={({cx,cy,midAngle,outerRadius,value})=>{
                             const RAD=Math.PI/180,r=outerRadius+14,x=cx+r*Math.cos(-midAngle*RAD),y=cy+r*Math.sin(-midAngle*RAD);
                             return <text x={x} y={y} fill="#000" fontSize={11} fontWeight={800} textAnchor={x>cx?'start':'end'} dominantBaseline="central">{value.toLocaleString()}</text>;
@@ -758,7 +765,7 @@ export default function CRMApp() {
                       {openCharts.origin.slice(0,9).map((o,i)=>{
                         const c1=CC[i%CC.length];
                         return (
-                        <div key={i} style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
+                        <div key={i} onClick={()=>setFOrigin(fOrigin===o.name?'All':o.name)} style={{display:'flex',alignItems:'center',gap:8,marginBottom:6,cursor:'pointer'}}>
                           <div style={{width:115,fontSize:10,fontWeight:700,color:T.textM,textAlign:'right',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{o.name}</div>
                           <div style={{flex:1,display:'flex',alignItems:'center',gap:7}}>
                             <div className="crm-bar" style={{height:16,width:`${o.pct}%`,minWidth:4,background:`linear-gradient(90deg,${c1},${c1}cc)`,borderRadius:4}}/>
@@ -774,7 +781,7 @@ export default function CRMApp() {
                   <Panel title="Cases By Ageing">
                     <div style={{padding:'8px 2px'}}>
                       {(()=>{ const mx=Math.max(...openCharts.ageing.map(a=>a.count),1); return openCharts.ageing.map((a,i)=>(
-                        <div key={i} style={{display:'flex',alignItems:'center',gap:10,marginBottom:9}}>
+                        <div key={i} onClick={()=>setAgeBucket(ageBucket===a.name?'':a.name)} style={{display:'flex',alignItems:'center',gap:10,marginBottom:9,cursor:'pointer'}}>
                           <div style={{width:92,fontSize:10,fontWeight:700,color:T.textM,textAlign:'right'}}>{a.name}</div>
                           <div style={{flex:1,display:'flex',justifyContent:'center'}}>
                             <div className="crm-bar" style={{height:24,width:`${Math.max(a.count/mx*100,3)}%`,background:`linear-gradient(90deg,${AGE_COLORS[i]},${AGE_COLORS[i]}cc)`,borderRadius:5}}/>
