@@ -130,6 +130,8 @@ const Panel = ({title,children,style={}}) => (
 );
 
 const typeColor = (n) => n==='Query'?'#c9a227':n==='Complaint'?'#d32f2f':n==='SPAM'?'#607d8b':'#0097a7';
+const stColor = (n) => n==='In Progress'?'#29b6f6':n==='New'?'#1a3a8f':n==='Pending for Clarification'?'#ff7043':n==='Re-Open'?'#7e57c2':'#00acc1';
+const AGE_COLORS = ['#f4a582','#5b9bd5','#9e9e9e','#ec7fb0','#d4b62c'];
 
 const Loading = () => (
   <div style={{minHeight:'100vh',backgroundImage:'url(/bg.jpg)',backgroundSize:'cover',backgroundPosition:'center',
@@ -275,6 +277,38 @@ export default function CRMApp() {
     });
     return Object.values(m).sort((x,y)=>y.total-x.total);
   }, [pageRows]);
+
+  // Open Tickets page data
+  const openCharts = useMemo(() => {
+    if(tab!=='open') return {byOwner:[],byOwnerTat:[],statusDonut:[],origin:[],ageing:[]};
+    const rows = pageRows;
+    // by owner (count)
+    const oc={};
+    rows.forEach(r=>{const v=(r.owner||'').trim(); if(v) oc[v]=(oc[v]||0)+1;});
+    const byOwner=Object.entries(oc).map(([name,count])=>({name,count})).sort((a,b)=>b.count-a.count).slice(0,10);
+    // by owner TAT split (Overdue / At Risk / Within Time)
+    const tb=(t)=> t==='Beyond TAT'?'overdue':(t&&t.includes('Escalation'))?'atrisk':'within';
+    const ot={};
+    rows.forEach(r=>{const v=(r.owner||'').trim(); if(!v)return; if(!ot[v])ot[v]={name:v,overdue:0,atrisk:0,within:0,total:0}; ot[v][tb(r.tatStatus)]++; ot[v].total++;});
+    const byOwnerTat=Object.values(ot).sort((a,b)=>b.total-a.total).slice(0,10);
+    // status donut (open statuses, ungrouped)
+    const sc={};
+    rows.forEach(r=>{const s=r.status||'Unknown'; if(s!=='Unknown') sc[s]=(sc[s]||0)+1;});
+    const statusDonut=Object.entries(sc).map(([name,value])=>({name,value})).sort((a,b)=>b.value-a.value);
+    // origin %
+    const ocn={};
+    rows.forEach(r=>{const v=(r.origin||'').trim(); if(v) ocn[v]=(ocn[v]||0)+1;});
+    const oe=Object.entries(ocn).map(([name,value])=>({name,value})).sort((a,b)=>b.value-a.value);
+    const otot=oe.reduce((s,o)=>s+o.value,0)||1;
+    const origin=oe.map(o=>({...o,pct:+(o.value/otot*100).toFixed(2)}));
+    // ageing buckets
+    const order=['Under 24 Hours','1-5 Days','5-15 Days','15-30 Days','> 30 Days'];
+    const bk=(a)=> a<1?'Under 24 Hours':a<=5?'1-5 Days':a<=15?'5-15 Days':a<=30?'15-30 Days':'> 30 Days';
+    const ac={};
+    rows.forEach(r=>{const a=typeof r.age==='number'?r.age:parseFloat(r.age)||0; const k=bk(a); ac[k]=(ac[k]||0)+1;});
+    const ageing=order.map(k=>({name:k,count:ac[k]||0}));
+    return {byOwner,byOwnerTat,statusDonut,origin,ageing};
+  }, [pageRows,tab]);
 
   // Filter dropdown options (from full dataset)
   const opts = useMemo(() => {
@@ -590,6 +624,138 @@ export default function CRMApp() {
                     </table>
                   </div>
                 </GC>
+              </>
+            ) : tab==='open' ? (
+              <>
+                {/* Summary cards */}
+                <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10}}>
+                  {[
+                    {v:openT, l:'Open Tickets', g:'linear-gradient(135deg,#ffb74d 0%,#fb8c00 55%,#e65100 100%)', ic:'🔓'},
+                    {v:pageRows.filter(r=>r.tatStatus==='Beyond TAT').length, l:'Overdue (Beyond TAT)', g:'linear-gradient(135deg,#ef5350 0%,#e53935 55%,#b71c1c 100%)', ic:'⚠️'},
+                    {v:pageRows.filter(r=>r.tatStatus&&r.tatStatus.includes('Escalation')).length, l:'In Escalation', g:'linear-gradient(135deg,#ffd54f 0%,#fbc02d 55%,#f9a825 100%)', ic:'📈'},
+                  ].map((c,i)=>(
+                    <div key={i} className="crm-stat" style={{background:c.g,animationDelay:`${i*0.09}s`}}>
+                      <div className="ic">{c.ic}</div>
+                      <div><div className="num">{c.v.toLocaleString()}</div><div className="lbl">{c.l}</div></div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Row 1 */}
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1.15fr 1fr',gap:10,alignItems:'start'}}>
+                  {/* No. of cases by Case Owner */}
+                  <Panel title="No. of Cases by Case Owner">
+                    <ResponsiveContainer width="100%" height={Math.max(200, openCharts.byOwner.length*26)}>
+                      <BarChart data={openCharts.byOwner} layout="vertical" margin={{top:5,right:42,left:6,bottom:5}}>
+                        <defs><linearGradient id="barPurple" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stopColor="#b39ddb"/><stop offset="100%" stopColor="#7e57c2"/></linearGradient></defs>
+                        <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="rgba(0,60,100,0.08)"/>
+                        <XAxis type="number" tick={{fontSize:10,fill:T.textL}}/>
+                        <YAxis type="category" dataKey="name" width={115} tick={{fontSize:10,fill:T.textM,fontWeight:600}}/>
+                        <Tooltip content={<CTip/>} cursor={{fill:'rgba(126,87,194,0.06)'}}/>
+                        <Bar dataKey="count" name="Cases" fill="url(#barPurple)" radius={[0,5,5,0]} isAnimationActive animationDuration={800}>
+                          <LabelList dataKey="count" position="right" style={{fontSize:10,fontWeight:800,fill:T.text}} formatter={v=>v.toLocaleString()}/>
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </Panel>
+
+                  {/* Cases by Status (Overdue/At Risk/Within Time) by owner */}
+                  <Panel title="Cases by Status (Overdue / At Risk / Within Time) — Case Owner">
+                    <ResponsiveContainer width="100%" height={Math.max(200, openCharts.byOwnerTat.length*26)}>
+                      <BarChart data={openCharts.byOwnerTat} layout="vertical" margin={{top:5,right:42,left:6,bottom:5}}>
+                        <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="rgba(0,60,100,0.08)"/>
+                        <XAxis type="number" tick={{fontSize:10,fill:T.textL}}/>
+                        <YAxis type="category" dataKey="name" width={115} tick={{fontSize:10,fill:T.textM,fontWeight:600}}/>
+                        <Tooltip content={<CTip/>} cursor={{fill:'rgba(21,101,192,0.06)'}}/>
+                        <Legend iconType="circle" wrapperStyle={{fontSize:10,fontWeight:700}} formatter={(v)=><span style={{color:"#000"}}>{v}</span>}/>
+                        <Bar dataKey="overdue" name="Overdue"     stackId="t" fill="#e53935"/>
+                        <Bar dataKey="atrisk"  name="At Risk"     stackId="t" fill="#fbc02d"/>
+                        <Bar dataKey="within"  name="Within Time" stackId="t" fill="#43a047" radius={[0,5,5,0]}>
+                          <LabelList dataKey="total" position="right" style={{fontSize:10,fontWeight:800,fill:T.text}} formatter={v=>v.toLocaleString()}/>
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </Panel>
+
+                  {/* Status donut */}
+                  <Panel title="Status">
+                    <ResponsiveContainer width="100%" height={210}>
+                      <PieChart>
+                        <filter id="donutSh" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="3" stdDeviation="4" floodColor="#003c5a" floodOpacity="0.3"/></filter>
+                        <Pie data={openCharts.statusDonut} dataKey="value" nameKey="name" cx="58%" cy="50%" innerRadius={42} outerRadius={72}
+                          paddingAngle={2} stroke="#fff" strokeWidth={2} style={{filter:'url(#donutSh)'}} isAnimationActive animationDuration={900}
+                          labelLine={true} label={({cx,cy,midAngle,outerRadius,value})=>{
+                            const RAD=Math.PI/180,r=outerRadius+14,x=cx+r*Math.cos(-midAngle*RAD),y=cy+r*Math.sin(-midAngle*RAD);
+                            return <text x={x} y={y} fill="#000" fontSize={11} fontWeight={800} textAnchor={x>cx?'start':'end'} dominantBaseline="central">{value.toLocaleString()}</text>;
+                          }}>
+                          {openCharts.statusDonut.map((e,i)=><Cell key={i} fill={stColor(e.name)}/>)}
+                        </Pie>
+                        <Tooltip content={<CTip/>}/>
+                        <Legend layout="vertical" align="left" verticalAlign="middle" iconType="circle" wrapperStyle={{fontSize:10.5,fontWeight:700}} formatter={(v)=><span style={{color:"#000"}}>{v}</span>}/>
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </Panel>
+                </div>
+
+                {/* Row 2 */}
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1.15fr 1fr',gap:10,alignItems:'start'}}>
+                  {/* Case Origin */}
+                  <Panel title="Case Origin">
+                    <div style={{padding:'4px 2px'}}>
+                      {openCharts.origin.slice(0,9).map((o,i)=>{
+                        const c1=CC[i%CC.length];
+                        return (
+                        <div key={i} style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
+                          <div style={{width:115,fontSize:10,fontWeight:700,color:T.textM,textAlign:'right',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{o.name}</div>
+                          <div style={{flex:1,display:'flex',alignItems:'center',gap:7}}>
+                            <div className="crm-bar" style={{height:16,width:`${o.pct}%`,minWidth:4,background:`linear-gradient(90deg,${c1},${c1}cc)`,borderRadius:4}}/>
+                            <span style={{fontSize:10.5,fontWeight:800,color:T.text,whiteSpace:'nowrap'}}>{o.pct}%</span>
+                          </div>
+                        </div>
+                        );
+                      })}
+                    </div>
+                  </Panel>
+
+                  {/* Cases By Ageing (centered funnel) */}
+                  <Panel title="Cases By Ageing">
+                    <div style={{padding:'8px 2px'}}>
+                      {(()=>{ const mx=Math.max(...openCharts.ageing.map(a=>a.count),1); return openCharts.ageing.map((a,i)=>(
+                        <div key={i} style={{display:'flex',alignItems:'center',gap:10,marginBottom:9}}>
+                          <div style={{width:92,fontSize:10,fontWeight:700,color:T.textM,textAlign:'right'}}>{a.name}</div>
+                          <div style={{flex:1,display:'flex',justifyContent:'center'}}>
+                            <div className="crm-bar" style={{height:24,width:`${Math.max(a.count/mx*100,3)}%`,background:`linear-gradient(90deg,${AGE_COLORS[i]},${AGE_COLORS[i]}cc)`,borderRadius:5}}/>
+                          </div>
+                          <div style={{width:44,fontSize:11,fontWeight:800,color:T.text,textAlign:'left'}}>{a.count.toLocaleString()}</div>
+                        </div>
+                      )); })()}
+                    </div>
+                  </Panel>
+
+                  {/* Area / Sub Area table */}
+                  <GC className="crm-rise" style={{padding:0,overflow:'hidden'}}>
+                    <div style={{maxHeight:320,overflowY:'auto'}}>
+                      <table style={{width:'100%',borderCollapse:'collapse',fontSize:12}}>
+                        <thead>
+                          <tr style={{background:'linear-gradient(135deg,#1565c0,#0d47a1)',position:'sticky',top:0,zIndex:1}}>
+                            <th style={{padding:'9px 14px',color:'#fff',fontWeight:800,textAlign:'left'}}>Area</th>
+                            <th style={{padding:'9px 14px',color:'#fff',fontWeight:800,textAlign:'left'}}>Sub Area</th>
+                            <th style={{padding:'9px 14px',color:'#fff',fontWeight:800,textAlign:'right'}}>No of Cases</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {areaTable.map((r,i)=>(
+                            <tr key={i} style={{borderBottom:'1px solid rgba(0,60,100,0.06)',background:i%2?'rgba(0,151,167,0.03)':'#fff'}}>
+                              <td style={{padding:'5px 14px',fontWeight:700,color:T.navy}}>{r.area}</td>
+                              <td style={{padding:'5px 14px',color:T.textM}}>{r.subArea}</td>
+                              <td style={{padding:'5px 14px',textAlign:'right',fontWeight:800,color:T.text}}>{r.total.toLocaleString()}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </GC>
+                </div>
               </>
             ) : (
               <GC style={{padding:18}}>
