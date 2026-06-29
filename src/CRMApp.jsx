@@ -155,7 +155,9 @@ export default function CRMApp() {
   const [fCaseType, setFCaseType] = useState('All');
   const [fStatus,   setFStatus]   = useState('All');
   const [fOwner,    setFOwner]    = useState('All');
+  const [fTL,       setFTL]       = useState('All');
   const [fOrigin,   setFOrigin]   = useState('All');
+  const [ticket,    setTicket]    = useState(null);  // ticket detail popup
 
   // "Number of cases by" dimension toggle
   const [byDim, setByDim] = useState('owner'); // owner | hod | tl
@@ -176,6 +178,9 @@ export default function CRMApp() {
       const parsed = rows.map(row=>({
         account:     g(row,'Account Name')||'',
         caseNum:     g(row,'Case Number')||'',
+        subject:     g(row,'Subject')||'',
+        priority:    g(row,'Priority')||'',
+        description: g(row,'Description')||'',
         category:    g(row,'Category')||'',
         subCategory: g(row,'Sub Category')||'',
         caseType:    g(row,'Case Type')||'',
@@ -195,6 +200,8 @@ export default function CRMApp() {
         openedStr:   g(row,'Date/Time Opened')||'',
         closedStr:   g(row,'Closed Date')||'',
         applicability: g(row,'Case Applicability')||'',
+        createdTime: g(row,'Created Time')||'',
+        firstResp:   g(row,'First Response At')||'',
       }));
       setData(parsed);
       setLoading(false);
@@ -214,6 +221,7 @@ export default function CRMApp() {
       if(fCaseType!=='All' && r.caseType!==fCaseType)      return false;
       if(fStatus!=='All'   && r.status!==fStatus)          return false;
       if(fOwner!=='All'    && r.owner!==fOwner)            return false;
+      if(fTL!=='All'       && r.tl!==fTL)                  return false;
       if(fOrigin!=='All'   && r.origin!==fOrigin)          return false;
       if(applic && r.applicability!==applic)               return false;
       if(tatFilter){
@@ -223,7 +231,7 @@ export default function CRMApp() {
       }
       return true;
     });
-  }, [data,fCategory,fSubCat,fCaseType,fStatus,fOwner,fOrigin,applic,tatFilter]);
+  }, [data,fCategory,fSubCat,fCaseType,fStatus,fOwner,fTL,fOrigin,applic,tatFilter]);
 
   // Narrow by page scope (status)
   const pageRows = useMemo(() => {
@@ -318,8 +326,9 @@ export default function CRMApp() {
     return {byOwner,byOwnerTat,statusDonut,origin,ageing};
   }, [pageRows,tab]);
 
-  // Worklist — sorted by age (days) desc as delay proxy (open & closed)
+  // Worklist — sorted by age (days) desc as delay proxy (open & closed); capped for performance
   const openList = useMemo(()=> tab!=='overall' ? [...pageRows].sort((a,b)=>(b.age||0)-(a.age||0)) : [], [pageRows,tab]);
+  const WORKLIST_CAP = 200;
 
   // Filter dropdown options (from full dataset)
   const opts = useMemo(() => {
@@ -328,8 +337,8 @@ export default function CRMApp() {
     return { category:u('area'), subCategory:u('subArea'), caseType:u('caseType'), status:u('status'), owner:u('owner'), origin:u('origin') };
   }, [data]);
 
-  const resetFilters = () => { setFCategory('All');setFSubCat('All');setFCaseType('All');setFStatus('All');setFOwner('All');setFOrigin('All'); };
-  const hasFilters = [fCategory,fSubCat,fCaseType,fStatus,fOwner,fOrigin].some(v=>v!=='All');
+  const resetFilters = () => { setFCategory('All');setFSubCat('All');setFCaseType('All');setFStatus('All');setFOwner('All');setFTL('All');setFOrigin('All'); };
+  const hasFilters = [fCategory,fSubCat,fCaseType,fStatus,fOwner,fTL,fOrigin].some(v=>v!=='All');
 
   if(loading) return <Loading/>;
 
@@ -585,10 +594,10 @@ export default function CRMApp() {
                         <YAxis type="category" dataKey="name" width={150} tick={{fontSize:10,fill:T.textM,fontWeight:600}}/>
                         <Tooltip content={<CTip/>} cursor={{fill:'rgba(21,101,192,0.06)'}}/>
                         <Legend iconType="circle" wrapperStyle={{fontSize:11,fontWeight:700}} formatter={(v)=><span style={{color:"#000"}}>{v}</span>}/>
-                        <Bar dataKey="closed" name="Closed" stackId="a" fill="url(#barClosed)" style={{filter:'url(#barSh)'}} isAnimationActive animationDuration={800}>
+                        <Bar dataKey="closed" name="Closed" stackId="a" fill="url(#barClosed)" style={{filter:'url(#barSh)',cursor:'pointer'}} isAnimationActive animationDuration={800} onClick={(d)=>d&&d.name&&(byDim==='tl'?setFTL(d.name):setFOwner(d.name))}>
                           <LabelList dataKey="closed" position="center" style={{fontSize:9,fontWeight:800,fill:'#fff'}} formatter={v=>v>maxTot*0.06?v.toLocaleString():''}/>
                         </Bar>
-                        <Bar dataKey="open" name="Open" stackId="a" fill="url(#barOpen)" radius={[0,5,5,0]} style={{filter:'url(#barSh)'}} isAnimationActive animationDuration={800}>
+                        <Bar dataKey="open" name="Open" stackId="a" fill="url(#barOpen)" radius={[0,5,5,0]} style={{filter:'url(#barSh)',cursor:'pointer'}} isAnimationActive animationDuration={800} onClick={(d)=>d&&d.name&&(byDim==='tl'?setFTL(d.name):setFOwner(d.name))}>
                           <LabelList dataKey="open" position="center" style={{fontSize:9,fontWeight:800,fill:'#fff'}} formatter={v=>v>maxTot*0.06?v.toLocaleString():''}/>
                           <LabelList content={barEndLabel}/>
                         </Bar>
@@ -678,7 +687,7 @@ export default function CRMApp() {
                         <XAxis type="number" tick={{fontSize:10,fill:T.textL}}/>
                         <YAxis type="category" dataKey="name" width={115} tick={{fontSize:10,fill:T.textM,fontWeight:600}}/>
                         <Tooltip content={<CTip/>} cursor={{fill:'rgba(126,87,194,0.06)'}}/>
-                        <Bar dataKey="count" name="Cases" fill="url(#barPurple)" radius={[0,5,5,0]} isAnimationActive animationDuration={800}>
+                        <Bar dataKey="count" name="Cases" fill="url(#barPurple)" radius={[0,5,5,0]} isAnimationActive animationDuration={800} style={{cursor:'pointer'}} onClick={(d)=>d&&d.name&&setFOwner(d.name)}>
                           <LabelList dataKey="count" position="right" style={{fontSize:10,fontWeight:800,fill:T.text}} formatter={v=>v.toLocaleString()}/>
                         </Bar>
                       </BarChart>
@@ -694,9 +703,9 @@ export default function CRMApp() {
                         <YAxis type="category" dataKey="name" width={115} tick={{fontSize:10,fill:T.textM,fontWeight:600}}/>
                         <Tooltip content={<CTip/>} cursor={{fill:'rgba(21,101,192,0.06)'}}/>
                         <Legend iconType="circle" wrapperStyle={{fontSize:10,fontWeight:700}} formatter={(v)=><span style={{color:"#000"}}>{v}</span>}/>
-                        <Bar dataKey="overdue" name="Overdue"     stackId="t" fill="#e53935"/>
-                        <Bar dataKey="atrisk"  name="At Risk"     stackId="t" fill="#fbc02d"/>
-                        <Bar dataKey="within"  name="Within Time" stackId="t" fill="#43a047" radius={[0,5,5,0]}>
+                        <Bar dataKey="overdue" name="Overdue"     stackId="t" fill="#e53935" style={{cursor:'pointer'}} onClick={(d)=>d&&d.name&&setFOwner(d.name)}/>
+                        <Bar dataKey="atrisk"  name="At Risk"     stackId="t" fill="#fbc02d" style={{cursor:'pointer'}} onClick={(d)=>d&&d.name&&setFOwner(d.name)}/>
+                        <Bar dataKey="within"  name="Within Time" stackId="t" fill="#43a047" radius={[0,5,5,0]} style={{cursor:'pointer'}} onClick={(d)=>d&&d.name&&setFOwner(d.name)}>
                           <LabelList dataKey="total" position="right" style={{fontSize:10,fontWeight:800,fill:T.text}} formatter={v=>v.toLocaleString()}/>
                         </Bar>
                       </BarChart>
@@ -787,7 +796,7 @@ export default function CRMApp() {
                 <GC className="crm-rise" style={{padding:0,overflow:'hidden'}}>
                   <div style={{background:'linear-gradient(135deg,#1e88e5,#1565c0 55%,#0d47a1)',color:'#fff',fontWeight:800,fontSize:13,padding:'9px 14px',letterSpacing:0.4,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
                     <span>{pageLabel} Worklist</span>
-                    <span style={{fontSize:10,fontWeight:600,opacity:0.85}}>{openList.length.toLocaleString()} {tab==='open'?'open':'closed'} · sorted by age</span>
+                    <span style={{fontSize:10,fontWeight:600,opacity:0.85}}>{openList.length.toLocaleString()} {tab==='open'?'open':'closed'} · showing top {Math.min(WORKLIST_CAP,openList.length)} by age</span>
                   </div>
                   <div style={{maxHeight:380,overflowY:'auto'}}>
                     <table style={{width:'100%',borderCollapse:'collapse',fontSize:11.5}}>
@@ -800,8 +809,10 @@ export default function CRMApp() {
                         </tr>
                       </thead>
                       <tbody>
-                        {openList.map((r,i)=>(
-                          <tr key={i} style={{borderBottom:'1px solid rgba(0,60,100,0.06)',background:i%2?'rgba(0,151,167,0.03)':'#fff'}}>
+                        {openList.slice(0,WORKLIST_CAP).map((r,i)=>(
+                          <tr key={i} onClick={()=>setTicket(r)} title="Click for full details" style={{borderBottom:'1px solid rgba(0,60,100,0.06)',background:i%2?'rgba(0,151,167,0.03)':'#fff',cursor:'pointer'}}
+                            onMouseEnter={e=>e.currentTarget.style.background='rgba(21,101,192,0.10)'}
+                            onMouseLeave={e=>e.currentTarget.style.background=i%2?'rgba(0,151,167,0.03)':'#fff'}>
                             <td style={{padding:'5px 12px',fontWeight:700,color:T.navy,whiteSpace:'nowrap'}}>{r.caseNum}</td>
                             <td style={{padding:'5px 12px',color:T.textM,whiteSpace:'nowrap'}}>{r.owner}</td>
                             <td style={{padding:'5px 12px',color:T.textM,whiteSpace:'nowrap'}}>{r.tl}</td>
@@ -821,6 +832,48 @@ export default function CRMApp() {
           </main>
 
         </div>
+
+        {/* Ticket detail popup */}
+        {ticket && (
+          <div onClick={()=>setTicket(null)} style={{position:'fixed',inset:0,background:'rgba(10,22,40,0.55)',backdropFilter:'blur(2px)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center',padding:20}}>
+            <div onClick={e=>e.stopPropagation()} className="crm-rise" style={{background:'#fff',borderRadius:16,maxWidth:680,width:'100%',maxHeight:'85vh',overflow:'hidden',boxShadow:'0 30px 80px rgba(0,0,0,0.45)',display:'flex',flexDirection:'column'}}>
+              <div style={{background:'linear-gradient(135deg,#1e88e5,#0d47a1)',color:'#fff',padding:'16px 22px',display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:12}}>
+                <div style={{minWidth:0}}>
+                  <div style={{fontSize:11,fontWeight:700,opacity:0.85,letterSpacing:0.5}}>CASE #{ticket.caseNum}</div>
+                  <div style={{fontSize:16,fontWeight:900,marginTop:3,lineHeight:1.3}}>{ticket.subject||'(No subject)'}</div>
+                </div>
+                <button onClick={()=>setTicket(null)} style={{background:'rgba(255,255,255,0.2)',border:'none',color:'#fff',borderRadius:8,width:30,height:30,fontSize:16,cursor:'pointer',fontWeight:800,flexShrink:0,lineHeight:1}}>×</button>
+              </div>
+              <div style={{padding:'18px 22px',overflowY:'auto'}}>
+                {ticket.description && (
+                  <div style={{marginBottom:16}}>
+                    <div style={{fontSize:10,fontWeight:800,color:T.gray,textTransform:'uppercase',letterSpacing:0.5,marginBottom:4}}>Description / What it's about</div>
+                    <div style={{fontSize:12.5,color:T.text,lineHeight:1.55,background:'#f5f8fb',borderRadius:8,padding:'10px 12px'}}>{ticket.description}</div>
+                  </div>
+                )}
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'11px 20px'}}>
+                  {[
+                    ['Account',ticket.account],['Status',ticket.status],
+                    ['Priority',ticket.priority],['Case Type',ticket.caseType],
+                    ['TAT Status',ticket.tatStatus],['Case Origin',ticket.origin],
+                    ['Area',ticket.area],['Sub Area',ticket.subArea],
+                    ['Case Owner',ticket.owner],['Team Leader',ticket.tl],
+                    ['Age (days)',(ticket.age||0).toLocaleString()],['Reassigns',ticket.reassigns],
+                    ['Response Time',ticket.respCat],['Resolution Time',ticket.resCat],
+                    ['Opened',ticket.openedStr],['Closed',ticket.closedStr],
+                    ['HNI Customer',ticket.hni?'Yes':'No'],['Active Legal',ticket.legal?'Yes':'No'],
+                    ['Applicability',ticket.applicability],['First Response',ticket.firstResp],
+                  ].map(([k,v],i)=>(
+                    <div key={i}>
+                      <div style={{fontSize:9.5,fontWeight:800,color:T.gray,textTransform:'uppercase',letterSpacing:0.4}}>{k}</div>
+                      <div style={{fontSize:12.5,fontWeight:600,color:T.text,marginTop:1,wordBreak:'break-word'}}>{(v===''||v==null)?'—':String(v)}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
