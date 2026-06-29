@@ -130,7 +130,7 @@ const Panel = ({title,children,style={}}) => (
 );
 
 const typeColor = (n) => n==='Query'?'#c9a227':n==='Complaint'?'#d32f2f':n==='SPAM'?'#607d8b':'#0097a7';
-const stColor = (n) => n==='In Progress'?'#29b6f6':n==='New'?'#1a3a8f':n==='Pending for Clarification'?'#ff7043':n==='Re-Open'?'#7e57c2':'#00acc1';
+const stColor = (n) => n==='In Progress'?'#29b6f6':n==='New'?'#1a3a8f':n==='Pending for Clarification'?'#ff7043':n==='Re-Open'?'#7e57c2':n==='Closed'?'#2e7d32':n==='Resolved'?'#00897b':n==='Close'?'#66bb6a':'#00acc1';
 const AGE_COLORS = ['#f4a582','#5b9bd5','#9e9e9e','#ec7fb0','#d4b62c'];
 
 const Loading = () => (
@@ -286,9 +286,9 @@ export default function CRMApp() {
     return Object.values(m).sort((x,y)=>y.total-x.total);
   }, [pageRows]);
 
-  // Open Tickets page data
+  // Open / Closed page data (same panels, scoped to pageRows)
   const openCharts = useMemo(() => {
-    if(tab!=='open') return {byOwner:[],byOwnerTat:[],statusDonut:[],origin:[],ageing:[]};
+    if(tab==='overall') return {byOwner:[],byOwnerTat:[],statusDonut:[],origin:[],ageing:[]};
     const rows = pageRows;
     // by owner (count)
     const oc={};
@@ -318,8 +318,8 @@ export default function CRMApp() {
     return {byOwner,byOwnerTat,statusDonut,origin,ageing};
   }, [pageRows,tab]);
 
-  // Open worklist — sorted by age (days) desc as delay proxy
-  const openList = useMemo(()=> tab==='open' ? [...pageRows].sort((a,b)=>(b.age||0)-(a.age||0)) : [], [pageRows,tab]);
+  // Worklist — sorted by age (days) desc as delay proxy (open & closed)
+  const openList = useMemo(()=> tab!=='overall' ? [...pageRows].sort((a,b)=>(b.age||0)-(a.age||0)) : [], [pageRows,tab]);
 
   // Filter dropdown options (from full dataset)
   const opts = useMemo(() => {
@@ -636,7 +636,7 @@ export default function CRMApp() {
                   </div>
                 </GC>
               </>
-            ) : tab==='open' ? (
+            ) : (
               <>
                 {/* TAT buttons */}
                 <div style={{display:'flex',gap:10,alignItems:'center'}}>
@@ -656,7 +656,7 @@ export default function CRMApp() {
                 {/* Summary cards */}
                 <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10}}>
                   {[
-                    {v:openT, l:'Open Tickets', g:'linear-gradient(135deg,#ffb74d 0%,#fb8c00 55%,#e65100 100%)', ic:'🔓'},
+                    {v:pageRows.length, l:pageLabel, g:tab==='open'?'linear-gradient(135deg,#ffb74d 0%,#fb8c00 55%,#e65100 100%)':'linear-gradient(135deg,#66bb6a 0%,#43a047 55%,#2e7d32 100%)', ic:tab==='open'?'🔓':'✅'},
                     {v:pageRows.filter(r=>r.tatStatus==='Beyond TAT').length, l:'Overdue (Beyond TAT)', g:'linear-gradient(135deg,#ef5350 0%,#e53935 55%,#b71c1c 100%)', ic:'⚠️'},
                     {v:pageRows.filter(r=>r.tatStatus&&r.tatStatus.includes('Escalation')).length, l:'In Escalation', g:'linear-gradient(135deg,#ffd54f 0%,#fbc02d 55%,#f9a825 100%)', ic:'📈'},
                   ].map((c,i)=>(
@@ -786,8 +786,8 @@ export default function CRMApp() {
                 {/* Open ticket worklist */}
                 <GC className="crm-rise" style={{padding:0,overflow:'hidden'}}>
                   <div style={{background:'linear-gradient(135deg,#1e88e5,#1565c0 55%,#0d47a1)',color:'#fff',fontWeight:800,fontSize:13,padding:'9px 14px',letterSpacing:0.4,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-                    <span>Open Ticket Worklist</span>
-                    <span style={{fontSize:10,fontWeight:600,opacity:0.85}}>{openList.length.toLocaleString()} open · sorted by age</span>
+                    <span>{pageLabel} Worklist</span>
+                    <span style={{fontSize:10,fontWeight:600,opacity:0.85}}>{openList.length.toLocaleString()} {tab==='open'?'open':'closed'} · sorted by age</span>
                   </div>
                   <div style={{maxHeight:380,overflowY:'auto'}}>
                     <table style={{width:'100%',borderCollapse:'collapse',fontSize:11.5}}>
@@ -815,15 +815,6 @@ export default function CRMApp() {
                   </div>
                 </GC>
               </>
-            ) : (
-              <GC style={{padding:18}}>
-                <SH title={pageLabel} sub={`${pageRows.length.toLocaleString()} tickets in view · ${(data||[]).length.toLocaleString()} total`}/>
-                <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',minHeight:280,gap:8}}>
-                  <div style={{fontSize:48,fontWeight:900,color:T.tealD,letterSpacing:-1,lineHeight:1}}>{pageRows.length.toLocaleString()}</div>
-                  <div style={{fontSize:12,fontWeight:700,color:T.textM,textTransform:'uppercase',letterSpacing:0.5}}>{pageLabel}</div>
-                  <div style={{fontSize:11,color:T.gray,marginTop:12,opacity:0.7}}>KPIs coming soon — page & filters ready</div>
-                </div>
-              </GC>
             )}
             </div>
 
