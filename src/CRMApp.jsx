@@ -163,6 +163,9 @@ export default function CRMApp() {
   // Case Applicability filter — '' (all) | 'Inclusion' | 'Exclusion'
   const [applic, setApplic] = useState('');
 
+  // Open page TAT filter — '' (all) | 'within' | 'beyond'
+  const [tatFilter, setTatFilter] = useState('');
+
   const logout = () => { sessionStorage.removeItem('crm_auth'); window.location.reload(); };
 
   // Fast lean-JSON loader (columnar {cols,rows} -> row objects). ~0.7MB gzipped, sub-second parse.
@@ -213,9 +216,14 @@ export default function CRMApp() {
       if(fOwner!=='All'    && r.owner!==fOwner)            return false;
       if(fOrigin!=='All'   && r.origin!==fOrigin)          return false;
       if(applic && r.applicability!==applic)               return false;
+      if(tatFilter){
+        const breached = r.tatStatus==='Beyond TAT' || (r.tatStatus && r.tatStatus.includes('Escalation'));
+        if(tatFilter==='beyond' && !breached) return false;
+        if(tatFilter==='within' &&  breached) return false;
+      }
       return true;
     });
-  }, [data,fCategory,fSubCat,fCaseType,fStatus,fOwner,fOrigin,applic]);
+  }, [data,fCategory,fSubCat,fCaseType,fStatus,fOwner,fOrigin,applic,tatFilter]);
 
   // Narrow by page scope (status)
   const pageRows = useMemo(() => {
@@ -627,6 +635,21 @@ export default function CRMApp() {
               </>
             ) : tab==='open' ? (
               <>
+                {/* TAT buttons */}
+                <div style={{display:'flex',gap:10,alignItems:'center'}}>
+                  <span style={{fontSize:11,fontWeight:800,color:T.textM,textTransform:'uppercase',letterSpacing:0.4}}>TAT:</span>
+                  {[{k:'within',l:'Within TAT',c:T.green},{k:'beyond',l:'Beyond TAT',c:T.red}].map(b=>(
+                    <button key={b.k} className="crm-btn" onClick={()=>setTatFilter(tatFilter===b.k?'':b.k)} style={{
+                      background:tatFilter===b.k?`linear-gradient(135deg,${b.c},${b.c}cc)`:'#fff',
+                      color:tatFilter===b.k?'#fff':b.c,
+                      border:`1.5px solid ${b.c}`,
+                      borderRadius:8,padding:'7px 20px',fontSize:12,fontWeight:800,cursor:'pointer'}}>
+                      {b.l}
+                    </button>
+                  ))}
+                  {tatFilter && <span style={{fontSize:11,color:T.gray,fontWeight:600}}>showing {tatFilter==='within'?'Within TAT':'Beyond TAT'} only · click again to clear</span>}
+                </div>
+
                 {/* Summary cards */}
                 <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10}}>
                   {[
