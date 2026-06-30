@@ -18,12 +18,28 @@ const COLS = [
   'Resolution Time Category','Date/Time Opened','Closed Date','Case Applicability','Created Time','First Response At',
 ];
 
-const inPath = process.argv[2];
+// Resolve the Excel to read:
+//  - if a path is passed as an argument, use it
+//  - otherwise pick the NEWEST .xlsx in the data-source/ folder
+//  - if none is found, keep the existing crm_cases.json and exit cleanly (so `npm start` never breaks)
+let inPath = process.argv[2];
 if (!inPath) {
-  console.error('Usage: node scripts/build-crm-data.mjs <path-to-excel.xlsx>');
-  process.exit(1);
-}
-if (!fs.existsSync(inPath)) {
+  const dir = 'data-source';
+  let newest = null, newestT = -1;
+  if (fs.existsSync(dir)) {
+    for (const f of fs.readdirSync(dir)) {
+      if (!/\.xlsx$/i.test(f)) continue;
+      const fp = path.join(dir, f);
+      const t = fs.statSync(fp).mtimeMs;
+      if (t > newestT) { newestT = t; newest = fp; }
+    }
+  }
+  if (!newest) {
+    console.log('CRM data: no Excel in data-source/ — keeping existing crm_cases.json.');
+    process.exit(0);
+  }
+  inPath = newest;
+} else if (!fs.existsSync(inPath)) {
   console.error('File not found: ' + inPath);
   process.exit(1);
 }
