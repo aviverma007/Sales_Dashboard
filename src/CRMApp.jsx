@@ -481,7 +481,7 @@ export default function CRMApp() {
               <>
                 {/* Case Applicability buttons */}
                 <div style={{display:'flex',gap:10,alignItems:'center'}}>
-                  <span style={{fontSize:11,fontWeight:800,color:T.textM,textTransform:'uppercase',letterSpacing:0.4}}>Case Applicability:</span>
+                  <span style={{fontSize:11,fontWeight:800,color:'#fff',textTransform:'uppercase',letterSpacing:0.4,background:'rgba(13,33,55,0.72)',padding:'5px 12px',borderRadius:8}}>Case Applicability:</span>
                   {[{k:'Inclusion',c:T.green},{k:'Exclusion',c:T.red}].map(b=>(
                     <button key={b.k} className="crm-btn" onClick={()=>setApplic(applic===b.k?'':b.k)} style={{
                       background:applic===b.k?`linear-gradient(135deg,${b.c},${b.c}cc)`:'#fff',
@@ -491,7 +491,7 @@ export default function CRMApp() {
                       {b.k}
                     </button>
                   ))}
-                  {applic && <span style={{fontSize:11,color:T.gray,fontWeight:600}}>showing {applic} only · click again to clear</span>}
+                  {applic && <span style={{fontSize:11,color:'#fff',fontWeight:700,textShadow:'0 1px 3px rgba(0,0,0,0.85)'}}>showing {applic} only · click again to clear</span>}
                 </div>
 
                 {/* Summary cards */}
@@ -666,7 +666,7 @@ export default function CRMApp() {
               <>
                 {/* TAT buttons */}
                 <div style={{display:'flex',gap:10,alignItems:'center'}}>
-                  <span style={{fontSize:11,fontWeight:800,color:T.textM,textTransform:'uppercase',letterSpacing:0.4}}>TAT:</span>
+                  <span style={{fontSize:11,fontWeight:800,color:'#fff',textTransform:'uppercase',letterSpacing:0.4,background:'rgba(13,33,55,0.72)',padding:'5px 12px',borderRadius:8}}>TAT:</span>
                   {[{k:'within',l:'Within TAT',c:T.green},{k:'beyond',l:'Beyond TAT',c:T.red}].map(b=>(
                     <button key={b.k} className="crm-btn" onClick={()=>setTatFilter(tatFilter===b.k?'':b.k)} style={{
                       background:tatFilter===b.k?`linear-gradient(135deg,${b.c},${b.c}cc)`:'#fff',
@@ -676,7 +676,7 @@ export default function CRMApp() {
                       {b.l}
                     </button>
                   ))}
-                  {tatFilter && <span style={{fontSize:11,color:T.gray,fontWeight:600}}>showing {tatFilter==='within'?'Within TAT':'Beyond TAT'} only · click again to clear</span>}
+                  {tatFilter && <span style={{fontSize:11,color:'#fff',fontWeight:700,textShadow:'0 1px 3px rgba(0,0,0,0.85)'}}>showing {tatFilter==='within'?'Within TAT':'Beyond TAT'} only · click again to clear</span>}
                 </div>
 
                 {/* Summary cards (clickable filters) */}
@@ -698,7 +698,7 @@ export default function CRMApp() {
                     );
                   })}
                 </div>
-                {cardFilter && <div style={{fontSize:11,color:T.gray,fontWeight:600,marginTop:-4}}>Filtered to {cardFilter==='overdue'?'Overdue (Beyond TAT)':'In Escalation'} · click the card again or the first card to clear</div>}
+                {cardFilter && <div style={{fontSize:11,color:'#fff',fontWeight:700,marginTop:-4,textShadow:'0 1px 3px rgba(0,0,0,0.85)'}}>Filtered to {cardFilter==='overdue'?'Overdue (Beyond TAT)':'In Escalation'} · click the card again or the first card to clear</div>}
 
                 {/* Row 1 */}
                 <div style={{display:'grid',gridTemplateColumns:'1fr 1.15fr 1fr',gap:10,alignItems:'start'}}>
