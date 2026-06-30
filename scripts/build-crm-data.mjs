@@ -16,6 +16,7 @@ const COLS = [
   'Case Type','Status','TAT Status','Area','Sub Area','Case Owner','Team Leader name','Case Origin',
   'HNI Customer','Active Legal Case','Number of Reassigns','Age','Response Time Category',
   'Resolution Time Category','Date/Time Opened','Closed Date','Case Applicability','Created Time','First Response At',
+  'Project','Property','Parent Case Number',
 ];
 
 // Resolve the Excel to read:

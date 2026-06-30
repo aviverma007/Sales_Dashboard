@@ -157,6 +157,9 @@ export default function CRMApp() {
   const [fOwner,    setFOwner]    = useState('All');
   const [fTL,       setFTL]       = useState('All');
   const [fOrigin,   setFOrigin]   = useState('All');
+  const [fPriority, setFPriority] = useState('All');
+  const [caseSearch,setCaseSearch]= useState('');
+  const [hniOnly,   setHniOnly]   = useState(false);
   const [ticket,    setTicket]    = useState(null);  // ticket detail popup
 
   // "Number of cases by" dimension toggle
@@ -209,6 +212,9 @@ export default function CRMApp() {
         applicability: g(row,'Case Applicability')||'',
         createdTime: g(row,'Created Time')||'',
         firstResp:   g(row,'First Response At')||'',
+        project:     g(row,'Project')||'',
+        property:    g(row,'Property')||'',
+        parentCase:  g(row,'Parent Case Number')||'',
       }));
       setData(parsed);
       setLoading(false);
@@ -230,6 +236,9 @@ export default function CRMApp() {
       if(fOwner!=='All'    && r.owner!==fOwner)            return false;
       if(fTL!=='All'       && r.tl!==fTL)                  return false;
       if(fOrigin!=='All'   && r.origin!==fOrigin)          return false;
+      if(fPriority!=='All' && r.priority!==fPriority)      return false;
+      if(hniOnly && !r.hni)                                return false;
+      if(caseSearch.trim() && !String(r.caseNum).toLowerCase().includes(caseSearch.trim().toLowerCase())) return false;
       if(ageBucket && ageOf(r.age)!==ageBucket)             return false;
       if(applic && r.applicability!==applic)               return false;
       if(tatFilter){
@@ -239,12 +248,13 @@ export default function CRMApp() {
       }
       return true;
     });
-  }, [data,fCategory,fSubCat,fCaseType,fStatus,fOwner,fTL,fOrigin,ageBucket,applic,tatFilter]);
+  }, [data,fCategory,fSubCat,fCaseType,fStatus,fOwner,fTL,fOrigin,fPriority,hniOnly,caseSearch,ageBucket,applic,tatFilter]);
 
   // Narrow by page scope (status)
   const pageRows = useMemo(() => {
     if(tab==='open')   return filtered.filter(r=>!isClosed(r));
     if(tab==='closed') return filtered.filter(r=>isClosed(r));
+    if(tab==='resolved') return filtered.filter(r=>r.status==='Resolved');
     return filtered;
   }, [filtered,tab]);
 
@@ -350,11 +360,11 @@ export default function CRMApp() {
   const opts = useMemo(() => {
     if(!data) return {};
     const u = k => [...new Set(data.map(r=>r[k]).filter(v=>v&&v.toString().trim()))].sort();
-    return { category:u('area'), subCategory:u('subArea'), caseType:u('caseType'), status:u('status'), owner:u('owner'), origin:u('origin') };
+    return { category:u('area'), subCategory:u('subArea'), caseType:u('caseType'), status:u('status'), owner:u('owner'), origin:u('origin'), priority:u('priority') };
   }, [data]);
 
-  const resetFilters = () => { setFCategory('All');setFSubCat('All');setFCaseType('All');setFStatus('All');setFOwner('All');setFTL('All');setFOrigin('All');setAgeBucket(''); };
-  const hasFilters = [fCategory,fSubCat,fCaseType,fStatus,fOwner,fTL,fOrigin].some(v=>v!=='All') || ageBucket!=='';
+  const resetFilters = () => { setFCategory('All');setFSubCat('All');setFCaseType('All');setFStatus('All');setFOwner('All');setFTL('All');setFOrigin('All');setFPriority('All');setAgeBucket('');setCaseSearch('');setHniOnly(false); };
+  const hasFilters = [fCategory,fSubCat,fCaseType,fStatus,fOwner,fTL,fOrigin,fPriority].some(v=>v!=='All') || ageBucket!=='' || caseSearch.trim()!=='' || hniOnly;
 
   if(loading) return <Loading/>;
 
@@ -362,9 +372,10 @@ export default function CRMApp() {
     {k:'overall', l:'📋 Overall Tickets'},
     {k:'open',    l:'🔓 Open Tickets'},
     {k:'closed',  l:'✅ Closed Tickets'},
+    {k:'resolved',l:'🟢 Resolved Tickets'},
   ];
   const navBg = 'linear-gradient(135deg,#0d2137 0%,#1a3a5c 60%,#006978 100%)';
-  const pageLabel = tab==='open'?'Open Tickets':tab==='closed'?'Closed Tickets':'Overall Tickets';
+  const pageLabel = tab==='open'?'Open Tickets':tab==='closed'?'Closed Tickets':tab==='resolved'?'Resolved Tickets':'Overall Tickets';
   const totalT  = filtered.length;
   const closedT = filtered.filter(isClosed).length;
   const openT   = totalT - closedT;
@@ -458,9 +469,17 @@ export default function CRMApp() {
                 <div style={{color:'rgba(255,255,255,0.7)',fontSize:7,letterSpacing:1,fontWeight:600}}>CASE MANAGEMENT</div>
               </div>
 
+              <div style={{position:'relative',marginBottom:14}}>
+                <span style={{position:'absolute',left:10,top:'50%',transform:'translateY(-50%)',fontSize:12,opacity:0.5,pointerEvents:'none'}}>🔍</span>
+                <input className="crm-sel" type="text" value={caseSearch} onChange={e=>setCaseSearch(e.target.value)} placeholder="Search Case Number…"
+                  style={{width:'100%',boxSizing:'border-box',fontSize:12,fontWeight:600,color:T.text,background:'#fff',border:'1px solid #cfd8dc',borderRadius:8,padding:'8px 26px 8px 30px'}}/>
+                {caseSearch && <span onClick={()=>setCaseSearch('')} style={{position:'absolute',right:8,top:'50%',transform:'translateY(-50%)',fontSize:14,cursor:'pointer',color:T.gray,fontWeight:800}}>×</span>}
+              </div>
+
               <SFilter label="Category"     value={fCategory} onChange={setFCategory} options={opts.category||[]}/>
               <SFilter label="Sub Category" value={fSubCat}   onChange={setFSubCat}   options={opts.subCategory||[]}/>
               <SFilter label="Case Type"    value={fCaseType} onChange={setFCaseType} options={opts.caseType||[]}/>
+              <SFilter label="Priority"     value={fPriority} onChange={setFPriority} options={opts.priority||[]}/>
               <SFilter label="Case Status"  value={fStatus}   onChange={setFStatus}   options={opts.status||[]}/>
               <SFilter label="Case Origin"  value={fOrigin}   onChange={setFOrigin}   options={opts.origin||[]}/>
               <SFilter label="Case Owner"   value={fOwner}    onChange={setFOwner}    options={opts.owner||[]}/>
@@ -677,12 +696,19 @@ export default function CRMApp() {
                     </button>
                   ))}
                   {tatFilter && <span style={{fontSize:11,color:'#fff',fontWeight:700,textShadow:'0 1px 3px rgba(0,0,0,0.85)'}}>showing {tatFilter==='within'?'Within TAT':'Beyond TAT'} only · click again to clear</span>}
+                  <button className="crm-btn" onClick={()=>setHniOnly(h=>!h)} style={{
+                    background:hniOnly?'linear-gradient(135deg,#d4af37,#9c7a13)':'#fff',
+                    color:hniOnly?'#fff':'#9c7a13',
+                    border:'1.5px solid #b8941f',
+                    borderRadius:8,padding:'7px 20px',fontSize:12,fontWeight:800,cursor:'pointer'}}>
+                    👑 HNI Tickets
+                  </button>
                 </div>
 
                 {/* Summary cards (clickable filters) */}
                 <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10}}>
                   {[
-                    {f:'',           v:pageRows.length, l:pageLabel, g:tab==='open'?'linear-gradient(135deg,#ffb74d 0%,#fb8c00 55%,#e65100 100%)':'linear-gradient(135deg,#66bb6a 0%,#43a047 55%,#2e7d32 100%)', ic:tab==='open'?'🔓':'✅'},
+                    {f:'',           v:pageRows.length, l:pageLabel, g:tab==='open'?'linear-gradient(135deg,#ffb74d 0%,#fb8c00 55%,#e65100 100%)':tab==='resolved'?'linear-gradient(135deg,#26c6da 0%,#00acc1 55%,#00838f 100%)':'linear-gradient(135deg,#66bb6a 0%,#43a047 55%,#2e7d32 100%)', ic:tab==='open'?'🔓':tab==='resolved'?'🟢':'✅'},
                     {f:'overdue',    v:pageRows.filter(r=>r.tatStatus==='Beyond TAT').length, l:'Overdue (Beyond TAT)', g:'linear-gradient(135deg,#ef5350 0%,#e53935 55%,#b71c1c 100%)', ic:'⚠️'},
                     {f:'escalation', v:pageRows.filter(r=>r.tatStatus&&r.tatStatus.includes('Escalation')).length, l:'In Escalation', g:'linear-gradient(135deg,#ffd54f 0%,#fbc02d 55%,#f9a825 100%)', ic:'📈'},
                   ].map((c,i)=>{
@@ -821,7 +847,7 @@ export default function CRMApp() {
                 <GC className="crm-rise" style={{padding:0,overflow:'hidden'}}>
                   <div style={{background:'linear-gradient(135deg,#1e88e5,#1565c0 55%,#0d47a1)',color:'#fff',fontWeight:800,fontSize:13,padding:'9px 14px',letterSpacing:0.4,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
                     <span>{pageLabel} Worklist</span>
-                    <span style={{fontSize:10,fontWeight:600,opacity:0.85}}>{openList.length.toLocaleString()} {tab==='open'?'open':'closed'} · showing top {Math.min(WORKLIST_CAP,openList.length)} by age</span>
+                    <span style={{fontSize:10,fontWeight:600,opacity:0.85}}>{openList.length.toLocaleString()} {tab==='open'?'open':tab==='resolved'?'resolved':'closed'} · showing top {Math.min(WORKLIST_CAP,openList.length)} by age</span>
                   </div>
                   <div style={{maxHeight:380,overflowY:'auto'}}>
                     <table style={{width:'100%',borderCollapse:'collapse',fontSize:11.5}}>
@@ -881,13 +907,15 @@ export default function CRMApp() {
                     ['Account',ticket.account],['Status',ticket.status],
                     ['Priority',ticket.priority],['Case Type',ticket.caseType],
                     ['TAT Status',ticket.tatStatus],['Case Origin',ticket.origin],
+                    ['Project',ticket.project],['Property',ticket.property],
                     ['Area',ticket.area],['Sub Area',ticket.subArea],
                     ['Case Owner',ticket.owner],['Team Leader',ticket.tl],
-                    ['Age (days)',(ticket.age||0).toLocaleString()],['Reassigns',ticket.reassigns],
-                    ['Response Time',ticket.respCat],['Resolution Time',ticket.resCat],
-                    ['Opened',ticket.openedStr],['Closed',ticket.closedStr],
-                    ['HNI Customer',ticket.hni?'Yes':'No'],['Active Legal',ticket.legal?'Yes':'No'],
-                    ['Applicability',ticket.applicability],['First Response',ticket.firstResp],
+                    ['Parent Ticket',ticket.parentCase],['Age (days)',(ticket.age||0).toLocaleString()],
+                    ['Reassigns',ticket.reassigns],['Response Time',ticket.respCat],
+                    ['Resolution Time',ticket.resCat],['Opened',ticket.openedStr],
+                    ['Closed',ticket.closedStr],['HNI Customer',ticket.hni?'Yes':'No'],
+                    ['Active Legal',ticket.legal?'Yes':'No'],['Applicability',ticket.applicability],
+                    ['First Response',ticket.firstResp],
                   ].map(([k,v],i)=>(
                     <div key={i}>
                       <div style={{fontSize:9.5,fontWeight:800,color:T.gray,textTransform:'uppercase',letterSpacing:0.4}}>{k}</div>
