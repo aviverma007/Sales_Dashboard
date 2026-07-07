@@ -1905,9 +1905,9 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                   <div style={{width:110,height:110,flexShrink:0,position:'relative'}}>
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
-                        <Pie data={[{name:'Booked',value:kpi.bookedUnits||0},{name:'Available',value:kpi.availableUnits||0},...(kpi.managementUnits>0?[{name:'Management',value:kpi.managementUnits}]:[])]}
+                        <Pie data={[{name:'Booked',value:kpi.bookedUnits||0},{name:'Available',value:(kpi.availableUnits||0)+(kpi.managementUnits||0)}]}
                           cx="50%" cy="50%" innerRadius={33} outerRadius={52} paddingAngle={3} dataKey="value" strokeWidth={2} stroke="rgba(255,255,255,0.9)" labelLine={false}>
-                          <Cell fill={T.teal}/><Cell fill={T.amber}/><Cell fill="#90a4ae"/>
+                          <Cell fill={T.teal}/><Cell fill={T.amber}/>
                         </Pie>
                         <Tooltip content={<CTip/>}/>
                       </PieChart>
@@ -1929,12 +1929,8 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                       </div>
                       <div style={{flex:1,background:`${T.amber}0d`,borderRadius:6,padding:'5px 8px'}}>
                         <p style={{fontSize:8,color:T.textM,fontWeight:700,margin:'0 0 2px'}}>Available</p>
-                        <p style={{fontSize:16,fontWeight:900,color:T.amber,margin:0}}>{kpi.availableUnits?.toLocaleString('en-IN')}</p>
+                        <p style={{fontSize:16,fontWeight:900,color:T.amber,margin:0}}>{((kpi.availableUnits||0)+(kpi.managementUnits||0)).toLocaleString('en-IN')}</p>
                       </div>
-                      {kpi.managementUnits>0 && <div style={{flex:1,background:'#6b728015',borderRadius:6,padding:'5px 8px'}}>
-                        <p style={{fontSize:8,color:T.textM,fontWeight:700,margin:'0 0 2px'}}>Management</p>
-                        <p style={{fontSize:16,fontWeight:900,color:'#546e7a',margin:0}}>{kpi.managementUnits?.toLocaleString('en-IN')}</p>
-                      </div>}
                     </div>
                   </div>
                 </div>
@@ -1956,9 +1952,9 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                       <div style={{width:110,height:110,flexShrink:0,position:'relative'}}>
                         <ResponsiveContainer width="100%" height="100%">
                           <PieChart>
-                            <Pie data={[{name:'Sold',value:sold||0.01},{name:'Available',value:avail||0.01},...(mgmt>0?[{name:'Management',value:mgmt}]:[])]}
+                            <Pie data={[{name:'Sold',value:sold||0.01},{name:'Available',value:(avail+mgmt)||0.01}]}
                               cx="50%" cy="50%" innerRadius={33} outerRadius={52} paddingAngle={3} dataKey="value" strokeWidth={2} stroke="rgba(255,255,255,0.9)" labelLine={false}>
-                              <Cell fill={T.teal}/><Cell fill={T.amber}/><Cell fill="#90a4ae"/>
+                              <Cell fill={T.teal}/><Cell fill={T.amber}/>
                             </Pie>
                             <Tooltip content={<CTip fmt={v=>(v/100000).toFixed(2)+' L sqft'}/>}/>
                           </PieChart>
@@ -1981,12 +1977,8 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                           </div>
                           <div style={{flex:1,background:`${T.amber}0d`,borderRadius:6,padding:'5px 8px'}}>
                             <p style={{fontSize:8,color:T.textM,fontWeight:700,margin:'0 0 2px'}}>Available</p>
-                            <p style={{fontSize:15,fontWeight:900,color:T.amber,margin:0}}>{(avail/100000).toFixed(2)}L</p>
+                            <p style={{fontSize:15,fontWeight:900,color:T.amber,margin:0}}>{((avail+mgmt)/100000).toFixed(2)}L</p>
                           </div>
-                          {mgmt>0 && <div style={{flex:1,background:'#6b728015',borderRadius:6,padding:'5px 8px'}}>
-                            <p style={{fontSize:8,color:T.textM,fontWeight:700,margin:'0 0 2px'}}>Management</p>
-                            <p style={{fontSize:15,fontWeight:900,color:'#546e7a',margin:0}}>{(mgmt/100000).toFixed(2)}L</p>
-                          </div>}
                         </div>
                       </div>
                     </div>
