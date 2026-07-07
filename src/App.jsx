@@ -1510,6 +1510,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
       totalUnits:       iFAll.length,
       bookedUnits:      iFAll.filter(r=>r.status==='Booked').length,
       availableUnits:   iFAll.filter(r=>r.status==='Available').length,
+      managementUnits:  iFAll.filter(r=>r.status==='Management Unit').length,
       inProgressUnits:  iFAll.filter(r=>r.status==='In Progress').length,
       totalSales:       tS,
       // Demand/collection from dapp_kpi.json (most accurate)
@@ -1551,6 +1552,11 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
     const bookedAreaSqft = dk.bookedAreaSqft || pAAll.reduce((s,r)=>s+(r.superArea||0),0);
     const carpetAreaSqft = dk.carpetAreaSqft || pAAll.reduce((s,r)=>s+(r.carpet||r.carpetArea||0),0);
     const availAreaSqft  = iFAll.filter(r=>r.status==='Available').reduce((s,r)=>s+(r.superArea||0),0);
+    const mgmtAreaSqft   = iFAll.filter(r=>r.status==='Management Unit').reduce((s,r)=>s+(r.superArea||0),0);
+    const bookedUnits    = iFAll.filter(r=>r.status==='Booked').length;
+    const availUnits     = iFAll.filter(r=>r.status==='Available').length;
+    const mgmtUnits      = iFAll.filter(r=>r.status==='Management Unit').length;
+    const totalUnits     = iFAll.length;
     const totalSuperArea = iFAll.reduce((s,r)=>s+(r.superArea||0),0);
     // BSP/TCV from pdrn (active bookings) — most accurate
     const totalBSPCr     = dk.totalBSPCr  || +(pAAll.reduce((s,r)=>s+(r.bsp||0),0)/1e7).toFixed(1);
@@ -1566,6 +1572,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
     const soldPctValue   = totalProjCr>0 ? Math.round(totalBSPCr/totalProjCr*100) : 0;
     return {
       bookedAreaSqft, carpetAreaSqft, availAreaSqft, totalSuperArea,
+      mgmtAreaSqft, bookedUnits, availUnits, mgmtUnits, totalUnits,
       totalBSPCr, totalTCVCr, cancelledBSPCr, cancelledAreaSqft,
       avgRatePerSqft, unsoldValueCr, totalProjCr, soldPctValue,
     };
@@ -1898,9 +1905,9 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                   <div style={{width:110,height:110,flexShrink:0,position:'relative'}}>
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
-                        <Pie data={[{name:'Booked',value:kpi.bookedUnits||0},{name:'Available',value:kpi.availableUnits||0}]}
+                        <Pie data={[{name:'Booked',value:kpi.bookedUnits||0},{name:'Available',value:kpi.availableUnits||0},...(kpi.managementUnits>0?[{name:'Management',value:kpi.managementUnits}]:[])]}
                           cx="50%" cy="50%" innerRadius={33} outerRadius={52} paddingAngle={3} dataKey="value" strokeWidth={2} stroke="rgba(255,255,255,0.9)" labelLine={false}>
-                          <Cell fill={T.teal}/><Cell fill={T.amber}/>
+                          <Cell fill={T.teal}/><Cell fill={T.amber}/><Cell fill="#90a4ae"/>
                         </Pie>
                         <Tooltip content={<CTip/>}/>
                       </PieChart>
@@ -1924,6 +1931,10 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                         <p style={{fontSize:8,color:T.textM,fontWeight:700,margin:'0 0 2px'}}>Available</p>
                         <p style={{fontSize:16,fontWeight:900,color:T.amber,margin:0}}>{kpi.availableUnits?.toLocaleString('en-IN')}</p>
                       </div>
+                      {kpi.managementUnits>0 && <div style={{flex:1,background:'#6b728015',borderRadius:6,padding:'5px 8px'}}>
+                        <p style={{fontSize:8,color:T.textM,fontWeight:700,margin:'0 0 2px'}}>Management</p>
+                        <p style={{fontSize:16,fontWeight:900,color:'#546e7a',margin:0}}>{kpi.managementUnits?.toLocaleString('en-IN')}</p>
+                      </div>}
                     </div>
                   </div>
                 </div>
@@ -1936,6 +1947,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                 {(()=>{
                   const sold=kpiEx.bookedAreaSqft||0;
                   const avail=kpiEx.availAreaSqft||0;
+                  const mgmt=kpiEx.mgmtAreaSqft||0;
                   // Total saleable = ALL units in INVR (booked + available + management + everything)
                   const tot=iFAll.reduce((s,u)=>s+(u.superArea||0),0)||sold+avail;
                   const pct=tot>0?Math.round((sold/tot)*100):0;
@@ -1944,9 +1956,9 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                       <div style={{width:110,height:110,flexShrink:0,position:'relative'}}>
                         <ResponsiveContainer width="100%" height="100%">
                           <PieChart>
-                            <Pie data={[{name:'Sold',value:sold||0.01},{name:'Available',value:avail||0.01}]}
+                            <Pie data={[{name:'Sold',value:sold||0.01},{name:'Available',value:avail||0.01},...(mgmt>0?[{name:'Management',value:mgmt}]:[])]}
                               cx="50%" cy="50%" innerRadius={33} outerRadius={52} paddingAngle={3} dataKey="value" strokeWidth={2} stroke="rgba(255,255,255,0.9)" labelLine={false}>
-                              <Cell fill={T.teal}/><Cell fill={T.amber}/>
+                              <Cell fill={T.teal}/><Cell fill={T.amber}/><Cell fill="#90a4ae"/>
                             </Pie>
                             <Tooltip content={<CTip fmt={v=>(v/100000).toFixed(2)+' L sqft'}/>}/>
                           </PieChart>
@@ -1971,6 +1983,10 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                             <p style={{fontSize:8,color:T.textM,fontWeight:700,margin:'0 0 2px'}}>Available</p>
                             <p style={{fontSize:15,fontWeight:900,color:T.amber,margin:0}}>{(avail/100000).toFixed(2)}L</p>
                           </div>
+                          {mgmt>0 && <div style={{flex:1,background:'#6b728015',borderRadius:6,padding:'5px 8px'}}>
+                            <p style={{fontSize:8,color:T.textM,fontWeight:700,margin:'0 0 2px'}}>Management</p>
+                            <p style={{fontSize:15,fontWeight:900,color:'#546e7a',margin:0}}>{(mgmt/100000).toFixed(2)}L</p>
+                          </div>}
                         </div>
                       </div>
                     </div>
