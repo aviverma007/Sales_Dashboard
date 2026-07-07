@@ -737,9 +737,9 @@ const CollectionsTab = ({T, GC, SH, filters={}, raw}) => {
     <SectionHead title="Demand & Collection Summary" icon="📊"/>
     <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:10}}>
       <GC style={{padding:13}} cls="kc">
-        <p style={{fontSize:8,color:T.textM,fontWeight:700,textTransform:'uppercase',margin:'0 0 4px',letterSpacing:0.5}}>Total Sales Value (TCV)</p>
-        <p style={{fontSize:24,fontWeight:900,color:'#1d4ed8',margin:'0 0 4px',letterSpacing:-0.5}}>₹{((filters?.project?.includes('SKY ARC') ? raw?.skyarcKpiExtra?.totalTCVCr : filters?.project?.includes('TRUMP') ? raw?.trumpKpiExtra?.totalTCVCr : raw?.kpiExtra?.totalTCVCr)||0).toFixed(0)} Cr</p>
-        <p style={{fontSize:8,color:T.textL,margin:0}}>Booked TCV incl. tax</p>
+        <p style={{fontSize:8,color:T.textM,fontWeight:700,textTransform:'uppercase',margin:'0 0 4px',letterSpacing:0.5}}>Total Sales Value (BSP)</p>
+        <p style={{fontSize:24,fontWeight:900,color:'#1d4ed8',margin:'0 0 4px',letterSpacing:-0.5}}>₹{((filters?.project?.includes('SKY ARC') ? raw?.skyarcKpiExtra?.totalBSPCr : filters?.project?.includes('TRUMP') ? raw?.trumpKpiExtra?.totalBSPCr : raw?.kpiExtra?.totalBSPCr)||0).toFixed(0)} Cr</p>
+        <p style={{fontSize:8,color:T.textL,margin:0}}>Booked BSP (net value)</p>
         <div style={{position:'absolute',bottom:0,left:0,right:0,height:3,background:'linear-gradient(90deg,#1d4ed8,transparent)',borderRadius:'0 0 14px 14px'}}/>
       </GC>
       <GC style={{padding:13}} cls="kc">
@@ -1562,8 +1562,8 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
     // Unsold value = available units × avg rate (available bsp not in invr)
     const unsoldValueCr  = +(availAreaSqft * avgRatePerSqft / 1e7).toFixed(1);
     // Total project = sold TCV + estimated unsold
-    const totalProjCr    = +(totalTCVCr + unsoldValueCr).toFixed(1);
-    const soldPctValue   = totalProjCr>0 ? Math.round(totalTCVCr/totalProjCr*100) : 0;
+    const totalProjCr    = +(totalBSPCr + unsoldValueCr).toFixed(1);
+    const soldPctValue   = totalProjCr>0 ? Math.round(totalBSPCr/totalProjCr*100) : 0;
     return {
       bookedAreaSqft, carpetAreaSqft, availAreaSqft, totalSuperArea,
       totalBSPCr, totalTCVCr, cancelledBSPCr, cancelledAreaSqft,
@@ -1985,7 +1985,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                 {(()=>{
                   // All values from kpiEx (sourced from dapp_kpi.json / invr Excel)
                   const dkAll = raw?.dappKpi?.kpi?.all || {};
-                  const bookedTCV      = +kpiEx.totalTCVCr;
+                  const bookedTCV      = +kpiEx.totalBSPCr;
                   const unsoldBSP      = +kpiEx.unsoldValueCr;
                   const totalPotential = +kpiEx.totalProjCr;
                   const soldPct        = kpiEx.soldPctValue || 0;
@@ -2502,7 +2502,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     // ── REQUIRED RATE LOGIC ──────────────────────────────────────────────
                     // Required Rate = (Total Project Sales Value - Sold TCV) / Available area
                     // i.e. what rate must be achieved on remaining inventory to hit overall target TSV
-                    const soldTCVVal=(kpiEx.totalTCVCr||0)*1e7;
+                    const soldTCVVal=(kpiEx.totalBSPCr||0)*1e7;
                     const availAreaR=kpiEx.availAreaSqft||0;
                     // AOP target rate = average of ALL monthly target rates for current project
                     const selProjR=filters.project||'';
