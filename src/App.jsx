@@ -2328,7 +2328,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
 
                 {/* ── CHART 2: TSV ─────────────────────────────────────── */}
                 <GC style={{padding:16}}>
-                  <SH title="TSV — Target vs Achieved" sub="Actual BSP (teal) · Target TSV (grey)"/>
+                  <SH title="TSV — Target vs Achieved (₹ Crs)" sub="Actual BSP (teal) · Target TSV (grey)"/>
                   {(()=>{
                     const WIN=14;
                     // TSV projection — same quarter logic
@@ -2380,20 +2380,20 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                         <ComposedChart data={sl} margin={{top:26,right:8,bottom:18,left:0}} barGap={4} barCategoryGap="30%">
                           <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.1)" vertical={false}/>
                           <XAxis dataKey="label" tick={({x,y,payload})=>{const d=sl.find(s=>s.label===payload.value);return <text x={x} y={y+10} textAnchor="middle" fontSize={9} fill={d?.isCurrent?T.tealD:d?.isFuture?'#90a4ae':T.textM} fontWeight={d?.isCurrent?900:600}>{payload.value}</text>;}} axisLine={false} tickLine={false}/>
-                          <YAxis tick={{fill:T.textM,fontSize:12}} axisLine={false} tickLine={false} width={40} tickFormatter={v=>v+'Cr'}/>
+                          <YAxis tick={{fill:T.textM,fontSize:12}} axisLine={false} tickLine={false} width={40} tickFormatter={v=>v}/>
                           <Tooltip content={({active,payload,label})=>{if(!active||!payload?.length)return null;const d=sl.find(s=>s.label===label);return(<div style={{background:'rgba(255,255,255,0.97)',border:'1px solid rgba(0,151,167,0.3)',borderRadius:10,padding:'8px 12px',fontSize:10}}><p style={{color:T.tealD,fontWeight:800,margin:'0 0 4px'}}>{label}</p>{d?.achieved!=null&&<p style={{color:T.tealD,margin:0}}>Achieved: ₹{d.achieved}Cr</p>}{d?.target!=null&&<p style={{color:'#607d8b',margin:0}}>Target: ₹{d.target}Cr</p>}</div>);}}/>
                           <Legend wrapperStyle={{fontSize:10,fontWeight:700}} iconSize={8}/>
                           <Bar dataKey="target" name="Target TSV" fill="#b0bec5" fillOpacity={0.75} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={1000} animationEasing="ease-out">
-                            <LabelList dataKey="target" position="insideTop" style={{fill:'#455a64',fontSize:9,fontWeight:700}} formatter={v=>v>0?v+'Cr':''}/>
+                            <LabelList dataKey="target" position="insideTop" style={{fill:'#455a64',fontSize:9,fontWeight:700}} formatter={v=>v>0?''+v:''}/>
                           </Bar>
                           <Bar dataKey="achieved" name="Actual BSP" fill={T.teal} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={800} animationEasing="ease-out">
                             {sl.map((d,i)=><Cell key={i} fill={d.isCurrent?'#ef4444':T.teal} fillOpacity={d.isCurrent?1:0.85}/>)}
-                            <LabelList dataKey="achieved" position="top" style={{fill:T.tealD,fontSize:9,fontWeight:800}} formatter={v=>v>0?'₹'+v+'Cr':''}/>
+                            <LabelList dataKey="achieved" position="top" style={{fill:T.tealD,fontSize:9,fontWeight:800}} formatter={v=>v>0?'₹'+v:''}/>
                           </Bar>
 
                           <Line type="monotone" dataKey="targetLine" stroke="#607d8b" strokeWidth={2} strokeDasharray="5 3" dot={{r:3,fill:'#607d8b',stroke:'#fff',strokeWidth:1.5}} activeDot={{r:4}} legendType="none" connectNulls={false}/>
                           <Line type="monotone" dataKey="projection" name="Adjusted" stroke="#22c55e" strokeWidth={2.5} strokeDasharray="6 2" dot={({cx,cy,payload})=>payload.projection!=null?<circle cx={cx} cy={cy} r={5} fill="#22c55e" stroke="#fff" strokeWidth={2}/>:<g/>} activeDot={{r:6,fill:'#22c55e'}} connectNulls={false}>
-                            <LabelList dataKey="projection" position="top" offset={18} content={({x,y,value})=>{if(value==null)return null;const txt='▲'+value+'Cr';const w=txt.length*7+12;return(<g><rect x={x-w/2} y={y-34} width={w} height={22} rx={5} fill="white" stroke="#ef4444" strokeWidth={1.5} opacity={0.97}/><text x={x} y={y-19} textAnchor="middle" fill="#ef4444" fontSize={11} fontWeight={900}>{txt}</text></g>);}}/>
+                            <LabelList dataKey="projection" position="top" offset={18} content={({x,y,value})=>{if(value==null)return null;const txt='▲'+value;const w=txt.length*7+12;return(<g><rect x={x-w/2} y={y-34} width={w} height={22} rx={5} fill="white" stroke="#ef4444" strokeWidth={1.5} opacity={0.97}/><text x={x} y={y-19} textAnchor="middle" fill="#ef4444" fontSize={11} fontWeight={900}>{txt}</text></g>);}}/>
                           </Line>
                           <Line type="monotone" dataKey="bridge" stroke="#90a4ae" strokeWidth={1.5} strokeDasharray="4 3" dot={false} activeDot={false} legendType="none" connectNulls={true}/>
                         </ComposedChart>
