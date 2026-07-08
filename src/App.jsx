@@ -2328,7 +2328,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
 
                 {/* ── CHART 2: TSV ─────────────────────────────────────── */}
                 <GC style={{padding:16}}>
-                  <SH title="TSV — Target vs Achieved (₹ Crs)" sub="Actual BSP (teal) · Target TSV (grey)"/>
+                  <SH title="TSV — Target vs Achieved (₹ Crs)" sub="Achieved TSV (teal) · Target TSV (grey)"/>
                   {(()=>{
                     const WIN=14;
                     // TSV projection — same quarter logic
@@ -2386,7 +2386,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                           <Bar dataKey="target" name="Target TSV" fill="#b0bec5" fillOpacity={0.75} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={1000} animationEasing="ease-out">
                             <LabelList dataKey="target" position="insideTop" style={{fill:'#455a64',fontSize:9,fontWeight:700}} formatter={v=>v>0?''+v:''}/>
                           </Bar>
-                          <Bar dataKey="achieved" name="Actual BSP" fill={T.teal} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={800} animationEasing="ease-out">
+                          <Bar dataKey="achieved" name="Achieved TSV" fill={T.teal} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={800} animationEasing="ease-out">
                             {sl.map((d,i)=><Cell key={i} fill={d.isCurrent?'#ef4444':T.teal} fillOpacity={d.isCurrent?1:0.85}/>)}
                             <LabelList dataKey="achieved" position="top" style={{fill:T.tealD,fontSize:9,fontWeight:800}} formatter={v=>v>0?'₹'+v:''}/>
                           </Bar>
