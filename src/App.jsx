@@ -1581,10 +1581,12 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
     const totalProjCr    = +(projRaw/1e7).toFixed(1);
     const unsoldValueCr  = +(totalProjCr - totalBSPCr).toFixed(1);
     const soldPctValue   = totalProjCr>0 ? Math.round(totalBSPCr/totalProjCr*100) : 0;
+    // Demand Raised sourced from PDRN 'Total Demand Amount' (active bookings)
+    const demandRaisedCr = +(pAAll.reduce((s,r)=>s+(r.demand||0),0)/1e7).toFixed(1);
     return {
       bookedAreaSqft, carpetAreaSqft, availAreaSqft, totalSuperArea,
       mgmtAreaSqft, bookedUnits, availUnits, mgmtUnits, totalUnits,
-      totalBSPCr, totalTCVCr, cancelledBSPCr, cancelledAreaSqft,
+      totalBSPCr, totalTCVCr, cancelledBSPCr, cancelledAreaSqft, demandRaisedCr,
       avgRatePerSqft, unsoldValueCr, totalProjCr, soldPctValue,
     };
   },[pAAll,pCAll,iFAll,raw]);
@@ -2009,7 +2011,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                   const totalPotential = +kpiEx.totalProjCr;
                   const soldPct        = kpiEx.soldPctValue || 0;
                   const availUnits     = iFAll.filter(r=>r.status==='Available'||r.status==='Management Unit').length;
-                  const installmentTotal = dkAll.totalInstallment || 0;
+                  const installmentTotal = kpiEx.demandRaisedCr || 0;
                   const totalReceived    = dkAll.totalReceivedWoT || 0;
                   const upcomingAmt      = dkAll.totalOutstanding || 0;
                   const collectedPct     = installmentTotal>0?Math.round(totalReceived/installmentTotal*100):0;
