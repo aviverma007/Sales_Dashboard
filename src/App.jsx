@@ -1565,10 +1565,21 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
     const cancelledAreaSqft = pCAll.reduce((s,r)=>s+(r.superArea||0),0);
     // Avg rate from kpiExtra (most reliable) or computed
     const avgRatePerSqft = dk.avgRatePerSqft || (bookedAreaSqft>0 ? Math.round(totalTCVCr*1e7/bookedAreaSqft) : 0);
-    // Unsold value = available units × avg rate (available bsp not in invr)
-    const unsoldValueCr  = +(availAreaSqft * avgRatePerSqft / 1e7).toFixed(1);
-    // Total project = sold TCV + estimated unsold
-    const totalProjCr    = +(totalBSPCr + unsoldValueCr).toFixed(1);
+    // Type-wise total project value: each unit type's own sold-average rate x that type's
+    // total area, summed. Types with no sales fall back to the blended rate (so they aren't 0).
+    const soldByType = {};
+    pAAll.forEach(r=>{ const t=r.bhk||r.bhkFull||'?'; (soldByType[t]||(soldByType[t]={bsp:0,area:0})); soldByType[t].bsp+=(r.bsp||0); soldByType[t].area+=(r.superArea||0); });
+    const areaByType = {};
+    iFAll.forEach(r=>{ const t=r.bhk||'?'; areaByType[t]=(areaByType[t]||0)+(r.superArea||0); });
+    let projRaw=0;
+    Object.keys(areaByType).forEach(t=>{
+      const s=soldByType[t];
+      const rate=(s&&s.area>0)?(s.bsp/s.area):avgRatePerSqft;
+      projRaw += rate*areaByType[t];
+    });
+    // Total project = type-wise sum; sold stays actual booked BSP; unsold = total - sold
+    const totalProjCr    = +(projRaw/1e7).toFixed(1);
+    const unsoldValueCr  = +(totalProjCr - totalBSPCr).toFixed(1);
     const soldPctValue   = totalProjCr>0 ? Math.round(totalBSPCr/totalProjCr*100) : 0;
     return {
       bookedAreaSqft, carpetAreaSqft, availAreaSqft, totalSuperArea,
@@ -1997,7 +2008,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                   const unsoldBSP      = +kpiEx.unsoldValueCr;
                   const totalPotential = +kpiEx.totalProjCr;
                   const soldPct        = kpiEx.soldPctValue || 0;
-                  const availUnits     = iFAll.filter(r=>r.status==='Available').length;
+                  const availUnits     = iFAll.filter(r=>r.status==='Available'||r.status==='Management Unit').length;
                   const installmentTotal = dkAll.totalInstallment || 0;
                   const totalReceived    = dkAll.totalReceivedWoT || 0;
                   const upcomingAmt      = dkAll.totalOutstanding || 0;
