@@ -1308,7 +1308,7 @@ function AppInner({overviewOnly=false}) {
   const [tab,setTab]=useState('overview'); // overview | collections | pipeline
   useEffect(()=>{ window.scrollTo({top:0,behavior:'instant'}); },[tab]);
 
-  const [filters,setFilters]=useState({company:'',project:'SMARTWORLD THE EDITION',month:'',quarter:'',broker:'',typology:'',fy:''});
+  const [filters,setFilters]=useState({company:'',project:'SMARTWORLD THE EDITION',month:'',quarter:'',broker:'',typology:'',fy:'',dateFrom:'',dateTo:''});
   const sf=useCallback((k,v)=>setFilters(p=>({...p,[k]:v})),[]);
   // Chart controls (lifted to comply with React hooks rules)
   const [tMode,setTMode]=useState('monthly');
@@ -1444,6 +1444,8 @@ function AppInner({overviewOnly=false}) {
     if(filters.broker){const brks=filters.broker.split('||').filter(Boolean);if(brks.length&&!brks.includes(r.brokerName))return false;}
     if(filters.typology){const typos=filters.typology.split('||').filter(Boolean);if(typos.length){const b=r.bhkFull||r.bhk||'';if(!typos.includes(b)&&!typos.includes(r.bhk||'')&&!typos.includes(r.bhkFull||''))return false;}}
     if(filters.fy){const fys=filters.fy.split('||').filter(Boolean);if(fys.length){const fy=r.bookingYear?(r.bookingMonth&&parseInt(r.bookingMonth.split('-')[1])>=4?`FY${r.bookingYear}-${String(r.bookingYear+1).slice(2)}`:`FY${r.bookingYear-1}-${String(r.bookingYear).slice(2)}`):null;if(!fys.includes(fy))return false;}}
+    if(filters.dateFrom&&(!r.bookingDate||r.bookingDate<filters.dateFrom))return false;
+    if(filters.dateTo&&(!r.bookingDate||r.bookingDate>filters.dateTo))return false;
     return true;
   });},[raw,filters,matchMo]);
   const pA=useMemo(()=>pF.filter(r=>r.status==='ACTIVE'),[pF]);
@@ -1836,8 +1838,19 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
           <FSel label="Month"        options={MONTHS_LIST}                              value={filters.month}    onChange={v=>sf('month',v)}      multi={true} openId="month"      activeOpen={activeFilter} setActiveOpen={setActiveFilter}/>
           {tab!=='pnl'&&<FSel label="CP"         options={availBrokers}                         value={filters.broker}   onChange={v=>sf('broker',v)}     multi={true} openId="cp"         activeOpen={activeFilter} setActiveOpen={setActiveFilter}/>}
           {tab!=='pnl'&&<FSel label="Typology"   options={availTypologies}                      value={filters.typology} onChange={v=>sf('typology',v)}   multi={true} openId="typology"   activeOpen={activeFilter} setActiveOpen={setActiveFilter}/>}
+          {tab!=='pnl'&&<div style={{display:'flex',flexDirection:'column',gap:3,alignSelf:'flex-end'}}>
+            <span style={{fontSize:9,fontWeight:800,color:T.textM,letterSpacing:0.3,paddingLeft:2}}>Booking Date</span>
+            <div style={{display:'flex',alignItems:'center',gap:5,background:'#fff',border:`1px solid ${(filters.dateFrom||filters.dateTo)?T.teal:'rgba(0,60,100,0.18)'}`,borderRadius:8,padding:'5px 9px',height:29,boxSizing:'border-box'}}>
+              <input type="date" value={filters.dateFrom} max={filters.dateTo||undefined} onChange={e=>sf('dateFrom',e.target.value)} title="From"
+                style={{border:'none',outline:'none',fontSize:11,fontWeight:600,color:filters.dateFrom?T.text:T.textM,fontFamily:'Inter,sans-serif',background:'transparent',cursor:'pointer',width:108}}/>
+              <span style={{fontSize:11,color:T.textM,fontWeight:800}}>–</span>
+              <input type="date" value={filters.dateTo} min={filters.dateFrom||undefined} onChange={e=>sf('dateTo',e.target.value)} title="To"
+                style={{border:'none',outline:'none',fontSize:11,fontWeight:600,color:filters.dateTo?T.text:T.textM,fontFamily:'Inter,sans-serif',background:'transparent',cursor:'pointer',width:108}}/>
+              {(filters.dateFrom||filters.dateTo)&&<span onClick={()=>{sf('dateFrom','');sf('dateTo','');}} title="Clear dates" style={{cursor:'pointer',color:T.red,fontWeight:800,fontSize:13,lineHeight:1,paddingLeft:1}}>×</span>}
+            </div>
+          </div>}
           {Object.values(filters).some(Boolean)&&(
-            <button onClick={()=>setFilters({company:'',project:'',year:'',month:'',quarter:'',broker:'',typology:'',fy:''})}
+            <button onClick={()=>setFilters({company:'',project:'',year:'',month:'',quarter:'',broker:'',typology:'',fy:'',dateFrom:'',dateTo:''})}
               style={{background:'linear-gradient(135deg,#c62828,#ef5350)',border:'none',borderRadius:7,color:'#fff',padding:'5px 14px',fontSize:10,cursor:'pointer',fontWeight:700,boxShadow:'0 2px 8px rgba(200,40,40,0.3)',alignSelf:'flex-end'}}>
               ✕ Reset
             </button>
