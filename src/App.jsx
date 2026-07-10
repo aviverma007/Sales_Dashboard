@@ -2243,8 +2243,10 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const todayYMn=todayD.getFullYear()*100+(todayD.getMonth()+1);
                     const todayLabel=ml(todayD.getFullYear(),todayD.getMonth()+1);
                     // Use numeric ym for correct date comparison (string compare fails: Jun < May alphabetically)
-                    const pastQMonths=curQMonthsObj.filter(o=>o.ym<todayYMn).map(o=>o.label);
-                    const futureQMonths=curQMonthsObj.filter(o=>o.ym>=todayYMn).map(o=>o.label);
+                    const fyStartYU=(todayD.getMonth()+1)>=4?todayD.getFullYear():todayD.getFullYear()-1;
+                    const fyMonthsU=Array.from({length:12},(_,i)=>{let m=4+i,y=fyStartYU;if(m>12){m-=12;y++;}return{label:ml(y,m),ym:y*100+m};});
+                    const pastQMonths=fyMonthsU.filter(o=>o.ym<todayYMn).map(o=>o.label);   // carry-forward: all FY months so far
+                    const futureQMonths=fyMonthsU.filter(o=>o.ym>=todayYMn).map(o=>o.label); // spread across rest of FY
                     // Gap = sum of (target - achieved) for past months in this quarter
                     const missedUnits=pastQMonths.reduce((s,lbl)=>{
                       const d=monthlyWithTargets.find(r=>r.label===lbl);
@@ -2321,7 +2323,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                           <Tooltip content={({active,payload,label})=>{if(!active||!payload?.length)return null;const d=sl.find(s=>s.label===label);return(<div style={{background:'rgba(255,255,255,0.97)',border:'1px solid rgba(0,151,167,0.3)',borderRadius:10,padding:'8px 12px',fontSize:10}}><p style={{color:T.tealD,fontWeight:800,margin:'0 0 4px'}}>{label}</p>{d?.achieved!=null&&<p style={{color:T.tealD,margin:0,fontWeight:700}}>Achieved: {d.achieved} units</p>}{d?.target!=null&&<p style={{color:'#607d8b',margin:0}}>Target: {d.target} units</p>}{d?.projection!=null&&<p style={{color:'#22c55e',margin:0,fontWeight:700}}>▲ Projection: {d.projection} units<br/><span style={{fontSize:9,color:'#86efac'}}>incl. catch-up from missed targets</span></p>}</div>);}}/>
                           <Legend wrapperStyle={{fontSize:10,fontWeight:700}} iconSize={8} payload={[{value:"Target",type:"rect",color:"#b0bec5"},{value:"Achieved",type:"rect",color:'#16a34a'},{value:"Projection (next Q)",type:"line",color:"#22c55e"}]}/>
                           <Bar dataKey="target" name="Target" fill="#b0bec5" fillOpacity={0.75} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={1000} animationEasing="ease-out">
-                            {sl.map((d,i)=><Cell key={'tgt'+i} fill={d.targetLine!=null?'#d3dce0':'#b0bec5'} fillOpacity={d.targetLine!=null?0.5:0.75}/>)}
+                            {sl.map((d,i)=><Cell key={'tgt'+i} fill={d.isFuture?'#d3dce0':'#b0bec5'} fillOpacity={d.isFuture?0.5:0.75}/>)}
                             <LabelList dataKey="target" position="insideTop" style={{fill:'#455a64',fontSize:9,fontWeight:700}} formatter={v=>v>0?v:''}/>
                           </Bar>
                           <Bar dataKey="achieved" name="Achieved" fill='#16a34a' radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={800} animationEasing="ease-out">
@@ -2351,8 +2353,10 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const lblYmT=l=>{const p=l.match(/([A-Za-z]{3})'(\d{2})/);return p?(2000+parseInt(p[2]))*100+(moNT[p[1]]||0):0;};
                     const todayYMT=todayT.getFullYear()*100+(todayT.getMonth()+1);
                     const cqmObj=[0,1,2].map(i=>{let m=tQS+i,y=todayT.getFullYear();if(m>12){m-=12;y++;}return{label:ml2(y,m),ym:y*100+m};});
-                    const pastCqmT=cqmObj.filter(o=>o.ym<todayYMT).map(o=>o.label);
-                    const futureCqmT=cqmObj.filter(o=>o.ym>=todayYMT).map(o=>o.label);
+                    const fyStartYT=(todayT.getMonth()+1)>=4?todayT.getFullYear():todayT.getFullYear()-1;
+                    const fyMonthsT=Array.from({length:12},(_,i)=>{let m=4+i,y=fyStartYT;if(m>12){m-=12;y++;}return{label:ml2(y,m),ym:y*100+m};});
+                    const pastCqmT=fyMonthsT.filter(o=>o.ym<todayYMT).map(o=>o.label);
+                    const futureCqmT=fyMonthsT.filter(o=>o.ym>=todayYMT).map(o=>o.label);
                     const missedTsv=pastCqmT.reduce((s,lbl)=>{const d=monthlyWithTargets.find(r=>r.label===lbl);return s+Math.max(0,(d?.targetTsvLine||0)-(d?.bspCr||0));},0);
                     const addTsvPer=futureCqmT.length>0?+(missedTsv/futureCqmT.length).toFixed(1):0;
                     const tsvProjMap={};
@@ -2396,7 +2400,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                           <Tooltip content={({active,payload,label})=>{if(!active||!payload?.length)return null;const d=sl.find(s=>s.label===label);return(<div style={{background:'rgba(255,255,255,0.97)',border:'1px solid rgba(0,151,167,0.3)',borderRadius:10,padding:'8px 12px',fontSize:10}}><p style={{color:T.tealD,fontWeight:800,margin:'0 0 4px'}}>{label}</p>{d?.achieved!=null&&<p style={{color:T.tealD,margin:0}}>Achieved: ₹{d.achieved}Cr</p>}{d?.target!=null&&<p style={{color:'#607d8b',margin:0}}>Target: ₹{d.target}Cr</p>}</div>);}}/>
                           <Legend wrapperStyle={{fontSize:10,fontWeight:700}} iconSize={8}/>
                           <Bar dataKey="target" name="Target TSV" fill="#b0bec5" fillOpacity={0.75} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={1000} animationEasing="ease-out">
-                            {sl.map((d,i)=><Cell key={'tgt'+i} fill={d.targetLine!=null?'#d3dce0':'#b0bec5'} fillOpacity={d.targetLine!=null?0.5:0.75}/>)}
+                            {sl.map((d,i)=><Cell key={'tgt'+i} fill={d.isFuture?'#d3dce0':'#b0bec5'} fillOpacity={d.isFuture?0.5:0.75}/>)}
                             <LabelList dataKey="target" position="insideTop" style={{fill:'#455a64',fontSize:9,fontWeight:700}} formatter={v=>v>0?''+v:''}/>
                           </Bar>
                           <Bar dataKey="achieved" name="Achieved TSV" fill='#16a34a' radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={800} animationEasing="ease-out">
@@ -2426,8 +2430,10 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const todayYMA3=todayA.getFullYear()*100+(todayA.getMonth()+1);
                     // Projection: same-quarter catch-up
                     const cqObjA2=[0,1,2].map(i=>{let m=aQS2+i,y=todayA.getFullYear();if(m>12){m-=12;y++;}return{label:ml4(y,m),ym:y*100+m};});
-                    const pastCqA2=cqObjA2.filter(o=>o.ym<todayYMA3).map(o=>o.label);
-                    const futureCqA2=cqObjA2.filter(o=>o.ym>=todayYMA3).map(o=>o.label);
+                    const fyStartYA=(todayA.getMonth()+1)>=4?todayA.getFullYear():todayA.getFullYear()-1;
+                    const fyMonthsA=Array.from({length:12},(_,i)=>{let m=4+i,y=fyStartYA;if(m>12){m-=12;y++;}return{label:ml4(y,m),ym:y*100+m};});
+                    const pastCqA2=fyMonthsA.filter(o=>o.ym<todayYMA3).map(o=>o.label);
+                    const futureCqA2=fyMonthsA.filter(o=>o.ym>=todayYMA3).map(o=>o.label);
                     const missedArea2=pastCqA2.reduce((s,lbl)=>{const d=monthlyWithTargets.find(r=>r.label===lbl);return s+Math.max(0,(d?.targetAreaSqft||0)-(d?.bookedAreaSqft||0));},0);
                     const addAreaPer2=futureCqA2.length>0?Math.round(missedArea2/futureCqA2.length):0;
                     const areaProjMap2={};
@@ -2483,7 +2489,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                           }}/>
                           <Legend wrapperStyle={{fontSize:10,fontWeight:700}} iconSize={8} payload={[{value:'Target',type:'rect',color:'#b0bec5'},{value:'Achieved',type:'rect',color:T.teal},{value:'Projection',type:'line',color:'#22c55e'}]}/>
                           <Bar dataKey="target" name="Target" fill="#b0bec5" fillOpacity={0.75} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={1000}>
-                            {sl.map((d,i)=><Cell key={'tgt'+i} fill={d.targetLine!=null?'#d3dce0':'#b0bec5'} fillOpacity={d.targetLine!=null?0.5:0.75}/>)}
+                            {sl.map((d,i)=><Cell key={'tgt'+i} fill={d.isFuture?'#d3dce0':'#b0bec5'} fillOpacity={d.isFuture?0.5:0.75}/>)}
                             <LabelList dataKey="target" position="insideTop" style={{fill:'#455a64',fontSize:9,fontWeight:700}} formatter={v=>v>0?v+'L':''}/>
                           </Bar>
                           <Bar dataKey="achieved" name="Achieved" fill='#16a34a' radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={800}>
