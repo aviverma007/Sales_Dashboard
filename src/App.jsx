@@ -2405,7 +2405,6 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                           </Bar>
 
                           <Line type="monotone" dataKey="projection" name="Adjusted" stroke="#22c55e" strokeWidth={2.5} strokeDasharray="6 2" dot={({cx,cy,payload})=>payload.projection!=null?<circle cx={cx} cy={cy} r={5} fill="#22c55e" stroke="#fff" strokeWidth={2}/>:<g/>} activeDot={{r:6,fill:'#22c55e'}} connectNulls={false}>
-                            <LabelList dataKey="projection" position="top" offset={18} content={({x,y,value})=>{if(value==null)return null;const txt='▲'+value;const w=txt.length*7+12;return(<g><rect x={x-w/2} y={y-34} width={w} height={22} rx={5} fill="white" stroke="#ef4444" strokeWidth={1.5} opacity={0.97}/><text x={x} y={y-19} textAnchor="middle" fill="#ef4444" fontSize={11} fontWeight={900}>{txt}</text></g>);}}/>
                           </Line>
                         </ComposedChart>
                       </ResponsiveContainer>
