@@ -2321,6 +2321,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                           <Tooltip content={({active,payload,label})=>{if(!active||!payload?.length)return null;const d=sl.find(s=>s.label===label);return(<div style={{background:'rgba(255,255,255,0.97)',border:'1px solid rgba(0,151,167,0.3)',borderRadius:10,padding:'8px 12px',fontSize:10}}><p style={{color:T.tealD,fontWeight:800,margin:'0 0 4px'}}>{label}</p>{d?.achieved!=null&&<p style={{color:T.tealD,margin:0,fontWeight:700}}>Achieved: {d.achieved} units</p>}{d?.target!=null&&<p style={{color:'#607d8b',margin:0}}>Target: {d.target} units</p>}{d?.projection!=null&&<p style={{color:'#22c55e',margin:0,fontWeight:700}}>▲ Projection: {d.projection} units<br/><span style={{fontSize:9,color:'#86efac'}}>incl. catch-up from missed targets</span></p>}</div>);}}/>
                           <Legend wrapperStyle={{fontSize:10,fontWeight:700}} iconSize={8} payload={[{value:"Target",type:"rect",color:"#b0bec5"},{value:"Achieved",type:"rect",color:T.teal},{value:"Projection (next Q)",type:"line",color:"#22c55e"}]}/>
                           <Bar dataKey="target" name="Target" fill="#b0bec5" fillOpacity={0.75} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={1000} animationEasing="ease-out">
+                            {sl.map((d,i)=><Cell key={'tgt'+i} fill={d.targetLine!=null?'#d3dce0':'#b0bec5'} fillOpacity={d.targetLine!=null?0.5:0.75}/>)}
                             <LabelList dataKey="target" position="insideTop" style={{fill:'#455a64',fontSize:9,fontWeight:700}} formatter={v=>v>0?v:''}/>
                           </Bar>
                           <Bar dataKey="achieved" name="Achieved" fill={T.teal} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={800} animationEasing="ease-out">
@@ -2328,11 +2329,9 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                             <LabelList dataKey="achieved" position="top" style={{fill:T.tealD,fontSize:9,fontWeight:800}} formatter={v=>v>0?v:''}/>
                           </Bar>
 
-                          <Line type="monotone" dataKey="targetLine" stroke="#607d8b" strokeWidth={2} strokeDasharray="5 3" dot={{r:3,fill:'#607d8b',stroke:'#fff',strokeWidth:1.5}} activeDot={{r:4}} legendType="none" connectNulls={false}/>
                           <Line type="monotone" dataKey="projection" name="Adjusted" stroke="#22c55e" strokeWidth={2.5} strokeDasharray="6 2" dot={({cx,cy,payload})=>payload.projection!=null?<circle cx={cx} cy={cy} r={5} fill="#22c55e" stroke="#fff" strokeWidth={2}/>:<g/>} activeDot={{r:6,fill:'#22c55e'}} connectNulls={false}>
                             <LabelList dataKey="projection" position="top" offset={18} content={({x,y,value})=>{if(value==null)return null;const txt='▲'+value;const w=txt.length*7+12;return(<g><rect x={x-w/2} y={y-34} width={w} height={22} rx={5} fill="white" stroke="#ef4444" strokeWidth={1.5} opacity={0.97}/><text x={x} y={y-19} textAnchor="middle" fill="#ef4444" fontSize={11} fontWeight={900}>{txt}</text></g>);}}/>
                           </Line>
-                          <Line type="monotone" dataKey="bridge" stroke="#90a4ae" strokeWidth={1.5} strokeDasharray="4 3" dot={false} activeDot={false} legendType="none" connectNulls={true}/>
                         </ComposedChart>
                       </ResponsiveContainer>
                     </>);
@@ -2397,6 +2396,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                           <Tooltip content={({active,payload,label})=>{if(!active||!payload?.length)return null;const d=sl.find(s=>s.label===label);return(<div style={{background:'rgba(255,255,255,0.97)',border:'1px solid rgba(0,151,167,0.3)',borderRadius:10,padding:'8px 12px',fontSize:10}}><p style={{color:T.tealD,fontWeight:800,margin:'0 0 4px'}}>{label}</p>{d?.achieved!=null&&<p style={{color:T.tealD,margin:0}}>Achieved: ₹{d.achieved}Cr</p>}{d?.target!=null&&<p style={{color:'#607d8b',margin:0}}>Target: ₹{d.target}Cr</p>}</div>);}}/>
                           <Legend wrapperStyle={{fontSize:10,fontWeight:700}} iconSize={8}/>
                           <Bar dataKey="target" name="Target TSV" fill="#b0bec5" fillOpacity={0.75} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={1000} animationEasing="ease-out">
+                            {sl.map((d,i)=><Cell key={'tgt'+i} fill={d.targetLine!=null?'#d3dce0':'#b0bec5'} fillOpacity={d.targetLine!=null?0.5:0.75}/>)}
                             <LabelList dataKey="target" position="insideTop" style={{fill:'#455a64',fontSize:9,fontWeight:700}} formatter={v=>v>0?''+v:''}/>
                           </Bar>
                           <Bar dataKey="achieved" name="Achieved TSV" fill={T.teal} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={800} animationEasing="ease-out">
@@ -2404,11 +2404,9 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                             <LabelList dataKey="achieved" position="top" style={{fill:T.tealD,fontSize:9,fontWeight:800}} formatter={v=>v>0?'₹'+v:''}/>
                           </Bar>
 
-                          <Line type="monotone" dataKey="targetLine" stroke="#607d8b" strokeWidth={2} strokeDasharray="5 3" dot={{r:3,fill:'#607d8b',stroke:'#fff',strokeWidth:1.5}} activeDot={{r:4}} legendType="none" connectNulls={false}/>
                           <Line type="monotone" dataKey="projection" name="Adjusted" stroke="#22c55e" strokeWidth={2.5} strokeDasharray="6 2" dot={({cx,cy,payload})=>payload.projection!=null?<circle cx={cx} cy={cy} r={5} fill="#22c55e" stroke="#fff" strokeWidth={2}/>:<g/>} activeDot={{r:6,fill:'#22c55e'}} connectNulls={false}>
                             <LabelList dataKey="projection" position="top" offset={18} content={({x,y,value})=>{if(value==null)return null;const txt='▲'+value;const w=txt.length*7+12;return(<g><rect x={x-w/2} y={y-34} width={w} height={22} rx={5} fill="white" stroke="#ef4444" strokeWidth={1.5} opacity={0.97}/><text x={x} y={y-19} textAnchor="middle" fill="#ef4444" fontSize={11} fontWeight={900}>{txt}</text></g>);}}/>
                           </Line>
-                          <Line type="monotone" dataKey="bridge" stroke="#90a4ae" strokeWidth={1.5} strokeDasharray="4 3" dot={false} activeDot={false} legendType="none" connectNulls={true}/>
                         </ComposedChart>
                       </ResponsiveContainer>
                     </>);
@@ -2486,6 +2484,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                           }}/>
                           <Legend wrapperStyle={{fontSize:10,fontWeight:700}} iconSize={8} payload={[{value:'Target',type:'rect',color:'#b0bec5'},{value:'Achieved',type:'rect',color:T.teal},{value:'Projection',type:'line',color:'#22c55e'}]}/>
                           <Bar dataKey="target" name="Target" fill="#b0bec5" fillOpacity={0.75} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={1000}>
+                            {sl.map((d,i)=><Cell key={'tgt'+i} fill={d.targetLine!=null?'#d3dce0':'#b0bec5'} fillOpacity={d.targetLine!=null?0.5:0.75}/>)}
                             <LabelList dataKey="target" position="insideTop" style={{fill:'#455a64',fontSize:9,fontWeight:700}} formatter={v=>v>0?v+'L':''}/>
                           </Bar>
                           <Bar dataKey="achieved" name="Achieved" fill={T.teal} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={800}>
@@ -2493,11 +2492,9 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                             <LabelList dataKey="achieved" position="top" style={{fill:T.tealD,fontSize:9,fontWeight:800}} formatter={v=>v!=null&&v>0?v+'L':''}/>
                           </Bar>
 
-                          <Line type="monotone" dataKey="targetLine" stroke="#607d8b" strokeWidth={2} strokeDasharray="5 3" dot={{r:3,fill:'#607d8b',stroke:'#fff',strokeWidth:1.5}} activeDot={{r:4}} legendType="none" connectNulls={false}/>
                           <Line type="monotone" dataKey="projection" name="Adjusted" stroke="#22c55e" strokeWidth={2.5} strokeDasharray="6 2" dot={({cx,cy,payload})=>payload.projection!=null?<circle cx={cx} cy={cy} r={5} fill="#22c55e" stroke="#fff" strokeWidth={2}/>:<g/>} activeDot={{r:6,fill:'#22c55e'}} connectNulls={false}>
                             <LabelList dataKey="projection" position="top" offset={18} content={({x,y,value})=>{if(value==null)return null;const txt='▲'+value+'L';const w=txt.length*7+12;return(<g><rect x={x-w/2} y={y-34} width={w} height={22} rx={5} fill="white" stroke="#ef4444" strokeWidth={1.5} opacity={0.97}/><text x={x} y={y-19} textAnchor="middle" fill="#ef4444" fontSize={11} fontWeight={900}>{txt}</text></g>);}}/>
                           </Line>
-                          <Line type="monotone" dataKey="bridge" stroke="#90a4ae" strokeWidth={1.5} strokeDasharray="4 3" dot={false} activeDot={false} legendType="none" connectNulls={true}/>
                         </ComposedChart>
                       </ResponsiveContainer>
                     </>);
