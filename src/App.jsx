@@ -1579,10 +1579,11 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
       const rate=(s&&s.area>0)?(s.bsp/s.area):avgRatePerSqft;
       projRaw += rate*areaByType[t];
     });
-    // Total project = type-wise sum; sold stays actual booked BSP; unsold = total - sold
-    const totalProjCr    = +(projRaw/1e7).toFixed(1);
-    const unsoldValueCr  = +(totalProjCr - totalBSPCr).toFixed(1);
-    const soldPctValue   = totalProjCr>0 ? Math.round(totalBSPCr/totalProjCr*100) : 0;
+    // If kpiExtra has totalProjCr and unsoldValueCr, use them (more accurate for Sky Arc)
+    // Otherwise use the type-wise calculation
+    const totalProjCr    = dk.totalProjCr || +(projRaw/1e7).toFixed(1);
+    const unsoldValueCr  = dk.unsoldValueCr || +(totalProjCr - totalBSPCr).toFixed(1);
+    const soldPctValue   = dk.soldPctValue || (totalProjCr>0 ? Math.round(totalBSPCr/totalProjCr*100) : 0);
     // Demand Raised sourced from PDRN 'Total Demand Amount' (active bookings)
     const demandRaisedCr = +(pAAll.reduce((s,r)=>s+(r.demand||0),0)/1e7).toFixed(1);
     // Collected = PDRN 'Total Received'; Outstanding = unpaid raised demand (floored per unit) — all active, w/o tax
