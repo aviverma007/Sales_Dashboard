@@ -356272,7 +356272,23 @@
       "builtupSqft": "39,28,752 sq ft",
       "landArea": "10.7 Acres",
       "name": "The Edition",
-      "builtupArea": "31,30,690 sq ft"
+      "builtupArea": "31,30,690 sq ft",
+      "majorMilestones": [
+        {
+          "name": "40TH FLOOR SLAB",
+          "shortName": "40th Floor Slab",
+          "date": "Jul 2027",
+          "amountCr": 1010.59,
+          "icon": "\ud83c\udfc6"
+        },
+        {
+          "name": "OC APPLICATION",
+          "shortName": "OC Application",
+          "date": "May 2028",
+          "amountCr": 817.0,
+          "icon": "\u26a1"
+        }
+      ]
     },
     "SMARTWORLD SKY ARC": {
       "name": "Sky Arc",
@@ -356281,7 +356297,23 @@
       "saleableArea": "25.63 Lakh sq ft",
       "launchDate": "Oct 2024",
       "handoverDate": "Dec 2027",
-      "company": "RIVERDAY INFRA"
+      "company": "RIVERDAY INFRA",
+      "majorMilestones": [
+        {
+          "name": "40TH FLOOR SLAB",
+          "shortName": "40th Floor Slab",
+          "date": "Jul 2028",
+          "amountCr": 507.64,
+          "icon": "\ud83c\udfc6"
+        },
+        {
+          "name": "OC APPLICATION",
+          "shortName": "OC Application",
+          "date": "May 2029",
+          "amountCr": 310.93,
+          "icon": "\u26a1"
+        }
+      ]
     },
     "TRUMP RESIDENCES GURGAON": {
       "name": "Trump Residences",

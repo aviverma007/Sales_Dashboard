@@ -1878,6 +1878,13 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
             ...(isSingle&&m?[
               {icon:'🚀',label:'Launch Date',val:m.launchDate,color:'#0097a7'},
               {icon:'🏁',label:'Project HO Date',val:m.handoverDate,color:T.greenL},
+              // Add major milestone chips (40th Floor Slab, OC Application)
+              ...(m.majorMilestones||[]).map(ms=>({
+                icon:ms.icon||'🏆',
+                label:ms.name,
+                val:`${ms.date} · ₹${ms.amountCr} Cr`,
+                color:'#f59e0b'
+              }))
             ]:[]),
           ];
           return(
