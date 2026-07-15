@@ -2252,15 +2252,15 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                       const d=monthlyWithTargets.find(r=>r.label===lbl);
                       return s+Math.max(0,(d?.targetUnitsLine||0)-(d?.bookedUnits||0));
                     },0);
-                    // Redistribute missed units evenly across remaining months (current + future in Q)
-                    const nRemaining=futureQMonths.length;
+                    // Redistribute missed units evenly across CURRENT QUARTER ONLY
+                    const nRemaining=curQMonths.length;
                     const addPerMonth=nRemaining>0?Math.round(missedUnits/nRemaining):0;
                     const projMap={};
-                    futureQMonths.forEach(lbl=>{
+                    curQMonths.forEach(lbl=>{
                       const base=monthlyWithTargets.find(d=>d.label===lbl)?.targetUnitsLine||0;
-                      projMap[lbl]=base+addPerMonth; // revised target = original + catch-up
+                      projMap[lbl]=base+addPerMonth; // revised target = original + catch-up (CURRENT QUARTER ONLY)
                     });
-                    // No green line beyond current quarter — grey line resumes from Jul
+                    // Green line ONLY shows on current quarter (Jul, Aug, Sep), not future quarters
 
                     const rawData=monthlyWithTargets.map(d=>({
                       label:d.label,isFuture:d.isFuture,isCurrent:d.label===TODAY_LABEL,
@@ -2358,9 +2358,10 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const pastCqmT=fyMonthsT.filter(o=>o.ym<todayYMT).map(o=>o.label);
                     const futureCqmT=fyMonthsT.filter(o=>o.ym>=todayYMT).map(o=>o.label);
                     const missedTsv=pastCqmT.reduce((s,lbl)=>{const d=monthlyWithTargets.find(r=>r.label===lbl);return s+Math.max(0,(d?.targetTsvLine||0)-(d?.bspCr||0));},0);
-                    const addTsvPer=futureCqmT.length>0?+(missedTsv/futureCqmT.length).toFixed(1):0;
+                    const cqmT=cqmObj.map(o=>o.label);
+                    const addTsvPer=cqmT.length>0?+(missedTsv/cqmT.length).toFixed(1):0;
                     const tsvProjMap={};
-                    futureCqmT.forEach(lbl=>{const base=monthlyWithTargets.find(d=>d.label===lbl)?.targetTsvLine||0;tsvProjMap[lbl]=+(base+addTsvPer).toFixed(1);});
+                    cqmT.forEach(lbl=>{const base=monthlyWithTargets.find(d=>d.label===lbl)?.targetTsvLine||0;tsvProjMap[lbl]=+(base+addTsvPer).toFixed(1);});
                     // Bridge: last proj month → first next-Q target
                     const sortedTsvProj=Object.keys(tsvProjMap).sort((a,b)=>lblYmT(a)-lblYmT(b));
                     const lastTsvLbl=sortedTsvProj[sortedTsvProj.length-1];
@@ -2435,9 +2436,10 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const pastCqA2=fyMonthsA.filter(o=>o.ym<todayYMA3).map(o=>o.label);
                     const futureCqA2=fyMonthsA.filter(o=>o.ym>=todayYMA3).map(o=>o.label);
                     const missedArea2=pastCqA2.reduce((s,lbl)=>{const d=monthlyWithTargets.find(r=>r.label===lbl);return s+Math.max(0,(d?.targetAreaSqft||0)-(d?.bookedAreaSqft||0));},0);
-                    const addAreaPer2=futureCqA2.length>0?Math.round(missedArea2/futureCqA2.length):0;
+                    const cqObjA2Months=cqObjA2.map(o=>o.label);
+                    const addAreaPer2=cqObjA2Months.length>0?Math.round(missedArea2/cqObjA2Months.length):0;
                     const areaProjMap2={};
-                    futureCqA2.forEach(lbl=>{const base=monthlyWithTargets.find(d=>d.label===lbl)?.targetAreaSqft||0;areaProjMap2[lbl]=Math.round(base+addAreaPer2);});
+                    cqObjA2Months.forEach(lbl=>{const base=monthlyWithTargets.find(d=>d.label===lbl)?.targetAreaSqft||0;areaProjMap2[lbl]=Math.round(base+addAreaPer2);});
                     const sortedAP2=Object.keys(areaProjMap2).sort((a,b)=>lblYmA2(a)-lblYmA2(b));
                     const lastALbl2=sortedAP2[sortedAP2.length-1];
                     const nqBMoA2=aQS2+3>12?aQS2-9:aQS2+3;const nqBYA2=aQS2+3>12?todayA.getFullYear()+1:todayA.getFullYear();
