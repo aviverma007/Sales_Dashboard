@@ -1,53 +1,53 @@
 {
   "kpi": {
     "all": {
-      "totalInstallment": 1856.15,
-      "totalReceivedBank": 1540.08,
-      "totalReceivedWoT": 1446.08,
-      "totalOutstanding": 423.33,
-      "totalDemandWoTax": 1856.15,
-      "advanceAmt": 24.88,
-      "advanceNet": 23.69,
-      "advanceGst": 1.18
+      "totalInstallment": 1861.93,
+      "totalReceivedBank": 1732.32,
+      "totalReceivedWoT": 1035.44,
+      "totalOutstanding": 919.54,
+      "totalDemandWoTax": 1861.93,
+      "advanceAmt": 0.0,
+      "advanceNet": 0.0,
+      "advanceGst": 0.0
     },
     "tlp": {
-      "totalInstallment": 509.76,
-      "totalReceivedBank": 522.16,
-      "totalReceivedWoT": 496.62,
-      "totalOutstanding": 9.91,
-      "totalDemandWoTax": 509.76,
-      "advanceAmt": 0.91,
-      "advanceNet": 0.87,
-      "advanceGst": 0.04
+      "totalInstallment": 129.75,
+      "totalReceivedBank": 124.02,
+      "totalReceivedWoT": 80.38,
+      "totalOutstanding": 55.85,
+      "totalDemandWoTax": 129.75,
+      "advanceAmt": 0.0,
+      "advanceNet": 0.0,
+      "advanceGst": 0.0
     },
     "clp": {
-      "totalInstallment": 1346.39,
-      "totalReceivedBank": 1017.92,
-      "totalReceivedWoT": 949.46,
-      "totalOutstanding": 413.42,
-      "totalDemandWoTax": 1346.39,
-      "advanceAmt": 23.97,
-      "advanceNet": 22.83,
-      "advanceGst": 1.14
+      "totalInstallment": 1732.19,
+      "totalReceivedBank": 1608.3,
+      "totalReceivedWoT": 955.06,
+      "totalOutstanding": 863.69,
+      "totalDemandWoTax": 1732.19,
+      "advanceAmt": 0.0,
+      "advanceNet": 0.0,
+      "advanceGst": 0.0
     }
   },
   "gstRate": 0.05,
-  "advanceNote": "\u26a0\ufe0f Advance Money: \u20b924.9 Cr received before SAP demand raised. GST @5% back-calc (\u20b91.18 Cr).",
+  "advanceNote": "\u26a0\ufe0f Advance Money detected: \u20b90.0 Cr received before SAP demand raised.",
   "advance": {
     "all": {
-      "rawCr": 24.88,
-      "netCr": 23.69,
-      "gstCr": 1.18
+      "rawCr": 0.0,
+      "netCr": 0.0,
+      "gstCr": 0.0
     },
     "tlp": {
-      "rawCr": 0.91,
-      "netCr": 0.87,
-      "gstCr": 0.04
+      "rawCr": 0.0,
+      "netCr": 0.0,
+      "gstCr": 0.0
     },
     "clp": {
-      "rawCr": 23.97,
-      "netCr": 22.83,
-      "gstCr": 1.14
+      "rawCr": 0.0,
+      "netCr": 0.0,
+      "gstCr": 0.0
     }
   },
   "advance_all": {
