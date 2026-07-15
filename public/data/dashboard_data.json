@@ -355258,12 +355258,19 @@
     "May'26": 18375
   },
   "skyarcKpiExtra": {
+    "totalSalesValueCr": 14578.6,
+    "soldBSPCr": 10097.22,
+    "unsoldCostCr": 4481.38,
     "totalBSPCr": 10097.22,
     "totalTCVCr": 10753.82,
     "bookedAreaSqft": 2738425,
     "carpetAreaSqft": 1468286,
-    "cancelledBSPCr": 0,
+    "demandRaisedCr": 1857.18,
+    "collectedCr": 1427.55,
+    "outstandingCr": 522.4,
+    "collectionPct": 76.9,
     "avgRatePerSqft": 36872,
+    "cancelledBSPCr": 0.0,
     "gstRate": 5,
     "advanceNote": "Sky Arc Overview - Updated Jul 15, 2026"
   },
