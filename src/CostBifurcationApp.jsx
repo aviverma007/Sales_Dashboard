@@ -274,7 +274,10 @@ export default function CostBifurcationApp() {
             <SH title="Budget Distribution" sub="By Budget Head (₹ Lakh)"/>
             <ResponsiveContainer width="100%" height={200}>
               <PieChart>
-                <Pie data={pieBudget} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} innerRadius={0}>
+                <Pie data={pieBudget} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} innerRadius={0}
+                  label={({percent})=>percent>0.04?`${(percent*100).toFixed(0)}%`:''}
+                  labelLine={false}
+                  style={{fontSize:9,fontWeight:800,fill:'#fff'}}>
                   {pieBudget.map((e,i)=>(<Cell key={i} fill={CC[i%CC.length]}/>))}
                 </Pie>
                 <Tooltip content={<CTip fmt={v=>fmtL(v)}/>}/>
@@ -295,15 +298,24 @@ export default function CostBifurcationApp() {
 
           <GC style={{padding:16}}>
             <SH title="Utilization Split" sub="Actual Spent vs Available (₹ Lakh)"/>
-            <ResponsiveContainer width="100%" height={200}>
-              <PieChart>
-                <Pie data={pieUtil} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={55} outerRadius={80} paddingAngle={2}>
-                  <Cell fill={T.teal}/>
-                  <Cell fill="rgba(0,60,100,0.15)"/>
-                </Pie>
-                <Tooltip content={<CTip fmt={v=>fmtL(v)}/>}/>
-              </PieChart>
-            </ResponsiveContainer>
+            <div style={{position:'relative',width:'100%',height:200}}>
+              <ResponsiveContainer width="100%" height={200}>
+                <PieChart>
+                  <Pie data={pieUtil} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={55} outerRadius={80} paddingAngle={2}
+                    label={({percent,name})=>`${name==='Actual Spent'?'Actual':'Avail.'} ${(percent*100).toFixed(0)}%`}
+                    labelLine={{stroke:T.textM,strokeWidth:1}}
+                    style={{fontSize:9,fontWeight:700,fill:T.textM}}>
+                    <Cell fill={T.teal}/>
+                    <Cell fill="rgba(0,60,100,0.15)"/>
+                  </Pie>
+                  <Tooltip content={<CTip fmt={v=>fmtL(v)}/>}/>
+                </PieChart>
+              </ResponsiveContainer>
+              <div style={{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',display:'flex',flexDirection:'column',alignItems:'center',pointerEvents:'none'}}>
+                <span style={{fontSize:8,color:T.textM,fontWeight:700,textTransform:'uppercase',letterSpacing:0.5}}>Total Budget</span>
+                <span style={{fontSize:15,color:T.navy,fontWeight:900,letterSpacing:-0.3}}>{fmtL(kpi.totalBudgetL)}</span>
+              </div>
+            </div>
             <div style={{display:'flex',flexDirection:'column',gap:6,marginTop:8}}>
               <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
                 <div style={{display:'flex',alignItems:'center',gap:6}}><div style={{width:8,height:8,borderRadius:2,background:T.teal}}/><span style={{fontSize:10,color:T.textM,fontWeight:700}}>Actual Spent</span></div>
