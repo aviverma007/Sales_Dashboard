@@ -20,7 +20,7 @@ const T = {
   purple: '#6a1b9a',
   blue:   '#1565c0',
 };
-const CC = ['#0097a7','#1565c0','#2e7d32','#f57c00','#d32f2f','#6a1b9a','#00695c','#37474f'];
+const CC = ['#00acc1','#3f51b5','#43a047','#fb8c00','#e53935','#8e24aa','#00897b','#5c6bc0'];
 
 // ─── UTILS ────────────────────────────────────────────────────────────────────
 const fmtL = v => { if(v===undefined||v===null||isNaN(v)) return '₹0 L'; const n=Number(v); return `₹${n.toLocaleString('en-IN',{maximumFractionDigits:2})} L`; };
@@ -274,11 +274,20 @@ export default function CostBifurcationApp() {
             <SH title="Budget Distribution" sub="By Budget Head (₹ Lakh)"/>
             <ResponsiveContainer width="100%" height={200}>
               <PieChart>
-                <Pie data={pieBudget} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} innerRadius={0}
+                <defs>
+                  {CC.map((c,i)=>(
+                    <radialGradient key={i} id={`pieGrad${i}`} cx="35%" cy="35%" r="75%">
+                      <stop offset="0%" stopColor={c} stopOpacity={1}/>
+                      <stop offset="100%" stopColor={c} stopOpacity={0.72}/>
+                    </radialGradient>
+                  ))}
+                </defs>
+                <Pie data={pieBudget} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={82} innerRadius={0}
+                  stroke="rgba(255,255,255,0.9)" strokeWidth={2}
                   label={({percent})=>percent>0.04?`${(percent*100).toFixed(0)}%`:''}
                   labelLine={false}
                   style={{fontSize:9,fontWeight:800,fill:'#fff'}}>
-                  {pieBudget.map((e,i)=>(<Cell key={i} fill={CC[i%CC.length]}/>))}
+                  {pieBudget.map((e,i)=>(<Cell key={i} fill={`url(#pieGrad${i%CC.length})`} style={{filter:'drop-shadow(0 3px 4px rgba(0,0,0,0.18))'}}/>))}
                 </Pie>
                 <Tooltip content={<CTip fmt={v=>fmtL(v)}/>}/>
               </PieChart>
@@ -301,12 +310,23 @@ export default function CostBifurcationApp() {
             <div style={{position:'relative',width:'100%',height:200}}>
               <ResponsiveContainer width="100%" height={200}>
                 <PieChart>
-                  <Pie data={pieUtil} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={55} outerRadius={80} paddingAngle={2}
+                  <defs>
+                    <radialGradient id="utilGradActual" cx="35%" cy="35%" r="75%">
+                      <stop offset="0%" stopColor={T.tealL} stopOpacity={1}/>
+                      <stop offset="100%" stopColor={T.tealD} stopOpacity={1}/>
+                    </radialGradient>
+                    <radialGradient id="utilGradAvail" cx="35%" cy="35%" r="75%">
+                      <stop offset="0%" stopColor="#cfd8dc" stopOpacity={1}/>
+                      <stop offset="100%" stopColor="#90a4ae" stopOpacity={1}/>
+                    </radialGradient>
+                  </defs>
+                  <Pie data={pieUtil} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={55} outerRadius={82} paddingAngle={3}
+                    stroke="rgba(255,255,255,0.9)" strokeWidth={2}
                     label={({percent,name})=>`${name==='Actual Spent'?'Actual':'Avail.'} ${(percent*100).toFixed(0)}%`}
                     labelLine={{stroke:T.textM,strokeWidth:1}}
                     style={{fontSize:9,fontWeight:700,fill:T.textM}}>
-                    <Cell fill={T.teal}/>
-                    <Cell fill="rgba(0,60,100,0.15)"/>
+                    <Cell fill="url(#utilGradActual)" style={{filter:'drop-shadow(0 3px 5px rgba(0,151,167,0.35))'}}/>
+                    <Cell fill="url(#utilGradAvail)" style={{filter:'drop-shadow(0 3px 5px rgba(0,0,0,0.12))'}}/>
                   </Pie>
                   <Tooltip content={<CTip fmt={v=>fmtL(v)}/>}/>
                 </PieChart>
@@ -322,7 +342,7 @@ export default function CostBifurcationApp() {
                 <span style={{fontSize:11,color:T.tealD,fontWeight:800}}>{fmtL(kpi.totalActualL)}</span>
               </div>
               <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
-                <div style={{display:'flex',alignItems:'center',gap:6}}><div style={{width:8,height:8,borderRadius:2,background:'rgba(0,60,100,0.3)'}}/><span style={{fontSize:10,color:T.textM,fontWeight:700}}>Available</span></div>
+                <div style={{display:'flex',alignItems:'center',gap:6}}><div style={{width:8,height:8,borderRadius:2,background:'#90a4ae'}}/><span style={{fontSize:10,color:T.textM,fontWeight:700}}>Available</span></div>
                 <span style={{fontSize:11,color:T.text,fontWeight:800}}>{fmtL(kpi.totalAvailableL)}</span>
               </div>
             </div>
