@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useContext, createContext } from 'react';
 import {
   AreaChart, Area, BarChart, Bar, ComposedChart, Line, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
@@ -287,18 +287,70 @@ const CTip = ({active,payload,label,fmt}) => {
 };
 
 // ─── GLASS CARD ───────────────────────────────────────────────────────────────
+// ─── ZOOM MODE CONTEXT ───────────────────────────────────────────────────────
+// When zoomMode is on, any GC card scales up + blurs the background on hover;
+// clicking pins it open (stays zoomed until you click outside or toggle zoom
+// mode off); clicking outside an active card, or re-clicking the zoom button,
+// closes it.
+const ZoomCtx = createContext({ zoomMode:false, pinnedId:null, setPinnedId:()=>{} });
+let __gcIdSeq = 0;
+
 const GC = ({children,style={},cls='',dark=false}) => {
   const [h,sH]=useState(false);
+  const { zoomMode, pinnedId, setPinnedId } = useContext(ZoomCtx);
+  const idRef = React.useRef(null);
+  if (idRef.current === null) idRef.current = 'gc-' + (++__gcIdSeq);
+  const id = idRef.current;
+
+  const isPinned = zoomMode && pinnedId === id;
+  // Hover-preview only applies when nothing is pinned yet; once something is
+  // pinned, other cards' hover no longer triggers a preview zoom.
+  const isHoverPreview = zoomMode && h && pinnedId === null;
+  const isZoomed = isPinned || isHoverPreview;
+
+  const handleClick = (e) => {
+    if (!zoomMode) return;
+    e.stopPropagation();
+    if (pinnedId === null) setPinnedId(id); // first click on a hovered card pins it
+    // if already pinned, clicks inside the card do nothing here — only the
+    // outside-click handler / blur-overlay click / zoom-button toggle unpin it
+  };
+
   return (
-    <div className={cls} onMouseEnter={()=>sH(true)} onMouseLeave={()=>sH(false)} style={{
-      background: dark?(h?T.glassDarkH:T.glassDark):(h?T.glassH:T.glass),
-      border:`1px solid ${dark?T.borderB:T.border}`,
-      borderRadius:14, boxShadow: dark?'0 8px 32px rgba(0,0,0,0.35)':'0 4px 24px rgba(0,80,120,0.12)',
-      transition:'all 0.25s ease', position:'relative', overflow:'hidden', ...style
-    }}>
-      {!dark&&<div style={{position:'absolute',top:0,left:0,right:0,height:1,background:'rgba(255,255,255,0.95)'}}/>}
-      {children}
-    </div>
+    <>
+      {isPinned && (
+        <div
+          onClick={()=>setPinnedId(null)}
+          style={{position:'fixed',inset:0,zIndex:998,background:'rgba(10,20,35,0.45)',backdropFilter:'blur(6px)',WebkitBackdropFilter:'blur(6px)',transition:'opacity 0.2s ease'}}
+        />
+      )}
+      <div
+        className={cls}
+        onMouseEnter={()=>sH(true)}
+        onMouseLeave={()=>sH(false)}
+        onClick={handleClick}
+        style={{
+          background: dark?(h?T.glassDarkH:T.glassDark):(h?T.glassH:T.glass),
+          border:`1px solid ${dark?T.borderB:T.border}`,
+          borderRadius:14,
+          boxShadow: isPinned?'0 24px 70px rgba(0,20,50,0.45)':(isHoverPreview?'0 14px 44px rgba(0,40,80,0.28)':(dark?'0 8px 32px rgba(0,0,0,0.35)':'0 4px 24px rgba(0,80,120,0.12)')),
+          transition:'all 0.2s ease', overflow:'hidden',
+          cursor: zoomMode?(isPinned?'zoom-out':'zoom-in'):'default',
+          ...style,
+          // Hover preview: scale up in place, stays in normal document flow so the
+          // pointer doesn't leave the element and cause flicker.
+          ...(isHoverPreview ? { position:'relative', zIndex:60, transform:'scale(1.035)' } : { position:'relative' }),
+          // Pinned: lift out of flow, center on screen above the blur overlay.
+          ...(isPinned ? {
+            position:'fixed', zIndex:999, top:'50%', left:'50%',
+            transform:'translate(-50%,-50%)',
+            width:'min(94vw, 1100px)', maxHeight:'90vh', overflowY:'auto',
+          } : {}),
+        }}>
+        {!dark&&<div style={{position:'absolute',top:0,left:0,right:0,height:1,background:'rgba(255,255,255,0.95)'}}/>}
+        {children}
+      </div>
+    </>
   );
 };
 
@@ -1308,6 +1360,26 @@ function AppInner({overviewOnly=false}) {
   const [tab,setTab]=useState('overview'); // overview | collections | pipeline
   useEffect(()=>{ window.scrollTo({top:0,behavior:'instant'}); },[tab]);
 
+  // Zoom mode: toggled via header button. When on, hovering any chart/KPI card
+  // previews a zoomed-in version; clicking pins it (blurred background) until
+  // clicked again or clicked outside; toggling zoom mode off unpins everything.
+  const [zoomMode, setZoomMode] = useState(false);
+  const [pinnedId, setPinnedId] = useState(null);
+  const toggleZoomMode = () => {
+    setZoomMode(z => !z);
+    setPinnedId(null);
+  };
+  // Click anywhere outside a pinned card closes it. The pinned card's own
+  // onClick already toggles it off via handleClick/setPinnedId in GC, and the
+  // blur overlay's onClick also unpins — this listener is a fallback for any
+  // other outside click (e.g. header, filters) while a card is pinned.
+  useEffect(() => {
+    if (pinnedId === null) return;
+    const onDocClick = () => setPinnedId(null);
+    document.addEventListener('click', onDocClick);
+    return () => document.removeEventListener('click', onDocClick);
+  }, [pinnedId]);
+
   const [filters,setFilters]=useState({company:'',project:'SMARTWORLD THE EDITION',month:'',quarter:'',broker:'',typology:'',fy:'',dateFrom:'',dateTo:''});
   const sf=useCallback((k,v)=>setFilters(p=>({...p,[k]:v})),[]);
   // Chart controls (lifted to comply with React hooks rules)
@@ -1756,6 +1828,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
   const tabs=overviewOnly?[{k:'overview',l:'Overview'},{k:'collections',l:'Demands & Collections'}]:[{k:'overview',l:'Overview'},{k:'collections',l:'Demands & Collections'},{k:'pnl',l:'P&L'}];
 
   return (
+    <ZoomCtx.Provider value={{ zoomMode, pinnedId, setPinnedId }}>
     <div style={{minHeight:'100vh',backgroundImage:'url(/bg.jpg)',backgroundSize:'cover',backgroundPosition:'center',backgroundAttachment:'fixed',fontFamily:'Inter,sans-serif',color:T.text}}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
@@ -1824,6 +1897,10 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
               <div style={{width:6,height:6,borderRadius:'50%',background:T.greenL,animation:'pulse 2s ease infinite'}}/>
               <span style={{color:T.green,fontSize:10,fontWeight:700}}>LIVE</span>
             </div>
+            <button onClick={toggleZoomMode} title={zoomMode?'Zoom mode on — hover a card to preview, click to pin':'Turn on zoom mode'} style={{display:'flex',alignItems:'center',gap:6,padding:'6px 14px',borderRadius:10,border:`1px solid ${zoomMode?'rgba(0,151,167,0.5)':'rgba(0,100,140,0.2)'}`,background:zoomMode?'linear-gradient(135deg,#0097a7,#00767f)':'rgba(0,100,140,0.06)',cursor:'pointer',fontSize:11,fontWeight:700,color:zoomMode?'#fff':T.tealD,fontFamily:'Inter,sans-serif',transition:'all 0.15s'}}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/><line x1="11" y1="8" x2="11" y2="14"/></svg>
+              Zoom {zoomMode?'On':'Off'}
+            </button>
             <span style={{color:T.textM,fontSize:11,fontWeight:700}}>{new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})}</span>
             <button onClick={()=>{['sd_auth','swsales_auth','cost_auth','cost2_auth','crm_auth','prpo_auth'].forEach(k=>sessionStorage.removeItem(k));window.location.reload();}} style={{display:'flex',alignItems:'center',gap:6,padding:'6px 14px',borderRadius:10,border:'1px solid rgba(200,40,40,0.25)',background:'rgba(211,47,47,0.07)',cursor:'pointer',fontSize:11,fontWeight:700,color:T.red,fontFamily:'Inter,sans-serif',transition:'all 0.15s'}} onMouseOver={e=>{e.currentTarget.style.background='rgba(211,47,47,0.14)';}} onMouseOut={e=>{e.currentTarget.style.background='rgba(211,47,47,0.07)';}}>
               🔒 Logout
@@ -3412,5 +3489,6 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
         </div>
       </div>
     </div>
+    </ZoomCtx.Provider>
   );
 }
