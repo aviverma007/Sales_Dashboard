@@ -20,13 +20,13 @@ const USERS = {
 };
 
 const DASHBOARDS = [
-  {key:'sales',    name:'Sales Dashboard',   desc:'Overview · Collections · P&L', icon:'📊', g:'linear-gradient(135deg,#0097a7,#006978)'},
-  {key:'swsales',  name:'Sales (Overview)',  desc:'Overview + Collections only',  icon:'📈', g:'linear-gradient(135deg,#26a69a,#00796b)'},
-  {key:'cost',     name:'Cost Intelligence', desc:'Cost analytics',               icon:'💰', g:'linear-gradient(135deg,#5c6bc0,#3949ab)'},
-  {key:'cost2',    name:'Cost 2',            desc:'Cost analytics II',            icon:'🧮', g:'linear-gradient(135deg,#7e57c2,#512da8)'},
-  {key:'crm',      name:'CRM Intelligence',  desc:'Case management',              icon:'🎫', g:'linear-gradient(135deg,#1e88e5,#0d47a1)'},
-  {key:'prpo',     name:'PR / PO Journey',   desc:'Procurement tracking',         icon:'📦', g:'linear-gradient(135deg,#ef6c00,#e65100)'},
-  {key:'costbif',  name:'Cost Bifurcation',  desc:'Cost breakdown (in progress)', icon:'🧾', g:'linear-gradient(135deg,#00897b,#00695c)'},
+  {key:'sales',    name:'Sales Dashboard',   desc:'Overview · Collections · P&L', icon:'📊', g:'linear-gradient(135deg,#0097a7,#006978)', sessionKey:'sd_auth'},
+  {key:'swsales',  name:'Sales (Overview)',  desc:'Overview + Collections only',  icon:'📈', g:'linear-gradient(135deg,#26a69a,#00796b)', sessionKey:'swsales_auth'},
+  {key:'cost',     name:'Cost Intelligence', desc:'Cost analytics',               icon:'💰', g:'linear-gradient(135deg,#5c6bc0,#3949ab)', sessionKey:'cost_auth'},
+  {key:'cost2',    name:'Cost 2',            desc:'Cost analytics II',            icon:'🧮', g:'linear-gradient(135deg,#7e57c2,#512da8)', sessionKey:'cost2_auth'},
+  {key:'crm',      name:'CRM Intelligence',  desc:'Case management',              icon:'🎫', g:'linear-gradient(135deg,#1e88e5,#0d47a1)', sessionKey:'crm_auth'},
+  {key:'prpo',     name:'PR / PO Journey',   desc:'Procurement tracking',         icon:'📦', g:'linear-gradient(135deg,#ef6c00,#e65100)', sessionKey:'prpo_auth'},
+  {key:'costbif',  name:'Cost Bifurcation',  desc:'Cost breakdown (in progress)', icon:'🧾', g:'linear-gradient(135deg,#00897b,#00695c)', sessionKey:'costbif_auth'},
 ];
 
 function AdminMenu({ onOpen, onLogout }) {
@@ -48,7 +48,7 @@ function AdminMenu({ onOpen, onLogout }) {
         </div>
         <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:14}}>
           {DASHBOARDS.map(d=>(
-            <button key={d.key} onClick={()=>onOpen(d.key)} style={{background:d.g,color:'#fff',border:'none',borderRadius:16,padding:'20px 16px',textAlign:'left',cursor:'pointer',boxShadow:'0 8px 22px rgba(0,40,70,0.18)',transition:'transform .18s ease, box-shadow .18s ease'}}
+            <button key={d.key} onClick={()=>{sessionStorage.setItem(d.sessionKey,'1');onOpen(d.key);}} style={{background:d.g,color:'#fff',border:'none',borderRadius:16,padding:'20px 16px',textAlign:'left',cursor:'pointer',boxShadow:'0 8px 22px rgba(0,40,70,0.18)',transition:'transform .18s ease, box-shadow .18s ease'}}
               onMouseOver={e=>{e.currentTarget.style.transform='translateY(-4px)';e.currentTarget.style.boxShadow='0 16px 34px rgba(0,40,70,0.30)';}}
               onMouseOut={e=>{e.currentTarget.style.transform='none';e.currentTarget.style.boxShadow='0 8px 22px rgba(0,40,70,0.18)';}}>
               <div style={{fontSize:30,marginBottom:8,filter:'drop-shadow(0 2px 4px rgba(0,0,0,0.25))'}}>{d.icon}</div>
