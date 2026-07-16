@@ -115,10 +115,12 @@ def main():
         avail_area=sum(r['superArea'] for r in inva); avail_units=len(inva)
         rate=round(bsp/barea) if barea else 0
 
-        # kpiExtra
-        d[P['kpi']]=dict(totalBSPCr=round(bsp/1e7,1),totalTCVCr=round(tcv/1e7,1),
+        # kpiExtra - merge (not replace) so extended fields some projects carry
+        # (e.g. Sky Arc's totalProjCr/soldBSPCr/unsoldValueCr/collectedCr/etc,
+        # computed separately via the INVR-based Approach 2 formula) are preserved.
+        d[P['kpi']] = {**d.get(P['kpi'], {}), **dict(totalBSPCr=round(bsp/1e7,1),totalTCVCr=round(tcv/1e7,1),
             bookedAreaSqft=round(barea),carpetAreaSqft=round(carea),
-            cancelledBSPCr=round(cbsp/1e7,1),avgRatePerSqft=rate)
+            cancelledBSPCr=round(cbsp/1e7,1),avgRatePerSqft=rate)}
 
         # monthly rate series (active bsp/area by booking month)
         mm=defaultdict(lambda:[0.0,0.0])
