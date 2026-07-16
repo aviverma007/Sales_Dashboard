@@ -5,25 +5,28 @@ import CostApp from './CostApp';
 import Cost2App from './Cost2App';
 import CRMApp from './CRMApp';
 import PRPOApp from './PRPOApp';
+import CostBifurcationApp from './CostBifurcationApp';
 import './index.css';
 
 const USERS = {
   'Sales':   { password: 'Smart@2026', profile: 'sales',    sessionKey: 'sd_auth' },
   'Swsales': { password: 'Smart@2026', profile: 'swsales',  sessionKey: 'swsales_auth' },
-  'Cost':    { password: 'Smart@2026', profile: 'cost',     sessionKey: 'cost_auth' },
+  'CostOld': { password: 'Smart@2026', profile: 'cost',     sessionKey: 'cost_auth' },
   'Cost2':   { password: 'Smart@2026', profile: 'cost2',    sessionKey: 'cost2_auth' },
   'CRM':     { password: 'Smart@2026', profile: 'crm',      sessionKey: 'crm_auth' },
   'PRPO':    { password: 'Smart@2026', profile: 'prpo',     sessionKey: 'prpo_auth' },
   'Admin':   { password: 'Smart@2026', profile: 'admin',    sessionKey: 'admin_auth' },
+  'Cost':    { password: 'cost',       profile: 'costbif',  sessionKey: 'costbif_auth' },
 };
 
 const DASHBOARDS = [
-  {key:'sales',   name:'Sales Dashboard',  desc:'Overview · Collections · P&L', icon:'📊', g:'linear-gradient(135deg,#0097a7,#006978)'},
-  {key:'swsales', name:'Sales (Overview)', desc:'Overview + Collections only',  icon:'📈', g:'linear-gradient(135deg,#26a69a,#00796b)'},
-  {key:'cost',    name:'Cost Intelligence',desc:'Cost analytics',               icon:'💰', g:'linear-gradient(135deg,#5c6bc0,#3949ab)'},
-  {key:'cost2',   name:'Cost 2',           desc:'Cost analytics II',            icon:'🧮', g:'linear-gradient(135deg,#7e57c2,#512da8)'},
-  {key:'crm',     name:'CRM Intelligence', desc:'Case management',              icon:'🎫', g:'linear-gradient(135deg,#1e88e5,#0d47a1)'},
-  {key:'prpo',    name:'PR / PO Journey',  desc:'Procurement tracking',         icon:'📦', g:'linear-gradient(135deg,#ef6c00,#e65100)'},
+  {key:'sales',    name:'Sales Dashboard',   desc:'Overview · Collections · P&L', icon:'📊', g:'linear-gradient(135deg,#0097a7,#006978)'},
+  {key:'swsales',  name:'Sales (Overview)',  desc:'Overview + Collections only',  icon:'📈', g:'linear-gradient(135deg,#26a69a,#00796b)'},
+  {key:'cost',     name:'Cost Intelligence', desc:'Cost analytics',               icon:'💰', g:'linear-gradient(135deg,#5c6bc0,#3949ab)'},
+  {key:'cost2',    name:'Cost 2',            desc:'Cost analytics II',            icon:'🧮', g:'linear-gradient(135deg,#7e57c2,#512da8)'},
+  {key:'crm',      name:'CRM Intelligence',  desc:'Case management',              icon:'🎫', g:'linear-gradient(135deg,#1e88e5,#0d47a1)'},
+  {key:'prpo',     name:'PR / PO Journey',   desc:'Procurement tracking',         icon:'📦', g:'linear-gradient(135deg,#ef6c00,#e65100)'},
+  {key:'costbif',  name:'Cost Bifurcation',  desc:'Cost breakdown (in progress)', icon:'🧾', g:'linear-gradient(135deg,#00897b,#00695c)'},
 ];
 
 function AdminMenu({ onOpen, onLogout }) {
@@ -69,6 +72,7 @@ function Portal() {
     if (sessionStorage.getItem('crm_auth')     === '1') return 'crm';
     if (sessionStorage.getItem('prpo_auth')    === '1') return 'prpo';
     if (sessionStorage.getItem('admin_auth')   === '1') return 'admin';
+    if (sessionStorage.getItem('costbif_auth') === '1') return 'costbif';
     return null;
   });
 
@@ -95,6 +99,7 @@ function Portal() {
   if (profile === 'cost2') return <Cost2App />;
   if (profile === 'crm')   return <CRMApp />;
   if (profile === 'prpo')  return <PRPOApp />;
+  if (profile === 'costbif') return <CostBifurcationApp />;
   if (profile === 'admin') return <AdminMenu onOpen={setProfile} onLogout={()=>{sessionStorage.removeItem('admin_auth');window.location.reload();}} />;
 
   return (
