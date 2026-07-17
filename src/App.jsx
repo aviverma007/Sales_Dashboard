@@ -2105,6 +2105,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
               {/* CARD C: Total Potential Sales Value — Sold + Unsold */}
               <GC style={{padding:12}} cls="kc">
                 <SH title="Total Sales Value (₹Cr)" compact/>
+                <p style={{fontSize:8,color:T.textM,fontWeight:600,margin:'-4px 0 6px',fontStyle:'italic'}}>Calculated as: Target Value + Sold Value</p>
                 {(()=>{
                   // All values from kpiEx (sourced from dapp_kpi.json / invr Excel)
                   const dkAll = raw?.dappKpi?.kpi?.all || {};
