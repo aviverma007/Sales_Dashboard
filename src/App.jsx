@@ -3169,9 +3169,10 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const maxU=Math.max(...slice.map(d=>d.units),1);
                     return(
                       <>
-                        <div style={{overflowX:'auto',overflowY:'hidden'}}>
-                          <div style={{minWidth:slice.length*52+60+'px',paddingLeft:12,paddingRight:12}}>
-                            <ResponsiveContainer width="100%" height={300}>
+                        <div style={{display:'flex',justifyContent:'center',paddingTop:12,paddingBottom:12}}>
+                          <div style={{overflowX:'auto',overflowY:'hidden'}}>
+                            <div style={{minWidth:slice.length*52+60+'px',paddingLeft:12,paddingRight:12}}>
+                              <ResponsiveContainer width="100%" height={300}>
                               <ComposedChart data={slice} margin={{top:28,right:24,bottom:100,left:24}}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.08)" vertical={false}/>
                                 <XAxis dataKey="name" tick={{fill:T.textM,fontSize:8,fontWeight:600}} axisLine={false} tickLine={false} angle={-40} textAnchor="end" interval={0} height={110} tickFormatter={v=>v?.length>22?v.slice(0,22)+'…':v}/>
@@ -3204,6 +3205,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                               </ComposedChart>
                             </ResponsiveContainer>
                           </div>
+                        </div>
                         </div>
                         {all.length>WIN&&(
                           <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:8,marginTop:4}}>
