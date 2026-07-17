@@ -159,7 +159,7 @@ def parse_dapp(rows):
             except Exception:
                 pass
 
-        proj = safe_str(r.get('Project Name')) or EDITION
+        proj = EDITION  # always canonical key - see rebuild_overview.py fix for why
         records.append({
             'project': proj,
             'companyNorm': COMPANY_NORM,

@@ -80,7 +80,12 @@ def parse_dapp(rows, proj, company):
         if d:
             try: p=datetime.strptime(d[:10],'%Y-%m-%d'); month=f"{p.year}-{p.month:02d}"
             except: pass
-        out.append(dict(project=s(r.get('Project Name')) or proj,companyNorm=company,
+        # Always use the canonical project key (proj), not the raw Excel
+        # 'Project Name' text - that text's casing varies per project
+        # ('Trump Residences Gurgaon' vs canonical 'TRUMP RESIDENCES GURGAON'),
+        # which caused these rows to never match PROJECTS on the next run's
+        # dedupe filter and silently triple/quadruple on every re-run.
+        out.append(dict(project=proj,companyNorm=company,
             unit=s(r.get('Unit Number')),customer=s(r.get('Sold to Party Name') or r.get('Customer Name (Payer)')),
             billMonth=month,demand=num(r.get('Total Demand after adj of Credit') or r.get('Total Due Amount With Tax')),
             received=num(r.get('Received Amt (in Bank)')),outstanding=num(r.get('Outstanding 1'))))
