@@ -922,5 +922,24 @@
       "he_out": 0.0,
       "hl_out": 0.0
     }
-  ]
+  ],
+  "projectMeta": {
+    "SKY ARC": {
+      "name": "SKY ARC",
+      "majorMilestones": [
+        {
+          "name": "40th Floor Slab",
+          "icon": "\ud83c\udfe2",
+          "date": "Apr 2027",
+          "amountCr": "1010.59"
+        },
+        {
+          "name": "Application of OC",
+          "icon": "\ud83d\udccb",
+          "date": "May 2029",
+          "amountCr": "0"
+        }
+      ]
+    }
+  }
 }
