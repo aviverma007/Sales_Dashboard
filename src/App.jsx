@@ -961,12 +961,12 @@ const CollectionsTab = ({T, GC, SH, filters={}, raw}) => {
           </ResponsiveContainer>
         </div>
       </div>
-      <div style={{overflowX:'auto',marginTop:12}}>
+      <div style={{overflowX:'auto',overflowY:'auto',maxHeight:480,marginTop:12,border:'1px solid rgba(0,100,140,0.08)',borderRadius:8}}>
         <table style={{width:'100%',borderCollapse:'collapse',fontSize:9}}>
           <thead>
-            <tr style={{background:'rgba(0,100,140,0.06)'}}>
+            <tr style={{background:'#eef5f8',position:'sticky',top:0,zIndex:1}}>
               {['Milestone','Type','Expected Date','T-1','T-2','T-3','T-4','T-5','T-6','Total (Cr)'].map(h=>(
-                <th key={h} style={{padding:'8px 10px',textAlign:h==='Milestone'?'left':'right',color:T.textM,fontWeight:800,textTransform:'uppercase',fontSize:11,letterSpacing:0.4,borderBottom:'2px solid rgba(0,100,140,0.12)'}}>
+                <th key={h} style={{padding:'8px 10px',textAlign:h==='Milestone'?'left':'right',color:T.textM,fontWeight:800,textTransform:'uppercase',fontSize:11,letterSpacing:0.4,borderBottom:'2px solid rgba(0,100,140,0.12)',background:'#eef5f8'}}>
                   {h==='Expected Date'
                     ? <div style={{display:'flex',alignItems:'center',justifyContent:'flex-end',gap:6}}>
                         <span>{h}</span>
