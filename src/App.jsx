@@ -2487,11 +2487,11 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                           <Legend wrapperStyle={{fontSize:10,fontWeight:700}} iconSize={8}/>
                           <Bar dataKey="target" name="Target TSV" fill="#b0bec5" fillOpacity={0.75} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={1000} animationEasing="ease-out">
                             {sl.map((d,i)=><Cell key={'tgt'+i} fill={d.isFuture?'#d3dce0':'#b0bec5'} fillOpacity={d.isFuture?0.5:0.75}/>)}
-                            <LabelList dataKey="target" position="insideTop" style={{fill:'#455a64',fontSize:9,fontWeight:700}} formatter={v=>v>0?''+v:''}/>
+                            <LabelList dataKey="target" position="insideTop" style={{fill:'#455a64',fontSize:9,fontWeight:700}} formatter={v=>v>0?Math.round(v).toString():''}/>
                           </Bar>
                           <Bar dataKey="achieved" name="Achieved TSV" fill='#16a34a' radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={800} animationEasing="ease-out">
                             {sl.map((d,i)=><Cell key={i} fill={d.isCurrent?'#ef4444':'#16a34a'} fillOpacity={d.isCurrent?1:0.85}/>)}
-                            <LabelList dataKey="achieved" position="top" style={{fill:'#15803d',fontSize:9,fontWeight:800}} formatter={v=>v>0?'₹'+v:''}/>
+                            <LabelList dataKey="achieved" position="top" style={{fill:'#15803d',fontSize:9,fontWeight:800}} formatter={v=>v>0?Math.round(v).toString():''}/>
                           </Bar>
 
                           <Line type="monotone" dataKey="projection" name="Adjusted" stroke="#22c55e" strokeWidth={2.5} strokeDasharray="6 2" dot={({cx,cy,payload})=>payload.projection!=null?<circle cx={cx} cy={cy} r={5} fill="#22c55e" stroke="#fff" strokeWidth={2}/>:<g/>} activeDot={{r:6,fill:'#22c55e'}} connectNulls={false}>
@@ -2577,15 +2577,15 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                           <Legend wrapperStyle={{fontSize:10,fontWeight:700}} iconSize={8} payload={[{value:'Target',type:'rect',color:'#b0bec5'},{value:'Achieved',type:'rect',color:T.teal},{value:'Projection',type:'line',color:'#22c55e'}]}/>
                           <Bar dataKey="target" name="Target" fill="#b0bec5" fillOpacity={0.75} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={1000}>
                             {sl.map((d,i)=><Cell key={'tgt'+i} fill={d.isFuture?'#d3dce0':'#b0bec5'} fillOpacity={d.isFuture?0.5:0.75}/>)}
-                            <LabelList dataKey="target" position="insideTop" style={{fill:'#455a64',fontSize:9,fontWeight:700}} formatter={v=>v>0?v+'L':''}/>
+                            <LabelList dataKey="target" position="insideTop" style={{fill:'#455a64',fontSize:9,fontWeight:700}} formatter={v=>v>0?Math.round(v).toString():''}/>
                           </Bar>
                           <Bar dataKey="achieved" name="Achieved" fill='#16a34a' radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={800}>
                             {sl.map((d,i)=><Cell key={i} fill={d.isCurrent?'#ef4444':'#16a34a'} fillOpacity={d.isCurrent?1:0.85}/>)}
-                            <LabelList dataKey="achieved" position="top" style={{fill:'#15803d',fontSize:9,fontWeight:800}} formatter={v=>v!=null&&v>0?v+'L':''}/>
+                            <LabelList dataKey="achieved" position="top" style={{fill:'#15803d',fontSize:9,fontWeight:800}} formatter={v=>v!=null&&v>0?Math.round(v).toString():''}/>
                           </Bar>
 
                           <Line type="monotone" dataKey="projection" name="Adjusted" stroke="#22c55e" strokeWidth={2.5} strokeDasharray="6 2" dot={({cx,cy,payload})=>payload.projection!=null?<circle cx={cx} cy={cy} r={5} fill="#22c55e" stroke="#fff" strokeWidth={2}/>:<g/>} activeDot={{r:6,fill:'#22c55e'}} connectNulls={false}>
-                            <LabelList dataKey="projection" position="top" offset={18} content={({x,y,value})=>{if(value==null)return null;const txt='▲'+value+'L';const w=txt.length*7+12;return(<g><rect x={x-w/2} y={y-34} width={w} height={22} rx={5} fill="white" stroke="#ef4444" strokeWidth={1.5} opacity={0.97}/><text x={x} y={y-19} textAnchor="middle" fill="#ef4444" fontSize={11} fontWeight={900}>{txt}</text></g>);}}/>
+                            <LabelList dataKey="projection" position="top" offset={18} content={({x,y,value})=>{if(value==null)return null;const txt='▲'+Math.round(value);const w=txt.length*7+12;return(<g><rect x={x-w/2} y={y-34} width={w} height={22} rx={5} fill="white" stroke="#ef4444" strokeWidth={1.5} opacity={0.97}/><text x={x} y={y-19} textAnchor="middle" fill="#ef4444" fontSize={11} fontWeight={900}>{txt}</text></g>);}}/>
                           </Line>
                         </ComposedChart>
                       </ResponsiveContainer>
