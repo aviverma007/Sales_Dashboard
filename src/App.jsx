@@ -2878,77 +2878,64 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                   })()}
                 </GC>
 
-                {/* ── CHART: Rate Trend Over Time (scatter) ───────────── */}
+                {/* ── CHART: Rate Trend Over Time (monthly average) ───────────── */}
                 <GC style={{padding:16}}>
-                  <SH title="Rate Trend Over Time" sub="₹/sqft per booking · coloured by tower · scroll for full timeline · filtered by project"/>
+                  <SH title="Rate Trend Over Time" sub="₹/sqft · monthly average booking rate · filtered by project"/>
                   {(()=>{
                     const pts=pAAll.filter(r=>r.bookingDate&&r.bsp&&r.superArea>0).map(r=>({
-                      date:r.bookingDate,
                       ts:new Date(r.bookingDate).getTime(),
-                      rate:Math.round(r.bsp/r.superArea),
-                      area:r.superArea,
-                      tower:r.tower||'?',
-                      name:r.customer||r.unit||'',
+                      rate:r.bsp/r.superArea,
                     })).sort((a,b)=>a.ts-b.ts);
                     if(!pts.length)return<p style={{color:T.textL,fontSize:11,textAlign:'center',padding:20}}>Select a project with booking dates to view rate trend</p>;
-                    const n=pts.length;
+                    // Group by calendar month
+                    const map={};
+                    pts.forEach(p=>{
+                      const d=new Date(p.ts);
+                      const key=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+                      if(!map[key])map[key]={key,sum:0,count:0,ts:new Date(d.getFullYear(),d.getMonth(),1).getTime()};
+                      map[key].sum+=p.rate;
+                      map[key].count+=1;
+                    });
+                    const monthly=Object.values(map).sort((a,b)=>a.ts-b.ts).map(m=>({
+                      ...m,
+                      avgRate:Math.round(m.sum/m.count),
+                      label:new Date(m.ts).toLocaleDateString('en-IN',{month:'short',year:'2-digit'}),
+                    }));
+                    // Overall linear trend across the monthly averages
+                    const n=monthly.length;
                     const xMean=(n-1)/2;
-                    const yArr=pts.map(p=>p.rate);
+                    const yArr=monthly.map(m=>m.avgRate);
                     const yMean=yArr.reduce((s,v)=>s+v,0)/n;
-                    const num=pts.reduce((s,_,i)=>s+(i-xMean)*(yArr[i]-yMean),0);
-                    const den=pts.reduce((s,_,i)=>s+(i-xMean)**2,0);
+                    const num=monthly.reduce((s,_,i)=>s+(i-xMean)*(yArr[i]-yMean),0);
+                    const den=monthly.reduce((s,_,i)=>s+(i-xMean)**2,0);
                     const slope=den?num/den:0;
                     const intercept=yMean-slope*xMean;
-                    const trendData=[{ts:pts[0].ts,trend:Math.round(intercept)},{ts:pts[n-1].ts,trend:Math.round(intercept+slope*(n-1))}];
-                    // Get unique towers for legend + colour map
-                    const towerKeys=[...new Set(pts.map(p=>p.tower))].sort();
-                    const PALETTE=['#0077b6','#00bcd4','#4dd0e1','#26c6da','#0288d1','#0097a7','#006064','#00838f'];
-                    const TOWER_COLOR=Object.fromEntries(towerKeys.map((t,i)=>[t,PALETTE[i%PALETTE.length]]));
-                    const fmt=ts=>{const d=new Date(ts);return d.toLocaleDateString('en-IN',{month:'short',year:'2-digit'});};
-                    // Window: show 90-day chunks with left/right scroll
-                    const minTs=pts[0].ts, maxTs=pts[n-1].ts;
-                    const totalDays=Math.ceil((maxTs-minTs)/86400000)||1;
-                    const WIN_DAYS=180;
-                    const needsScroll=totalDays>WIN_DAYS;
-                    const visiblePts=pts; // Show all, let overflow scroll handle it
-                    // Spread wide: 6px per point minimum, ensures dots don't overlap
-                    const PX_PER_PT=4;
-                    const innerW=Math.max(n*PX_PER_PT+100, 600);
-                    const TICK_COUNT=8; // max readable X ticks
+                    const withTrend=monthly.map((m,i)=>({...m,trend:Math.round(intercept+slope*i)}));
                     return(
-                      <>
-                        <div style={{overflowX:'auto',overflowY:'hidden',paddingBottom:4}}>
-                          <div style={{width:innerW+'px',minWidth:'100%'}}>
-                            <ResponsiveContainer width="100%" height={260}>
-                              <ComposedChart margin={{top:8,right:20,bottom:48,left:0}}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.06)"/>
-                                <XAxis dataKey="ts" type="number" domain={[pts[0].ts,pts[n-1].ts]} scale="time"
-                                  tickFormatter={fmt} tick={{fill:T.textM,fontSize:11,fontWeight:700}} axisLine={false} tickLine={false}
-                                  angle={-35} textAnchor="end" height={44} ticks={Array.from({length:Math.ceil((pts[n-1].ts-pts[0].ts)/(30*86400000))+1},(_,i)=>pts[0].ts+i*30*86400000).filter(t=>t<=pts[n-1].ts)}/>
-                                <YAxis tick={{fill:T.textM,fontSize:12}} axisLine={false} tickLine={false} width={48}
-                                  tickFormatter={v=>v.toLocaleString('en-IN')} domain={['auto','auto']}/>
-                                <Tooltip content={({active,payload})=>{
-                                  if(!active||!payload?.length)return null;
-                                  const d=payload[0]?.payload;
-                                  if(!d?.rate)return null;
-                                  return(<div style={{background:'#fff',border:'1px solid #e5e7eb',borderRadius:8,padding:'8px 12px',fontSize:12,boxShadow:'0 2px 8px rgba(0,0,0,0.1)'}}>
-                                    
-                                    <p style={{margin:'3px 0',color:T.tealD,fontWeight:800}}>₹{d.rate.toLocaleString('en-IN')}/sqft</p>
-                                    <p style={{margin:0,color:T.textM}}>{d.date} · {d.tower}</p>
-                                  </div>);
-                                }}/>
-                                <Scatter data={pts} dataKey="rate" name="rate">
-                                  {pts.map((p,i)=><Cell key={i} fill={TOWER_COLOR[p.tower]||T.teal} fillOpacity={0.8}/>)}
-                                </Scatter>
-                                <Line data={trendData} type="linear" dataKey="trend" stroke="#22c55e" strokeWidth={2.5} dot={false} strokeDasharray="6 3" name="Trend"/>
-                                <Legend wrapperStyle={{fontSize:10,fontWeight:700}} iconSize={8}
-                                  payload={[...towerKeys.map(t=>({value:t,type:'circle',color:TOWER_COLOR[t]})),{value:'Trend',type:'line',color:'#22c55e'}]}/>
-                              </ComposedChart>
-                            </ResponsiveContainer>
-                          </div>
-                        </div>
-                        <div style={{textAlign:'center',fontSize:9,color:T.textL,marginTop:2}}>← scroll to see full timeline →</div>
-                      </>
+                      <ResponsiveContainer width="100%" height={280}>
+                        <ComposedChart data={withTrend} margin={{top:20,right:20,bottom:24,left:0}}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.08)" vertical={false}/>
+                          <XAxis dataKey="label" tick={{fill:T.textM,fontSize:11,fontWeight:700}} axisLine={false} tickLine={false}/>
+                          <YAxis tick={{fill:T.textM,fontSize:12}} axisLine={false} tickLine={false} width={48}
+                            tickFormatter={v=>v.toLocaleString('en-IN')} domain={['auto','auto']}/>
+                          <Tooltip content={({active,payload})=>{
+                            if(!active||!payload?.length)return null;
+                            const d=payload[0]?.payload;
+                            if(!d)return null;
+                            return(<div style={{background:'#fff',border:'1px solid #e5e7eb',borderRadius:8,padding:'8px 12px',fontSize:12,boxShadow:'0 2px 8px rgba(0,0,0,0.1)'}}>
+                              <p style={{margin:0,fontWeight:800,color:T.navy}}>{d.label}</p>
+                              <p style={{margin:'3px 0',color:T.tealD,fontWeight:800}}>Avg: ₹{d.avgRate.toLocaleString('en-IN')}/sqft</p>
+                              <p style={{margin:0,color:T.textM}}>{d.count} booking{d.count>1?'s':''}</p>
+                            </div>);
+                          }}/>
+                          <Bar dataKey="avgRate" name="Avg Rate" fill={T.teal} radius={[4,4,0,0]} barSize={28}>
+                            <LabelList dataKey="avgRate" position="top" style={{fill:T.tealD,fontSize:9,fontWeight:700}} formatter={v=>v.toLocaleString('en-IN')}/>
+                          </Bar>
+                          <Line type="linear" dataKey="trend" stroke="#22c55e" strokeWidth={2.5} dot={false} strokeDasharray="6 3" name="Trend"/>
+                          <Legend wrapperStyle={{fontSize:10,fontWeight:700}} iconSize={8}
+                            payload={[{value:'Monthly Avg',type:'square',color:T.teal},{value:'Trend',type:'line',color:'#22c55e'}]}/>
+                        </ComposedChart>
+                      </ResponsiveContainer>
                     );
                   })()}
                 </GC>
