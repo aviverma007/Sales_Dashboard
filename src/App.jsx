@@ -645,7 +645,7 @@ const CollectionsTab = ({T, GC, SH, filters={}, raw}) => {
   React.useEffect(()=>{
     const pf=getProjectFiles(filters?.project?.split('||')[0]||'');
     fetch(pf.dapp).then(r=>r.json()).then(setDk).catch(()=>{});
-  },[]);
+  },[filters?.project]);
 
   if(!dk) return <div style={{textAlign:'center',padding:40,color:T.textL,fontSize:12}}>Loading Demand & Collection data…</div>;
 
