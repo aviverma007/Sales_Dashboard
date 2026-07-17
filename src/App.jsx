@@ -2666,7 +2666,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const rawDataR=monthlyWithTargets.map(d=>({label:d.label,isFuture:d.isFuture,isCurrent:d.label===TODAY_LABEL,
                       achieved:d.actualRate>0?d.actualRate:null,
                       target:d.targetRateLine||null,
-                      targetLine:(!d.isFuture&&!d.isCurrent||rateProjMap[d.label]!=null)?null:(d.targetRateLine||null),
+                      targetLine:(!d.isFuture&&!d.isCurrent)?null:(d.targetRateLine||null),
                       // Current quarter short-term projection
                       projection:(()=>{
                         if(!futureCqmR.includes(d.label))return null;
