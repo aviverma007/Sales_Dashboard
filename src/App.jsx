@@ -2659,9 +2659,11 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     // Current achieved avg rate = TCV / booked area (more accurate than kpiEx.avgRatePerSqft)
                     const bookedAreaActual=kpiEx.bookedAreaSqft||1;
                     const currentAvgRate=soldTCVVal>0&&bookedAreaActual>0?Math.round(soldTCVVal/bookedAreaActual):kpiEx.avgRatePerSqft||0;
-                    // Fixed rate used for unsold value (kpiExtra.unsoldValueCr / unsoldAreaSqft) - derived
-                    // rather than hardcoded, so it stays in sync with the rebuild script's rate.
-                    const fixedUnsoldRate=(kpiEx.unsoldAreaSqft>0)?Math.round((kpiEx.unsoldValueCr||0)*1e7/kpiEx.unsoldAreaSqft):currentAvgRate;
+                    // Fixed rate used for unsold value (kpiExtra.unsoldValueCr / unsold area).
+                    // NOTE: kpiEx has no 'unsoldAreaSqft' field - only availAreaSqft/mgmtAreaSqft
+                    // separately. Unsold area = Available + Management Unit area.
+                    const unsoldAreaTotal=(kpiEx.availAreaSqft||0)+(kpiEx.mgmtAreaSqft||0);
+                    const fixedUnsoldRate=(unsoldAreaTotal>0)?Math.round((kpiEx.unsoldValueCr||0)*1e7/unsoldAreaTotal):currentAvgRate;
                     const aopTsvAtFixedRate=kpiEx.totalProjCr||((soldTCVVal+(availAreaR*requiredRate))/1e7);
                     const avgRateR=aopTargetRate;
 
