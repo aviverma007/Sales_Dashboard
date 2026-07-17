@@ -641,6 +641,7 @@ const CollectionsTab = ({T, GC, SH, filters={}, raw}) => {
   const [showNote, setShowNote] = React.useState(false);
   const [rangeIdx, setRangeIdx] = React.useState([0, 999]);
   const [sortBy, setSortBy] = React.useState('amount'); // 'amount' | 'date'
+  const [monthOff, setMonthOff] = React.useState(-1); // -1 = use default (centered near today)
 
   React.useEffect(()=>{
     const pf=getProjectFiles(filters?.project?.split('||')[0]||'');
@@ -740,6 +741,11 @@ const CollectionsTab = ({T, GC, SH, filters={}, raw}) => {
     upcomingByMonth[ym][key] = (upcomingByMonth[ym][key]||0) + m.totalCr;
   });
   const upcomingMonthArr=Object.values(upcomingByMonth).sort((a,b)=>a.month.localeCompare(b.month));
+  const MONTH_WIN=14;
+  const todayYM=(()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;})();
+  const monthDefIdx=(()=>{const i=upcomingMonthArr.findIndex(d=>d.month>=todayYM);return i>=0?Math.max(0,i-2):Math.max(0,upcomingMonthArr.length-MONTH_WIN);})();
+  const monthOffClamped=Math.min(Math.max(monthOff<0?monthDefIdx:monthOff,0),Math.max(0,upcomingMonthArr.length-MONTH_WIN));
+  const upcomingMonthSlice=upcomingMonthArr.slice(monthOffClamped,monthOffClamped+MONTH_WIN);
 
   const fmtC=v=>v>=100?`₹${v.toFixed(0)} Cr`:`₹${v.toFixed(2)} Cr`;
   const SH2=({title,sub})=>(<div style={{marginBottom:12}}><p style={{fontSize:12,fontWeight:900,color:T.tealD,margin:0,textTransform:'uppercase',letterSpacing:0.5}}>{title}</p>{sub&&<p style={{fontSize:10,color:T.textL,margin:'2px 0 0'}}>{sub}</p>}</div>);
@@ -833,8 +839,20 @@ const CollectionsTab = ({T, GC, SH, filters={}, raw}) => {
     <SectionHead title="Month-wise Expected Collections" icon="📅"/>
     <GC style={{padding:16}}>
       <SH2 title="Expected Collection per Month" sub="Based on milestone expected dates from Slab Matrix"/>
+      {upcomingMonthArr.length>MONTH_WIN&&(
+        <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:10}}>
+          <button className="chart-slider-btn" onClick={()=>setMonthOff(Math.max(0,monthOffClamped-1))} disabled={monthOffClamped===0}>‹</button>
+          <div className="chart-slider-track"
+            onClick={e=>{const r=e.currentTarget.getBoundingClientRect();const p=(e.clientX-r.left)/r.width;setMonthOff(Math.round(p*Math.max(0,upcomingMonthArr.length-MONTH_WIN)));}}
+            onMouseDown={e=>{e.preventDefault();const thumb=e.currentTarget.querySelector('.chart-slider-thumb');if(thumb)thumb.classList.add('dragging');const track=e.currentTarget;const move=ev=>{const r=track.getBoundingClientRect();const p=Math.max(0,Math.min(1,(ev.clientX-r.left)/r.width));setMonthOff(Math.round(p*Math.max(0,upcomingMonthArr.length-MONTH_WIN)));};const up=()=>{if(thumb)thumb.classList.remove('dragging');window.removeEventListener('mousemove',move);window.removeEventListener('mouseup',up);};window.addEventListener('mousemove',move);window.addEventListener('mouseup',up);}}
+          >
+            <div className="chart-slider-thumb" style={{left:`${(monthOffClamped/Math.max(1,upcomingMonthArr.length-MONTH_WIN))*(100-MONTH_WIN/upcomingMonthArr.length*100)}%`,width:`${(MONTH_WIN/upcomingMonthArr.length)*100}%`}}/>
+          </div>
+          <button className="chart-slider-btn" onClick={()=>setMonthOff(Math.min(upcomingMonthArr.length-MONTH_WIN,monthOffClamped+1))} disabled={monthOffClamped>=upcomingMonthArr.length-MONTH_WIN}>›</button>
+        </div>
+      )}
       <ResponsiveContainer width="100%" height={220}>
-        <ComposedChart data={upcomingMonthArr.map(d=>({
+        <ComposedChart data={upcomingMonthSlice.map(d=>({
           ...d,
           total: +((d.tlp||0)+(d.clp||0)).toFixed(2)
         }))} margin={{top:28,right:20,bottom:20,left:0}}>
