@@ -312,7 +312,10 @@ def build_area_summary(pdrn_records, invr_records):
     }
 
 
-def build_kpi_extra(pdrn_records):
+FIXED_UNSOLD_RATE = 21500  # Rs/sqft - per instruction, not the type-wise/blended rate
+
+
+def build_kpi_extra(pdrn_records, invr_records=None):
     active = [r for r in pdrn_records if r['status'] == 'ACTIVE']
     cancelled = [r for r in pdrn_records if r['status'] == 'CANCELLED']
     total_bsp = sum(r['bsp'] for r in active)
@@ -321,7 +324,7 @@ def build_kpi_extra(pdrn_records):
     carpet_area = sum(r['carpet'] for r in active)
     cancelled_bsp = sum(r['bsp'] for r in cancelled)
     avg_rate = round(total_bsp / booked_area) if booked_area > 0 else 0
-    return {
+    result = {
         'totalBSPCr': round(total_bsp / 1e7, 1),
         'totalTCVCr': round(total_tcv / 1e7, 1),
         'bookedAreaSqft': round(booked_area),
@@ -329,6 +332,23 @@ def build_kpi_extra(pdrn_records):
         'cancelledBSPCr': round(cancelled_bsp / 1e7, 1),
         'avgRatePerSqft': avg_rate,
     }
+
+    if invr_records is not None:
+        # Unsold value = unsold area (Available + Management Unit) x fixed Rs 21,500/sqft
+        # (not the type-wise/blended sold rate). Total Project Value = Sold BSP (w/o tax) + Unsold Value.
+        unsold_area = sum(r['superArea'] for r in invr_records if r['status'] in ('Available', 'Management Unit'))
+        unsold_value = unsold_area * FIXED_UNSOLD_RATE
+        total_proj = total_bsp + unsold_value
+        sold_pct_value = round(total_bsp / total_proj * 100) if total_proj > 0 else 0
+        result.update({
+            'unsoldAreaSqft': round(unsold_area),
+            'unsoldValueCr': round(unsold_value / 1e7, 2),
+            'totalProjCr': round(total_proj / 1e7, 2),
+            'soldPctValue': sold_pct_value,
+            'unsoldRateNote': f'Unsold Value = Unsold Area x fixed Rs {FIXED_UNSOLD_RATE}/sqft (not type-wise/blended rate)',
+        })
+
+    return result
 
 
 def build_cancelled_status(pdrn_records, invr_records):
@@ -526,7 +546,7 @@ def main():
     d['areaSummary']['byProject'] = [r for r in d['areaSummary'].get('byProject', []) if r.get('project') != EDITION] + [edition_area]
 
     # 10. kpiExtra - rebuild from Edition data (this was Edition-only)
-    d['kpiExtra'] = build_kpi_extra(edition_pdrn)
+    d['kpiExtra'] = build_kpi_extra(edition_pdrn, edition_invr)
 
     # 11. cancelledUnitStatus - GLOBAL aggregate; Sky Arc/Trump cancelled units
     # aren't present in the shared pdrn/invr arrays, so only rebuild Edition's
