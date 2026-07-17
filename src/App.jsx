@@ -2494,9 +2494,6 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                             {sl.map((d,i)=><Cell key={i} fill={d.isCurrent?'#ef4444':'#16a34a'} fillOpacity={d.isCurrent?1:0.85}/>)}
                             <LabelList dataKey="achieved" position="top" style={{fill:'#15803d',fontSize:9,fontWeight:800}} formatter={v=>v>0?Math.round(v).toString():''}/>
                           </Bar>
-
-                          <Line type="monotone" dataKey="projection" name="Adjusted" stroke="#22c55e" strokeWidth={2.5} strokeDasharray="6 2" dot={({cx,cy,payload})=>payload.projection!=null?<circle cx={cx} cy={cy} r={5} fill="#22c55e" stroke="#fff" strokeWidth={2}/>:<g/>} activeDot={{r:6,fill:'#22c55e'}} connectNulls={false}>
-                          </Line>
                         </ComposedChart>
                       </ResponsiveContainer>
                     </>);
