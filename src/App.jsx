@@ -1669,11 +1669,17 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
       const rate=(s&&s.area>0)?(s.bsp/s.area):avgRatePerSqft;
       projRaw += rate*areaByType[t];
     });
-    // If kpiExtra has totalProjCr and unsoldValueCr, use them (more accurate for Sky Arc)
-    // Otherwise use the type-wise calculation
-    const totalProjCr    = dk.totalProjCr || +(projRaw/1e7).toFixed(1);
-    const unsoldValueCr  = dk.unsoldValueCr || +(totalProjCr - totalBSPCr).toFixed(1);
-    const soldPctValue   = dk.soldPctValue || (totalProjCr>0 ? Math.round(totalBSPCr/totalProjCr*100) : 0);
+    // Unsold Value = current month's Target Rate (from monthlyTargets) x Unsold Area
+    // (Available + Management Unit), same rule for all 3 projects - matches the
+    // Target Rate shown in the Rate chart's own tooltip/callout for consistency.
+    const projKeyForTargets = selProj.includes('SKY ARC') ? 'SMARTWORLD SKY ARC'
+                            : selProj.includes('TRUMP')   ? 'TRUMP RESIDENCES GURGAON'
+                            : 'SMARTWORLD THE EDITION';
+    const currentMonthTargetRate = (raw?.monthlyTargets||[]).find(t=>t.projectFilter===projKeyForTargets&&t.label===TODAY_LABEL)?.targetRate || avgRatePerSqft;
+    const unsoldAreaForValue = availAreaSqft + mgmtAreaSqft;
+    const totalProjCr    = +(totalBSPCr + (unsoldAreaForValue*currentMonthTargetRate)/1e7).toFixed(2);
+    const unsoldValueCr  = +((unsoldAreaForValue*currentMonthTargetRate)/1e7).toFixed(2);
+    const soldPctValue   = totalProjCr>0 ? Math.round(totalBSPCr/totalProjCr*100) : 0;
     // Demand Raised sourced from DAPP 'Demand Amount W/O Tax' column (via dapp_kpi.json kpi.all, project-specific)
     const dappAll = raw?.dappKpi?.kpi?.all || {};
     const demandRaisedCr = dappAll.totalDemandWoTax || dk.totalDemandWoTax || +(pAAll.reduce((s,r)=>s+(r.demand||0),0)/1e7).toFixed(1);
