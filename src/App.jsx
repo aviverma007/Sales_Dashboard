@@ -3171,10 +3171,10 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                       <>
                         <div style={{overflowX:'auto',overflowY:'hidden'}}>
                           <div style={{minWidth:slice.length*52+60+'px',paddingLeft:12,paddingRight:12}}>
-                            <ResponsiveContainer width="100%" height={220}>
-                              <ComposedChart data={slice} margin={{top:28,right:24,bottom:56,left:24}}>
+                            <ResponsiveContainer width="100%" height={300}>
+                              <ComposedChart data={slice} margin={{top:28,right:24,bottom:100,left:24}}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.08)" vertical={false}/>
-                                <XAxis dataKey="name" tick={{fill:T.textM,fontSize:8,fontWeight:600}} axisLine={false} tickLine={false} angle={-40} textAnchor="end" interval={0} height={80} tickFormatter={v=>v?.length>22?v.slice(0,22)+'…':v}/>
+                                <XAxis dataKey="name" tick={{fill:T.textM,fontSize:8,fontWeight:600}} axisLine={false} tickLine={false} angle={-40} textAnchor="end" interval={0} height={110} tickFormatter={v=>v?.length>22?v.slice(0,22)+'…':v}/>
                                 <YAxis tick={{fill:T.textM,fontSize:12}} axisLine={false} tickLine={false} width={24} domain={[0,maxU+10]}/>
                                 <Tooltip content={({active,payload,label})=>{
                                   if(!active||!payload?.length)return null;
