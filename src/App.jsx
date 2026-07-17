@@ -2902,7 +2902,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     if(!data.length)return<p style={{color:T.textL,fontSize:11,textAlign:'center',padding:20}}>Select a project to view tower data</p>;
                     return(
                       <ResponsiveContainer width="100%" height={240}>
-                        <ComposedChart data={data} margin={{top:24,right:12,bottom:24,left:0}} barGap={2}>
+                        <ComposedChart data={data} margin={{top:32,right:12,bottom:24,left:0}} barGap={2}>
                           <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.08)" vertical={false}/>
                           <XAxis dataKey="tower" tick={{fill:T.textM,fontSize:11,fontWeight:700}} axisLine={false} tickLine={false}/>
                           <YAxis tick={{fill:T.textM,fontSize:12}} axisLine={false} tickLine={false} width={40} tickFormatter={v=>v?v.toLocaleString('en-IN'):''} domain={['auto','auto']}/>
@@ -2910,11 +2910,11 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                           <Legend wrapperStyle={{fontSize:10,fontWeight:700}} iconSize={8} formatter={v=>FY_LABELS[v]||v}/>
                           {FYS.map(fy=>(
                             <Bar key={fy} dataKey={fy} name={fy} fill={FY_COLORS[fy]} radius={[3,3,0,0]} barSize={18}>
-                              <LabelList dataKey={fy} position="top" style={{fill:FY_COLORS[fy],fontSize:7,fontWeight:700}} formatter={v=>v?v.toLocaleString('en-IN'):''}/>
+                              <LabelList dataKey={fy} position="top" style={{fill:FY_COLORS[fy],fontSize:12,fontWeight:900}} formatter={v=>v?v.toLocaleString('en-IN'):''}/>
                             </Bar>
                           ))}
                           <Line type="monotone" dataKey="avg" name="Average" stroke="#22c55e" strokeWidth={2} dot={{r:4,fill:'#22c55e',stroke:'#fff',strokeWidth:1.5}} activeDot={{r:6}}>
-                            <LabelList dataKey="overall" position="top" style={{fill:'#16a34a',fontSize:8,fontWeight:800}} formatter={v=>v?v.toLocaleString('en-IN'):''}/>
+                            <LabelList dataKey="avg" position="top" style={{fill:'#15803d',fontSize:12,fontWeight:900}} formatter={v=>v?v.toLocaleString('en-IN'):''}/>
                           </Line>
                         </ComposedChart>
                       </ResponsiveContainer>
