@@ -2736,8 +2736,8 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                             </div>
                             <div style={{background:'rgba(255,255,255,0.9)',border:'1.5px solid rgba(0,100,140,0.15)',borderRadius:8,padding:'8px 10px',flex:1}}>
                               <p style={{fontSize:10,fontWeight:800,color:'#1a237e',margin:'0 0 6px'}}>Rate (Target Vs Actual)</p>
-                              <p style={{fontSize:10,fontWeight:700,color:'#e65100',margin:'0 0 2px'}}>New Rate of {requiredRate.toLocaleString('en-IN')}</p>
-                              <p style={{fontSize:9,color:'#37474f',margin:0}}>required against ₹{currentAvgRate.toLocaleString('en-IN')} (current avg rate) to maintain AOP TSV of ₹{((soldTCVVal+(availAreaR*requiredRate))/1e7).toFixed(0)} Cr</p>
+                              <p style={{fontSize:10,fontWeight:700,color:'#e65100',margin:'0 0 2px'}}>New required rate of {requiredRate.toLocaleString('en-IN')}</p>
+                              <p style={{fontSize:9,color:'#37474f',margin:0}}>required against ₹{currentAvgRate.toLocaleString('en-IN')} (Target Rate) to maintain AOP TSV of ₹{((soldTCVVal+(availAreaR*requiredRate))/1e7).toFixed(0)} Cr</p>
                             </div>
                           </div>
                         )}
