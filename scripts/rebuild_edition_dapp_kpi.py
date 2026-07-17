@@ -36,6 +36,34 @@ CONSTRUCTION_KW = ['floor', 'slab', 'excavation', 'structure', 'occupation certi
                    'occupat', 'possession', 'flooring', 'finishing work', 'plaster',
                    'top floor', 'basement', 'plinth']
 
+MONTHS = {'jan': 1, 'feb': 2, 'mar': 3, 'apr': 4, 'may': 5, 'jun': 6,
+          'jul': 7, 'aug': 8, 'sep': 9, 'oct': 10, 'nov': 11, 'dec': 12}
+
+
+def extract_date(text):
+    """Pull an explicit calendar date out of milestone text, e.g.
+    'On or Before 15th May 2024', 'On or Before 28-01-2026', or
+    'On or before 14th-Sep-2025'. Returns a datetime or None."""
+    t = (text or '').replace('\xa0', ' ')
+    m = re.search(r"(\d{1,2})(?:st|nd|rd|th)?[\s-]+([A-Za-z]+)'?[\s-]*(\d{4}|\d{2})\b", t)
+    if m:
+        mon_txt = m.group(2)[:3].lower()
+        if mon_txt in MONTHS:
+            year = int(m.group(3))
+            if year < 100:
+                year += 2000
+            try:
+                return datetime(year, MONTHS[mon_txt], int(m.group(1)))
+            except ValueError:
+                pass
+    m2 = re.search(r'(\d{1,2})-(\d{1,2})-(\d{4})', t)
+    if m2:
+        try:
+            return datetime(int(m2.group(3)), int(m2.group(2)), int(m2.group(1)))
+        except ValueError:
+            pass
+    return None
+
 
 def num(v):
     try:
@@ -100,13 +128,20 @@ def short_name(milestone, mtype):
         return 'Booking Amount'
     if nl == 'on allotment':
         return 'On Allotment'
+    # TLP "after" - interval from allotment/booking - keep each interval as its
+    # own row (60 days is not the same milestone as 90 days)
     m2 = re.search(r'within\s+(\d+)\s*(days|months)', nl)
     if m2:
-        return f"Within {m2.group(1)} {m2.group(2).title()} of Allotment"
-    if 'execution' in nl or 'signing' in nl:
-        return 'Agreement Execution'
-    # fallback: pure fixed date with no other description
-    return 'Fixed-Date Installment'
+        anchor = 'Booking' if 'booking' in nl else 'Allotment'
+        return f"After {m2.group(1)} {m2.group(2).title()} of {anchor}"
+    # TLP "before" - a fixed calendar date, with or without an "execution/
+    # signing" description - keep each date as its own row rather than
+    # collapsing every fixed-date milestone into one generic bucket
+    d = extract_date(n)
+    if d:
+        return f"Before {d.day} {d.strftime('%b %Y')}"
+    # fallback: no recognizable date or keyword at all
+    return n if len(n) <= 40 else n[:40].rstrip()
 
 
 def _ord_suffix(n):
@@ -297,7 +332,10 @@ def main():
         dates = milestone_dates.get(sname, [])
         entry['expectedDate'] = max(dates) if dates else SLAB_MATRIX_DATES.get(sname, '')
         prefix = 'CLP' if mtype == 'clp' else 'TLP'
-        entry['shortName'] = f"{prefix} \u2014 {sname}"
+        if sname.startswith('Before ') or sname.startswith('After '):
+            entry['shortName'] = sname  # already self-descriptive, no need for a redundant TLP prefix
+        else:
+            entry['shortName'] = f"{prefix} \u2014 {sname}"
         milestonesUpcoming.append(entry)
 
     out = {

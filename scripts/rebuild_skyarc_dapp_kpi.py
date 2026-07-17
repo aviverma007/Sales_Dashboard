@@ -5,10 +5,22 @@ rebuild_skyarc_dapp_kpi.py
 Rebuilds public/data/skyarc_dapp_kpi.json (Sky Arc Demand & Collection page KPIs)
 from public/data/skyarc_dapp.XLSX.
 
-Classification (per documented Sky Arc convention, confirmed against the new
-file): CLP if "Payment Plan Name" contains the literal text "CLP", else TLP.
-Sky Arc's plan names actually contain this text (unlike Edition/Trump), so
-no milestone-content classification is needed here.
+Classification is now by MILESTONE CONTENT (same rule as Edition), not by
+Payment Plan Name - this guarantees each milestone appears in exactly one
+row, since a milestone's meaning doesn't change depending on which plan
+happened to bill it. See rebuild_edition_dapp_kpi.py for the full rationale.
+
+  CLP = construction event (floor/slab, excavation, structure, OC,
+        possession, flooring, finishing, plaster, basement/plinth/top
+        floor), OR hybrid event-or-date ("whichever is later/earlier" -
+        date is just a backstop on a real construction milestone), OR
+        booking-stage (Booking Amount/On Allotment), OR a time offset
+        anchored to a construction event.
+  TLP  = "Before <date>" - a pure fixed calendar date with no construction
+         anchor. Each distinct date is its OWN row - never collapsed into
+         one generic bucket.
+       = "After X Days/Months of Allotment/Booking" - a relative interval
+         with no construction anchor. Each distinct interval is its own row.
 
 Tower mapping for the milestone table: TA->T1, TB->T2, TC->T3, TD->T4,
 TE->T5, TF->T6 (fixed positional mapping, per doc).
@@ -19,6 +31,7 @@ Usage:
 import openpyxl
 import json
 import os
+import re
 from datetime import datetime
 from collections import defaultdict
 
@@ -27,6 +40,13 @@ FNAME = 'skyarc_dapp.XLSX'
 OUT = 'skyarc_dapp_kpi.json'
 
 TOWER_MAP = {'TA': 'T1', 'TB': 'T2', 'TC': 'T3', 'TD': 'T4', 'TE': 'T5', 'TF': 'T6'}
+
+CONSTRUCTION_KW = ['floor', 'slab', 'excavation', 'structure', 'occupation certificate',
+                   'occupat', 'possession', 'flooring', 'finishing work', 'plaster',
+                   'top floor', 'basement', 'plinth']
+
+MONTHS = {'jan': 1, 'feb': 2, 'mar': 3, 'apr': 4, 'may': 5, 'jun': 6,
+          'jul': 7, 'aug': 8, 'sep': 9, 'oct': 10, 'nov': 11, 'dec': 12}
 
 
 def num(v):
@@ -46,33 +66,100 @@ def load_rows():
     return rows
 
 
-def classify(payment_plan_name):
-    return 'clp' if 'CLP' in (payment_plan_name or '').upper() else 'tlp'
+def extract_date(text):
+    t = (text or '').replace(' ', ' ')
+    m = re.search(r"(\d{1,2})(?:st|nd|rd|th)?[\s-]+([A-Za-z]+)'?[\s-]*(\d{4}|\d{2})\b", t)
+    if m:
+        mon_txt = m.group(2)[:3].lower()
+        if mon_txt in MONTHS:
+            year = int(m.group(3))
+            if year < 100:
+                year += 2000
+            try:
+                return datetime(year, MONTHS[mon_txt], int(m.group(1)))
+            except ValueError:
+                pass
+    m2 = re.search(r'(\d{1,2})-(\d{1,2})-(\d{4})', t)
+    if m2:
+        try:
+            return datetime(int(m2.group(3)), int(m2.group(2)), int(m2.group(1)))
+        except ValueError:
+            pass
+    return None
+
+
+def classify(milestone):
+    n = (milestone or '').lower()
+    has_constr = any(k in n for k in CONSTRUCTION_KW) or bool(re.search(r'\boc\b', n))
+    if 'whichever is later' in n or 'whichever is earlier' in n:
+        return 'clp'
+    if has_constr:
+        return 'clp'
+    if 'booking amount' in n or n.strip() in ('on booking', 'on allotment'):
+        return 'clp'
+    if re.search(r'from application of', n) or re.search(r'from\s+occupat', n):
+        return 'clp'
+    return 'tlp'
+
+
+def short_name(milestone):
+    n = (milestone or '').strip()
+    nl = n.lower()
+
+    m = re.search(r'(\d+)\s*(st|nd|rd|th)?\s*floor', nl)
+    if m and 'flooring' not in nl:
+        return f"{m.group(1)}{_ord_suffix(int(m.group(1)))} Floor Slab"
+    if 'top floor' in nl:
+        return 'Top Floor Slab'
+    if 'occupation certificate' in nl or re.search(r'\boc\b', nl) or 'occupat' in nl:
+        return 'OC Application'
+    if 'possession' in nl:
+        return 'Possession'
+    if 'finishing work' in nl:
+        return 'Finishing Work'
+    if 'plaster' in nl:
+        return 'External Plaster'
+    if 'structure' in nl:
+        return 'Structure Complete'
+    if 'flooring' in nl:
+        return 'Flooring'
+    if 'basement' in nl:
+        return 'Upper Basement'
+    if 'plinth' in nl:
+        return 'Plinth'
+    if 'excavation' in nl:
+        return 'Excavation Complete' if 'complet' in nl else 'Excavation Start'
+    if 'booking amount' in nl or nl in ('on booking',):
+        return 'Booking Amount'
+    if nl == 'on allotment':
+        return 'On Allotment'
+    m2 = re.search(r'within\s+(\d+)\s*(days|months)', nl)
+    if m2:
+        anchor = 'Booking' if 'booking' in nl else 'Allotment'
+        return f"After {m2.group(1)} {m2.group(2).title()} of {anchor}"
+    d = extract_date(n)
+    if d:
+        return f"Before {d.day} {d.strftime('%b %Y')}"
+    return n if len(n) <= 40 else n[:40].rstrip()
+
+
+def _ord_suffix(n):
+    if 11 <= n % 100 <= 13:
+        return 'th'
+    return {1: 'st', 2: 'nd', 3: 'rd'}.get(n % 10, 'th')
 
 
 # Dates from Sky Arc schedule (11__Sky_Arc_schedule_-_Update-01_Jul_26_.xlsx,
 # 'Summary' sheet, CRM Milestone Completions table). Using the latest tower's
 # actual/CRM date, same MAX-across-towers convention as Edition's slab matrix.
-# Substring-matched against the lowercased milestone text since Sky Arc's
-# milestones are compound phrases ("Within X months ... or On completion of
-# Nth floor Slab (whichever is later)"). Milestones with no explicit date in
-# the schedule (OC Application, Possession, Super Structure) are left blank
-# rather than interpolated/guessed.
-SLAB_SCHEDULE_KEYWORDS = [
-    ('40th floor slab', '2027-10'),
-    ('30th floor slab', '2027-04'),
-    ('20th floor slab', '2026-11'),
-    ('5th floor slab', '2026-07'),
-    ('external plaster', '2028-04'),
-    ('flooring', '2028-11'),
-]
-
-
-def slab_schedule_lookup(mkey):
-    for kw, date in SLAB_SCHEDULE_KEYWORDS:
-        if kw in mkey:
-            return date
-    return ''
+SLAB_SCHEDULE_DATES = {
+    '40th Floor Slab': '2027-10',
+    '30th Floor Slab': '2027-04',
+    '20th Floor Slab': '2026-11',
+    '5th Floor Slab': '2026-07',
+    'External Plaster': '2028-04',
+    'Flooring': '2028-11',
+}
 
 
 def to_month(v):
@@ -106,15 +193,14 @@ def main():
     milestone_acc = defaultdict(lambda: defaultdict(float))
     milestone_type = {}
     milestone_dates = defaultdict(list)
-    milestone_display_name = {}
 
     adv_raw = {t: 0.0 for t in ('tlp', 'clp')}
     adv_raw_all = 0.0
 
     for r in rows:
-        plan = r.get('Payment Plan Name') or ''
-        mtype = classify(plan)
         milestone = (r.get('Milestone') or '').strip()
+        mtype = classify(milestone)
+        sname = short_name(milestone)
 
         demand = num(r.get('Demand Amount W/O Tax'))
         installment = num(r.get('Installment Amount'))
@@ -148,18 +234,14 @@ def main():
             mk[f'{mtype}_dem'] += demand
             mk[f'{mtype}_rec'] += recv_wot
 
-        # milestone rollup - grouped by case-insensitive, whitespace-trimmed
-        # Milestone text + type (per doc 6.4 normalization), using Installment
-        # Amount (full scheduled plan value), same convention as Edition
-        norm_key = (milestone.lower().strip(), mtype)
-        acc = milestone_acc[norm_key]
+        # milestone rollup - grouped by shortName (semantic, content-derived),
+        # not raw text or plan type - guarantees one row per unique milestone
+        acc = milestone_acc[sname]
         acc['totalCr'] += installment
         acc[tower_raw] = acc.get(tower_raw, 0) + installment
-        milestone_type[norm_key] = mtype
-        if norm_key not in milestone_display_name:
-            milestone_display_name[norm_key] = milestone
+        milestone_type[sname] = mtype
         if due_month:
-            milestone_dates[norm_key].append(due_month)
+            milestone_dates[sname].append(due_month)
 
     def round_bucket(b):
         return {k: round(v / 1e7, 2) for k, v in b.items()}
@@ -182,7 +264,6 @@ def main():
     advance_note = (f"\u26a0\ufe0f Advance Money: \u20b9{adv_all_raw} Cr received before SAP demand was raised. "
                     f"GST @5% back-calculated (\u20b9{adv_all_gst} Cr) to show net W/O Tax of \u20b9{adv_all_net} Cr.")
 
-    # towerKpi - use real tower codes (TA..TF), fixing the old "TTF" typo
     tower_order = ['TA', 'TB', 'TC', 'TD', 'TE', 'TF']
     towerKpi = []
     for t in tower_order:
@@ -225,20 +306,22 @@ def main():
         })
 
     milestonesUpcoming = []
-    for (mkey, mtype), acc in sorted(milestone_acc.items(), key=lambda x: -x[1]['totalCr']):
-        mname = milestone_display_name.get((mkey, mtype), mkey)
+    for sname, acc in sorted(milestone_acc.items(), key=lambda x: -x[1]['totalCr']):
+        mtype = milestone_type[sname]
         entry = {
-            'name': mname,
+            'name': sname,
             'type': mtype,
             'totalCr': round(acc['totalCr'] / 1e7, 2),
         }
         for raw_t, mapped_t in TOWER_MAP.items():
             entry[mapped_t] = round(acc.get(raw_t, 0) / 1e7, 2)
-        dates = milestone_dates.get((mkey, mtype), [])
-        entry['expectedDate'] = max(dates) if dates else slab_schedule_lookup(mkey)
-        short = mname if len(mname) <= 32 else mname[:32].rstrip()
+        dates = milestone_dates.get(sname, [])
+        entry['expectedDate'] = max(dates) if dates else SLAB_SCHEDULE_DATES.get(sname, '')
         prefix = 'CLP' if mtype == 'clp' else 'TLP'
-        entry['shortName'] = f"{prefix} \u2014 {short}"
+        if sname.startswith('Before ') or sname.startswith('After '):
+            entry['shortName'] = sname
+        else:
+            entry['shortName'] = f"{prefix} \u2014 {sname}"
         milestonesUpcoming.append(entry)
 
     out = {
