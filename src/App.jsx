@@ -2964,24 +2964,25 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                 <GC style={{padding:16}}>
                   <SH title="Type Wise % Sale" sub="Units sold vs unsold per unit type · % sold line · all projects unless filtered"/>
                   {(()=>{
-                    // bhkS is already filtered by iF (invr filtered) + pA (pdrn filtered) — works for all projects
-                    const SHORTEN=v=>{
-                      if(!v)return'';
-                      if(v.startsWith('TYPE '))return v.replace('- 3BHK + STUDY + UTILITY','- 3BHK').replace('- 4BHK + STUDY + 2 UTILITY','- 4BHK').replace('- 4BHK + STUDY + UTILITY','- 4BHK').replace('- 2BHK + STUDY + UTILITY','- 2BHK');
-                      return v.length>14?v.slice(0,14)+'…':v;
-                    };
-                    const EDITION_ORDER=['TYPE A- 3BHK + STUDY + UTILITY','TYPE A1- 3BHK + STUDY + UTILITY','TYPE B- 4BHK + STUDY + UTILITY','TYPE B1- 4BHK + STUDY + UTILITY','TYPE D- 3BHK + STUDY + UTILITY','TYPE E- 4BHK + STUDY + 2 UTILITY','TYPE F- 4BHK + STUDY + 2 UTILITY','TYPE G- 4BHK + STUDY + 2 UTILITY','TYPE C- 2BHK + STUDY + UTILITY'];
-                    const selProjs=filters.project?filters.project.split('||').filter(Boolean):[];
-                    const editionOnly=selProjs.length===1&&selProjs[0]==='SMARTWORLD THE EDITION';
-                    let sorted=[...bhkS];
-                    if(editionOnly){
-                      const orderMap={};EDITION_ORDER.forEach((k,i)=>orderMap[k]=i);
-                      sorted=sorted.sort((a,b)=>(orderMap[a.bhk]??99)-(orderMap[b.bhk]??99));
-                    } else {
-                      sorted=sorted.sort((a,b)=>b.booked-a.booked);
-                    }
+                    // Collapse the many project-specific sub-types (e.g. Edition's
+                    // "TYPE A- 3BHK...", Sky Arc's "3BHK+UTILITY - TYPE 3", Trump's
+                    // "4BHK+UTILITY (DX-ODD) TYPE-3") into simple 2BHK/3BHK/4BHK/...
+                    // buckets by BHK count, across all projects.
+                    const bhkCount=v=>{const m=(v||'').match(/(\d)\s*BHK/i);return m?m[1]+' BHK':'Other';};
+                    const grouped={};
+                    bhkS.forEach(r=>{
+                      const key=bhkCount(r.bhk);
+                      if(!grouped[key])grouped[key]={bhk:key,booked:0,total:0,areaSum:0,areaCount:0};
+                      grouped[key].booked+=r.booked;
+                      grouped[key].total+=r.total;
+                      if(r.avgArea>0&&r.booked>0){grouped[key].areaSum+=r.avgArea*r.booked;grouped[key].areaCount+=r.booked;}
+                    });
+                    let sorted=Object.values(grouped).sort((a,b)=>{
+                      const na=parseInt(a.bhk)||99, nb=parseInt(b.bhk)||99;
+                      return na-nb;
+                    }).map(r=>({...r,available:Math.max(0,r.total-r.booked),avgArea:r.areaCount>0?Math.round(r.areaSum/r.areaCount):0}));
                     const data=sorted.filter(r=>r.total>0).map(r=>({
-                      label:SHORTEN(r.bhk),
+                      label:r.bhk,
                       sold:r.booked,
                       unsold:r.available,
                       total:r.total,
