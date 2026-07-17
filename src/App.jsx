@@ -3169,38 +3169,39 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const maxU=Math.max(...slice.map(d=>d.units),1);
                     return(
                       <>
-                        <div style={{display:'flex',justifyContent:'center',paddingTop:12,paddingBottom:12}}>
-                          <div style={{overflowX:'auto',overflowY:'hidden'}}>
-                            <div style={{minWidth:slice.length*52+60+'px',paddingLeft:12,paddingRight:12}}>
-                              <ResponsiveContainer width="100%" height={280}>
-                              <ComposedChart data={slice} margin={{top:28,right:24,bottom:80,left:24}}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.08)" vertical={false}/>
-                                <XAxis dataKey="name" tick={{fill:T.textM,fontSize:9,fontWeight:700}} axisLine={false} tickLine={false} angle={-90} textAnchor="middle" interval={0} height={80} tickFormatter={v=>v?.length>22?v.slice(0,22)+'…':v}/>
-                                <YAxis tick={{fill:T.textM,fontSize:12}} axisLine={false} tickLine={false} width={24} domain={[0,maxU+10]}/>
+                        <div style={{display:'flex',justifyContent:'center',paddingTop:8,paddingBottom:8}}>
+                          <div style={{overflowX:'auto',overflowY:'hidden',width:'100%'}}>
+                            <div style={{minWidth:slice.length*65+80+'px',paddingLeft:16,paddingRight:16}}>
+                              <ResponsiveContainer width="100%" height={320}>
+                              <ComposedChart data={slice} margin={{top:32,right:32,bottom:70,left:44}}>
+                                <CartesianGrid strokeDasharray="4 4" stroke="rgba(0,60,100,0.12)" vertical={false}/>
+                                <XAxis dataKey="name" tick={{fill:T.textM,fontSize:9,fontWeight:700}} axisLine={{stroke:'rgba(0,100,140,0.2)'}} tickLine={false} angle={-90} textAnchor="middle" interval={0} height={70} tickFormatter={v=>v?.length>20?v.slice(0,20)+'…':v}/>
+                                <YAxis tick={{fill:T.textM,fontSize:11,fontWeight:600}} axisLine={{stroke:'rgba(0,100,140,0.2)'}} tickLine={false} width={40} domain={[0,maxU+15]} label={{value:'Units',angle:-90,position:'insideLeft',offset:10,style:{fill:T.textM,fontWeight:700,fontSize:11}}}/>
                                 <Tooltip content={({active,payload,label})=>{
                                   if(!active||!payload?.length)return null;
                                   const d=slice.find(r=>r.name===label)||{};
-                                  return(<div style={{background:'#fff',border:'1px solid #e5e7eb',borderRadius:8,padding:'8px 12px',fontSize:12,boxShadow:'0 2px 8px rgba(0,0,0,0.1)'}}>
-                                    <p style={{margin:'0 0 4px',fontWeight:800,color:T.navy,fontSize:12}}>{label}</p>
-                                    <p style={{margin:'0 0 2px',color:T.tealD}}>Units: <strong>{d.units}</strong></p>
-                                    <p style={{margin:'0 0 2px',color:T.amber}}>BSP: <strong>₹{d.bspCr} Cr</strong></p>
-                                    <p style={{margin:0,color:'#7c3aed'}}>Avg Rate: <strong>₹{(d.avgRate||0).toLocaleString('en-IN')}/sqft</strong></p>
+                                  return(<div style={{background:'#fff',border:'1px solid rgba(0,151,167,0.25)',borderRadius:10,padding:'10px 14px',fontSize:11,boxShadow:'0 4px 16px rgba(0,80,120,0.2)',fontWeight:600}}>
+                                    <p style={{margin:'0 0 6px',fontWeight:900,color:T.navy,fontSize:12}}>{label}</p>
+                                    <p style={{margin:'0 0 3px',color:T.tealD}}>📊 Units: <strong>{d.units}</strong></p>
+                                    <p style={{margin:'0 0 3px',color:T.amber}}>💰 BSP: <strong>₹{d.bspCr} Cr</strong></p>
+                                    <p style={{margin:0,color:'#7c3aed'}}>📈 Avg Rate: <strong>₹{(d.avgRate||0).toLocaleString('en-IN')}/sqft</strong></p>
                                   </div>);
                                 }}/>
+                                <Legend wrapperStyle={{fontSize:10,fontWeight:700,paddingTop:12}} iconSize={10}/>
                                 <defs>
                                   <linearGradient id="cpLineGrad" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor={T.teal} stopOpacity={0.15}/>
+                                    <stop offset="5%" stopColor={T.teal} stopOpacity={0.2}/>
                                     <stop offset="95%" stopColor={T.teal} stopOpacity={0}/>
                                   </linearGradient>
                                 </defs>
-                                <Area type="monotone" dataKey="units" fill="url(#cpLineGrad)" stroke="none"/>
-                                <Line type="monotone" dataKey="units" name="Units" stroke={T.tealD} strokeWidth={2.5} dot={({cx,cy,index})=>(
-                                  <circle key={index} cx={cx} cy={cy} r={index===0?6:4} fill={index===0?T.tealD:T.teal} stroke="#fff" strokeWidth={1.5}/>
-                                )} activeDot={{r:7,fill:T.tealD,stroke:'#fff',strokeWidth:2}}>
-                                  <LabelList dataKey="units" position="top" style={{fill:T.navy,fontSize:10,fontWeight:800}}/>
+                                <Area type="monotone" dataKey="units" fill="url(#cpLineGrad)" stroke="none" isAnimationActive={false}/>
+                                <Line type="monotone" dataKey="units" name="Units Booked" stroke={T.tealD} strokeWidth={3} dot={({cx,cy,index})=>(
+                                  <circle key={index} cx={cx} cy={cy} r={index===0?7:5} fill={index===0?T.tealD:T.teal} stroke="#fff" strokeWidth={2}/>
+                                )} activeDot={{r:8,fill:T.tealD,stroke:'#fff',strokeWidth:2.5}}>
+                                  <LabelList dataKey="units" position="top" offset={8} style={{fill:T.navy,fontSize:11,fontWeight:800}}/>
                                 </Line>
-                                <Line type="monotone" dataKey="bspCr" name="₹Cr" stroke={T.amber} strokeWidth={1.5} strokeDasharray="4 3" dot={{r:3,fill:T.amber,stroke:'#fff',strokeWidth:1}} activeDot={{r:5}}>
-                                  <LabelList dataKey="bspCr" position="insideTopRight" style={{fill:T.amber,fontSize:7,fontWeight:700}} formatter={v=>'₹'+v}/>
+                                <Line type="monotone" dataKey="bspCr" name="BSP (₹Cr)" stroke={T.amber} strokeWidth={2} strokeDasharray="5 4" dot={{r:4,fill:T.amber,stroke:'#fff',strokeWidth:1.5}} activeDot={{r:6}}>
+                                  <LabelList dataKey="bspCr" position="insideTopRight" offset={6} style={{fill:T.amber,fontSize:8,fontWeight:700}} formatter={v=>v>0?'₹'+v.toFixed(1):''}/>
                                 </Line>
                               </ComposedChart>
                             </ResponsiveContainer>
