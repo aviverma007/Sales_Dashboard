@@ -2928,10 +2928,9 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                               <p style={{margin:0,color:T.textM}}>{d.count} booking{d.count>1?'s':''}</p>
                             </div>);
                           }}/>
+                          <Line type="monotone" dataKey="avgRate" name="Monthly Avg" stroke={T.tealD} strokeWidth={2}
+                            dot={{r:7,fill:T.teal,stroke:'#fff',strokeWidth:1.5}} activeDot={{r:9}}/>
                           <Line type="linear" dataKey="trend" stroke="#22c55e" strokeWidth={2.5} dot={false} strokeDasharray="6 3" name="Trend"/>
-                          <Scatter dataKey="avgRate" name="Monthly Avg" fill={T.teal}>
-                            {withTrend.map((_,i)=><Cell key={i} r={7} fill={T.teal} fillOpacity={0.85}/>)}
-                          </Scatter>
                           <Legend wrapperStyle={{fontSize:10,fontWeight:700}} iconSize={8}
                             payload={[{value:'Monthly Avg',type:'circle',color:T.teal},{value:'Trend',type:'line',color:'#22c55e'}]}/>
                         </ComposedChart>
