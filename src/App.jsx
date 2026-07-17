@@ -1659,8 +1659,8 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
     // Demand Raised sourced from DAPP 'Demand Amount W/O Tax' column (via dapp_kpi.json kpi.all, project-specific)
     const dappAll = raw?.dappKpi?.kpi?.all || {};
     const demandRaisedCr = dappAll.totalDemandWoTax || dk.totalDemandWoTax || +(pAAll.reduce((s,r)=>s+(r.demand||0),0)/1e7).toFixed(1);
-    // Collected = DAPP 'Received Amount' (W/O Tax); Outstanding = DAPP 'Outstanding Amount'
-    const collectedCr    = dappAll.totalReceivedWoT || dk.totalReceivedWoT || +(pAAll.reduce((s,r)=>s+(r.received||0),0)/1e7).toFixed(1);
+    // Collected sourced from PDRN 'Total Received' column (active bookings)
+    const collectedCr    = +(pAAll.reduce((s,r)=>s+(r.received||0),0)/1e7).toFixed(1);
     const outstandingCr  = dappAll.totalOutstanding || dk.totalOutstanding || +(pAAll.reduce((s,r)=>s+Math.max((r.demand||0)-(r.received||0),0),0)/1e7).toFixed(1);
     return {
       bookedAreaSqft, carpetAreaSqft, availAreaSqft, totalSuperArea,
