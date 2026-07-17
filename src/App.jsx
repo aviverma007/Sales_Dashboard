@@ -1950,7 +1950,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
           const label=isSingle?(m?.name||m?.label||projs[0]):`${allMeta.length} Projects`;
           const fields=[
             {icon:'🌍',label:'Land Area',val:landAreaVal,color:T.teal},
-            {icon:'🏗️',label:'Builtup Area',val:isSingle&&m?(m.builtupArea||m.builtupSqft||'—'):`${(parseFloat(sumBuiltup)*100000).toLocaleString('en-IN')} sq ft`,color:'#7c3aed'},
+            {icon:'🏗️',label:'Builtup Area',val:isSingle&&m?(m.builtupArea||m.builtupSqft||'—'):`${(parseFloat(sumBuiltup)/100000).toFixed(2)} Lakh sq ft`,color:'#7c3aed'},
             {icon:'📐',label:'Saleable Area',val:`${sumSaleable} Lakh sq ft`,color:T.amber},
             ...(isSingle&&m?[
               {icon:'🚀',label:'Launch Date',val:m.launchDate,color:'#0097a7'},
