@@ -176,6 +176,7 @@ def main():
         sname = short_name(milestone, mtype)
 
         demand = num(r.get('Demand Amount W/O Tax'))
+        installment = num(r.get('Installment Amount'))
         bank = num(r.get('Received Amt (in Bank)'))
         cgst = num(r.get('CGST'))
         sgst = num(r.get('SGST'))
@@ -210,8 +211,8 @@ def main():
             mk[f'{mtype}_rec'] += recv_wot
 
         # milestone rollup (grouped by shortName, not raw text)
-        milestone_acc[sname]['totalCr'] += demand
-        milestone_acc[sname][f'{tower}'] = milestone_acc[sname].get(tower, 0) + demand
+        milestone_acc[sname]['totalCr'] += installment
+        milestone_acc[sname][f'{tower}'] = milestone_acc[sname].get(tower, 0) + installment
         milestone_type[sname] = mtype
         if due_month:
             milestone_dates[sname].append(due_month)
