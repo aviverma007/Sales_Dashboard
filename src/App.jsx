@@ -975,7 +975,7 @@ const CollectionsTab = ({T, GC, SH, filters={}, raw}) => {
                 <td style={{padding:'8px 10px',textAlign:'right'}}>
                   <span style={{background:m.type==='tlp'?'rgba(245,158,11,0.12)':'rgba(0,151,167,0.12)',color:m.type==='tlp'?T.amber:T.tealD,borderRadius:4,padding:'3px 8px',fontSize:10,fontWeight:800}}>{m.type.toUpperCase()}</span>
                 </td>
-                <td style={{padding:'8px 10px',textAlign:'right',color:T.textM,fontWeight:600,fontSize:12}}>{m.expectedDate||'—'}</td>
+                <td style={{padding:'8px 10px',textAlign:'right',color:T.textM,fontWeight:600,fontSize:12}}>{(()=>{const d=m.expectedDate;if(!d)return'—';const p=d.match(/^(\d{4})-(\d{2})$/);if(!p)return d;const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];return months[parseInt(p[2])-1]+' '+p[1];})()}</td>
                 {['T1','T2','T3','T4','T5','T6'].map(t=>(
                   <td key={t} style={{padding:'8px 10px',textAlign:'right',color:m[t]>0?T.tealD:T.textL,fontWeight:m[t]>0?700:400,fontSize:12}}>{m[t]>0?`₹${m[t]}`:'-'}</td>
                 ))}
