@@ -1,11 +1,11 @@
 {
   "kpi": {
     "all": {
-      "totalInstallment": 1156.49,
+      "totalInstallment": 1177.11,
       "totalReceivedBank": 1408.64,
-      "totalReceivedWoT": 1339.86,
-      "totalOutstanding": 32.45,
-      "totalDemandWoTax": 1156.49,
+      "totalReceivedWoT": 1211.48,
+      "totalOutstanding": 34.92,
+      "totalDemandWoTax": 1177.11,
       "advanceAmt": 230.13,
       "advanceNet": 219.17,
       "advanceGst": 10.96
