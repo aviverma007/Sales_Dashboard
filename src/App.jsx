@@ -2995,7 +2995,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                       <div style={{overflowX:needsScroll?'auto':'visible',overflowY:'hidden',paddingBottom:4}}>
                         <div style={{width:needsScroll?innerW+'px':'100%',minWidth:'100%'}}>
                           <ResponsiveContainer width="100%" height={240}>
-                            <ComposedChart data={data} margin={{top:18,right:40,bottom:52,left:0}} barSize={Math.max(18,Math.min(28,Math.floor(innerW/Math.max(data.length,1)-8)))}>
+                            <ComposedChart data={data} margin={{top:34,right:40,bottom:52,left:0}} barSize={Math.max(18,Math.min(28,Math.floor(innerW/Math.max(data.length,1)-8)))}>
                               <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.08)" vertical={false}/>
                               <XAxis dataKey="label" axisLine={false} tickLine={false} interval={0} height={68}
                                 tick={({x,y,payload})=>{
@@ -3022,7 +3022,17 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                               }}/>
                               <Legend wrapperStyle={{fontSize:10,fontWeight:700,paddingTop:4}} iconSize={8}/>
                               <Bar yAxisId="left" dataKey="sold" name="Units Sold" stackId="s" fill={T.tealD} fillOpacity={0.9} radius={[0,0,3,3]}>
-                                <LabelList dataKey="pct" position="insideTop" offset={6} formatter={v=>v+'%'} style={{fill:'#fff',fontSize:8,fontWeight:800}}/>
+                                <LabelList content={({x,y,width,value})=>{
+                                  if(value==null)return null;
+                                  const txt=value+'%';
+                                  const w=txt.length*7+14;
+                                  return(
+                                    <g>
+                                      <rect x={x+width/2-w/2} y={y-22} width={w} height={17} rx={4} fill={T.tealD}/>
+                                      <text x={x+width/2} y={y-10} textAnchor="middle" fill="#fff" fontSize={10} fontWeight={800}>{txt}</text>
+                                    </g>
+                                  );
+                                }} dataKey="pct"/>
                               </Bar>
                               <Bar yAxisId="left" dataKey="unsold" name="Unsold Units" stackId="s" fill={T.teal} fillOpacity={0.18} radius={[3,3,0,0]}/>
                               <Line yAxisId="right" type="monotone" dataKey="pct" name="% Sold" stroke={T.tealD} strokeWidth={2} dot={{r:3,fill:T.tealD}} activeDot={{r:5}}/>
