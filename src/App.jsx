@@ -2878,7 +2878,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                   })()}
                 </GC>
 
-                {/* ── CHART: Rate Trend Over Time (monthly average) ───────────── */}
+                {/* ── CHART: Rate Trend Over Time (monthly average, dot style) ───────────── */}
                 <GC style={{padding:16}}>
                   <SH title="Rate Trend Over Time" sub="₹/sqft · monthly average booking rate · filtered by project"/>
                   {(()=>{
@@ -2928,12 +2928,12 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                               <p style={{margin:0,color:T.textM}}>{d.count} booking{d.count>1?'s':''}</p>
                             </div>);
                           }}/>
-                          <Bar dataKey="avgRate" name="Avg Rate" fill={T.teal} radius={[4,4,0,0]} barSize={28}>
-                            <LabelList dataKey="avgRate" position="top" style={{fill:T.tealD,fontSize:9,fontWeight:700}} formatter={v=>v.toLocaleString('en-IN')}/>
-                          </Bar>
                           <Line type="linear" dataKey="trend" stroke="#22c55e" strokeWidth={2.5} dot={false} strokeDasharray="6 3" name="Trend"/>
+                          <Scatter dataKey="avgRate" name="Monthly Avg" fill={T.teal}>
+                            {withTrend.map((_,i)=><Cell key={i} r={7} fill={T.teal} fillOpacity={0.85}/>)}
+                          </Scatter>
                           <Legend wrapperStyle={{fontSize:10,fontWeight:700}} iconSize={8}
-                            payload={[{value:'Monthly Avg',type:'square',color:T.teal},{value:'Trend',type:'line',color:'#22c55e'}]}/>
+                            payload={[{value:'Monthly Avg',type:'circle',color:T.teal},{value:'Trend',type:'line',color:'#22c55e'}]}/>
                         </ComposedChart>
                       </ResponsiveContainer>
                     );
