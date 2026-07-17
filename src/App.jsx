@@ -3175,7 +3175,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                               <ResponsiveContainer width="100%" height={320}>
                               <ComposedChart data={slice} margin={{top:32,right:32,bottom:70,left:44}}>
                                 <CartesianGrid strokeDasharray="4 4" stroke="rgba(0,60,100,0.12)" vertical={false}/>
-                                <XAxis dataKey="name" tick={{fill:T.textM,fontSize:9,fontWeight:700}} axisLine={{stroke:'rgba(0,100,140,0.2)'}} tickLine={false} angle={-90} textAnchor="middle" interval={0} height={70} tickFormatter={v=>v?.length>20?v.slice(0,20)+'…':v}/>
+                                <XAxis dataKey="name" tick={{fill:T.textM,fontSize:9,fontWeight:700}} axisLine={{stroke:'rgba(0,100,140,0.2)'}} tickLine={false} angle={-45} textAnchor="end" interval={0} height={70} tickFormatter={v=>v?.length>20?v.slice(0,20)+'…':v}/>
                                 <YAxis tick={{fill:T.textM,fontSize:11,fontWeight:600}} axisLine={{stroke:'rgba(0,100,140,0.2)'}} tickLine={false} width={40} domain={[0,maxU+15]} label={{value:'Units',angle:-90,position:'insideLeft',offset:10,style:{fill:T.textM,fontWeight:700,fontSize:11}}}/>
                                 <Tooltip content={({active,payload,label})=>{
                                   if(!active||!payload?.length)return null;
