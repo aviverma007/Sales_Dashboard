@@ -74,7 +74,7 @@ def parse_pdrn(rows):
         if dt:
             try:
                 d = datetime.strptime(dt[:10], '%Y-%m-%d')
-                month = f"{d.year}-{str(d.month).padStart(2,'0') if hasattr(str(d.month),'padStart') else str(d.month).zfill(2)}"
+                month = f"{d.year}-{str(d.month).zfill(2)}"
                 year = d.year
                 month_num = d.month
             except Exception:
@@ -168,7 +168,7 @@ def parse_dapp(rows):
             'billMonth': month,
             'demand': safe_num(r.get('Total Demand after adj of Credit') or r.get('Total Due Amount With Tax')),
             'received': safe_num(r.get('Received Amt (in Bank)')),
-            'outstanding': safe_num(r.get('Outstanding 1') or r.get('Outstanding Amount')),
+            'outstanding': safe_num(r.get('Outstanding 1')),
         })
     return records
 
@@ -244,7 +244,7 @@ def build_sales_vs_refund(pdrn_records):
     monthly = defaultdict(lambda: {'bsp': 0.0, 'cancelledBSP': 0.0, 'refund': 0.0,
                                     'bookCount': 0, 'cancelCount': 0})
     for r in pdrn_records:
-        m = r['bookingMonth']
+        m = r.get('bookingMonth')
         if not m:
             continue
         if r['status'] == 'ACTIVE':
@@ -336,7 +336,6 @@ def build_cancelled_status(pdrn_records, invr_records):
     PROJ_LABEL = 'Edition'
     today = datetime.today()
 
-    # Units currently booked in invr = rebooked after cancellation
     invr_booked = {r['unit'] for r in invr_records if r['status'] == 'Booked'}
 
     cancelled = [r for r in pdrn_records if r['status'] == 'CANCELLED']
@@ -372,13 +371,11 @@ def build_cancelled_status(pdrn_records, invr_records):
         else:
             vacant_units.append(unit_obj)
 
-    # Sort vacant by daysVacant desc (most urgent first)
     vacant_units.sort(key=lambda x: -x['daysVacant'])
     total = len(cancelled)
     rebooked_count = len(rebooked_units)
     vacant_count = len(vacant_units)
 
-    # Bucket by daysVacant for vacant units
     bucket_counts = {'0–30 days': 0, '31–90 days': 0, '91–180 days': 0, '180+ days': 0}
     for u in vacant_units:
         d = u['daysVacant']
@@ -399,6 +396,54 @@ def build_cancelled_status(pdrn_records, invr_records):
             'totalCancelled': total,
             'rebooked': rebooked_count,
             'stillVacant': vacant_count,
+            'rebookedPct': round(rebooked_count / total * 100) if total > 0 else 0,
+        },
+        'buckets': [
+            {'label': '0–30 days', 'count': bucket_counts['0–30 days'], 'color': '#00bcd4'},
+            {'label': '31–90 days', 'count': bucket_counts['31–90 days'], 'color': '#f59e0b'},
+            {'label': '91–180 days', 'count': bucket_counts['91–180 days'], 'color': '#ef4444'},
+            {'label': '180+ days', 'count': bucket_counts['180+ days'], 'color': '#7c3aed'},
+        ],
+        'byProject': by_project,
+        'vacantUnits': vacant_units,
+        'rebookedUnits': rebooked_units,
+    }
+
+
+def build_cancelled_status_merged(edition_pdrn, edition_invr, existing_cancelled_status):
+    """Rebuild ONLY Edition's slice of cancelledUnitStatus, and merge it back in
+    with Sky Arc/Trump's existing entries preserved as-is. Sky Arc/Trump cancelled
+    units aren't present in the shared pdrn/invr arrays (their PDRN records are
+    ACTIVE-only there), so they can't be recomputed from that data - only Edition's
+    fresh Excel gives us new information here."""
+    edition_only = build_cancelled_status(edition_pdrn, edition_invr)
+
+    other_vacant = [u for u in existing_cancelled_status.get('vacantUnits', []) if u.get('project') != EDITION]
+    other_rebooked = [u for u in existing_cancelled_status.get('rebookedUnits', []) if u.get('project') != EDITION]
+    other_by_project = [p for p in existing_cancelled_status.get('byProject', []) if p.get('project') != 'Edition']
+
+    vacant_units = other_vacant + edition_only['vacantUnits']
+    rebooked_units = other_rebooked + edition_only['rebookedUnits']
+    vacant_units.sort(key=lambda x: -x['daysVacant'])
+
+    by_project = other_by_project + edition_only['byProject']
+
+    bucket_counts = {'0–30 days': 0, '31–90 days': 0, '91–180 days': 0, '180+ days': 0}
+    for u in vacant_units:
+        d = u['daysVacant']
+        if d <= 30:   bucket_counts['0–30 days'] += 1
+        elif d <= 90:  bucket_counts['31–90 days'] += 1
+        elif d <= 180: bucket_counts['91–180 days'] += 1
+        else:          bucket_counts['180+ days'] += 1
+
+    total = len(vacant_units) + len(rebooked_units)
+    rebooked_count = len(rebooked_units)
+
+    return {
+        'summary': {
+            'totalCancelled': total,
+            'rebooked': rebooked_count,
+            'stillVacant': len(vacant_units),
             'rebookedPct': round(rebooked_count / total * 100) if total > 0 else 0,
         },
         'buckets': [
@@ -467,13 +512,11 @@ def main():
     d['towerData'] = other_towers + edition_towers
     print(f"  towerData: {len(edition_towers)} Edition towers rebuilt")
 
-    # 7. salesVsRefund (Edition-specific; if stored per-project replace, else skip)
-    # This is a global list — rebuild Edition portion
-    other_svr = [r for r in d.get('salesVsRefund', []) if r.get('project') and r['project'] != EDITION]
-    if not other_svr:
-        # It's global not per-project, rebuild entirely from Edition data
-        d['salesVsRefund'] = build_sales_vs_refund(edition_pdrn)
-    
+    # 7. salesVsRefund - GLOBAL aggregate across all projects; rebuild from the
+    # full combined pdrn (other projects + fresh Edition) so Sky Arc/Trump months
+    # aren't lost just because only Edition's source file changed.
+    d['salesVsRefund'] = build_sales_vs_refund(d['pdrn'])
+
     # 8. cpVsDirect - replace Edition entry
     edition_cpd = build_cp_vs_direct(edition_pdrn)
     d['cpVsDirect'] = [r for r in d.get('cpVsDirect', []) if r.get('name') != EDITION] + [edition_cpd]
@@ -485,15 +528,31 @@ def main():
     # 10. kpiExtra - rebuild from Edition data (this was Edition-only)
     d['kpiExtra'] = build_kpi_extra(edition_pdrn)
 
-    # 11. cancelledUnitStatus - rebuild from Edition data
-    d['cancelledUnitStatus'] = build_cancelled_status(edition_pdrn, edition_invr)
+    # 11. cancelledUnitStatus - GLOBAL aggregate; Sky Arc/Trump cancelled units
+    # aren't present in the shared pdrn/invr arrays, so only rebuild Edition's
+    # slice and merge it back with Sky Arc/Trump's existing entries preserved.
+    d['cancelledUnitStatus'] = build_cancelled_status_merged(edition_pdrn, edition_invr, d['cancelledUnitStatus'])
 
-    # 12. brokerMap - rebuild from Edition pdrn
+    # 12. brokerMap - GLOBAL map across all projects; rebuild from full combined pdrn.
     broker_map = {}
-    for r in edition_pdrn:
+    for r in d['pdrn']:
         if r['broker'] and r['brokerName']:
             broker_map[r['broker']] = r['brokerName']
     d['brokerMap'] = broker_map
+
+    # 13. monthlyActualRates - Edition-only monthly avg rate series (not touched
+    # by the sections above; rebuild it here so it stays in sync with the fresh Excel).
+    mm = defaultdict(lambda: [0.0, 0.0])
+    for r in edition_pdrn:
+        if r['status'] == 'ACTIVE' and r['bookingMonth']:
+            mm[r['bookingMonth']][0] += r['bsp']
+            mm[r['bookingMonth']][1] += r['superArea']
+    def _mlabel(m):
+        try:
+            return datetime.strptime(m, '%Y-%m').strftime("%b'%y")
+        except Exception:
+            return m
+    d['monthlyActualRates'] = {_mlabel(k): (round(v[0] / v[1]) if v[1] else 0) for k, v in sorted(mm.items())}
 
     print("Writing JSON...")
     with open(json_path, 'w') as f:

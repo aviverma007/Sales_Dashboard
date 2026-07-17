@@ -83,7 +83,7 @@ def parse_dapp(rows, proj, company):
         out.append(dict(project=s(r.get('Project Name')) or proj,companyNorm=company,
             unit=s(r.get('Unit Number')),customer=s(r.get('Sold to Party Name') or r.get('Customer Name (Payer)')),
             billMonth=month,demand=num(r.get('Total Demand after adj of Credit') or r.get('Total Due Amount With Tax')),
-            received=num(r.get('Received Amt (in Bank)')),outstanding=num(r.get('Outstanding 1') or r.get('Outstanding Amount'))))
+            received=num(r.get('Received Amt (in Bank)')),outstanding=num(r.get('Outstanding 1'))))
     return out
 
 def main():
