@@ -2390,7 +2390,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
 
                     const rawData=monthlyWithTargets.map(d=>({
                       label:d.label,isFuture:d.isFuture,isCurrent:d.label===TODAY_LABEL,
-                      achieved:d.isFuture?null:(d.bookedUnits||0),
+                      achieved:(d.isFuture&&d.label!==TODAY_LABEL)?null:(d.bookedUnits||0),
                       target:d.targetUnitsLine||null,          // keeps bars intact
                       // targetLine: null for any past month (before today) + projection months
                       // This stops grey connecting line for past months, green handles projection months
@@ -2503,7 +2503,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const nqBMoT=tQS+3>12?tQS-9:tQS+3;const nqBYT=tQS+3>12?todayT.getFullYear()+1:todayT.getFullYear();
                     const nqBLblT=ml2(nqBYT,nqBMoT);
                     const rawDataTsv=monthlyWithTargets.map(d=>({label:d.label,isFuture:d.isFuture,isCurrent:d.label===TODAY_LABEL,
-                      achieved:d.isFuture?null:(d.bspCr||0),
+                      achieved:(d.isFuture&&d.label!==TODAY_LABEL)?null:(d.bspCr||0),
                       target:d.targetTsvLine||null,
                       targetLine:(!d.isFuture&&!d.isCurrent||tsvProjMap[d.label]!=null)?null:(d.targetTsvLine||null),
                       projection:tsvProjMap[d.label]||null,
@@ -2587,7 +2587,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const nqBLblA2=ml4(nqBYA2,nqBMoA2);
                     const rawDataA=monthlyWithTargets.map(d=>({
                       label:d.label,isFuture:d.isFuture,isCurrent:d.label===TODAY_LABEL,
-                      achieved:d.isFuture?null:(d.bookedAreaSqft!=null&&d.bookedAreaSqft>0?+(d.bookedAreaSqft/100000).toFixed(2):0),
+                      achieved:(d.isFuture&&d.label!==TODAY_LABEL)?null:(d.bookedAreaSqft!=null&&d.bookedAreaSqft>0?+(d.bookedAreaSqft/100000).toFixed(2):0),
                       target:d.targetAreaSqft?+(d.targetAreaSqft/100000).toFixed(2):null,
                       targetLine:(!d.isFuture&&!d.isCurrent||areaProjMap2[d.label]!=null)?null:(d.targetAreaSqft?+(d.targetAreaSqft/100000).toFixed(2):null),
                       projection:areaProjMap2[d.label]!=null?+(areaProjMap2[d.label]/100000).toFixed(2):null,
