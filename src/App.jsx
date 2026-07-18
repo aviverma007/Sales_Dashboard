@@ -2765,8 +2765,11 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const def=firstActualIdx>=0?Math.max(0,firstActualIdx):cur>=2?cur-2:Math.max(0,dataFinal.length-WIN);
                     const off=(chartMonthFrom&&chartGranularity!=='quarterly')?Math.min(Math.max(chartOff<0?0:chartOff,0),Math.max(0,dataFinal.length-WIN)):Math.min(Math.max(chartOff<0?def:chartOff,0),Math.max(0,dataFinal.length-WIN));
                     const sl=dataFinal.slice(off,off+WIN);
-                    const achievedRatePts=dataFinal.filter(d=>d.achieved!=null&&d.achieved>0);
-                    const avgAchievedRate=achievedRatePts.length>0?Math.round(achievedRatePts.reduce((s,d)=>s+d.achieved,0)/achievedRatePts.length):0;
+                    const hasDateFilter=!!(filters.fy||filters.quarter||filters.month);
+                    const pAWithRate=pA.filter(r=>r.superArea>0);
+                    const avgAchievedRate=hasDateFilter
+                      ?(pAWithRate.length>0?Math.round(pAWithRate.reduce((s,r)=>s+(r.bsp||0),0)/pAWithRate.reduce((s,r)=>s+(r.superArea||0),0)):0)
+                      :kpiEx.avgRatePerSqft;
                     return(<>
                       <div style={{display:'inline-flex',alignItems:'center',gap:8,background:'linear-gradient(135deg,#0097a7,#00bcd4)',borderRadius:8,padding:'6px 14px',marginBottom:8,boxShadow:'0 2px 8px rgba(0,151,167,0.3)'}}>
                         <span style={{fontSize:9,fontWeight:700,color:'rgba(255,255,255,0.85)',textTransform:'uppercase',letterSpacing:0.4}}>Avg Achieved Rate (this filter)</span>
