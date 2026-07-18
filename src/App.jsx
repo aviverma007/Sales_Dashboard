@@ -1690,8 +1690,12 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
     // Demand Raised sourced from DAPP 'Demand Amount W/O Tax' column (via dapp_kpi.json kpi.all, project-specific)
     const dappAll = raw?.dappKpi?.kpi?.all || {};
     const demandRaisedCr = dappAll.totalDemandWoTax || dk.totalDemandWoTax || +(pAAll.reduce((s,r)=>s+(r.demand||0),0)/1e7).toFixed(1);
-    // Collected sourced from PDRN 'Total Received' column (active bookings)
-    const collectedCr    = +(pAAll.reduce((s,r)=>s+(r.received||0),0)/1e7).toFixed(1);
+    // Collected sourced from DAPP 'Received Amt (in Bank) - CGST - SGST' (via dapp_kpi.json
+    // kpi.all.totalReceivedWoT) - same source as Demand Raised and Outstanding above, so all
+    // three stay consistent with the Demand & Collection page's own headline figures. This
+    // used to read PDRN's separate 'Total Received' column, which is a different, stale
+    // figure (e.g. Rs 1,615 Cr vs the correct Rs 1,639 Cr for Sky Arc).
+    const collectedCr    = dappAll.totalReceivedWoT || dk.totalReceivedWoT || +(pAAll.reduce((s,r)=>s+(r.received||0),0)/1e7).toFixed(1);
     const outstandingCr  = dappAll.totalOutstanding || dk.totalOutstanding || +(pAAll.reduce((s,r)=>s+Math.max((r.demand||0)-(r.received||0),0),0)/1e7).toFixed(1);
     return {
       bookedAreaSqft, carpetAreaSqft, availAreaSqft, totalSuperArea,
