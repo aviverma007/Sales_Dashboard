@@ -75,8 +75,14 @@ const toQuarterly=(data,labelKey='label')=>{
     const m=lbl.match(/([A-Za-z]{3})'(\d{2})/);
     if(!m)return;
     const monNum={'Jan':1,'Feb':2,'Mar':3,'Apr':4,'May':5,'Jun':6,'Jul':7,'Aug':8,'Sep':9,'Oct':10,'Nov':11,'Dec':12}[m[1]]||0;
-    const yr=m[2];
-    const q=`Q${Math.ceil(monNum/3)}'${yr}`;
+    const calYr=parseInt(m[2]);
+    // Fiscal year (Apr-Mar), matching FY_QUARTERS elsewhere: Q1=Apr-Jun, Q2=Jul-Sep,
+    // Q3=Oct-Dec, Q4=Jan-Mar. Jan-Mar belongs to the FY ending that calendar year;
+    // Apr-Dec belongs to the FY ending the following calendar year - so all 4
+    // quarters of one fiscal year share the same year label (Q1'26...Q4'26).
+    const fyYr=monNum<=3?calYr:calYr+1;
+    const fq=monNum<=3?4:Math.ceil((monNum-3)/3);
+    const q=`Q${fq}'${String(fyYr).padStart(2,'0')}`;
     if(!qMap[q]){qMap[q]={...d,[labelKey]:q,month:q};Object.keys(d).forEach(k=>{if(typeof d[k]==='number')qMap[q][k]=0;});}
     Object.keys(d).forEach(k=>{if(typeof d[k]==='number')qMap[q][k]=+(qMap[q][k]+d[k]).toFixed(1);});
   });
