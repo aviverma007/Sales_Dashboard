@@ -202,6 +202,8 @@ A 52-unit/₹309 Cr (Sky Arc) or 76-unit/₹949 Cr (Trump) or 336-unit/₹2,388 
 - **Expected Collection per Month chart:** was rendering every month at once with no windowing, causing labels to overlap; added the same 14-month scrollable window + prev/next buttons used elsewhere.
 - **Milestone table:** was rendering all rows with no height limit (400+ for Edition); added a 480px scrollable container with a sticky header.
 - **Builtup Area (Project Snapshot bar):** was showing a raw comma-formatted sqft string; converted to "X.XX Lakh sq ft" to match the Saleable Area field's format.
+- **Chart Range slider + Booking Date filter removed (17 Jul 2026):** the top-level "Chart Range" (Nov'23→Mar'27) slider above the 2x2 trend chart grid, and the "Booking Date" (dd-mm-yyyy – dd-mm-yyyy) filter in the filter strip, were both removed per instruction. The 4 trend charts' own individual per-chart scrollers are unaffected.
+- **Month/Quarter toggle added (17 Jul 2026):** a single toggle next to the "Tower Wise Sales" switch controls all 4 trend charts (Units/TSV/Area/Rate) together, switching between monthly bars and quarter-aggregated bars. This wires up state (`uMode`/`tsvMode`/`rMode`/`suMode`, now unified into one `chartGranularity` value) and a `toQuarterly()` helper that already existed in the code but had no UI trigger before. Selecting Quarter mode clears and locks (greys out, lock icon) the Month filter, since filtering to one specific month while viewing quarter-aggregated bars doesn't make sense; FY and Quarter filters remain usable in both modes. Switching back to Month re-enables the Month filter immediately.
 
 ---
 
