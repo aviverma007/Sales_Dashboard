@@ -181,13 +181,6 @@ Deliberate decisions and known gaps, so future rebuilds can be checked against t
 
 7. **BHK type charts** — the "Type Wise % Sale" chart on the Overview page collapses every project's detailed unit sub-type naming (Edition: "TYPE A- 3BHK...", Sky Arc: "3BHK+UTILITY - TYPE 3", Trump: "4BHK+UTILITY (DX-ODD) TYPE-3") down to plain 2BHK/3BHK/4BHK/5BHK buckets via a `(\d)\s*BHK` regex, consistent across all three. A separate, more detailed sub-type chart (`ChartCardBHK`) elsewhere on the page is untouched and still shows the granular breakdown.
 
-8. **"Collected" on the Sales Overview / Collection Progress card was reading a stale PDRN column (fixed 17 Jul 2026, all 3 projects).** "Demand Raised" and "Outstanding" on this card correctly used the DAPP-derived `dappKpi.kpi.all` figures, but "Collected" was separately summing PDRN's own `"Total Received"` column - a different, stale figure that doesn't match the Demand & Collection page's own headline number:
-   - Edition: ₹1,211.48 Cr (PDRN, wrong) vs ₹1,360.22 Cr (DAPP, correct)
-   - Sky Arc: ₹1,614.89 Cr (PDRN, wrong) vs ₹1,639.23 Cr (DAPP, correct)
-   - Trump: ₹646.23 Cr (PDRN, wrong) vs ₹764.82 Cr (DAPP, correct)
-
-   Fixed to read `dappKpi.kpi.all.totalReceivedWoT`, matching the same pattern as Demand Raised/Outstanding on that card. Collection Progress % shifts slightly for all three now that all three figures share one consistent source.
-
 ---
 
 ## 6. Monthly Targets (AOP)
