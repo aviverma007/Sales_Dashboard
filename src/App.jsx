@@ -1687,12 +1687,18 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
     const totalProjCr    = +(totalBSPCr + (unsoldAreaForValue*currentMonthTargetRate)/1e7).toFixed(2);
     const unsoldValueCr  = +((unsoldAreaForValue*currentMonthTargetRate)/1e7).toFixed(2);
     const soldPctValue   = totalProjCr>0 ? Math.round(totalBSPCr/totalProjCr*100) : 0;
-    // Demand Raised sourced from DAPP 'Demand Amount W/O Tax' column (via dapp_kpi.json kpi.all, project-specific)
+    // Demand/Collected/Outstanding: Edition uses DAPP (validated, matches doc exactly).
+    // Sky Arc and Trump use PDRN instead ('Total Demand Amount' / 'Total Received' columns,
+    // active bookings incl. Temporary Surrender) - per instruction, since their DAPP-derived
+    // figures didn't match the reference values for these two projects.
     const dappAll = raw?.dappKpi?.kpi?.all || {};
-    const demandRaisedCr = dappAll.totalDemandWoTax || dk.totalDemandWoTax || +(pAAll.reduce((s,r)=>s+(r.demand||0),0)/1e7).toFixed(1);
-    // Collected sourced from PDRN 'Total Received' column (active bookings)
-    const collectedCr    = +(pAAll.reduce((s,r)=>s+(r.received||0),0)/1e7).toFixed(1);
-    const outstandingCr  = dappAll.totalOutstanding || dk.totalOutstanding || +(pAAll.reduce((s,r)=>s+Math.max((r.demand||0)-(r.received||0),0),0)/1e7).toFixed(1);
+    const useDappForDemand = projKeyForTargets==='SMARTWORLD THE EDITION';
+    const pdrnDemandCr  = +(pAAll.reduce((s,r)=>s+(r.demand||0),0)/1e7).toFixed(2);
+    const pdrnReceivedCr = +(pAAll.reduce((s,r)=>s+(r.received||0),0)/1e7).toFixed(2);
+    const pdrnOutstandingCr = +(pAAll.reduce((s,r)=>s+Math.max((r.demand||0)-(r.received||0),0),0)/1e7).toFixed(2);
+    const demandRaisedCr = useDappForDemand ? (dappAll.totalDemandWoTax || dk.totalDemandWoTax || pdrnDemandCr) : pdrnDemandCr;
+    const collectedCr    = useDappForDemand ? (dappAll.totalReceivedWoT || dk.totalReceivedWoT || pdrnReceivedCr) : pdrnReceivedCr;
+    const outstandingCr  = useDappForDemand ? (dappAll.totalOutstanding || dk.totalOutstanding || pdrnOutstandingCr) : pdrnOutstandingCr;
     return {
       bookedAreaSqft, carpetAreaSqft, availAreaSqft, totalSuperArea,
       mgmtAreaSqft, bookedUnits, availUnits, mgmtUnits, totalUnits,
