@@ -1949,8 +1949,8 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
           {tab!=='pnl'&&<FSel label="CP"         options={availBrokers}                         value={filters.broker}   onChange={v=>sf('broker',v)}     multi={true} openId="cp"         activeOpen={activeFilter} setActiveOpen={setActiveFilter}/>}
           {tab!=='pnl'&&<FSel label="Typology"   options={availTypologies}                      value={filters.typology} onChange={v=>sf('typology',v)}   multi={true} openId="typology"   activeOpen={activeFilter} setActiveOpen={setActiveFilter}/>}
           {/* Booking Date filter removed per instruction */}
-          {Object.values(filters).some(Boolean)&&(
-            <button onClick={()=>setFilters({company:'',project:'',year:'',month:'',quarter:'',broker:'',typology:'',fy:'',dateFrom:'',dateTo:''})}
+          {Object.entries(filters).some(([k,v])=>k!=='project'&&Boolean(v))&&(
+            <button onClick={()=>setFilters(f=>({company:'',project:f.project,year:'',month:'',quarter:'',broker:'',typology:'',fy:'',dateFrom:'',dateTo:''}))}
               style={{background:'linear-gradient(135deg,#c62828,#ef5350)',border:'none',borderRadius:7,color:'#fff',padding:'5px 14px',fontSize:10,cursor:'pointer',fontWeight:700,boxShadow:'0 2px 8px rgba(200,40,40,0.3)',alignSelf:'flex-end'}}>
               ✕ Reset
             </button>
