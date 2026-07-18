@@ -362,9 +362,9 @@ const SH = ({title,sub,light=false,compact=false}) => (
 );
 
 // ─── FILTER SELECT ────────────────────────────────────────────────────────────
-const FSel = ({label,options,value,onChange,multi=false,openId='',activeOpen=null,setActiveOpen=()=>{},mandatory=false}) => {
-  const open    = activeOpen===openId;
-  const setOpen = ()=>setActiveOpen(open?null:openId);
+const FSel = ({label,options,value,onChange,multi=false,openId='',activeOpen=null,setActiveOpen=()=>{},mandatory=false,disabled=false}) => {
+  const open    = !disabled&&activeOpen===openId;
+  const setOpen = ()=>{if(disabled)return;setActiveOpen(open?null:openId);};
 
   if(multi){
     const vals=value?value.split('||').filter(Boolean):[];
@@ -372,9 +372,9 @@ const FSel = ({label,options,value,onChange,multi=false,openId='',activeOpen=nul
     return(
       <div style={{display:'flex',flexDirection:'column',gap:2,position:'relative'}}>
         <label style={{color:T.textM,fontSize:10,fontWeight:800,letterSpacing:1,textTransform:'uppercase'}}>{label}</label>
-        <div onClick={setOpen} style={{background:'rgba(255,255,255,0.88)',border:`1px solid ${vals.length?T.teal:'rgba(0,100,140,0.25)'}`,borderRadius:7,color:vals.length?T.tealD:T.textM,padding:'5px 10px',fontSize:12,fontFamily:'Inter,sans-serif',minWidth:120,cursor:'pointer',fontWeight:vals.length?600:400,userSelect:'none',display:'flex',justifyContent:'space-between',alignItems:'center',gap:6}}>
-          <span style={{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:130}}>{vals.length?vals.join(', '):'All'}</span>
-          <span style={{fontSize:8,opacity:0.6}}>{open?'▲':'▼'}</span>
+        <div onClick={setOpen} style={{background:disabled?'rgba(0,0,0,0.04)':'rgba(255,255,255,0.88)',border:`1px solid ${disabled?'rgba(0,60,100,0.1)':vals.length?T.teal:'rgba(0,100,140,0.25)'}`,borderRadius:7,color:disabled?'rgba(100,110,120,0.5)':vals.length?T.tealD:T.textM,padding:'5px 10px',fontSize:12,fontFamily:'Inter,sans-serif',minWidth:120,cursor:disabled?'not-allowed':'pointer',fontWeight:vals.length?600:400,userSelect:'none',display:'flex',justifyContent:'space-between',alignItems:'center',gap:6,opacity:disabled?0.6:1}}>
+          <span style={{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:130}}>{disabled?'Quarter mode':vals.length?vals.join(', '):'All'}</span>
+          <span style={{fontSize:8,opacity:0.6}}>{disabled?'🔒':open?'▲':'▼'}</span>
         </div>
         {open&&(
           <div onClick={e=>e.stopPropagation()} style={{position:'absolute',top:'100%',left:0,zIndex:999,background:'#fff',border:`1px solid ${T.teal}30`,borderRadius:8,boxShadow:'0 8px 24px rgba(0,80,120,0.15)',minWidth:200,maxHeight:260,overflowY:'auto',padding:4,marginTop:2}}>
@@ -407,9 +407,9 @@ const FSel = ({label,options,value,onChange,multi=false,openId='',activeOpen=nul
   return(
     <div style={{display:'flex',flexDirection:'column',gap:2,position:'relative'}}>
       <label style={{color:T.textM,fontSize:10,fontWeight:800,letterSpacing:1,textTransform:'uppercase'}}>{label}</label>
-      <div onClick={setOpen} style={{background:'rgba(255,255,255,0.88)',border:`1px solid ${value?T.teal:'rgba(0,100,140,0.25)'}`,borderRadius:7,color:value?T.tealD:T.textM,padding:'5px 10px',fontSize:12,fontFamily:'Inter,sans-serif',minWidth:140,cursor:'pointer',fontWeight:value?600:400,userSelect:'none',display:'flex',justifyContent:'space-between',alignItems:'center',gap:6}}>
-        <span style={{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:160}}>{value||'All'}</span>
-        <span style={{fontSize:8,opacity:0.6}}>{open?'▲':'▼'}</span>
+      <div onClick={setOpen} style={{background:disabled?'rgba(0,0,0,0.04)':'rgba(255,255,255,0.88)',border:`1px solid ${disabled?'rgba(0,60,100,0.1)':value?T.teal:'rgba(0,100,140,0.25)'}`,borderRadius:7,color:disabled?'rgba(100,110,120,0.5)':value?T.tealD:T.textM,padding:'5px 10px',fontSize:12,fontFamily:'Inter,sans-serif',minWidth:140,cursor:disabled?'not-allowed':'pointer',fontWeight:value?600:400,userSelect:'none',display:'flex',justifyContent:'space-between',alignItems:'center',gap:6,opacity:disabled?0.6:1}}>
+        <span style={{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:160}}>{disabled?'Quarter mode':value||'All'}</span>
+        <span style={{fontSize:8,opacity:0.6}}>{disabled?'🔒':open?'▲':'▼'}</span>
       </div>
       {open&&(
         <div onClick={e=>e.stopPropagation()} style={{position:'absolute',top:'100%',left:0,zIndex:999,background:'#fff',border:`1px solid ${T.teal}30`,borderRadius:8,boxShadow:'0 8px 24px rgba(0,80,120,0.15)',minWidth:220,maxHeight:260,overflowY:'auto',padding:4,marginTop:2}}>
@@ -1407,10 +1407,11 @@ function AppInner({overviewOnly=false}) {
   const [bOff,setBOff]=useState(9999);
   const [sMode,setSMode]=useState('monthly');
   const [sOff,setSOff]=useState(9999);
-  const [uMode,setUMode]=useState('monthly');
-  const [tsvMode,setTsvMode]=useState('monthly');
-  const [rMode,setRMode]=useState('monthly');
-  const [suMode,setSuMode]=useState('monthly');
+  // Single shared Month/Quarter toggle for all 4 trend charts (Units/TSV/Area/Rate).
+  // Switching to 'quarterly' also greys out and clears the Month filter, since
+  // filtering to one specific month while viewing quarterly bars doesn't make sense.
+  const [chartGranularity,setChartGranularity]=useState('monthly');
+  const uMode=chartGranularity, tsvMode=chartGranularity, rMode=chartGranularity, suMode=chartGranularity;
   const [cancelTab,setCancelTab]=useState('overview');
   const [showTowerType,setShowTowerType]=useState(false);
   // Chart month range slider (independent of top filters, only affects the 4 Sales & Pricing Trend charts)
@@ -1938,20 +1939,10 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
           <FSel label="Project"    options={availProj}                           value={filters.project}  onChange={v=>sf('project',v)}   multi={false} openId="project"    activeOpen={activeFilter} setActiveOpen={setActiveFilter} mandatory={true}/>
           <FSel label="Fin. Year"  options={fo.financialYears||[]}               value={filters.fy}       onChange={v=>sf('fy',v)}         multi={true} openId="fy"         activeOpen={activeFilter} setActiveOpen={setActiveFilter}/>
           <FSel label="Quarter"       options={FY_QUARTERS}                              value={filters.quarter}  onChange={v=>sf('quarter',v)}    multi={true} openId="quarter"    activeOpen={activeFilter} setActiveOpen={setActiveFilter}/>
-          <FSel label="Month"        options={MONTHS_LIST}                              value={filters.month}    onChange={v=>sf('month',v)}      multi={true} openId="month"      activeOpen={activeFilter} setActiveOpen={setActiveFilter}/>
+          <FSel label="Month"        options={MONTHS_LIST}                              value={filters.month}    onChange={v=>sf('month',v)}      multi={true} openId="month"      activeOpen={activeFilter} setActiveOpen={setActiveFilter} disabled={chartGranularity==='quarterly'}/>
           {tab!=='pnl'&&<FSel label="CP"         options={availBrokers}                         value={filters.broker}   onChange={v=>sf('broker',v)}     multi={true} openId="cp"         activeOpen={activeFilter} setActiveOpen={setActiveFilter}/>}
           {tab!=='pnl'&&<FSel label="Typology"   options={availTypologies}                      value={filters.typology} onChange={v=>sf('typology',v)}   multi={true} openId="typology"   activeOpen={activeFilter} setActiveOpen={setActiveFilter}/>}
-          {tab!=='pnl'&&<div style={{display:'flex',flexDirection:'column',gap:3,alignSelf:'flex-end'}}>
-            <span style={{fontSize:9,fontWeight:800,color:T.textM,letterSpacing:0.3,paddingLeft:2}}>Booking Date</span>
-            <div style={{display:'flex',alignItems:'center',gap:5,background:'#fff',border:`1px solid ${(filters.dateFrom||filters.dateTo)?T.teal:'rgba(0,60,100,0.18)'}`,borderRadius:8,padding:'5px 9px',height:29,boxSizing:'border-box'}}>
-              <input type="date" value={filters.dateFrom} max={filters.dateTo||undefined} onChange={e=>sf('dateFrom',e.target.value)} title="From"
-                style={{border:'none',outline:'none',fontSize:11,fontWeight:600,color:filters.dateFrom?T.text:T.textM,fontFamily:'Inter,sans-serif',background:'transparent',cursor:'pointer',width:108}}/>
-              <span style={{fontSize:11,color:T.textM,fontWeight:800}}>–</span>
-              <input type="date" value={filters.dateTo} min={filters.dateFrom||undefined} onChange={e=>sf('dateTo',e.target.value)} title="To"
-                style={{border:'none',outline:'none',fontSize:11,fontWeight:600,color:filters.dateTo?T.text:T.textM,fontFamily:'Inter,sans-serif',background:'transparent',cursor:'pointer',width:108}}/>
-              {(filters.dateFrom||filters.dateTo)&&<span onClick={()=>{sf('dateFrom','');sf('dateTo','');}} title="Clear dates" style={{cursor:'pointer',color:T.red,fontWeight:800,fontSize:13,lineHeight:1,paddingLeft:1}}>×</span>}
-            </div>
-          </div>}
+          {/* Booking Date filter removed per instruction */}
           {Object.values(filters).some(Boolean)&&(
             <button onClick={()=>setFilters({company:'',project:'',year:'',month:'',quarter:'',broker:'',typology:'',fy:'',dateFrom:'',dateTo:''})}
               style={{background:'linear-gradient(135deg,#c62828,#ef5350)',border:'none',borderRadius:7,color:'#fff',padding:'5px 14px',fontSize:10,cursor:'pointer',fontWeight:700,boxShadow:'0 2px 8px rgba(200,40,40,0.3)',alignSelf:'flex-end'}}>
@@ -2295,6 +2286,19 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                 </div>
                 <div style={{flex:1,height:1,background:'rgba(245,158,11,0.15)',borderRadius:1}}/>
 
+                {!showTowerType&&(
+                  <div style={{display:'flex',alignItems:'center',border:'1.5px solid rgba(0,151,167,0.3)',borderRadius:20,padding:2,background:'#fff'}}>
+                    {['monthly','quarterly'].map(g=>(
+                      <button key={g} onClick={()=>{setChartGranularity(g);if(g==='quarterly')sf('month','');}}
+                        style={{padding:'6px 14px',borderRadius:18,border:'none',cursor:'pointer',fontSize:10,fontWeight:800,letterSpacing:0.4,textTransform:'capitalize',
+                          background:chartGranularity===g?'linear-gradient(135deg,#0097a7,#00bcd4)':'transparent',
+                          color:chartGranularity===g?'#fff':'#0097a7',transition:'all 0.2s'}}>
+                        {g==='monthly'?'Month':'Quarter'}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
                 <div style={{position:'relative',display:'inline-flex',flexDirection:'column',alignItems:'center'}}>
                   {/* Pulsing "click here" callout — shown only when Sales Trend is active */}
                   {!showTowerType&&(
@@ -2334,16 +2338,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                 </div>
               </div>
 
-              {/* Full-width Month Range Slider */}
-              <MonthRangeSlider
-                months={FILTERED_CHART_MONTHS}
-                rangeIdx={chartRangeIdx}
-                setRangeIdx={(updater)=>{
-                  setChartRangeIdx(updater);
-                  setAllOff(-1);setChartOff(-1);
-                }}
-                onReset={()=>{setChartRangeIdx([0,999]);setAllOff(-1);setChartOff(-1);}}
-              />
+              {/* Month Range Slider removed per instruction - charts use their own individual scrollers */}
 
               {/* 2x2 chart grid */}
               <div style={{
