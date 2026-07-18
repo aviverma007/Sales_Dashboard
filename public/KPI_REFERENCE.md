@@ -181,23 +181,23 @@ Deliberate decisions and known gaps, so future rebuilds can be checked against t
 
 7. **BHK type charts** — the "Type Wise % Sale" chart on the Overview page collapses every project's detailed unit sub-type naming (Edition: "TYPE A- 3BHK...", Sky Arc: "3BHK+UTILITY - TYPE 3", Trump: "4BHK+UTILITY (DX-ODD) TYPE-3") down to plain 2BHK/3BHK/4BHK/5BHK buckets via a `(\d)\s*BHK` regex, consistent across all three. A separate, more detailed sub-type chart (`ChartCardBHK`) elsewhere on the page is untouched and still shows the granular breakdown.
 
-8. **Sales Overview card's Demand/Collected/Outstanding now source differently per project (18 Jul 2026) - this is a deliberate divergence, not a bug:**
-   - **Edition** continues to use DAPP (`dappKpi.kpi.all` - `totalDemandWoTax`/`totalReceivedWoT`/`totalOutstanding`), validated exactly against this doc.
-   - **Sky Arc and Trump** now use **PDRN** instead, per instruction (their DAPP-derived figures didn't match the reference values expected for these two projects):
-     - Demand = SUM(PDRN active rows incl. Temporary Surrender, `"Total Demand Amount"`)
-     - Collected = SUM(PDRN active rows incl. Temporary Surrender, `"Total Received"`)
-     - Outstanding = SUM per row of `max("Total Demand Amount" - "Total Received", 0)`
+8. **Sales Overview card's Demand/Collected/Outstanding now use PDRN for all 3 projects (18 Jul 2026), separate from the dedicated Demand & Collection page (still DAPP-based):**
+   - Demand = SUM(PDRN active rows incl. Temporary Surrender, `"Total Demand Amount"`)
+   - Collected = SUM(PDRN active rows incl. Temporary Surrender, `"Total Received"`)
+   - Outstanding = SUM per row of `max("Total Demand Amount" - "Total Received", 0)`
 
    Current values:
 
-   | | Edition (DAPP) | Sky Arc (PDRN) | Trump (PDRN) |
+   | | Edition | Sky Arc | Trump |
    |---|---|---|---|
    | Demand | ₹1,177.11 Cr | ₹1,863.99 Cr | ₹686.63 Cr |
-   | Collected | ₹1,360.22 Cr | ₹1,614.89 Cr | ₹646.23 Cr |
-   | Outstanding | ₹40.46 Cr | ₹250.92 Cr | ₹46.06 Cr |
+   | Collected | ₹1,211.48 Cr | ₹1,614.89 Cr | ₹646.23 Cr |
+   | Outstanding | ₹34.92 Cr | ₹250.92 Cr | ₹46.06 Cr |
 
-   ⚠️ **This means the Sales Overview card and the dedicated Demand & Collection page (§3 above, still 100% DAPP-based for all 3 projects) show different Demand/Collected/Outstanding numbers for Sky Arc and Trump.** This is intentional per instruction, not a bug to silently "fix" back into agreement — if a future request asks to reconcile the two pages, treat that as a real design decision to flag, not an oversight to correct on sight.
-   - Never found an exact match for the originally-requested target figure (₹1,860.81 Cr demand for Sky Arc, given to 2 decimal places); the closest PDRN column found was `"Total Demand Amount"` at ₹1,863.99 Cr (off by ₹3.18 Cr) — that's what's live. Sky Arc's raw DAPP file also has 2 genuine exact-duplicate rows (unit TB-2704) not yet cleaned up — irrelevant to this specific change since Sky Arc no longer uses DAPP for this card, but still worth fixing if DAPP is ever used for Sky Arc totals again.
+   Note Edition's Collected (₹1,211.48 Cr) exceeds its Demand (₹1,177.11 Cr) - Collection % comes out to 102.9%. This is a real, valid consequence of the formula, not a bug: PDRN's `"Total Received"` includes money collected ahead of a formal DAPP demand being raised (i.e. advance payments), so it can legitimately exceed Demand.
+
+   ⚠️ **This means the Sales Overview card and the dedicated Demand & Collection page (§3 above, still 100% DAPP-based for all 3 projects) intentionally show different Demand/Collected/Outstanding numbers.** This is per instruction, not a bug to silently "fix" back into agreement — if a future request asks to reconcile the two pages, treat that as a real design decision to flag, not an oversight to correct on sight.
+   - Never found an exact match for the originally-requested target figure (₹1,860.81 Cr demand for Sky Arc, given to 2 decimal places); the closest PDRN column found was `"Total Demand Amount"` at ₹1,863.99 Cr (off by ₹3.18 Cr) — that's what's live. Sky Arc's raw DAPP file also has 2 genuine exact-duplicate rows (unit TB-2704) not yet cleaned up — irrelevant to this specific change since none of the 3 projects use DAPP for this card anymore, but still worth fixing if DAPP is ever used for Sky Arc totals again.
 
 ---
 
