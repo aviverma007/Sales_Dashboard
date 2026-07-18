@@ -2430,7 +2430,12 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const def=cur>=2?cur-2:Math.max(0,dataFinal.length-WIN);
                     const off=(chartMonthFrom&&chartGranularity!=='quarterly')?Math.min(Math.max(chartOff<0?0:chartOff,0),Math.max(0,dataFinal.length-WIN)):Math.min(Math.max(chartOff<0?def:chartOff,0),Math.max(0,dataFinal.length-WIN));
                     const sl=dataFinal.slice(off,off+WIN);
+                    const totalAchievedUnits=dataFinal.reduce((s,d)=>s+(d.achieved||0),0);
                     return(<>
+                      <div style={{display:'inline-flex',alignItems:'center',gap:8,background:'linear-gradient(135deg,#0097a7,#00bcd4)',borderRadius:8,padding:'6px 14px',marginBottom:8,boxShadow:'0 2px 8px rgba(0,151,167,0.3)'}}>
+                        <span style={{fontSize:9,fontWeight:700,color:'rgba(255,255,255,0.85)',textTransform:'uppercase',letterSpacing:0.4}}>Achieved (this filter)</span>
+                        <span style={{fontSize:15,fontWeight:900,color:'#fff'}}>{totalAchievedUnits.toLocaleString('en-IN')} Units</span>
+                      </div>
                       <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
                         {!chartRangeCompact&&dataFinal.length>WIN&&<><button className="chart-slider-btn" onClick={()=>setAllOff(Math.max(0,off-1))} disabled={off===0}>&#8249;</button>
                         <div className="chart-slider-track"
@@ -2507,7 +2512,12 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const def=cur>=2?cur-2:Math.max(0,dataFinal.length-WIN);
                     const off=(chartMonthFrom&&chartGranularity!=='quarterly')?Math.min(Math.max(chartOff<0?0:chartOff,0),Math.max(0,dataFinal.length-WIN)):Math.min(Math.max(chartOff<0?def:chartOff,0),Math.max(0,dataFinal.length-WIN));
                     const sl=dataFinal.slice(off,off+WIN);
+                    const totalAchievedTsv=+dataFinal.reduce((s,d)=>s+(d.achieved||0),0).toFixed(1);
                     return(<>
+                      <div style={{display:'inline-flex',alignItems:'center',gap:8,background:'linear-gradient(135deg,#0097a7,#00bcd4)',borderRadius:8,padding:'6px 14px',marginBottom:8,boxShadow:'0 2px 8px rgba(0,151,167,0.3)'}}>
+                        <span style={{fontSize:9,fontWeight:700,color:'rgba(255,255,255,0.85)',textTransform:'uppercase',letterSpacing:0.4}}>Achieved (this filter)</span>
+                        <span style={{fontSize:15,fontWeight:900,color:'#fff'}}>₹{totalAchievedTsv.toLocaleString('en-IN')} Cr</span>
+                      </div>
                       <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
                         
                         {!chartRangeCompact&&dataFinal.length>WIN&&<><button className="chart-slider-btn" onClick={()=>setAllOff(Math.max(0,off-1))} disabled={off===0}>‹</button>
@@ -2582,10 +2592,15 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const def=cur>=2?cur-2:Math.max(0,dataFinal.length-WIN);
                     const off=(chartMonthFrom&&chartGranularity!=='quarterly')?Math.min(Math.max(chartOff<0?0:chartOff,0),Math.max(0,dataFinal.length-WIN)):Math.min(Math.max(chartOff<0?def:chartOff,0),Math.max(0,dataFinal.length-WIN));
                     const sl=dataFinal.slice(off,off+WIN);
+                    const totalAchievedArea=+dataFinal.reduce((s,d)=>s+(d.achieved||0),0).toFixed(2);
                     // KPI pills
                     const totBooked=monthlyWithTargets.filter(d=>!d.isFuture).reduce((s,d)=>s+(d.bookedAreaSqft||0),0);
                     const totTarget=monthlyWithTargets.reduce((s,d)=>s+(d.targetAreaSqft||0),0);
                     return(<>
+                      <div style={{display:'inline-flex',alignItems:'center',gap:8,background:'linear-gradient(135deg,#0097a7,#00bcd4)',borderRadius:8,padding:'6px 14px',marginBottom:8,boxShadow:'0 2px 8px rgba(0,151,167,0.3)'}}>
+                        <span style={{fontSize:9,fontWeight:700,color:'rgba(255,255,255,0.85)',textTransform:'uppercase',letterSpacing:0.4}}>Achieved (this filter)</span>
+                        <span style={{fontSize:15,fontWeight:900,color:'#fff'}}>{totalAchievedArea.toLocaleString('en-IN')} L sqft</span>
+                      </div>
                       <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
                         {!chartRangeCompact&&dataFinal.length>WIN&&<><button className="chart-slider-btn" onClick={()=>setAllOff(Math.max(0,off-1))} disabled={off===0}>‹</button>
                         <div className="chart-slider-track"
@@ -2733,7 +2748,13 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const def=firstActualIdx>=0?Math.max(0,firstActualIdx):cur>=2?cur-2:Math.max(0,dataFinal.length-WIN);
                     const off=(chartMonthFrom&&chartGranularity!=='quarterly')?Math.min(Math.max(chartOff<0?0:chartOff,0),Math.max(0,dataFinal.length-WIN)):Math.min(Math.max(chartOff<0?def:chartOff,0),Math.max(0,dataFinal.length-WIN));
                     const sl=dataFinal.slice(off,off+WIN);
+                    const achievedRatePts=dataFinal.filter(d=>d.achieved!=null&&d.achieved>0);
+                    const avgAchievedRate=achievedRatePts.length>0?Math.round(achievedRatePts.reduce((s,d)=>s+d.achieved,0)/achievedRatePts.length):0;
                     return(<>
+                      <div style={{display:'inline-flex',alignItems:'center',gap:8,background:'linear-gradient(135deg,#0097a7,#00bcd4)',borderRadius:8,padding:'6px 14px',marginBottom:8,boxShadow:'0 2px 8px rgba(0,151,167,0.3)'}}>
+                        <span style={{fontSize:9,fontWeight:700,color:'rgba(255,255,255,0.85)',textTransform:'uppercase',letterSpacing:0.4}}>Avg Achieved Rate (this filter)</span>
+                        <span style={{fontSize:15,fontWeight:900,color:'#fff'}}>₹{avgAchievedRate.toLocaleString('en-IN')}/sqft</span>
+                      </div>
                       <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
                         
                         {!chartRangeCompact&&dataFinal.length>WIN&&<><button className="chart-slider-btn" onClick={()=>setAllOff(Math.max(0,off-1))} disabled={off===0}>‹</button>
