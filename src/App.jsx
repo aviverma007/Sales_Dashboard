@@ -2459,7 +2459,11 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                           </Bar>
                           <Bar dataKey="achieved" name="Achieved" fill='#16a34a' radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={800} animationEasing="ease-out">
                             {sl.map((d,i)=><Cell key={i} fill={d.isCurrent?'#ef4444':'#16a34a'} fillOpacity={d.isCurrent?1:0.85}/>)}
-                            <LabelList dataKey="achieved" position="top" style={{fill:'#15803d',fontSize:9,fontWeight:800}} formatter={v=>v>0?v:''}/>
+                            <LabelList dataKey="achieved" position="top" content={({x,y,width,value,index})=>{
+                              const show=value>0||sl[index]?.isCurrent;
+                              if(!show)return null;
+                              return<text x={x+width/2} y={y-4} textAnchor="middle" fill="#15803d" fontSize={9} fontWeight={800}>{value||0}</text>;
+                            }}/>
                           </Bar>
 
                           <Line type="monotone" dataKey="projection" name="Adjusted" stroke="#22c55e" strokeWidth={2.5} strokeDasharray="6 2" dot={({cx,cy,payload})=>payload.projection!=null?<circle cx={cx} cy={cy} r={5} fill="#22c55e" stroke="#fff" strokeWidth={2}/>:<g/>} activeDot={{r:6,fill:'#22c55e'}} connectNulls={false}>
@@ -2542,7 +2546,11 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                           </Bar>
                           <Bar dataKey="achieved" name="Achieved TSV" fill='#16a34a' radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={800} animationEasing="ease-out">
                             {sl.map((d,i)=><Cell key={i} fill={d.isCurrent?'#ef4444':'#16a34a'} fillOpacity={d.isCurrent?1:0.85}/>)}
-                            <LabelList dataKey="achieved" position="top" style={{fill:'#15803d',fontSize:9,fontWeight:800}} formatter={v=>v>0?Math.round(v).toString():''}/>
+                            <LabelList dataKey="achieved" position="top" content={({x,y,width,value,index})=>{
+                              const show=value>0||sl[index]?.isCurrent;
+                              if(!show)return null;
+                              return<text x={x+width/2} y={y-4} textAnchor="middle" fill="#15803d" fontSize={9} fontWeight={800}>{Math.round(value||0)}</text>;
+                            }}/>
                           </Bar>
                         </ComposedChart>
                       </ResponsiveContainer>
@@ -2634,7 +2642,11 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                           </Bar>
                           <Bar dataKey="achieved" name="Achieved" fill='#16a34a' radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={800}>
                             {sl.map((d,i)=><Cell key={i} fill={d.isCurrent?'#ef4444':'#16a34a'} fillOpacity={d.isCurrent?1:0.85}/>)}
-                            <LabelList dataKey="achieved" position="top" style={{fill:'#15803d',fontSize:9,fontWeight:800}} formatter={v=>v!=null&&v>0?v.toString():''}/>
+                            <LabelList dataKey="achieved" position="top" content={({x,y,width,value,index})=>{
+                              const show=(value!=null&&value>0)||sl[index]?.isCurrent;
+                              if(!show)return null;
+                              return<text x={x+width/2} y={y-4} textAnchor="middle" fill="#15803d" fontSize={9} fontWeight={800}>{value||0}</text>;
+                            }}/>
                           </Bar>
 
                           <Line type="monotone" dataKey="projection" name="Adjusted" stroke="#22c55e" strokeWidth={2.5} strokeDasharray="6 2" dot={({cx,cy,payload})=>payload.projection!=null?<circle cx={cx} cy={cy} r={5} fill="#22c55e" stroke="#fff" strokeWidth={2}/>:<g/>} activeDot={{r:6,fill:'#22c55e'}} connectNulls={false}>
