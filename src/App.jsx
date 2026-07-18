@@ -2432,7 +2432,8 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const def=cur>=2?cur-2:Math.max(0,dataFinal.length-WIN);
                     const off=(chartMonthFrom&&chartGranularity!=='quarterly')?Math.min(Math.max(chartOff<0?0:chartOff,0),Math.max(0,dataFinal.length-WIN)):Math.min(Math.max(chartOff<0?def:chartOff,0),Math.max(0,dataFinal.length-WIN));
                     const sl=dataFinal.slice(off,off+WIN);
-                    const totalAchievedUnits=pA.length;
+                    const hasDateFilter=!!(filters.fy||filters.quarter||filters.month);
+                    const totalAchievedUnits=hasDateFilter?pA.length:kpiEx.bookedUnits;
                     return(<>
                       <div style={{display:'inline-flex',alignItems:'center',gap:8,background:'linear-gradient(135deg,#0097a7,#00bcd4)',borderRadius:8,padding:'6px 14px',marginBottom:8,boxShadow:'0 2px 8px rgba(0,151,167,0.3)'}}>
                         <span style={{fontSize:9,fontWeight:700,color:'rgba(255,255,255,0.85)',textTransform:'uppercase',letterSpacing:0.4}}>Achieved (this filter)</span>
@@ -2518,7 +2519,8 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const def=cur>=2?cur-2:Math.max(0,dataFinal.length-WIN);
                     const off=(chartMonthFrom&&chartGranularity!=='quarterly')?Math.min(Math.max(chartOff<0?0:chartOff,0),Math.max(0,dataFinal.length-WIN)):Math.min(Math.max(chartOff<0?def:chartOff,0),Math.max(0,dataFinal.length-WIN));
                     const sl=dataFinal.slice(off,off+WIN);
-                    const totalAchievedTsv=+(pA.reduce((s,r)=>s+(r.bsp||0),0)/1e7).toFixed(1);
+                    const hasDateFilter=!!(filters.fy||filters.quarter||filters.month);
+                    const totalAchievedTsv=hasDateFilter?+(pA.reduce((s,r)=>s+(r.bsp||0),0)/1e7).toFixed(1):kpiEx.totalBSPCr;
                     return(<>
                       <div style={{display:'inline-flex',alignItems:'center',gap:8,background:'linear-gradient(135deg,#0097a7,#00bcd4)',borderRadius:8,padding:'6px 14px',marginBottom:8,boxShadow:'0 2px 8px rgba(0,151,167,0.3)'}}>
                         <span style={{fontSize:9,fontWeight:700,color:'rgba(255,255,255,0.85)',textTransform:'uppercase',letterSpacing:0.4}}>Achieved (this filter)</span>
@@ -2602,7 +2604,8 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const def=cur>=2?cur-2:Math.max(0,dataFinal.length-WIN);
                     const off=(chartMonthFrom&&chartGranularity!=='quarterly')?Math.min(Math.max(chartOff<0?0:chartOff,0),Math.max(0,dataFinal.length-WIN)):Math.min(Math.max(chartOff<0?def:chartOff,0),Math.max(0,dataFinal.length-WIN));
                     const sl=dataFinal.slice(off,off+WIN);
-                    const totalAchievedArea=+(pA.reduce((s,r)=>s+(r.superArea||0),0)/100000).toFixed(2);
+                    const hasDateFilter=!!(filters.fy||filters.quarter||filters.month);
+                    const totalAchievedArea=hasDateFilter?+(pA.reduce((s,r)=>s+(r.superArea||0),0)/100000).toFixed(2):+((kpiEx.bookedAreaSqft||0)/100000).toFixed(2);
                     // KPI pills
                     const totBooked=monthlyWithTargets.filter(d=>!d.isFuture).reduce((s,d)=>s+(d.bookedAreaSqft||0),0);
                     const totTarget=monthlyWithTargets.reduce((s,d)=>s+(d.targetAreaSqft||0),0);
