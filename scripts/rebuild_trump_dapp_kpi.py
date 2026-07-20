@@ -33,7 +33,7 @@ import openpyxl
 import json
 import os
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 from collections import defaultdict
 
 BASE = os.path.join(os.path.dirname(__file__), '..', 'public', 'data')
@@ -150,6 +150,119 @@ def _ord_suffix(n):
     return {1: 'st', 2: 'nd', 3: 'rd'}.get(n % 10, 'th')
 
 
+def add_months(d, n):
+    """Add n months to date d, clamping the day to the target month's length."""
+    import calendar
+    month = d.month - 1 + n
+    year = d.year + month // 12
+    month = month % 12 + 1
+    day = min(d.day, calendar.monthrange(year, month)[1])
+    return datetime(year, month, day)
+
+
+def construction_shortname(text):
+    """Match ONLY the construction-event half of a milestone - no date/interval
+    fallback - used to identify the 'construction side' of a hybrid milestone."""
+    nl = (text or '').lower()
+    m = re.search(r'(\d+)\s*(st|nd|rd|th)?\s*floor', nl)
+    if m and 'flooring' not in nl:
+        return f"{m.group(1)}{_ord_suffix(int(m.group(1)))} Floor Slab"
+    if 'top floor' in nl:
+        return 'Top Floor Slab'
+    if 'occupation certificate' in nl or re.search(r'\boc\b', nl) or 'occupat' in nl:
+        return 'OC Application'
+    if 'possession' in nl:
+        return 'Possession'
+    if 'finishing work' in nl or 'completion work' in nl:
+        return 'Finishing Work'
+    if 'plaster' in nl:
+        return 'External Plaster'
+    if 'structure' in nl:
+        return 'Structure Complete'
+    if 'flooring' in nl:
+        return 'Flooring'
+    if 'basement' in nl:
+        return 'Upper Basement'
+    if 'plinth' in nl:
+        return 'Plinth'
+    if 'excavation' in nl:
+        return 'Excavation Complete' if 'complet' in nl else 'Excavation Start'
+    return None
+
+
+def parse_relative_interval(text):
+    """'36th months of booking', '1 year from date of booking', etc.
+    Returns (count, unit, anchor) or None."""
+    nl = (text or '').lower()
+    m = re.search(r'(\d+)\s*(?:st|nd|rd|th)?\s*(day|month|year)s?\s+(?:from|of)\s+(?:date of\s+)?(allotment|booking)', nl)
+    if m:
+        return int(m.group(1)), m.group(2), m.group(3)
+    return None
+
+
+def parse_cell_date(v):
+    if v is None:
+        return None
+    if isinstance(v, datetime):
+        return datetime(v.year, v.month, v.day)
+    try:
+        return datetime.strptime(str(v)[:10], '%Y-%m-%d')
+    except Exception:
+        return None
+
+
+def resolve_hybrid(milestone, row_booking_date, row_allotment_date, schedule_dates):
+    """For a 'whichever is earlier/later' milestone, resolve THIS ROW'S actual
+    winning date + classification: compare that unit's own booking/allotment
+    date + stated interval (or a fixed date, if the text gives one instead of
+    a relative interval) against the project-wide schedule-file date for the
+    construction event. Returns (date, mtype, shortname) or None if the text
+    isn't a hybrid pattern at all."""
+    nl = (milestone or '').lower().replace('which ever', 'whichever')
+    if 'whichever' not in nl:
+        return None
+    is_later = 'later' in nl
+
+    time_date = None
+    time_label = None
+    rel = parse_relative_interval(milestone)
+    if rel:
+        count, unit, anchor = rel
+        base = row_booking_date if anchor == 'booking' else row_allotment_date
+        if base:
+            if unit == 'day':
+                time_date = base + timedelta(days=count)
+            else:
+                months = count if unit == 'month' else count * 12
+                time_date = add_months(base, months)
+        time_label = f"After {count} {unit.title()}{'s' if count != 1 else ''} of {anchor.title()}"
+    else:
+        fd = extract_date(milestone)
+        if fd:
+            time_date = fd
+            time_label = f"Before {fd.day} {fd.strftime('%b %Y')}"
+
+    constr_name = construction_shortname(milestone)
+    constr_date = None
+    if constr_name and schedule_dates.get(constr_name):
+        try:
+            constr_date = datetime.strptime(schedule_dates[constr_name], '%Y-%m')
+        except Exception:
+            constr_date = None
+
+    if time_date is None and constr_date is None:
+        return None
+    if time_date is None:
+        return (constr_date, 'clp', constr_name)
+    if constr_date is None:
+        return (time_date, 'tlp', time_label)
+
+    winner = max(time_date, constr_date) if is_later else min(time_date, constr_date)
+    if winner == time_date:
+        return (time_date, 'tlp', time_label)
+    return (constr_date, 'clp', constr_name)
+
+
 # Dates from Trump Tower schedule (20260702_Trump_Tower_L0.xlsx, '31.10.2025'
 # sheet), MAX across Tower-1/Tower-2 finish dates, same convention as
 # Edition/Sky Arc.
@@ -162,6 +275,28 @@ SLAB_SCHEDULE_DATES = {
     'OC Application': '2029-10',
     'Possession': '2029-10',  # Hand over date used as possession proxy
 }
+
+
+def estimate_row_date(milestone, resolved_date, row_booking_date, row_allotment_date, sname, schedule_dates):
+    """Best-effort date for an UNBILLED row, used to order each unit's future
+    milestones chronologically for advance-netting and month bucketing."""
+    if resolved_date is not None:
+        return resolved_date
+    rel = parse_relative_interval(milestone)
+    if rel:
+        count, unit, anchor = rel
+        base = row_booking_date if anchor == 'booking' else row_allotment_date
+        if base:
+            return base + timedelta(days=count) if unit == 'day' else add_months(base, count if unit == 'month' else count * 12)
+    fd = extract_date(milestone)
+    if fd:
+        return fd
+    if schedule_dates.get(sname):
+        try:
+            return datetime.strptime(schedule_dates[sname], '%Y-%m')
+        except Exception:
+            pass
+    return None
 
 
 def to_month(v):
@@ -199,10 +334,23 @@ def main():
     adv_raw = {t: 0.0 for t in ('tlp', 'clp')}
     adv_raw_all = 0.0
 
+    unit_advance_pool = defaultdict(float)
+    unit_future_rows = defaultdict(list)
+
+    today = datetime.today()
+    current_month_start = datetime(today.year, today.month, 1)
+
     for r in rows:
         milestone = (r.get('Milestone') or '').strip()
-        mtype = classify(milestone)
-        sname = short_name(milestone)
+        row_booking_date = parse_cell_date(r.get('SFDC Booking date'))
+        row_allotment_date = parse_cell_date(r.get('Allotment Date'))
+        hybrid = resolve_hybrid(milestone, row_booking_date, row_allotment_date, SLAB_SCHEDULE_DATES)
+        resolved_date = None
+        if hybrid:
+            resolved_date, mtype, sname = hybrid
+        else:
+            mtype = classify(milestone)
+            sname = short_name(milestone)
 
         demand = num(r.get('Demand Amount W/O Tax'))
         installment = num(r.get('Installment Amount'))
@@ -213,7 +361,8 @@ def main():
         outstanding = num(r.get('Outstanding 1'))
         tower_raw = (r.get('Tower') or 'Unknown').strip() or 'Unknown'
         month = to_month(r.get('Bill creation date') or r.get('SAP Booking date'))
-        due_month = to_month(r.get('Due Installment Date'))
+        due_month = to_month(r.get('Due Installment Date')) or (f"{resolved_date.year}-{resolved_date.month:02d}" if resolved_date else '')
+        unit = (r.get('Unit Number') or '').strip()
 
         for t in ('all', mtype):
             buckets[t]['totalInstallment'] += demand
@@ -225,6 +374,7 @@ def main():
         if demand == 0 and bank > 0:
             adv_raw_all += bank
             adv_raw[mtype] += bank
+            unit_advance_pool[unit] += bank
 
         tk = tower_acc[tower_raw]
         tk[f'{mtype}_dem'] += demand
@@ -236,12 +386,40 @@ def main():
             mk[f'{mtype}_dem'] += demand
             mk[f'{mtype}_rec'] += recv_wot
 
-        acc = milestone_acc[sname]
-        acc['totalCr'] += installment
-        acc[tower_raw] = acc.get(tower_raw, 0) + installment
-        milestone_type[sname] = mtype
-        if due_month:
-            milestone_dates[sname].append(due_month)
+        if demand > 0:
+            pass
+        else:
+            row_date = estimate_row_date(milestone, resolved_date, row_booking_date, row_allotment_date, sname, SLAB_SCHEDULE_DATES)
+            unit_future_rows[unit].append([row_date, installment, mtype, sname, tower_raw])
+
+    for unit, future_rows in unit_future_rows.items():
+        future_rows.sort(key=lambda x: (x[0] is None, x[0] if x[0] else datetime.max))
+        remaining_advance = unit_advance_pool.get(unit, 0.0)
+        for row in future_rows:
+            row_date, installment, mtype, sname, tower_raw = row
+            net_installment = installment
+            if remaining_advance > 0:
+                applied = min(remaining_advance, net_installment)
+                net_installment -= applied
+                remaining_advance -= applied
+            clamped_date = row_date
+            if clamped_date is not None and clamped_date < current_month_start:
+                clamped_date = current_month_start
+            due_month_net = f"{clamped_date.year}-{clamped_date.month:02d}" if clamped_date else ''
+
+            acc = milestone_acc[sname]
+            acc['totalCr'] += net_installment
+            acc[tower_raw] = acc.get(tower_raw, 0) + net_installment
+            milestone_type[sname] = mtype
+            if due_month_net:
+                milestone_dates[sname].append(due_month_net)
+
+    if buckets['all']['totalOutstanding'] > 0:
+        overdue_sname = 'Overdue / Outstanding Payments'
+        current_month_key = f"{current_month_start.year}-{current_month_start.month:02d}"
+        milestone_acc[overdue_sname]['totalCr'] += buckets['all']['totalOutstanding']
+        milestone_type[overdue_sname] = 'overdue'
+        milestone_dates[overdue_sname].append(current_month_key)
 
     def round_bucket(b):
         return {k: round(v / 1e7, 2) for k, v in b.items()}
@@ -316,10 +494,12 @@ def main():
             entry[t] = 0.0
         dates = milestone_dates.get(sname, [])
         entry['expectedDate'] = max(dates) if dates else SLAB_SCHEDULE_DATES.get(sname, '')
-        prefix = 'CLP' if mtype == 'clp' else 'TLP'
-        if sname.startswith('Before ') or sname.startswith('After '):
+        if mtype == 'overdue':
+            entry['shortName'] = sname
+        elif sname.startswith('Before ') or sname.startswith('After '):
             entry['shortName'] = sname
         else:
+            prefix = 'CLP' if mtype == 'clp' else 'TLP'
             entry['shortName'] = f"{prefix} \u2014 {sname}"
         milestonesUpcoming.append(entry)
 
