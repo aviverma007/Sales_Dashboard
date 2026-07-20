@@ -45,7 +45,7 @@ def extract_date(text):
     'On or Before 15th May 2024', 'On or Before 28-01-2026', or
     'On or before 14th-Sep-2025'. Returns a datetime or None."""
     t = (text or '').replace('\xa0', ' ')
-    m = re.search(r"(\d{1,2})(?:st|nd|rd|th)?[\s-]+([A-Za-z]+)'?[\s-]*(\d{4}|\d{2})\b", t)
+    m = re.search(r"(\d{1,2})(?:st|nd|rd|th)?[\s-]+([A-Za-z]+)'?[\s,-]*(\d{4}|\d{2})\b", t)
     if m:
         mon_txt = m.group(2)[:3].lower()
         if mon_txt in MONTHS:
@@ -122,6 +122,8 @@ def short_name(milestone, mtype):
         return 'Upper Basement'
     if 'plinth' in nl:
         return 'Plinth'
+    if 'raft' in nl:
+        return 'Raft Foundation'
     if 'excavation' in nl:
         return 'Excavation Complete' if 'complet' in nl else 'Excavation Start'
     if 'booking amount' in nl or nl in ('on booking',):
@@ -186,6 +188,8 @@ def construction_shortname(text):
         return 'Upper Basement'
     if 'plinth' in nl:
         return 'Plinth'
+    if 'raft' in nl:
+        return 'Raft Foundation'
     if 'excavation' in nl:
         return 'Excavation Complete' if 'complet' in nl else 'Excavation Start'
     return None
