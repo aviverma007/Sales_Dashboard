@@ -1044,44 +1044,7 @@ const CollectionsTab = ({T, GC, SH, filters={}, raw}) => {
       </div>
     </GC>
 
-    {/* SECTION 5b: THIS FINANCIAL YEAR — DEMAND VS RECEIVED */}
-    {(()=>{
-      const today=new Date();
-      const fyStartYear = today.getMonth()>=3 ? today.getFullYear() : today.getFullYear()-1; // FY starts April
-      const fyStart = `${fyStartYear}-04`;
-      const fyEnd = `${fyStartYear+1}-03`;
-      const fyData = allMonthlyRaw.filter(m=>m.month>=fyStart && m.month<=fyEnd);
-      const fyLabel = `FY${String(fyStartYear).slice(2)}-${String(fyStartYear+1).slice(2)}`;
-      if(!fyData.length) return null;
-      const fyTotalDem = +fyData.reduce((s,m)=>s+(m.dem||0),0).toFixed(1);
-      const fyTotalRec = +fyData.reduce((s,m)=>s+(m.rec||0),0).toFixed(1);
-      return (
-        <GC style={{padding:16}}>
-          <SH2 title={`This Financial Year (${fyLabel}) — Demand vs Received`} sub="From bill creation date in DAPP (W/O GST)"/>
-          <div style={{display:'flex',gap:16,marginBottom:10}}>
-            <div style={{fontSize:11,color:T.textM}}>Total Demand: <b style={{color:T.amber}}>₹{fyTotalDem} Cr</b></div>
-            <div style={{fontSize:11,color:T.textM}}>Total Received: <b style={{color:T.tealD}}>₹{fyTotalRec} Cr</b></div>
-          </div>
-          <ResponsiveContainer width="100%" height={220}>
-            <ComposedChart data={fyData} margin={{top:14,right:20,bottom:28,left:0}}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.07)" vertical={false}/>
-              <XAxis dataKey="label" tick={{fill:T.textM,fontSize:9,fontWeight:600}} angle={-30} textAnchor="end" height={36} axisLine={false} tickLine={false}/>
-              <YAxis tick={{fill:T.textM,fontSize:12}} axisLine={false} tickLine={false} tickFormatter={v=>'₹'+v+'Cr'} width={46}/>
-              <Tooltip formatter={(v,n)=>[`₹${v} Cr`,n]}/>
-              <Legend wrapperStyle={{fontSize:10,fontWeight:700}} iconSize={8}/>
-              <Bar dataKey="dem" name="Demand" fill={T.amber} fillOpacity={0.75} radius={[3,3,0,0]}>
-                <LabelList dataKey="dem" position="top" style={{fill:T.amber,fontSize:9,fontWeight:800}} formatter={v=>v>0?v:''}/>
-              </Bar>
-              <Bar dataKey="rec" name="Received" fill={T.tealD} fillOpacity={0.85} radius={[3,3,0,0]}>
-                <LabelList dataKey="rec" position="top" style={{fill:T.tealD,fontSize:9,fontWeight:800}} formatter={v=>v>0?v:''}/>
-              </Bar>
-            </ComposedChart>
-          </ResponsiveContainer>
-        </GC>
-      );
-    })()}
-
-    {/* SECTION 5c: OUTSTANDING BY MONTH */}
+    {/* SECTION 5b: OUTSTANDING BY MONTH */}
     {(()=>{
       const outstandingMonths = allMonthlyRaw.filter(m=>(m.outstanding||0)>0);
       if(!outstandingMonths.length) return null;
