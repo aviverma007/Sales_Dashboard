@@ -641,13 +641,14 @@ const SummaryBar = ({raw, filters, T, GC}) => {
 };
 
 // ── Collections Tab Component ─────────────────────────────────────────────────
-const CollectionsTab = ({T, GC, SH, filters={}, raw}) => {
+const CollectionsTab = ({T, GC, SH, filters={}, setFilters=()=>{}, raw}) => {
   const [dk, setDk] = React.useState(null);
   const [planType, setPlanType] = React.useState('all');
   const [showNote, setShowNote] = React.useState(false);
   const [rangeIdx, setRangeIdx] = React.useState([0, 999]);
   const [sortBy, setSortBy] = React.useState('amount'); // 'amount' | 'date'
   const [monthOff, setMonthOff] = React.useState(-1); // -1 = use default (centered near today)
+  const [showOnlyOutstanding, setShowOnlyOutstanding] = React.useState(false);
 
   React.useEffect(()=>{
     const pf=getProjectFiles(filters?.project?.split('||')[0]||'');
@@ -777,6 +778,47 @@ const CollectionsTab = ({T, GC, SH, filters={}, raw}) => {
       ))}
       <span style={{marginLeft:'auto',fontSize:9,color:T.textL,fontStyle:'italic'}}>All amounts W/O GST</span>
     </div>
+
+    {/* NEW SALES (auto-selects FY2026-27) + OUTSTANDING-ONLY VIEW */}
+    <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
+      <button onClick={()=>setFilters(p=>({...p,fy:'FY2026-27'}))}
+        style={{background:'linear-gradient(135deg,#0097a7,#00bcd4)',color:'#fff',border:'none',borderRadius:8,padding:'8px 18px',fontWeight:800,fontSize:11,cursor:'pointer',letterSpacing:0.4,boxShadow:'0 2px 8px rgba(0,151,167,0.35)'}}>
+        🆕 New Sales (FY2026-27)
+      </button>
+      <button onClick={()=>setShowOnlyOutstanding(o=>!o)}
+        style={showOnlyOutstanding
+          ? {background:T.red,color:'#fff',border:'none',borderRadius:8,padding:'8px 18px',fontWeight:800,fontSize:11,cursor:'pointer',letterSpacing:0.4,boxShadow:`0 2px 8px ${T.red}66`}
+          : {background:'rgba(211,47,47,0.08)',color:T.red,border:'1px solid rgba(211,47,47,0.3)',borderRadius:8,padding:'8px 18px',fontWeight:700,fontSize:11,cursor:'pointer',letterSpacing:0.4}}>
+        {showOnlyOutstanding ? '✕ Show All Charts' : '📊 Outstanding by Month Only'}
+      </button>
+    </div>
+
+    {showOnlyOutstanding && (()=>{
+      const outstandingMonths = allMonthlyRaw.filter(m=>(m.outstanding||0)>0);
+      const totalOut = +outstandingMonths.reduce((s,m)=>s+(m.outstanding||0),0).toFixed(1);
+      return (
+        <GC style={{padding:16}}>
+          <SH2 title="Outstanding by Month" sub={`Months with unpaid amount against demand raised that month · Total ₹${totalOut} Cr`}/>
+          {outstandingMonths.length===0 ? (
+            <p style={{fontSize:12,color:T.textL,textAlign:'center',padding:40}}>No outstanding amounts found for this filter.</p>
+          ) : (
+            <ResponsiveContainer width="100%" height={320}>
+              <ComposedChart data={outstandingMonths} margin={{top:24,right:20,bottom:28,left:0}}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.07)" vertical={false}/>
+                <XAxis dataKey="label" tick={{fill:T.textM,fontSize:9,fontWeight:600}} angle={-30} textAnchor="end" height={36} axisLine={false} tickLine={false}/>
+                <YAxis tick={{fill:T.textM,fontSize:12}} axisLine={false} tickLine={false} tickFormatter={v=>'₹'+v+'Cr'} width={46}/>
+                <Tooltip formatter={(v)=>[`₹${v} Cr`,'Outstanding']}/>
+                <Bar dataKey="outstanding" name="Outstanding" fill={T.red} fillOpacity={0.8} radius={[3,3,0,0]}>
+                  <LabelList dataKey="outstanding" position="top" style={{fill:T.red,fontSize:9,fontWeight:800}} formatter={v=>v>0?v:''}/>
+                </Bar>
+              </ComposedChart>
+            </ResponsiveContainer>
+          )}
+        </GC>
+      );
+    })()}
+
+    {!showOnlyOutstanding && (<>
 
     {/* ADVANCE NOTE — compact pill with hover tooltip */}
     {advRaw>0&&(
@@ -1066,6 +1108,7 @@ const CollectionsTab = ({T, GC, SH, filters={}, raw}) => {
         </GC>
       );
     })()}
+  </>)}
   </>);
 };
 
@@ -3562,7 +3605,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
         ══════════════════════════════════════════════════════ */}
         {tab==='collections'&&(
           <div style={{display:'flex',flexDirection:'column',gap:16}}>
-            <CollectionsTab T={T} GC={GC} SH={SH} filters={filters} raw={raw}/>
+            <CollectionsTab T={T} GC={GC} SH={SH} filters={filters} setFilters={setFilters} raw={raw}/>
           </div>
         )}
 
