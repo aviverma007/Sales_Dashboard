@@ -15,7 +15,8 @@ PROJECTS = [
          cpLabel='Edition',  files=('edition_pdrn.XLSX','edition_invr.XLSX','edition_dapp.XLSX')),
     dict(key='SMARTWORLD SKY ARC',     kpi='skyarcKpiExtra', month='skyarcMonthlyRates',
          area='invr', company='RIVERDAY INFRA',   bpLabel='Smartworld Sky Arc',
-         cpLabel='Sky Arc',  files=('skyarc_pdrn.XLSX','skyarc_invr.XLSX','skyarc_dapp.XLSX')),
+         cpLabel='Sky Arc',  files=('skyarc_pdrn.XLSX','skyarc_invr.XLSX','skyarc_dapp.XLSX'),
+         bspCol='Total Basic Selling Price'),  # verified exact match against reference figure (20 Jul 2026) - Sky Arc only
     dict(key='TRUMP RESIDENCES GURGAON', kpi='trumpKpiExtra', month='trumpMonthlyRates',
          area='invr', company='TRUMP RESIDENCES',  bpLabel='Trump Residences Gurgaon',
          cpLabel='Trump',    files=('trump_pdrn.XLSX','trump_invr.XLSX','trump_dapp.XLSX')),
@@ -39,7 +40,7 @@ def mlabel(m):
     try: return datetime.strptime(m,'%Y-%m').strftime("%b'%y")
     except: return m
 
-def parse_pdrn(rows, proj, company):
+def parse_pdrn(rows, proj, company, bsp_col='Total BSP Net Value'):
     out=[]
     for r in rows:
         d=dt(r.get('SFDC Booking Date')); month='';yr=0;mn=0
@@ -55,7 +56,7 @@ def parse_pdrn(rows, proj, company):
             bhkFull=s(r.get('BHK')),bhk=s(r.get('BHK')),status=st,bookingStatusRaw=raw.upper(),bookingMonth=month,bookingYear=yr,
             bookingDate=d,bookingFY=fy(yr,mn) if yr else '',unit=s(r.get('Unit No.')),
             broker=s(r.get('Broker Code')),brokerName=s(r.get('Broker Name (SFDC)')),
-            bsp=num(r.get('Total BSP Net Value')),tcv=num(r.get('TCV (With Tax)')),
+            bsp=num(r.get(bsp_col)),tcv=num(r.get('TCV (With Tax)')),
             demand=num(r.get('Total Demand Amount')),received=num(r.get('Total Received')),
             superArea=num(r.get('Super Area')),carpet=num(r.get('Carpet')),
             customer=s(r.get('Latest Customer Name')),paymentPlan=s(r.get('Payment Plan Name')),
@@ -104,7 +105,7 @@ def main():
     parsed={}
     for P in PROJECTS:
         pf,inf,df=P['files']
-        pd=parse_pdrn(load(pf),P['key'],P['company'])
+        pd=parse_pdrn(load(pf),P['key'],P['company'],P.get('bspCol','Total BSP Net Value'))
         iv=parse_invr(load(inf),P['key'],P['company'])
         da=parse_dapp(load(df),P['key'],P['company'])
         parsed[P['key']]=(pd,iv,da)
