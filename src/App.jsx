@@ -780,7 +780,7 @@ const CollectionsTab = ({T, GC, SH, filters={}, setFilters=()=>{}, raw}) => {
   const GREY_BTN={background:'rgba(0,100,140,0.08)',color:T.textM,border:'1px solid rgba(0,100,140,0.15)',borderRadius:8,padding:'7px 20px',fontWeight:700,fontSize:11,cursor:'pointer',letterSpacing:0.5};
 
   return (<>
-    {/* TLP / CLP TOGGLE */}
+    {/* TLP / CLP TOGGLE + NEW SALES + OUTSTANDING-ONLY VIEW (all one row) */}
     <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap',background:'rgba(255,255,255,0.95)',borderRadius:12,padding:'10px 16px',border:'1px solid rgba(0,100,140,0.1)',boxShadow:'0 2px 8px rgba(0,60,100,0.06)'}}>
       <span style={{fontSize:11,fontWeight:800,color:T.textM,textTransform:'uppercase',letterSpacing:0.8,marginRight:4}}>Payment Plan:</span>
       {[
@@ -795,21 +795,20 @@ const CollectionsTab = ({T, GC, SH, filters={}, setFilters=()=>{}, raw}) => {
           {l}
         </button>
       ))}
-      <span style={{marginLeft:'auto',fontSize:9,color:T.textL,fontStyle:'italic'}}>All amounts W/O GST</span>
-    </div>
-
-    {/* NEW SALES (auto-selects FY2026-27) + OUTSTANDING-ONLY VIEW */}
-    <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
-      <button onClick={()=>setFilters(p=>({...p,fy:'FY2026-27'}))}
-        style={{background:'linear-gradient(135deg,#0097a7,#00bcd4)',color:'#fff',border:'none',borderRadius:8,padding:'8px 18px',fontWeight:800,fontSize:11,cursor:'pointer',letterSpacing:0.4,boxShadow:'0 2px 8px rgba(0,151,167,0.35)'}}>
-        🆕 New Sales (FY2026-27)
+      <div style={{width:1,height:22,background:'rgba(0,100,140,0.15)',margin:'0 4px'}}/>
+      <button onClick={()=>setFilters(p=>({...p,fy:p.fy==='FY2026-27'?'':'FY2026-27'}))}
+        style={filters.fy==='FY2026-27'
+          ? {background:'linear-gradient(135deg,#0097a7,#00bcd4)',color:'#fff',border:'none',borderRadius:8,padding:'7px 16px',fontWeight:800,fontSize:10,cursor:'pointer',letterSpacing:0.4,boxShadow:'0 2px 8px rgba(0,151,167,0.4)'}
+          : {background:'rgba(0,100,140,0.06)',color:T.textM,border:'1px solid rgba(0,100,140,0.15)',borderRadius:8,padding:'7px 16px',fontWeight:700,fontSize:10,cursor:'pointer',letterSpacing:0.4}}>
+        🆕 {filters.fy==='FY2026-27' ? 'New Sales (Click to Clear)' : 'New Sales (FY2026-27)'}
       </button>
       <button onClick={()=>setShowOnlyOutstanding(o=>!o)}
         style={showOnlyOutstanding
-          ? {background:T.red,color:'#fff',border:'none',borderRadius:8,padding:'8px 18px',fontWeight:800,fontSize:11,cursor:'pointer',letterSpacing:0.4,boxShadow:`0 2px 8px ${T.red}66`}
-          : {background:'rgba(211,47,47,0.08)',color:T.red,border:'1px solid rgba(211,47,47,0.3)',borderRadius:8,padding:'8px 18px',fontWeight:700,fontSize:11,cursor:'pointer',letterSpacing:0.4}}>
+          ? {background:T.red,color:'#fff',border:'none',borderRadius:8,padding:'7px 16px',fontWeight:800,fontSize:10,cursor:'pointer',letterSpacing:0.4,boxShadow:`0 2px 8px ${T.red}66`}
+          : {background:'rgba(211,47,47,0.06)',color:T.red,border:'1px solid rgba(211,47,47,0.2)',borderRadius:8,padding:'7px 16px',fontWeight:700,fontSize:10,cursor:'pointer',letterSpacing:0.4}}>
         {showOnlyOutstanding ? '✕ Show All Charts' : '📊 Outstanding by Month Only'}
       </button>
+      <span style={{marginLeft:'auto',fontSize:9,color:T.textL,fontStyle:'italic'}}>All amounts W/O GST</span>
     </div>
 
     {showOnlyOutstanding && (()=>{
