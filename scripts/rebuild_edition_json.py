@@ -94,6 +94,7 @@ def parse_pdrn(rows):
             'bhkFull': safe_str(r.get('BHK')),
             'bhk': safe_str(r.get('BHK')),
             'status': status,
+            'bookingStatusRaw': safe_str(status_raw).upper(),
             'bookingMonth': month,
             'bookingYear': year,
             'bookingDate': dt,

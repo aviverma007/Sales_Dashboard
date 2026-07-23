@@ -1539,10 +1539,10 @@ function AppInner({overviewOnly=false}) {
     if(filters.dateTo&&(!r.bookingDate||r.bookingDate>filters.dateTo))return false;
     return true;
   });},[raw,filters,matchMo]);
-  const pA=useMemo(()=>pF.filter(r=>r.status==='ACTIVE'),[pF]);
+  const pA=useMemo(()=>pF.filter(r=>r.status==='ACTIVE'&&r.bookingStatusRaw==='ACTIVE'),[pF]);
   const pC=useMemo(()=>pF.filter(r=>r.status==='CANCELLED'),[pF]);
   // Unfiltered (project-only) versions for KPI cards — ignore FY/quarter/month/broker/typology
-  const pAAll=useMemo(()=>{if(!raw?.pdrn)return[];const projs=filters.project?filters.project.split('||').filter(Boolean):[];return raw.pdrn.filter(r=>r.status==='ACTIVE'&&(!filters.company||r.companyNorm===filters.company)&&(!projs.length||projs.includes(r.project)));},[raw,filters.project,filters.company]);
+  const pAAll=useMemo(()=>{if(!raw?.pdrn)return[];const projs=filters.project?filters.project.split('||').filter(Boolean):[];return raw.pdrn.filter(r=>r.status==='ACTIVE'&&r.bookingStatusRaw==='ACTIVE'&&(!filters.company||r.companyNorm===filters.company)&&(!projs.length||projs.includes(r.project)));},[raw,filters.project,filters.company]);
   const pCAll=useMemo(()=>{if(!raw?.pdrn)return[];const projs=filters.project?filters.project.split('||').filter(Boolean):[];return raw.pdrn.filter(r=>r.status==='CANCELLED'&&(!filters.company||r.companyNorm===filters.company)&&(!projs.length||projs.includes(r.project)));},[raw,filters.project,filters.company]);
   const iFAll=useMemo(()=>{if(!raw?.invr)return[];const projs=filters.project?filters.project.split('||').filter(Boolean):[];return raw.invr.filter(r=>(!filters.company||r.companyNorm===filters.company)&&(!projs.length||projs.includes(r.project)));},[raw,filters.project,filters.company]);
   const dF=useMemo(()=>{if(!raw?.dapp)return[];return raw.dapp.filter(r=>{if(filters.company&&r.companyNorm!==filters.company)return false;if(filters.project){const projs=filters.project.split('||').filter(Boolean);if(projs.length&&!projs.includes(r.project))return false;}if((filters.month||filters.quarter)&&!matchMo(r.billMonth))return false;return true;});},[raw,filters,matchMo]);

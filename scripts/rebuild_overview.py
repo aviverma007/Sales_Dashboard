@@ -52,7 +52,7 @@ def parse_pdrn(rows, proj, company):
         # everything else (incl. TEMPORARY SURRENDER) counts as booked/ACTIVE.
         st='CANCELLED' if 'CANCEL' in raw.upper() else ('' if raw=='' else 'ACTIVE')
         out.append(dict(company=s(r.get('Company Name')),companyNorm=company,project=proj,
-            bhkFull=s(r.get('BHK')),bhk=s(r.get('BHK')),status=st,bookingMonth=month,bookingYear=yr,
+            bhkFull=s(r.get('BHK')),bhk=s(r.get('BHK')),status=st,bookingStatusRaw=raw.upper(),bookingMonth=month,bookingYear=yr,
             bookingDate=d,bookingFY=fy(yr,mn) if yr else '',unit=s(r.get('Unit No.')),
             broker=s(r.get('Broker Code')),brokerName=s(r.get('Broker Name (SFDC)')),
             bsp=num(r.get('Total BSP Net Value')),tcv=num(r.get('TCV (With Tax)')),
