@@ -89,6 +89,25 @@ const toQuarterly=(data,labelKey='label')=>{
   return Object.values(qMap);
 };
 
+// Same fiscal-year convention as toQuarterly (Apr-Mar), but collapses a whole
+// year into one bar instead of one quarter - label is 'FY26' style (year the
+// fiscal year ENDS in), matching the Quarter labels' year suffix.
+const toYearly=(data,labelKey='label')=>{
+  const yMap={};
+  data.forEach(d=>{
+    const lbl=String(d[labelKey]||d.month||d.label||'');
+    const m=lbl.match(/([A-Za-z]{3})'(\d{2})/);
+    if(!m)return;
+    const monNum={'Jan':1,'Feb':2,'Mar':3,'Apr':4,'May':5,'Jun':6,'Jul':7,'Aug':8,'Sep':9,'Oct':10,'Nov':11,'Dec':12}[m[1]]||0;
+    const calYr=parseInt(m[2]);
+    const fyYr=monNum<=3?calYr:calYr+1;
+    const y=`FY${String(fyYr).padStart(2,'0')}`;
+    if(!yMap[y]){yMap[y]={...d,[labelKey]:y,month:y};Object.keys(d).forEach(k=>{if(typeof d[k]==='number')yMap[y][k]=0;});}
+    Object.keys(d).forEach(k=>{if(typeof d[k]==='number')yMap[y][k]=+(yMap[y][k]+d[k]).toFixed(1);});
+  });
+  return Object.values(yMap);
+};
+
 const ChartControls=({mode,setMode,offset,setOffset,total,window:win=6})=>{
   const maxOffset=Math.max(0,total-win);
   const displayOffset=Math.min(offset,maxOffset);
@@ -379,7 +398,7 @@ const FSel = ({label,options,value,onChange,multi=false,openId='',activeOpen=nul
       <div style={{display:'flex',flexDirection:'column',gap:2,position:'relative'}}>
         <label style={{color:T.textM,fontSize:10,fontWeight:800,letterSpacing:1,textTransform:'uppercase'}}>{label}</label>
         <div onClick={setOpen} style={{background:disabled?'rgba(0,0,0,0.04)':'rgba(255,255,255,0.88)',border:`1px solid ${disabled?'rgba(0,60,100,0.1)':vals.length?T.teal:'rgba(0,100,140,0.25)'}`,borderRadius:7,color:disabled?'rgba(100,110,120,0.5)':vals.length?T.tealD:T.textM,padding:'5px 10px',fontSize:12,fontFamily:'Inter,sans-serif',minWidth:120,cursor:disabled?'not-allowed':'pointer',fontWeight:vals.length?600:400,userSelect:'none',display:'flex',justifyContent:'space-between',alignItems:'center',gap:6,opacity:disabled?0.6:1}}>
-          <span style={{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:130}}>{disabled?'Quarter mode':vals.length?vals.join(', '):'All'}</span>
+          <span style={{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:130}}>{disabled?'Locked':vals.length?vals.join(', '):'All'}</span>
           <span style={{fontSize:8,opacity:0.6}}>{disabled?'🔒':open?'▲':'▼'}</span>
         </div>
         {open&&(
@@ -414,7 +433,7 @@ const FSel = ({label,options,value,onChange,multi=false,openId='',activeOpen=nul
     <div style={{display:'flex',flexDirection:'column',gap:2,position:'relative'}}>
       <label style={{color:T.textM,fontSize:10,fontWeight:800,letterSpacing:1,textTransform:'uppercase'}}>{label}</label>
       <div onClick={setOpen} style={{background:disabled?'rgba(0,0,0,0.04)':'rgba(255,255,255,0.88)',border:`1px solid ${disabled?'rgba(0,60,100,0.1)':value?T.teal:'rgba(0,100,140,0.25)'}`,borderRadius:7,color:disabled?'rgba(100,110,120,0.5)':value?T.tealD:T.textM,padding:'5px 10px',fontSize:12,fontFamily:'Inter,sans-serif',minWidth:140,cursor:disabled?'not-allowed':'pointer',fontWeight:value?600:400,userSelect:'none',display:'flex',justifyContent:'space-between',alignItems:'center',gap:6,opacity:disabled?0.6:1}}>
-        <span style={{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:160}}>{disabled?'Quarter mode':value||'All'}</span>
+        <span style={{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:160}}>{disabled?'Locked':value||'All'}</span>
         <span style={{fontSize:8,opacity:0.6}}>{disabled?'🔒':open?'▲':'▼'}</span>
       </div>
       {open&&(
@@ -2003,7 +2022,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
           <FSel label="Project"    options={availProj}                           value={filters.project}  onChange={v=>sf('project',v)}   multi={false} openId="project"    activeOpen={activeFilter} setActiveOpen={setActiveFilter} mandatory={true}/>
           <FSel label="Fin. Year"  options={fo.financialYears||[]}               value={filters.fy}       onChange={v=>sf('fy',v)}         multi={true} openId="fy"         activeOpen={activeFilter} setActiveOpen={setActiveFilter}/>
           <FSel label="Quarter"       options={FY_QUARTERS}                              value={filters.quarter}  onChange={v=>sf('quarter',v)}    multi={true} openId="quarter"    activeOpen={activeFilter} setActiveOpen={setActiveFilter}/>
-          <FSel label="Month"        options={MONTHS_LIST}                              value={filters.month}    onChange={v=>sf('month',v)}      multi={true} openId="month"      activeOpen={activeFilter} setActiveOpen={setActiveFilter} disabled={chartGranularity==='quarterly'}/>
+          <FSel label="Month"        options={MONTHS_LIST}                              value={filters.month}    onChange={v=>sf('month',v)}      multi={true} openId="month"      activeOpen={activeFilter} setActiveOpen={setActiveFilter} disabled={chartGranularity!=='monthly'}/>
           {tab!=='pnl'&&<FSel label="CP"         options={availBrokers}                         value={filters.broker}   onChange={v=>sf('broker',v)}     multi={true} openId="cp"         activeOpen={activeFilter} setActiveOpen={setActiveFilter}/>}
           {tab!=='pnl'&&<FSel label="Typology"   options={availTypologies}                      value={filters.typology} onChange={v=>sf('typology',v)}   multi={true} openId="typology"   activeOpen={activeFilter} setActiveOpen={setActiveFilter}/>}
           {/* Booking Date filter removed per instruction */}
@@ -2352,12 +2371,12 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
 
                 {!showTowerType&&(
                   <div style={{display:'flex',alignItems:'center',border:'1.5px solid rgba(0,151,167,0.3)',borderRadius:20,padding:2,background:'#fff'}}>
-                    {['monthly','quarterly'].map(g=>(
-                      <button key={g} onClick={()=>{setChartGranularity(g);if(g==='quarterly')sf('month','');}}
+                    {['monthly','quarterly','yearly'].map(g=>(
+                      <button key={g} onClick={()=>{setChartGranularity(g);if(g!=='monthly')sf('month','');}}
                         style={{padding:'6px 14px',borderRadius:18,border:'none',cursor:'pointer',fontSize:10,fontWeight:800,letterSpacing:0.4,textTransform:'capitalize',
                           background:chartGranularity===g?'linear-gradient(135deg,#0097a7,#00bcd4)':'transparent',
                           color:chartGranularity===g?'#fff':'#0097a7',transition:'all 0.2s'}}>
-                        {g==='monthly'?'Month':'Quarter'}
+                        {g==='monthly'?'Month':g==='quarterly'?'Quarter':'Year'}
                       </button>
                     ))}
                   </div>
@@ -2481,12 +2500,12 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                         return null;
                       })(),
                     }));
-                    const data=uMode==='quarterly'?toQuarterly(rawData,'label').map(q=>({...q,isFuture:false,isCurrent:false})):rawData;
-                    const parseM=l=>{const p=l.match(/([A-Za-z]{3})'(\d{2})/);if(!p)return'';const mn={Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'};return(p[2]>='90'?'19':'20')+p[2]+'-'+mn[p[1]];};const dataF=(chartMonthFrom&&chartGranularity!=='quarterly')?data.filter(d=>parseM(d.label)>=chartMonthFrom):data;
+                    const data=uMode==='quarterly'?toQuarterly(rawData,'label').map(q=>({...q,isFuture:false,isCurrent:false})):uMode==='yearly'?toYearly(rawData,'label').map(q=>({...q,isFuture:false,isCurrent:false})):rawData;
+                    const parseM=l=>{const p=l.match(/([A-Za-z]{3})'(\d{2})/);if(!p)return'';const mn={Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'};return(p[2]>='90'?'19':'20')+p[2]+'-'+mn[p[1]];};const dataF=(chartMonthFrom&&chartGranularity==='monthly')?data.filter(d=>parseM(d.label)>=chartMonthFrom):data;
                     const dataFinal=chartMonthFrom?dataF:data;
                     const cur=dataFinal.findIndex(d=>d.isCurrent);
                     const def=cur>=2?cur-2:Math.max(0,dataFinal.length-WIN);
-                    const off=(chartMonthFrom&&chartGranularity!=='quarterly')?Math.min(Math.max(chartOff<0?0:chartOff,0),Math.max(0,dataFinal.length-WIN)):Math.min(Math.max(chartOff<0?def:chartOff,0),Math.max(0,dataFinal.length-WIN));
+                    const off=(chartMonthFrom&&chartGranularity==='monthly')?Math.min(Math.max(chartOff<0?0:chartOff,0),Math.max(0,dataFinal.length-WIN)):Math.min(Math.max(chartOff<0?def:chartOff,0),Math.max(0,dataFinal.length-WIN));
                     const sl=dataFinal.slice(off,off+WIN);
                     const hasDateFilter=!!(filters.fy||filters.quarter||filters.month);
                     const totalAchievedUnits=hasDateFilter?pA.length:kpiEx.bookedUnits;
@@ -2568,12 +2587,12 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                       projection:tsvProjMap[d.label]||null,
                       bridge:(d.label===lastTsvLbl?tsvProjMap[lastTsvLbl]:d.label===nqBLblT?(monthlyWithTargets.find(r=>r.label===nqBLblT)?.targetTsvLine||null):null),
                     }));
-                    const data=tsvMode==='quarterly'?toQuarterly(rawDataTsv,'label').map(q=>({...q,isFuture:false,isCurrent:false})):rawDataTsv;
-                    const parseM=l=>{const p=l.match(/([A-Za-z]{3})'(\d{2})/);if(!p)return'';const mn={Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'};return(p[2]>='90'?'19':'20')+p[2]+'-'+mn[p[1]];};const dataF=(chartMonthFrom&&chartGranularity!=='quarterly')?data.filter(d=>parseM(d.label)>=chartMonthFrom):data;
+                    const data=tsvMode==='quarterly'?toQuarterly(rawDataTsv,'label').map(q=>({...q,isFuture:false,isCurrent:false})):tsvMode==='yearly'?toYearly(rawDataTsv,'label').map(q=>({...q,isFuture:false,isCurrent:false})):rawDataTsv;
+                    const parseM=l=>{const p=l.match(/([A-Za-z]{3})'(\d{2})/);if(!p)return'';const mn={Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'};return(p[2]>='90'?'19':'20')+p[2]+'-'+mn[p[1]];};const dataF=(chartMonthFrom&&chartGranularity==='monthly')?data.filter(d=>parseM(d.label)>=chartMonthFrom):data;
                     const dataFinal=chartMonthFrom?dataF:data;
                     const cur=dataFinal.findIndex(d=>d.isCurrent);
                     const def=cur>=2?cur-2:Math.max(0,dataFinal.length-WIN);
-                    const off=(chartMonthFrom&&chartGranularity!=='quarterly')?Math.min(Math.max(chartOff<0?0:chartOff,0),Math.max(0,dataFinal.length-WIN)):Math.min(Math.max(chartOff<0?def:chartOff,0),Math.max(0,dataFinal.length-WIN));
+                    const off=(chartMonthFrom&&chartGranularity==='monthly')?Math.min(Math.max(chartOff<0?0:chartOff,0),Math.max(0,dataFinal.length-WIN)):Math.min(Math.max(chartOff<0?def:chartOff,0),Math.max(0,dataFinal.length-WIN));
                     const sl=dataFinal.slice(off,off+WIN);
                     const hasDateFilter=!!(filters.fy||filters.quarter||filters.month);
                     const totalAchievedTsv=hasDateFilter?+(pA.reduce((s,r)=>s+(r.bsp||0),0)/1e7).toFixed(1):kpiEx.totalBSPCr;
@@ -2653,12 +2672,12 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                       projection:areaProjMap2[d.label]!=null?+(areaProjMap2[d.label]/100000).toFixed(2):null,
                       bridge:(d.label===lastALbl2?+(areaProjMap2[lastALbl2]/100000).toFixed(2):d.label===nqBLblA2?(monthlyWithTargets.find(r=>r.label===nqBLblA2)?.targetAreaSqft?+(monthlyWithTargets.find(r=>r.label===nqBLblA2).targetAreaSqft/100000).toFixed(2):null):null),
                     }));
-                    const data=suMode==='quarterly'?toQuarterly(rawDataA,'label').map(q=>({...q,isFuture:false,isCurrent:false})):rawDataA;
-                    const parseM=l=>{const p=l.match(/([A-Za-z]{3})'(\d{2})/);if(!p)return'';const mn={Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'};return(p[2]>='90'?'19':'20')+p[2]+'-'+mn[p[1]];};const dataF=(chartMonthFrom&&chartGranularity!=='quarterly')?data.filter(d=>parseM(d.label)>=chartMonthFrom):data;
+                    const data=suMode==='quarterly'?toQuarterly(rawDataA,'label').map(q=>({...q,isFuture:false,isCurrent:false})):suMode==='yearly'?toYearly(rawDataA,'label').map(q=>({...q,isFuture:false,isCurrent:false})):rawDataA;
+                    const parseM=l=>{const p=l.match(/([A-Za-z]{3})'(\d{2})/);if(!p)return'';const mn={Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'};return(p[2]>='90'?'19':'20')+p[2]+'-'+mn[p[1]];};const dataF=(chartMonthFrom&&chartGranularity==='monthly')?data.filter(d=>parseM(d.label)>=chartMonthFrom):data;
                     const dataFinal=chartMonthFrom?dataF:data;
                     const cur=dataFinal.findIndex(d=>d.isCurrent);
                     const def=cur>=2?cur-2:Math.max(0,dataFinal.length-WIN);
-                    const off=(chartMonthFrom&&chartGranularity!=='quarterly')?Math.min(Math.max(chartOff<0?0:chartOff,0),Math.max(0,dataFinal.length-WIN)):Math.min(Math.max(chartOff<0?def:chartOff,0),Math.max(0,dataFinal.length-WIN));
+                    const off=(chartMonthFrom&&chartGranularity==='monthly')?Math.min(Math.max(chartOff<0?0:chartOff,0),Math.max(0,dataFinal.length-WIN)):Math.min(Math.max(chartOff<0?def:chartOff,0),Math.max(0,dataFinal.length-WIN));
                     const sl=dataFinal.slice(off,off+WIN);
                     const hasDateFilter=!!(filters.fy||filters.quarter||filters.month);
                     const totalAchievedArea=hasDateFilter?+(pA.reduce((s,r)=>s+(r.superArea||0),0)/100000).toFixed(2):+((kpiEx.bookedAreaSqft||0)/100000).toFixed(2);
@@ -2812,14 +2831,14 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                       })(),
                       bridge:(d.label===lastRateLbl?rateProjMap[lastRateLbl]:d.label===nqBLblR?(monthlyWithTargets.find(r=>r.label===nqBLblR)?.targetRateLine||null):null),
                     }));
-                    const data=rMode==='quarterly'?toQuarterly(rawDataR,'label').map(q=>({...q,isFuture:false,isCurrent:false})):rawDataR;
-                    const parseM=l=>{const p=l.match(/([A-Za-z]{3})'(\d{2})/);if(!p)return'';const mn={Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'};return(p[2]>='90'?'19':'20')+p[2]+'-'+mn[p[1]];};const dataF=(chartMonthFrom&&chartGranularity!=='quarterly')?data.filter(d=>parseM(d.label)>=chartMonthFrom):data;
+                    const data=rMode==='quarterly'?toQuarterly(rawDataR,'label').map(q=>({...q,isFuture:false,isCurrent:false})):rMode==='yearly'?toYearly(rawDataR,'label').map(q=>({...q,isFuture:false,isCurrent:false})):rawDataR;
+                    const parseM=l=>{const p=l.match(/([A-Za-z]{3})'(\d{2})/);if(!p)return'';const mn={Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'};return(p[2]>='90'?'19':'20')+p[2]+'-'+mn[p[1]];};const dataF=(chartMonthFrom&&chartGranularity==='monthly')?data.filter(d=>parseM(d.label)>=chartMonthFrom):data;
                     const dataFinal=chartMonthFrom?dataF:data;
                     const cur=dataFinal.findIndex(d=>d.isCurrent);
                     // Start from first month with actual rate data so achieved line is visible
                     const firstActualIdx=dataFinal.findIndex(d=>d.achieved!=null&&d.achieved>0);
                     const def=firstActualIdx>=0?Math.max(0,firstActualIdx):cur>=2?cur-2:Math.max(0,dataFinal.length-WIN);
-                    const off=(chartMonthFrom&&chartGranularity!=='quarterly')?Math.min(Math.max(chartOff<0?0:chartOff,0),Math.max(0,dataFinal.length-WIN)):Math.min(Math.max(chartOff<0?def:chartOff,0),Math.max(0,dataFinal.length-WIN));
+                    const off=(chartMonthFrom&&chartGranularity==='monthly')?Math.min(Math.max(chartOff<0?0:chartOff,0),Math.max(0,dataFinal.length-WIN)):Math.min(Math.max(chartOff<0?def:chartOff,0),Math.max(0,dataFinal.length-WIN));
                     const sl=dataFinal.slice(off,off+WIN);
                     const hasDateFilter=!!(filters.fy||filters.quarter||filters.month);
                     const pAWithRate=pA.filter(r=>r.superArea>0);
