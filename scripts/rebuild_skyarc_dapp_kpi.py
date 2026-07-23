@@ -387,6 +387,7 @@ def main():
             mk = monthly_acc[month]
             mk[f'{mtype}_dem'] += demand
             mk[f'{mtype}_rec'] += recv_wot
+            mk['outstanding'] += outstanding
 
         if demand > 0:
             # Already billed - accounted for in the headline KPIs already; not
@@ -486,6 +487,7 @@ def main():
             'clp_rec': round(v.get('clp_rec', 0) / 1e7, 2),
             'dem': round(dem / 1e7, 2),
             'rec': round(rec / 1e7, 2),
+            'outstanding': round(v.get('outstanding', 0) / 1e7, 2),
         })
 
     milestonesUpcoming = []
