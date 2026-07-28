@@ -15,8 +15,7 @@ PROJECTS = [
          cpLabel='Edition',  files=('edition_pdrn.XLSX','edition_invr.XLSX','edition_dapp.XLSX')),
     dict(key='SMARTWORLD SKY ARC',     kpi='skyarcKpiExtra', month='skyarcMonthlyRates',
          area='invr', company='RIVERDAY INFRA',   bpLabel='Smartworld Sky Arc',
-         cpLabel='Sky Arc',  files=('skyarc_pdrn.XLSX','skyarc_invr.XLSX','skyarc_dapp.XLSX'),
-         bspCol='Total Basic Selling Price'),  # verified exact match against reference figure (20 Jul 2026) - Sky Arc only
+         cpLabel='Sky Arc',  files=('skyarc_pdrn.XLSX','skyarc_invr.XLSX','skyarc_dapp.XLSX')),
     dict(key='TRUMP RESIDENCES GURGAON', kpi='trumpKpiExtra', month='trumpMonthlyRates',
          area='invr', company='TRUMP RESIDENCES',  bpLabel='Trump Residences Gurgaon',
          cpLabel='Trump',    files=('trump_pdrn.XLSX','trump_invr.XLSX','trump_dapp.XLSX')),
