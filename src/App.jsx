@@ -2161,7 +2161,105 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
               <div style={{flex:1,height:1,background:'rgba(0,151,167,0.15)',borderRadius:1}}/>
             </div>
             {/* ROW 1: KPI CARDS — Merged pairs with pie charts */}
-            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr auto',gap:10,alignItems:'stretch'}}>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr auto',gap:10,alignItems:'stretch'}}>
+
+              {/* CARD A2: Total Units — from PDRN (booked=ACTIVE rows, available=INVR Available) */}
+              <GC style={{padding:14}} cls="kc">
+                <SH title="Total Units (PDRN)" compact/>
+                {(()=>{
+                  const pdrnBooked=pAAll.length;
+                  const pdrnAvailable=(kpi.availableUnits||0)+(kpi.managementUnits||0);
+                  const pdrnTotal=pdrnBooked+pdrnAvailable;
+                  const pdrnPct=pdrnTotal>0?Math.round((pdrnBooked/pdrnTotal)*100):0;
+                  return(
+                    <div style={{display:'flex',alignItems:'center',gap:12}}>
+                      <div style={{width:110,height:110,flexShrink:0,position:'relative'}}>
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie data={[{name:'Booked',value:pdrnBooked||0.01},{name:'Available',value:pdrnAvailable||0.01}]}
+                              cx="50%" cy="50%" innerRadius={33} outerRadius={52} paddingAngle={3} dataKey="value" strokeWidth={2} stroke="rgba(255,255,255,0.9)" labelLine={false}>
+                              <Cell fill={T.teal}/><Cell fill={T.amber}/>
+                            </Pie>
+                            <Tooltip content={<CTip/>}/>
+                          </PieChart>
+                        </ResponsiveContainer>
+                        <div style={{position:'absolute',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',pointerEvents:'none'}}>
+                          <span style={{fontSize:14,fontWeight:900,color:T.tealD,lineHeight:1}}>{pdrnPct}%</span>
+                          <span style={{fontSize:8,fontWeight:700,color:T.textM}}>SOLD</span>
+                        </div>
+                      </div>
+                      <div style={{flex:1,display:'flex',flexDirection:'column',gap:6}}>
+                        <div>
+                          <p style={{fontSize:8,color:T.textM,fontWeight:700,margin:'0 0 2px',textTransform:'uppercase'}}>Total</p>
+                          <p style={{fontSize:22,fontWeight:900,color:T.navy,margin:0,letterSpacing:-1}}>{pdrnTotal.toLocaleString('en-IN')}</p>
+                        </div>
+                        <div style={{display:'flex',gap:8}}>
+                          <div style={{flex:1,background:`${T.teal}0d`,borderRadius:6,padding:'5px 8px'}}>
+                            <p style={{fontSize:8,color:T.textM,fontWeight:700,margin:'0 0 2px'}}>Booked</p>
+                            <p style={{fontSize:16,fontWeight:900,color:T.tealD,margin:0}}>{pdrnBooked.toLocaleString('en-IN')}</p>
+                          </div>
+                          <div style={{flex:1,background:`${T.amber}0d`,borderRadius:6,padding:'5px 8px'}}>
+                            <p style={{fontSize:8,color:T.textM,fontWeight:700,margin:'0 0 2px'}}>Available</p>
+                            <p style={{fontSize:16,fontWeight:900,color:T.amber,margin:0}}>{pdrnAvailable.toLocaleString('en-IN')}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+                <p style={{fontSize:7,color:T.textL,margin:'6px 0 0',fontStyle:'italic'}}>Booked = PDRN ACTIVE rows · Available = INVR Available + Management</p>
+                <div style={{position:'absolute',bottom:0,left:0,right:0,height:3,background:`linear-gradient(90deg,${T.teal},${T.amber})`,borderRadius:'0 0 14px 14px'}}/>
+              </GC>
+
+              {/* CARD B2: Area — from PDRN (booked area = superArea sum of ACTIVE rows) */}
+              <GC style={{padding:14}} cls="kc">
+                <SH title="Area (Lakh sq ft) — PDRN" compact/>
+                {(()=>{
+                  const sold=pAAll.reduce((s,r)=>s+(r.superArea||0),0);
+                  const avail=iFAll.filter(r=>r.status==='Available'||r.status==='Management Unit').reduce((s,r)=>s+(r.superArea||0),0);
+                  const tot=sold+avail;
+                  const pct=tot>0?Math.round((sold/tot)*100):0;
+                  const carpetSold=pAAll.reduce((s,r)=>s+(r.carpet||r.carpetArea||0),0);
+                  return(
+                    <div style={{display:'flex',alignItems:'center',gap:12}}>
+                      <div style={{width:110,height:110,flexShrink:0,position:'relative'}}>
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie data={[{name:'Sold',value:sold||0.01},{name:'Available',value:avail||0.01}]}
+                              cx="50%" cy="50%" innerRadius={33} outerRadius={52} paddingAngle={3} dataKey="value" strokeWidth={2} stroke="rgba(255,255,255,0.9)" labelLine={false}>
+                              <Cell fill={T.teal}/><Cell fill={T.amber}/>
+                            </Pie>
+                            <Tooltip content={<CTip fmt={v=>(v/100000).toFixed(2)+' L sqft'}/>}/>
+                          </PieChart>
+                        </ResponsiveContainer>
+                        <div style={{position:'absolute',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',pointerEvents:'none'}}>
+                          <span style={{fontSize:14,fontWeight:900,color:T.tealD,lineHeight:1}}>{pct}%</span>
+                          <span style={{fontSize:8,fontWeight:700,color:T.textM}}>SOLD</span>
+                        </div>
+                      </div>
+                      <div style={{flex:1,display:'flex',flexDirection:'column',gap:6}}>
+                        <div>
+                          <p style={{fontSize:8,color:T.textM,fontWeight:700,margin:'0 0 2px',textTransform:'uppercase'}}>Saleable Area</p>
+                          <p style={{fontSize:24,fontWeight:900,color:T.navy,margin:0,letterSpacing:-0.5}}>{(tot/100000).toFixed(2)} L sqft</p>
+                          <p style={{fontSize:8,color:T.textM,margin:'2px 0 0'}}>Booked carpet: {(carpetSold/100000).toFixed(2)} L sqft</p>
+                        </div>
+                        <div style={{display:'flex',gap:8}}>
+                          <div style={{flex:1,background:`${T.teal}0d`,borderRadius:6,padding:'5px 8px'}}>
+                            <p style={{fontSize:8,color:T.textM,fontWeight:700,margin:'0 0 2px'}}>Sold</p>
+                            <p style={{fontSize:15,fontWeight:900,color:T.tealD,margin:0}}>{(sold/100000).toFixed(2)}L</p>
+                          </div>
+                          <div style={{flex:1,background:`${T.amber}0d`,borderRadius:6,padding:'5px 8px'}}>
+                            <p style={{fontSize:8,color:T.textM,fontWeight:700,margin:'0 0 2px'}}>Available</p>
+                            <p style={{fontSize:15,fontWeight:900,color:T.amber,margin:0}}>{(avail/100000).toFixed(2)}L</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+                <p style={{fontSize:7,color:T.textL,margin:'6px 0 0',fontStyle:'italic'}}>Sold = PDRN ACTIVE Super Area · Available = INVR Available+Mgmt Super Area</p>
+                <div style={{position:'absolute',bottom:0,left:0,right:0,height:3,background:`linear-gradient(90deg,${T.teal},${T.amber})`,borderRadius:'0 0 14px 14px'}}/>
+              </GC>
 
               {/* CARD C: Total Potential Sales Value — Sold + Unsold */}
               <GC style={{padding:12}} cls="kc">
