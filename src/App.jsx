@@ -2872,6 +2872,12 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const nqBLblR=ml3(nqBYR,nqBMoR);
                     const rawDataR=monthlyWithTargets.map(d=>({label:d.label,isFuture:d.isFuture,isCurrent:d.label===TODAY_LABEL,
                       achieved:d.actualRate>0?d.actualRate:null,
+                      // Underlying BSP/Area behind 'achieved' and 'target' - needed to compute
+                      // a volume-weighted average rate for Quarter/Year views (see aggRatePeriod
+                      // below); a rate is a ratio, so summing monthly rates across a quarter is
+                      // meaningless - must be (sum of period BSP) / (sum of period Area) instead.
+                      achievedBspCr:d.bspCr||null, achievedAreaSqft:d.bookedAreaSqft||null,
+                      targetTsvForRate:d.targetTsvLine||null, targetAreaForRate:d.targetAreaSqft||null,
                       target:d.targetRateLine||null,
                       targetLine:(!d.isFuture&&!d.isCurrent)?null:(d.targetRateLine||null),
                       // Current quarter short-term projection
@@ -2889,7 +2895,39 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                       })(),
                       bridge:(d.label===lastRateLbl?rateProjMap[lastRateLbl]:d.label===nqBLblR?(monthlyWithTargets.find(r=>r.label===nqBLblR)?.targetRateLine||null):null),
                     }));
-                    const data=rMode==='quarterly'?toQuarterly(rawDataR,'label').map(q=>({...q,isFuture:false,isCurrent:false})):rMode==='yearly'?toYearly(rawDataR,'label').map(q=>({...q,isFuture:false,isCurrent:false})):rawDataR;
+                    // Rate is a ratio (BSP/Area), so Quarter/Year views must use a volume-
+                    // weighted average - NOT a sum of monthly rates (which would show e.g. a
+                    // quarterly rate 3x the real ₹/sqft). achieved/target = sum(period BSP) /
+                    // sum(period Area). projection/requiredRate/bridge have no BSP/Area behind
+                    // them (they're already rate-level projections), so those take a simple
+                    // average of the non-null values in that period instead of summing.
+                    const aggRatePeriod=(data,yearly)=>{
+                      const monNumR={Jan:1,Feb:2,Mar:3,Apr:4,May:5,Jun:6,Jul:7,Aug:8,Sep:9,Oct:10,Nov:11,Dec:12};
+                      const map={};
+                      data.forEach(d=>{
+                        const m=d.label.match(/([A-Za-z]{3})'(\d{2})/); if(!m) return;
+                        const mn=monNumR[m[1]]||0, calYr=parseInt(m[2]);
+                        const fyYr=mn<=3?calYr:calYr+1;
+                        const period=yearly?`FY${String(fyYr).padStart(2,'0')}`:`Q${mn<=3?4:Math.ceil((mn-3)/3)}'${String(fyYr).padStart(2,'0')}`;
+                        if(!map[period])map[period]={label:period,achBsp:0,achArea:0,tgtBsp:0,tgtArea:0,projSum:0,projN:0,reqSum:0,reqN:0,bridgeVal:null};
+                        const g=map[period];
+                        if(d.achieved!=null&&d.achievedBspCr>0&&d.achievedAreaSqft>0){g.achBsp+=d.achievedBspCr;g.achArea+=d.achievedAreaSqft;}
+                        if(d.targetTsvForRate>0&&d.targetAreaForRate>0){g.tgtBsp+=d.targetTsvForRate;g.tgtArea+=d.targetAreaForRate;}
+                        if(d.projection!=null){g.projSum+=d.projection;g.projN++;}
+                        if(d.requiredRate!=null){g.reqSum+=d.requiredRate;g.reqN++;}
+                        if(d.bridge!=null)g.bridgeVal=d.bridge;
+                      });
+                      return Object.values(map).map(g=>({
+                        label:g.label,month:g.label,isFuture:false,isCurrent:false,
+                        achieved:g.achArea>0?Math.round(g.achBsp*1e7/g.achArea):null,
+                        target:g.tgtArea>0?Math.round(g.tgtBsp*1e7/g.tgtArea):null,
+                        targetLine:g.tgtArea>0?Math.round(g.tgtBsp*1e7/g.tgtArea):null,
+                        projection:g.projN>0?Math.round(g.projSum/g.projN):null,
+                        requiredRate:g.reqN>0?Math.round(g.reqSum/g.reqN):null,
+                        bridge:g.bridgeVal,
+                      }));
+                    };
+                    const data=rMode==='quarterly'?aggRatePeriod(rawDataR,false):rMode==='yearly'?aggRatePeriod(rawDataR,true):rawDataR;
                     const parseM=l=>{const p=l.match(/([A-Za-z]{3})'(\d{2})/);if(!p)return'';const mn={Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'};return(p[2]>='90'?'19':'20')+p[2]+'-'+mn[p[1]];};const dataF=(chartMonthFrom&&chartGranularity==='monthly')?data.filter(d=>parseM(d.label)>=chartMonthFrom):data;
                     const dataFinal=chartMonthFrom?dataF:data;
                     const cur=dataFinal.findIndex(d=>d.isCurrent);
