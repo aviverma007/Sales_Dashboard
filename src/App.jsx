@@ -1403,21 +1403,17 @@ const PnLTab = ({T, GC, SH, filters, sf, raw}) => {
           const areaSqft = booked.reduce((s,u)=>s+(u.carpetArea||u.superArea||0),0);
           const dkAll    = raw?.dappKpi?.kpi?.all || {};
 
-          // Units Sold: use PDRN-based bookedUnits from kpiExtra (ACTIVE count),
+          // Units Sold: use PDRN-based bookedUnits from areaSummary.byProject (ACTIVE count),
           // not INVR Booked count (inventory status differs from sales booking status).
-          // For multi-project views, sum the kpiExtra values; for single-project, use that project's value.
           let pdfnBookedUnits = 0;
           if (selProjs.length === 1) {
             const proj = selProjs[0];
-            const kpiKey = proj === 'SMARTWORLD THE EDITION' ? 'kpiExtra' :
-                          proj === 'SMARTWORLD SKY ARC' ? 'skyarcKpiExtra' :
-                          proj === 'TRUMP RESIDENCES GURGAON' ? 'trumpKpiExtra' : null;
-            if (kpiKey && raw?.[kpiKey]) {
-              pdfnBookedUnits = raw[kpiKey].bookedAreaSqft ? Math.round(raw[kpiKey].bookedAreaSqft / 3200) : 0; // rough estimate from area
-              // Actually, use the exact count if available - check if there's a bookedUnits field
-              // For now, reconstruct from areaSummary which has the exact count
-              const asProj = (raw?.areaSummary?.byProject||[]).find(p =>
-                proj.includes(p.project) || p.project.includes(proj.split(' ')[0]));
+            // Map project keys to display names in areaSummary
+            const displayName = proj === 'SMARTWORLD THE EDITION' ? 'SMARTWORLD THE EDITION' :
+                               proj === 'SMARTWORLD SKY ARC' ? 'Smartworld Sky Arc' :
+                               proj === 'TRUMP RESIDENCES GURGAON' ? 'TRUMP RESIDENCES GURGAON' : null;
+            if (displayName) {
+              const asProj = (raw?.areaSummary?.byProject||[]).find(p => p.project === displayName);
               pdfnBookedUnits = asProj?.bookedUnits || 0;
             }
           }
