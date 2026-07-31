@@ -1764,23 +1764,27 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
     const dk = selProj.includes('SKY ARC') ? (raw?.skyarcKpiExtra || {})
              : selProj.includes('TRUMP')   ? (raw?.trumpKpiExtra  || {})
              : (raw?.kpiExtra || {});
-    // Areas from kpiExtra (pre-computed from actual Excel)
-    const bookedAreaSqft = dk.bookedAreaSqft || pAAll.reduce((s,r)=>s+(r.superArea||0),0);
-    const carpetAreaSqft = dk.carpetAreaSqft || pAAll.reduce((s,r)=>s+(r.carpet||r.carpetArea||0),0);
+    // Areas: ALWAYS compute live from PDRN ACTIVE rows first (single source of
+    // truth = current PDRN file); stored kpiExtra value is only a fallback for
+    // the rare case pAAll hasn't loaded yet.
+    const bookedAreaSqft = pAAll.reduce((s,r)=>s+(r.superArea||0),0) || dk.bookedAreaSqft || 0;
+    const carpetAreaSqft = pAAll.reduce((s,r)=>s+(r.carpet||r.carpetArea||0),0) || dk.carpetAreaSqft || 0;
     const availAreaSqft  = iFAll.filter(r=>r.status==='Available').reduce((s,r)=>s+(r.superArea||0),0);
     const mgmtAreaSqft   = iFAll.filter(r=>r.status==='Management Unit').reduce((s,r)=>s+(r.superArea||0),0);
-    const bookedUnits    = iFAll.filter(r=>r.status==='Booked').length;
+    const bookedUnits    = pAAll.length; // PDRN ACTIVE rows, not INVR Booked status
     const availUnits     = iFAll.filter(r=>r.status==='Available').length;
     const mgmtUnits      = iFAll.filter(r=>r.status==='Management Unit').length;
     const totalUnits     = iFAll.length;
     const totalSuperArea = iFAll.reduce((s,r)=>s+(r.superArea||0),0);
-    // BSP/TCV from pdrn (active bookings) — most accurate
-    const totalBSPCr     = dk.totalBSPCr  || +(pAAll.reduce((s,r)=>s+(r.bsp||0),0)/1e7).toFixed(1);
+    // BSP/TCV: ALWAYS compute live from PDRN ACTIVE rows first, stored kpiExtra
+    // value only as a last-resort fallback.
+    const totalBSPCr     = +(pAAll.reduce((s,r)=>s+(r.bsp||0),0)/1e7).toFixed(1) || dk.totalBSPCr || 0;
     const totalTCVCr     = dk.totalTCVCr  || totalBSPCr;
-    const cancelledBSPCr = dk.cancelledBSPCr || +(pCAll.reduce((s,r)=>s+(r.bsp||0),0)/1e7).toFixed(1);
+    const cancelledBSPCr = +(pCAll.reduce((s,r)=>s+(r.bsp||0),0)/1e7).toFixed(1) || dk.cancelledBSPCr || 0;
     const cancelledAreaSqft = pCAll.reduce((s,r)=>s+(r.superArea||0),0);
-    // Avg rate from kpiExtra (most reliable) or computed
-    const avgRatePerSqft = dk.avgRatePerSqft || (bookedAreaSqft>0 ? Math.round(totalTCVCr*1e7/bookedAreaSqft) : 0);
+    // Avg rate: compute live from the live PDRN BSP/Area above; dk.avgRatePerSqft
+    // only as fallback if bookedAreaSqft is 0 (e.g. no PDRN loaded yet).
+    const avgRatePerSqft = bookedAreaSqft>0 ? Math.round(totalBSPCr*1e7/bookedAreaSqft) : (dk.avgRatePerSqft||0);
     // Type-wise total project value: each unit type's own sold-average rate x that type's
     // total area, summed. Types with no sales fall back to the blended rate (so they aren't 0).
     const soldByType = {};
@@ -2979,9 +2983,10 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
 
                     let twData=[];
                     if(editionOnly){
-                      // Live from invr + towerData for BSP
+                      // Live from PDRN (booked = ACTIVE rows) + INVR (total inventory per tower) + towerData for BSP
                       const inv={};
-                      iF.forEach(r=>{const t=r.tower||'';if(!t)return;if(!inv[t])inv[t]={booked:0,total:0};inv[t].total++;if(r.status==='Booked')inv[t].booked++;});
+                      iF.forEach(r=>{const t=r.tower||'';if(!t)return;if(!inv[t])inv[t]={booked:0,total:0};inv[t].total++;});
+                      pAAll.forEach(r=>{const t=r.tower||'';if(!t)return;if(!inv[t])inv[t]={booked:0,total:0};inv[t].booked++;});
                       twData=Object.entries(inv).filter(([t])=>t).map(([t,v])=>{
                         const td=towerData.find(r=>r.tower===t&&r.project==='SMARTWORLD THE EDITION')||{};
                         const totalBSP=(td.totalBSPCr||0)+(td.available||0)*(td.pricePerSqft||0)*((td.bookedArea||1)/(td.booked||1))/1e7;
