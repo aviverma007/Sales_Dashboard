@@ -2851,7 +2851,12 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     // Edition/Sky Arc/Trump since all three have a monthlyTargets
                     // AOP table now.
                     const currentMonthTargetRate=monthlyWithTargets.find(d=>d.label===TODAY_LABEL)?.targetRateLine||aopTargetRate;
-                    const aopTsvAtCurrentRate=soldTCVVal/1e7+(availAreaR*currentMonthTargetRate)/1e7;
+                    // Use kpiEx.totalProjCr directly - the SAME canonical "Total Project
+                    // Value" shown on the Total Sales Value card elsewhere on this page
+                    // (Sold BSP + Unsold Value, incl. management units). Always reflects
+                    // whichever project is currently selected in the filter, and can never
+                    // drift out of sync with the number shown on that other card.
+                    const aopTsvAtCurrentRate=kpiEx.totalProjCr||0;
                     const avgRateR=aopTargetRate;
 
                     // Current quarter projection (short-term trend)
