@@ -120,12 +120,27 @@ def main():
         avail_area=sum(r['superArea'] for r in inva); avail_units=len(inva)
         rate=round(bsp/barea) if barea else 0
 
+        # Overview Demand / Collected / Outstanding (Sales Overview card): all 3
+        # projects use PDRN over strictly-ACTIVE rows - Demand = Total Demand
+        # Amount, Collected = Total Received, Outstanding = SUM per row of
+        # max(demand - received, 0). Recomputed here so they refresh with the
+        # uploaded file rather than carrying stale values through the merge.
+        act_strict=[r for r in act if r['bookingStatusRaw']=='ACTIVE']
+        o_demand=sum(r['demand'] for r in act_strict)
+        o_collected=sum(r['received'] for r in act_strict)
+        o_outstanding=sum(max(r['demand']-r['received'],0) for r in act_strict)
+        demand_cr=round(o_demand/1e7,2); collected_cr=round(o_collected/1e7,2)
+        outstanding_cr=round(o_outstanding/1e7,2)
+        collection_pct=round(o_collected/o_demand*100,1) if o_demand>0 else 0
+
         # kpiExtra - merge (not replace) so extended fields some projects carry
         # (e.g. Sky Arc's totalProjCr/soldBSPCr/unsoldValueCr/collectedCr/etc,
         # computed separately via the INVR-based Approach 2 formula) are preserved.
         d[P['kpi']] = {**d.get(P['kpi'], {}), **dict(totalBSPCr=round(bsp/1e7,1),totalTCVCr=round(tcv/1e7,1),
             bookedAreaSqft=round(barea),carpetAreaSqft=round(carea),
-            cancelledBSPCr=round(cbsp/1e7,1),avgRatePerSqft=rate)}
+            cancelledBSPCr=round(cbsp/1e7,1),avgRatePerSqft=rate,
+            demandRaisedCr=demand_cr,collectedCr=collected_cr,
+            outstandingCr=outstanding_cr,collectionPct=collection_pct)}
 
         # monthly rate series (active bsp/area by booking month)
         mm=defaultdict(lambda:[0.0,0.0])
