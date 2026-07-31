@@ -1400,12 +1400,12 @@ const PnLTab = ({T, GC, SH, filters, sf, raw}) => {
           const selProjs = filters.project ? filters.project.split('||').filter(Boolean) : [];
           const invr     = (raw?.invr||[]).filter(u=>!selProjs.length||selProjs.includes(u.project));
           const booked   = invr.filter(u=>u.status==='Booked');
-          const areaSqft = booked.reduce((s,u)=>s+(u.carpetArea||u.superArea||0),0);
           const dkAll    = raw?.dappKpi?.kpi?.all || {};
 
-          // Units Sold: use PDRN-based bookedUnits from areaSummary.byProject (ACTIVE count),
-          // not INVR Booked count (inventory status differs from sales booking status).
+          // Units Sold & Area Sold: use PDRN-based values from kpiExtra (ACTIVE count/area),
+          // not INVR Booked values (inventory status differs from sales booking status).
           let pdfnBookedUnits = 0;
+          let pdfnBookedAreaSqft = 0;
           if (selProjs.length === 1) {
             const proj = selProjs[0];
             // Map project keys to display names in areaSummary
@@ -1415,9 +1415,11 @@ const PnLTab = ({T, GC, SH, filters, sf, raw}) => {
             if (displayName) {
               const asProj = (raw?.areaSummary?.byProject||[]).find(p => p.project === displayName);
               pdfnBookedUnits = asProj?.bookedUnits || 0;
+              pdfnBookedAreaSqft = asProj?.bookedArea || 0;
             }
           }
           const bookedUnitsDisplay = pdfnBookedUnits || booked.length;
+          const areaSqft = pdfnBookedAreaSqft || booked.reduce((s,u)=>s+(u.carpetArea||u.superArea||0),0);
 
           const bars = [
             { label:'Units Sold',        rawVal: bookedUnitsDisplay,                    display:`${bookedUnitsDisplay}`,          unit:'units',  color:'#0097a7' },
