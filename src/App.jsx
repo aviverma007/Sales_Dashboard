@@ -3351,12 +3351,17 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
 
                 {/* ── CP: Sales Value ₹Cr (bar) + % line ───────── */}
                 <GC style={{padding:16}}>
-                  <SH title="Top CP — Sales Value (₹Cr)" sub="BSP value by channel partner · % of total sales on orange line · scroll for more"/>
+                  <SH title="Top CP — Sales Value (₹Cr)" sub="BSP value by channel partner · % of TOTAL project sales (incl. direct) on orange line · scroll for more"/>
                   {(()=>{
                     const all=topCP;
                     const WIN=14;
                     const slice=all.slice(cpScroll2,cpScroll2+WIN);
-                    const totalBSP=all.reduce((s,r)=>s+r.bspCr,0)||1;
+                    // Denominator = total BSP across ALL booked (ACTIVE) units in the current
+                    // filter, including direct sales with no broker - not just the sum of
+                    // CP-attributed bookings (topCP skips rows with no brokerName entirely,
+                    // so summing only topCP's bspCr silently excludes direct sales and
+                    // overstates each CP's true share of total project sales).
+                    const totalBSP=+(pA.reduce((s,r)=>s+(r.bsp||0),0)/1e7).toFixed(1)||1;
                     const dataWithPct=slice.map(r=>({...r,pct:+((r.bspCr/totalBSP)*100).toFixed(1)}));
                     return(
                       <>
