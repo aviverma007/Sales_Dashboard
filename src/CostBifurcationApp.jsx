@@ -260,38 +260,69 @@ export default function CostBifurcationApp() {
         <div style={{display:'flex',alignItems:'center',gap:12}}>
           <div style={{background:'linear-gradient(135deg,#006978,#00bcd4)',borderRadius:10,padding:'5px 18px',display:'flex',alignItems:'center',gap:8,boxShadow:'0 2px 10px rgba(0,151,167,0.25)'}}>
             <span style={{fontSize:13}}>📊</span>
-            <span style={{fontSize:11,fontWeight:900,color:'#fff',textTransform:'uppercase',letterSpacing:1}}>Cost Bifurcation by Budget Head</span>
+            <span style={{fontSize:11,fontWeight:900,color:'#fff',textTransform:'uppercase',letterSpacing:1}}>Cost Analysis Charts</span>
           </div>
           <div style={{flex:1,height:1,background:'rgba(0,151,167,0.15)',borderRadius:1}}/>
         </div>
 
-        {/* ── ROW 2a: BAR CHART (all 5 metrics) — full width so 22 Budget Heads fit legibly ── */}
+        {/* ── ROW 2a: BAR CHART by DEPARTMENT (all 5 metrics) ── */}
         <GC style={{padding:16}}>
-          <SH title="Cost Bifurcation" sub="Budget · Assigned · Actual · Commitment · Available (₹ Lakh)"/>
-          <ResponsiveContainer width="100%" height={420}>
-            <BarChart data={fBudgetHead} margin={{top:20,right:12,bottom:70,left:0}}>
+          <SH title="Cost Bifurcation by Department" sub="Budget · Assigned · Actual · Commitment · Available (₹ Lakh)"/>
+          <ResponsiveContainer width="100%" height={360}>
+            <BarChart data={fDepartment} margin={{top:20,right:12,bottom:30,left:0}}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.15)" vertical={false}/>
-              <XAxis dataKey="budgetHead" tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false} angle={-35} textAnchor="end" interval={0} height={90}/>
+              <XAxis dataKey="department" tick={{fill:T.textM,fontSize:11,fontWeight:700}} axisLine={false} tickLine={false} height={40}/>
               <YAxis tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false} tickFormatter={v=>v+'L'} width={48}/>
               <Tooltip content={<CTip fmt={v=>fmtL(v)}/>}/>
               <Legend wrapperStyle={{fontSize:9,fontWeight:700}} iconSize={8}/>
               <Bar dataKey="budgetL" name="Budget" fill={T.gray} radius={[3,3,0,0]}>
-                <LabelList dataKey="budgetL" position="top" style={{fill:T.gray,fontSize:8,fontWeight:700}}/>
+                <LabelList dataKey="budgetL" position="top" style={{fill:T.gray,fontSize:9,fontWeight:700}} formatter={v=>fmtL(v)}/>
               </Bar>
               <Bar dataKey="assignedL" name="Assigned" fill={T.blue} radius={[3,3,0,0]}>
-                <LabelList dataKey="assignedL" position="top" style={{fill:T.blue,fontSize:8,fontWeight:700}}/>
+                <LabelList dataKey="assignedL" position="top" style={{fill:T.blue,fontSize:9,fontWeight:700}} formatter={v=>fmtL(v)}/>
               </Bar>
               <Bar dataKey="actualL" name="Actual" fill={T.teal} radius={[3,3,0,0]}>
-                <LabelList dataKey="actualL" position="top" style={{fill:T.tealD,fontSize:8,fontWeight:700}}/>
+                <LabelList dataKey="actualL" position="top" style={{fill:T.tealD,fontSize:9,fontWeight:700}} formatter={v=>fmtL(v)}/>
               </Bar>
               <Bar dataKey="commitmentL" name="Commitment" fill={T.amber} radius={[3,3,0,0]}>
-                <LabelList dataKey="commitmentL" position="top" style={{fill:T.amber,fontSize:8,fontWeight:700}}/>
+                <LabelList dataKey="commitmentL" position="top" style={{fill:T.amber,fontSize:9,fontWeight:700}} formatter={v=>fmtL(v)}/>
               </Bar>
               <Bar dataKey="availableL" name="Available" fill={T.greenL} radius={[3,3,0,0]}>
-                <LabelList dataKey="availableL" position="top" style={{fill:T.greenL,fontSize:8,fontWeight:700}}/>
+                <LabelList dataKey="availableL" position="top" style={{fill:T.greenL,fontSize:9,fontWeight:700}} formatter={v=>fmtL(v)}/>
               </Bar>
             </BarChart>
           </ResponsiveContainer>
+        </GC>
+
+        {/* ── ROW 2a-2: BAR CHART by BUDGET HEAD — Assigned + (Actual|Commitment stacked), top 10 then scroll ── */}
+        <GC style={{padding:16}}>
+          <SH title="Cost Bifurcation by Budget Head" sub="Assigned vs (Actual + Commitment) · top 10 shown, scroll → for more (₹ Lakh)"/>
+          <div style={{overflowX:'auto',overflowY:'hidden'}}>
+            {/* Width scales with number of budget heads so only ~10 fit in view; the rest are reachable by scrolling right. ~105px per group. */}
+            <div style={{width:`${Math.max(fBudgetHead.length*105,700)}px`,minWidth:'100%'}}>
+              <ResponsiveContainer width="100%" height={360}>
+                <BarChart data={fBudgetHead} margin={{top:20,right:12,bottom:90,left:0}} barGap={4}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.15)" vertical={false}/>
+                  <XAxis dataKey="budgetHead" tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false} angle={-35} textAnchor="end" interval={0} height={100}/>
+                  <YAxis tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false} tickFormatter={v=>v+'L'} width={48}/>
+                  <Tooltip content={<CTip fmt={v=>fmtL(v)}/>}/>
+                  <Legend wrapperStyle={{fontSize:9,fontWeight:700}} iconSize={8}/>
+                  <Bar dataKey="assignedL" name="Assigned" fill={T.blue} radius={[3,3,0,0]}>
+                    <LabelList dataKey="assignedL" position="top" style={{fill:T.blue,fontSize:8,fontWeight:700}} formatter={v=>v>0?fmtL(v):''}/>
+                  </Bar>
+                  <Bar dataKey="actualL" name="Actual" stackId="ac" fill={T.teal} radius={[0,0,0,0]}/>
+                  <Bar dataKey="commitmentL" name="Commitment" stackId="ac" fill={T.amber} radius={[3,3,0,0]}>
+                    <LabelList position="top" style={{fill:T.textM,fontSize:8,fontWeight:700}} content={({x,y,width,index})=>{
+                      const d=fBudgetHead[index]; if(!d) return null;
+                      const tot=+(d.actualL+d.commitmentL).toFixed(2);
+                      if(tot<=0) return null;
+                      return <text x={x+width/2} y={y-4} textAnchor="middle" fill={T.textM} fontSize={8} fontWeight={700}>{fmtL(tot)}</text>;
+                    }}/>
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
         </GC>
 
         {/* ── ROW 2b: PIE (budget distribution) + PIE (util split) — moved below the bar chart ── */}
