@@ -265,36 +265,37 @@ export default function CostBifurcationApp() {
           <div style={{flex:1,height:1,background:'rgba(0,151,167,0.15)',borderRadius:1}}/>
         </div>
 
-        {/* ── ROW 2: BAR CHART (all 5 metrics) + PIE (budget distribution) + PIE (util split) ── */}
-        <div style={{display:'grid',gridTemplateColumns:'1.6fr 1fr 1fr',gap:12}}>
-          <GC style={{padding:16}}>
-            <SH title="Cost Bifurcation" sub="Budget · Assigned · Actual · Commitment · Available (₹ Lakh)"/>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={fBudgetHead} margin={{top:20,right:8,bottom:50,left:0}}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.15)" vertical={false}/>
-                <XAxis dataKey="budgetHead" tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false} angle={-30} textAnchor="end" interval={0} height={70}/>
-                <YAxis tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false} tickFormatter={v=>v+'L'} width={44}/>
-                <Tooltip content={<CTip fmt={v=>fmtL(v)}/>}/>
-                <Legend wrapperStyle={{fontSize:9,fontWeight:700}} iconSize={8}/>
-                <Bar dataKey="budgetL" name="Budget" fill={T.gray} radius={[3,3,0,0]}>
-                  <LabelList dataKey="budgetL" position="top" style={{fill:T.gray,fontSize:7,fontWeight:700}}/>
-                </Bar>
-                <Bar dataKey="assignedL" name="Assigned" fill={T.blue} radius={[3,3,0,0]}>
-                  <LabelList dataKey="assignedL" position="top" style={{fill:T.blue,fontSize:7,fontWeight:700}}/>
-                </Bar>
-                <Bar dataKey="actualL" name="Actual" fill={T.teal} radius={[3,3,0,0]}>
-                  <LabelList dataKey="actualL" position="top" style={{fill:T.tealD,fontSize:7,fontWeight:700}}/>
-                </Bar>
-                <Bar dataKey="commitmentL" name="Commitment" fill={T.amber} radius={[3,3,0,0]}>
-                  <LabelList dataKey="commitmentL" position="top" style={{fill:T.amber,fontSize:7,fontWeight:700}}/>
-                </Bar>
-                <Bar dataKey="availableL" name="Available" fill={T.greenL} radius={[3,3,0,0]}>
-                  <LabelList dataKey="availableL" position="top" style={{fill:T.greenL,fontSize:7,fontWeight:700}}/>
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </GC>
+        {/* ── ROW 2a: BAR CHART (all 5 metrics) — full width so 22 Budget Heads fit legibly ── */}
+        <GC style={{padding:16}}>
+          <SH title="Cost Bifurcation" sub="Budget · Assigned · Actual · Commitment · Available (₹ Lakh)"/>
+          <ResponsiveContainer width="100%" height={420}>
+            <BarChart data={fBudgetHead} margin={{top:20,right:12,bottom:70,left:0}}>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.15)" vertical={false}/>
+              <XAxis dataKey="budgetHead" tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false} angle={-35} textAnchor="end" interval={0} height={90}/>
+              <YAxis tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false} tickFormatter={v=>v+'L'} width={48}/>
+              <Tooltip content={<CTip fmt={v=>fmtL(v)}/>}/>
+              <Legend wrapperStyle={{fontSize:9,fontWeight:700}} iconSize={8}/>
+              <Bar dataKey="budgetL" name="Budget" fill={T.gray} radius={[3,3,0,0]}>
+                <LabelList dataKey="budgetL" position="top" style={{fill:T.gray,fontSize:8,fontWeight:700}}/>
+              </Bar>
+              <Bar dataKey="assignedL" name="Assigned" fill={T.blue} radius={[3,3,0,0]}>
+                <LabelList dataKey="assignedL" position="top" style={{fill:T.blue,fontSize:8,fontWeight:700}}/>
+              </Bar>
+              <Bar dataKey="actualL" name="Actual" fill={T.teal} radius={[3,3,0,0]}>
+                <LabelList dataKey="actualL" position="top" style={{fill:T.tealD,fontSize:8,fontWeight:700}}/>
+              </Bar>
+              <Bar dataKey="commitmentL" name="Commitment" fill={T.amber} radius={[3,3,0,0]}>
+                <LabelList dataKey="commitmentL" position="top" style={{fill:T.amber,fontSize:8,fontWeight:700}}/>
+              </Bar>
+              <Bar dataKey="availableL" name="Available" fill={T.greenL} radius={[3,3,0,0]}>
+                <LabelList dataKey="availableL" position="top" style={{fill:T.greenL,fontSize:8,fontWeight:700}}/>
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </GC>
 
+        {/* ── ROW 2b: PIE (budget distribution) + PIE (util split) — moved below the bar chart ── */}
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
           <GC style={{padding:16}}>
             <SH title="Budget Distribution" sub="By Budget Head (₹ Lakh)"/>
             <ResponsiveContainer width="100%" height={200}>
