@@ -633,8 +633,26 @@ const SummaryBar = ({raw, filters, T, GC}) => {
   const areaSold = booked.reduce((s,u)=>s+(u.carpetArea||u.superArea||0),0);
   const dkAll = raw?.dappKpi?.kpi?.all || {};
 
-  const totalUnits = booked.length;
-  const areaSoldK  = (areaSold/1000).toFixed(1);
+  // Units Sold & Area Sold: use PDRN-based values from areaSummary (ACTIVE count/area),
+  // not INVR Booked values (inventory status differs from sales booking status).
+  let pdfnTotalUnits = totalUnits = booked.length; // default to INVR
+  let pdfnTotalArea = areaSold; // default to INVR
+  if (selProjs.length === 1) {
+    const proj = selProjs[0];
+    // Map project keys to display names in areaSummary
+    const displayName = proj === 'SMARTWORLD THE EDITION' ? 'SMARTWORLD THE EDITION' :
+                       proj === 'SMARTWORLD SKY ARC' ? 'Smartworld Sky Arc' :
+                       proj === 'TRUMP RESIDENCES GURGAON' ? 'TRUMP RESIDENCES GURGAON' : null;
+    if (displayName) {
+      const asProj = (raw?.areaSummary?.byProject||[]).find(p => p.project === displayName);
+      if (asProj) {
+        pdfnTotalUnits = asProj.bookedUnits;
+        pdfnTotalArea = asProj.bookedArea;
+      }
+    }
+  }
+  const totalUnits = pdfnTotalUnits;
+  const areaSoldK  = (pdfnTotalArea/1000).toFixed(1);
   const totalColl  = (dkAll.totalReceivedWoT || 0).toFixed(1);
   const totalExp   = (pnlKpi?.totalExpenditure || 0).toFixed(1);
 
@@ -1420,6 +1438,9 @@ const PnLTab = ({T, GC, SH, filters, sf, raw}) => {
           }
           const bookedUnitsDisplay = pdfnBookedUnits || booked.length;
           const areaSqft = pdfnBookedAreaSqft || booked.reduce((s,u)=>s+(u.carpetArea||u.superArea||0),0);
+          
+          // DEBUG: Log what's being used
+          console.log('[Overview] selProjs:', selProjs, 'pdfnBookedUnits:', pdfnBookedUnits, 'booked.length:', booked.length, 'displayValue:', bookedUnitsDisplay);
 
           const bars = [
             { label:'Units Sold',        rawVal: bookedUnitsDisplay,                    display:`${bookedUnitsDisplay}`,          unit:'units',  color:'#0097a7' },
