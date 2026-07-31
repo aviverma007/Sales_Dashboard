@@ -67,7 +67,7 @@ const FSel = ({label,options,value,onChange,open,setOpen}) => {
     <div style={{display:'flex',flexDirection:'column',gap:2,position:'relative'}}>
       <label style={{color:T.textM,fontSize:9,fontWeight:800,letterSpacing:1,textTransform:'uppercase'}}>{label}</label>
       <div onClick={()=>setOpen(!open)} style={{background:'rgba(255,255,255,0.88)',border:`1px solid ${vals.length?T.teal:'rgba(0,100,140,0.25)'}`,borderRadius:7,color:vals.length?T.tealD:T.textM,padding:'6px 12px',fontSize:11,fontFamily:'Inter,sans-serif',minWidth:200,cursor:'pointer',fontWeight:vals.length?600:400,userSelect:'none',display:'flex',justifyContent:'space-between',alignItems:'center',gap:6}}>
-        <span style={{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:190}}>{vals.length?vals.join(', '):'All Budget Heads'}</span>
+        <span style={{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:190}}>{vals.length?vals.join(', '):`All ${label}s`}</span>
         <span style={{fontSize:8,opacity:0.6}}>{open?'▲':'▼'}</span>
       </div>
       {open&&(
@@ -95,11 +95,12 @@ export default function CostBifurcationApp() {
   const [raw, setRaw] = useState(null);
   const [loading, setLoading] = useState(true);
   const [budgetHead, setBudgetHead] = useState('');
-  const [filterOpen, setFilterOpen] = useState(false);
+  const [department, setDepartment] = useState('');
+  const [activeFilter, setActiveFilter] = useState(null); // 'budgetHead' | 'department' | null
 
   useEffect(()=>{
-    document.addEventListener('click',()=>setFilterOpen(false));
-    return ()=>document.removeEventListener('click',()=>setFilterOpen(false));
+    document.addEventListener('click',()=>setActiveFilter(null));
+    return ()=>document.removeEventListener('click',()=>setActiveFilter(null));
   },[]);
 
   useEffect(()=>{
@@ -108,20 +109,43 @@ export default function CostBifurcationApp() {
 
   if (!authed) return null;
 
-  // ── FILTERED DATA (single Budget Head filter drives everything) ──
+  // ── FILTERED DATA — fWbs is filtered by BOTH Budget Head and Department;
+  // fBudgetHead/fDepartment are then re-aggregated live FROM fWbs (not read
+  // from the pre-computed raw.byBudgetHead/byDepartment), so cross-filtering
+  // (e.g. Department=IT narrowing what shows per Budget Head) is always
+  // correct rather than showing stale unfiltered totals.
   const selectedHeads = budgetHead ? budgetHead.split('||').filter(Boolean) : [];
-
-  const fBudgetHead = useMemo(()=>{
-    if(!raw?.byBudgetHead) return [];
-    if(!selectedHeads.length) return raw.byBudgetHead;
-    return raw.byBudgetHead.filter(b=>selectedHeads.includes(b.budgetHead));
-  },[raw, budgetHead]);
+  const selectedDepts = department ? department.split('||').filter(Boolean) : [];
 
   const fWbs = useMemo(()=>{
     if(!raw?.wbsTable) return [];
-    if(!selectedHeads.length) return raw.wbsTable;
-    return raw.wbsTable.filter(w=>selectedHeads.includes(w.budgetHead));
-  },[raw, budgetHead]);
+    return raw.wbsTable.filter(w=>
+      (!selectedHeads.length || selectedHeads.includes(w.budgetHead)) &&
+      (!selectedDepts.length || selectedDepts.includes(w.department))
+    );
+  },[raw, budgetHead, department]);
+
+  const aggBy = (rows, keyField) => {
+    const acc = {};
+    rows.forEach(r=>{
+      const k = r[keyField];
+      if(!acc[k]) acc[k]={budget:0,assigned:0,actual:0,commitment:0,available:0,wbsCount:0};
+      acc[k].budget+=r.budget; acc[k].assigned+=r.assigned; acc[k].actual+=r.actual;
+      acc[k].commitment+=r.commitment; acc[k].available+=r.available; acc[k].wbsCount++;
+    });
+    return Object.entries(acc).map(([k,v])=>({
+      [keyField]: k,
+      budget:v.budget, assigned:v.assigned, actual:v.actual, commitment:v.commitment, available:v.available,
+      budgetL:+(v.budget/1e5).toFixed(2), assignedL:+(v.assigned/1e5).toFixed(2), actualL:+(v.actual/1e5).toFixed(2),
+      commitmentL:+(v.commitment/1e5).toFixed(2), availableL:+(v.available/1e5).toFixed(2),
+      wbsCount:v.wbsCount,
+      utilPct: v.budget>0?+((v.actual/v.budget)*100).toFixed(1):0,
+      availPct: v.budget>0?+((v.available/v.budget)*100).toFixed(1):0,
+    })).sort((a,b)=>b.budget-a.budget);
+  };
+
+  const fBudgetHead = useMemo(()=>aggBy(fWbs,'budgetHead'),[fWbs]);
+  const fDepartment = useMemo(()=>aggBy(fWbs,'department'),[fWbs]);
 
   // ── RECOMPUTED KPIs based on filtered set ──
   const kpi = useMemo(()=>{
@@ -140,7 +164,7 @@ export default function CostBifurcationApp() {
     return s;
   },[fWbs]);
 
-  const fo = raw?.filterOptions || {budgetHeads:[]};
+  const fo = raw?.filterOptions || {budgetHeads:[],departments:[]};
 
   // ── Pie: Budget distribution by Budget Head ──
   const pieBudget = fBudgetHead.map(b=>({name:b.budgetHead, value:b.budgetL}));
@@ -195,11 +219,12 @@ export default function CostBifurcationApp() {
           </button>
         </div>
 
-        {/* Filter strip — single Budget Head filter */}
+        {/* Filter strip — Budget Head + Department */}
         <div onClick={e=>e.stopPropagation()} style={{maxWidth:1440,margin:'0 auto',padding:'4px 24px 10px',display:'flex',alignItems:'flex-end',gap:10,flexWrap:'wrap'}}>
-          <FSel label="Budget Head" options={fo.budgetHeads||[]} value={budgetHead} onChange={setBudgetHead} open={filterOpen} setOpen={setFilterOpen}/>
-          {budgetHead&&(
-            <button onClick={()=>setBudgetHead('')}
+          <FSel label="Budget Head" options={fo.budgetHeads||[]} value={budgetHead} onChange={setBudgetHead} open={activeFilter==='budgetHead'} setOpen={o=>setActiveFilter(o?'budgetHead':null)}/>
+          <FSel label="Department" options={fo.departments||[]} value={department} onChange={setDepartment} open={activeFilter==='department'} setOpen={o=>setActiveFilter(o?'department':null)}/>
+          {(budgetHead||department)&&(
+            <button onClick={()=>{setBudgetHead('');setDepartment('');}}
               style={{background:'linear-gradient(135deg,#c62828,#ef5350)',border:'none',borderRadius:7,color:'#fff',padding:'6px 14px',fontSize:10,cursor:'pointer',fontWeight:700,boxShadow:'0 2px 8px rgba(200,40,40,0.3)',alignSelf:'flex-end'}}>
               ✕ Reset
             </button>
@@ -419,6 +444,41 @@ export default function CostBifurcationApp() {
           </GC>
         </div>
 
+        {/* Section header — Department */}
+        <div style={{display:'flex',alignItems:'center',gap:12}}>
+          <div style={{background:'linear-gradient(135deg,#00695c,#26a69a)',borderRadius:10,padding:'5px 18px',display:'flex',alignItems:'center',gap:8,boxShadow:'0 2px 10px rgba(0,105,92,0.3)'}}>
+            <span style={{fontSize:13}}>🏢</span>
+            <span style={{fontSize:11,fontWeight:900,color:'#fff',textTransform:'uppercase',letterSpacing:1}}>Cost Bifurcation by Department</span>
+          </div>
+          <div style={{flex:1,height:1,background:'rgba(0,105,92,0.15)',borderRadius:1}}/>
+        </div>
+
+        {/* ── ROW 3b: DEPARTMENT CARDS ── */}
+        <div style={{display:'grid',gridTemplateColumns:`repeat(${Math.max(fDepartment.length,1)},1fr)`,gap:12}}>
+          {fDepartment.map((dpt,i)=>(
+            <GC key={i} style={{padding:16}} cls="kc">
+              <SH title={dpt.department} sub={`${dpt.wbsCount} WBS elements · ${dpt.utilPct}% utilized`}/>
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginTop:8}}>
+                {[
+                  {l:'Budget',v:dpt.budgetL,c:T.navy},
+                  {l:'Assigned',v:dpt.assignedL,c:T.blue},
+                  {l:'Actual',v:dpt.actualL,c:T.teal},
+                  {l:'Commitment',v:dpt.commitmentL,c:T.amber},
+                  {l:'Available',v:dpt.availableL,c:T.greenL},
+                ].map((m,j)=>(
+                  <div key={j}>
+                    <p style={{fontSize:8,color:T.textM,fontWeight:800,textTransform:'uppercase',margin:0,letterSpacing:0.4}}>{m.l}</p>
+                    <p style={{fontSize:13,fontWeight:900,color:m.c,margin:'2px 0 0'}}>{fmtL(m.v)}</p>
+                  </div>
+                ))}
+              </div>
+              <div style={{height:10,background:'rgba(0,100,140,0.08)',borderRadius:5,overflow:'hidden',marginTop:10}}>
+                <div style={{height:'100%',width:`${Math.min(dpt.utilPct,100)}%`,background:`linear-gradient(90deg,${T.teal},${T.tealD})`,borderRadius:5}}/>
+              </div>
+            </GC>
+          ))}
+        </div>
+
         {/* Section header */}
         <div style={{display:'flex',alignItems:'center',gap:12}}>
           <div style={{background:'linear-gradient(135deg,#4527a0,#7e57c2)',borderRadius:10,padding:'5px 18px',display:'flex',alignItems:'center',gap:8,boxShadow:'0 2px 10px rgba(126,87,194,0.3)'}}>
@@ -435,8 +495,8 @@ export default function CostBifurcationApp() {
             <table style={{width:'100%',borderCollapse:'collapse',fontSize:10.5}}>
               <thead>
                 <tr style={{background:T.navy,position:'sticky',top:0,zIndex:1}}>
-                  {['Site','WBS','Budget Head','Description','Budget (L)','Assigned (L)','Actual (L)','Commitment (L)','Available (L)','Util %'].map((h,i)=>(
-                    <th key={i} style={{padding:'8px 10px',textAlign:i>3?'right':'left',color:'#fff',fontWeight:800,fontSize:9.5,textTransform:'uppercase',letterSpacing:0.3,whiteSpace:'nowrap'}}>{h}</th>
+                  {['Site','WBS','Budget Head','Department','Description','Budget (L)','Assigned (L)','Actual (L)','Commitment (L)','Available (L)','Util %'].map((h,i)=>(
+                    <th key={i} style={{padding:'8px 10px',textAlign:i>4?'right':'left',color:'#fff',fontWeight:800,fontSize:9.5,textTransform:'uppercase',letterSpacing:0.3,whiteSpace:'nowrap'}}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -446,6 +506,7 @@ export default function CostBifurcationApp() {
                     <td style={{padding:'6px 10px',color:T.textM,fontWeight:600,whiteSpace:'nowrap'}}>{w.site}</td>
                     <td style={{padding:'6px 10px',color:T.textL,fontWeight:600,whiteSpace:'nowrap',fontFamily:'monospace',fontSize:9.5}}>{w.wbs}</td>
                     <td style={{padding:'6px 10px',color:T.text,fontWeight:700,whiteSpace:'nowrap'}}>{w.budgetHead}</td>
+                    <td style={{padding:'6px 10px',color:T.tealD,fontWeight:700,whiteSpace:'nowrap'}}>{w.department}</td>
                     <td style={{padding:'6px 10px',color:T.textM,fontWeight:500,maxWidth:180,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={w.description}>{w.description}</td>
                     <td style={{padding:'6px 10px',textAlign:'right',color:T.textM,fontWeight:600}}>{w.budgetL.toLocaleString('en-IN')}</td>
                     <td style={{padding:'6px 10px',textAlign:'right',color:T.blue,fontWeight:600}}>{w.assignedL.toLocaleString('en-IN')}</td>
@@ -458,7 +519,7 @@ export default function CostBifurcationApp() {
               </tbody>
               <tfoot>
                 <tr style={{background:T.navy,position:'sticky',bottom:0}}>
-                  <td colSpan={4} style={{padding:'8px 10px',fontWeight:900,color:'#fff'}}>Total ({fWbs.length} WBS)</td>
+                  <td colSpan={5} style={{padding:'8px 10px',fontWeight:900,color:'#fff'}}>Total ({fWbs.length} WBS)</td>
                   <td style={{padding:'8px 10px',textAlign:'right',fontWeight:900,color:'#fff'}}>{kpi.totalBudgetL.toLocaleString('en-IN')}</td>
                   <td style={{padding:'8px 10px',textAlign:'right',fontWeight:900,color:'#fff'}}>{kpi.totalAssignedL.toLocaleString('en-IN')}</td>
                   <td style={{padding:'8px 10px',textAlign:'right',fontWeight:900,color:'#fff'}}>{kpi.totalActualL.toLocaleString('en-IN')}</td>
