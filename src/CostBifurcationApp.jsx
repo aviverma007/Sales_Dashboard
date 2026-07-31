@@ -346,11 +346,8 @@ export default function CostBifurcationApp() {
                       <stop offset="100%" stopColor="#90a4ae" stopOpacity={1}/>
                     </radialGradient>
                   </defs>
-                  <Pie data={pieUtil} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={55} outerRadius={82} paddingAngle={3}
-                    stroke="rgba(255,255,255,0.9)" strokeWidth={2}
-                    label={({percent,name})=>`${name==='Actual Spent'?'Actual':'Avail.'} ${(percent*100).toFixed(0)}%`}
-                    labelLine={{stroke:T.textM,strokeWidth:1}}
-                    style={{fontSize:9,fontWeight:700,fill:T.textM}}>
+                  <Pie data={pieUtil} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={55} outerRadius={78} paddingAngle={3}
+                    stroke="rgba(255,255,255,0.9)" strokeWidth={2}>
                     <Cell fill="url(#utilGradActual)" style={{filter:'drop-shadow(0 3px 5px rgba(0,151,167,0.35))'}}/>
                     <Cell fill="url(#utilGradAvail)" style={{filter:'drop-shadow(0 3px 5px rgba(0,0,0,0.12))'}}/>
                   </Pie>
@@ -365,11 +362,11 @@ export default function CostBifurcationApp() {
             <div style={{display:'flex',flexDirection:'column',gap:6,marginTop:8}}>
               <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
                 <div style={{display:'flex',alignItems:'center',gap:6}}><div style={{width:8,height:8,borderRadius:2,background:T.teal}}/><span style={{fontSize:10,color:T.textM,fontWeight:700}}>Actual Spent</span></div>
-                <span style={{fontSize:11,color:T.tealD,fontWeight:800}}>{fmtL(kpi.totalActualL)}</span>
+                <span style={{fontSize:11,color:T.tealD,fontWeight:800}}>{fmtL(kpi.totalActualL)} <span style={{color:T.textL,fontWeight:600}}>({pct(kpi.totalActualL,kpi.totalBudgetL)}%)</span></span>
               </div>
               <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
                 <div style={{display:'flex',alignItems:'center',gap:6}}><div style={{width:8,height:8,borderRadius:2,background:'#90a4ae'}}/><span style={{fontSize:10,color:T.textM,fontWeight:700}}>Available</span></div>
-                <span style={{fontSize:11,color:T.text,fontWeight:800}}>{fmtL(kpi.totalAvailableL)}</span>
+                <span style={{fontSize:11,color:T.text,fontWeight:800}}>{fmtL(kpi.totalAvailableL)} <span style={{color:T.textL,fontWeight:600}}>({pct(kpi.totalAvailableL,kpi.totalBudgetL)}%)</span></span>
               </div>
             </div>
           </GC>
