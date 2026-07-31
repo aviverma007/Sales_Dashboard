@@ -347,7 +347,20 @@ export default function CostBifurcationApp() {
                     </radialGradient>
                   </defs>
                   <Pie data={pieUtil} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={55} outerRadius={78} paddingAngle={3}
-                    stroke="rgba(255,255,255,0.9)" strokeWidth={2}>
+                    stroke="rgba(255,255,255,0.9)" strokeWidth={2}
+                    label={({cx,cy,midAngle,innerRadius,outerRadius,value,percent})=>{
+                      const RAD=Math.PI/180;
+                      const r=innerRadius+(outerRadius-innerRadius)/2;
+                      const x=cx+r*Math.cos(-midAngle*RAD);
+                      const y=cy+r*Math.sin(-midAngle*RAD);
+                      return (
+                        <text x={x} y={y} textAnchor="middle" dominantBaseline="central" style={{fontSize:8.5,fontWeight:800,fill:'#fff',pointerEvents:'none'}}>
+                          <tspan x={x} dy="-0.4em">{fmtL(value)}</tspan>
+                          <tspan x={x} dy="1.1em">{(percent*100).toFixed(0)}%</tspan>
+                        </text>
+                      );
+                    }}
+                    labelLine={false}>
                     <Cell fill="url(#utilGradActual)" style={{filter:'drop-shadow(0 3px 5px rgba(0,151,167,0.35))'}}/>
                     <Cell fill="url(#utilGradAvail)" style={{filter:'drop-shadow(0 3px 5px rgba(0,0,0,0.12))'}}/>
                   </Pie>
