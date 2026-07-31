@@ -307,7 +307,7 @@ export default function CostBifurcationApp() {
                   <YAxis tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false} tickFormatter={v=>v+'L'} width={48}/>
                   <Tooltip content={<CTip fmt={v=>fmtL(v)}/>}/>
                   <Legend wrapperStyle={{fontSize:9,fontWeight:700}} iconSize={8}/>
-                  <Bar dataKey="assignedL" name="Assigned" fill={T.blue} radius={[3,3,0,0]}>
+                  <Bar dataKey="assignedL" name="Assigned" stackId="asg" fill={T.blue} radius={[3,3,0,0]}>
                     <LabelList dataKey="assignedL" position="top" style={{fill:T.blue,fontSize:8,fontWeight:700}} formatter={v=>v>0?fmtL(v):''}/>
                   </Bar>
                   <Bar dataKey="actualL" name="Actual" stackId="ac" fill={T.teal} radius={[0,0,0,0]}/>
