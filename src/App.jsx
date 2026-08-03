@@ -2122,27 +2122,6 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
             ...(isSingle&&m?[
               {icon:'🚀',label:'Launch Date',val:m.launchDate,color:'#0097a7'},
               {icon:'🏁',label:'Project HO Date',val:m.handoverDate,color:T.greenL},
-              // Top 2 milestones by amount, computed live from this project's
-              // own milestonesUpcoming (dapp_kpi) - not a stored/stale value,
-              // so it automatically reflects whatever the current milestone
-              // data says for whichever project is selected.
-              ...(()=>{
-                const list=(raw?.dappKpi?.milestonesUpcoming||[]).filter(x=>x.totalCr>0);
-                const top2=[...list].sort((a,b)=>b.totalCr-a.totalCr).slice(0,2);
-                const iconFor=name=>{
-                  const n=(name||'').toLowerCase();
-                  if(n.includes('oc application')||n.includes('occupation'))return'⚡';
-                  if(n.includes('possession'))return'🔑';
-                  if(n.includes('floor')||n.includes('slab'))return'🏆';
-                  if(n.includes('excavation'))return'🚧';
-                  return'🏗️';
-                };
-                const fmtDate=d=>{const p=(d||'').match(/^(\d{4})-(\d{2})$/);if(!p)return'—';const mo=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];return mo[parseInt(p[2])-1]+' '+p[1];};
-                return top2.map(ms=>{
-                  const cleanName=(ms.shortName||ms.name||'').replace(/^(CLP|TLP)\s*\u2014\s*/,'');
-                  return{icon:iconFor(cleanName),label:cleanName,val:`${fmtDate(ms.expectedDate)} \u00b7 \u20b9${ms.totalCr} Cr`,color:'#f59e0b'};
-                });
-              })()
             ]:[]),
           ];
           return(
