@@ -2174,12 +2174,12 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
             {/* ROW 1: KPI CARDS — Merged pairs with pie charts */}
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr auto',gap:10,alignItems:'stretch'}}>
 
-              {/* CARD A2: Total Units — from PDRN (booked=ACTIVE rows, available=INVR Available) */}
+              {/* CARD A2: Total Units — 100% from PDRN (booked=ACTIVE rows, available=CANCELLED rows not yet rebooked) */}
               <GC style={{padding:14}} cls="kc">
                 <SH title="Total Units (PDRN)" compact/>
                 {(()=>{
                   const pdrnBooked=pAAll.length;
-                  const pdrnAvailable=(kpi.availableUnits||0)+(kpi.managementUnits||0);
+                  const pdrnAvailable=pCAll.length;
                   const pdrnTotal=pdrnBooked+pdrnAvailable;
                   const pdrnPct=pdrnTotal>0?Math.round((pdrnBooked/pdrnTotal)*100):0;
                   return(
@@ -2218,16 +2218,16 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     </div>
                   );
                 })()}
-                <p style={{fontSize:7,color:T.textL,margin:'6px 0 0',fontStyle:'italic'}}>Booked = PDRN ACTIVE rows · Available = INVR Available + Management</p>
+                <p style={{fontSize:7,color:T.textL,margin:'6px 0 0',fontStyle:'italic'}}>Booked = PDRN ACTIVE rows · Available = PDRN CANCELLED rows (100% PDRN, no INVR mixed in)</p>
                 <div style={{position:'absolute',bottom:0,left:0,right:0,height:3,background:`linear-gradient(90deg,${T.teal},${T.amber})`,borderRadius:'0 0 14px 14px'}}/>
               </GC>
 
-              {/* CARD B2: Area — from PDRN (booked area = superArea sum of ACTIVE rows) */}
+              {/* CARD B2: Area — 100% from PDRN (sold area=ACTIVE Super Area, available area=CANCELLED Super Area) */}
               <GC style={{padding:14}} cls="kc">
                 <SH title="Area (Lakh sq ft) — PDRN" compact/>
                 {(()=>{
                   const sold=pAAll.reduce((s,r)=>s+(r.superArea||0),0);
-                  const avail=iFAll.filter(r=>r.status==='Available'||r.status==='Management Unit').reduce((s,r)=>s+(r.superArea||0),0);
+                  const avail=pCAll.reduce((s,r)=>s+(r.superArea||0),0);
                   const tot=sold+avail;
                   const pct=tot>0?Math.round((sold/tot)*100):0;
                   const carpetSold=pAAll.reduce((s,r)=>s+(r.carpet||r.carpetArea||0),0);
@@ -2268,7 +2268,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     </div>
                   );
                 })()}
-                <p style={{fontSize:7,color:T.textL,margin:'6px 0 0',fontStyle:'italic'}}>Sold = PDRN ACTIVE Super Area · Available = INVR Available+Mgmt Super Area</p>
+                <p style={{fontSize:7,color:T.textL,margin:'6px 0 0',fontStyle:'italic'}}>Sold = PDRN ACTIVE Super Area · Available = PDRN CANCELLED Super Area (100% PDRN, no INVR mixed in)</p>
                 <div style={{position:'absolute',bottom:0,left:0,right:0,height:3,background:`linear-gradient(90deg,${T.teal},${T.amber})`,borderRadius:'0 0 14px 14px'}}/>
               </GC>
 
