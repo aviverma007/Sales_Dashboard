@@ -3145,9 +3145,17 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                       return row;
                     });
                     if(!data.length)return<p style={{color:T.textL,fontSize:11,textAlign:'center',padding:20}}>Select a project to view tower data</p>;
+                    // Vertical (rotated) labels so 4 values per tower group (3 bars +
+                    // 1 average line point) never overlap horizontally - each label reads
+                    // bottom-to-top, anchored just above its own bar/point.
+                    const VLabel=(color)=>({x,y,width=0,value})=>{
+                      if(!value)return null;
+                      const cx=x+width/2, cy=y-6;
+                      return <text x={cx} y={cy} textAnchor="start" fill={color} fontSize={10} fontWeight={900} transform={`rotate(-90 ${cx} ${cy})`}>{value.toLocaleString('en-IN')}</text>;
+                    };
                     return(
-                      <ResponsiveContainer width="100%" height={240}>
-                        <ComposedChart data={data} margin={{top:32,right:12,bottom:24,left:0}} barGap={2}>
+                      <ResponsiveContainer width="100%" height={280}>
+                        <ComposedChart data={data} margin={{top:70,right:12,bottom:24,left:0}} barGap={2}>
                           <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.08)" vertical={false}/>
                           <XAxis dataKey="tower" tick={{fill:T.textM,fontSize:11,fontWeight:700}} axisLine={false} tickLine={false}/>
                           <YAxis tick={{fill:T.textM,fontSize:12}} axisLine={false} tickLine={false} width={40} tickFormatter={v=>v?v.toLocaleString('en-IN'):''} domain={['auto','auto']}/>
@@ -3155,11 +3163,15 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                           <Legend wrapperStyle={{fontSize:10,fontWeight:700}} iconSize={8} formatter={v=>FY_LABELS[v]||v}/>
                           {FYS.map(fy=>(
                             <Bar key={fy} dataKey={fy} name={fy} fill={FY_COLORS[fy]} radius={[3,3,0,0]} barSize={18}>
-                              <LabelList dataKey={fy} position="top" style={{fill:FY_COLORS[fy],fontSize:12,fontWeight:900}} formatter={v=>v?v.toLocaleString('en-IN'):''}/>
+                              <LabelList dataKey={fy} content={VLabel(FY_COLORS[fy])}/>
                             </Bar>
                           ))}
                           <Line type="monotone" dataKey="avg" name="Average" stroke="#22c55e" strokeWidth={2} dot={{r:4,fill:'#22c55e',stroke:'#fff',strokeWidth:1.5}} activeDot={{r:6}}>
-                            <LabelList dataKey="avg" position="top" style={{fill:'#15803d',fontSize:12,fontWeight:900}} formatter={v=>v?v.toLocaleString('en-IN'):''}/>
+                            <LabelList dataKey="avg" content={({x,y,value})=>{
+                              if(!value)return null;
+                              const cx=x, cy=y-10;
+                              return <text x={cx} y={cy} textAnchor="start" fill="#15803d" fontSize={10} fontWeight={900} transform={`rotate(-90 ${cx} ${cy})`}>{value.toLocaleString('en-IN')}</text>;
+                            }}/>
                           </Line>
                         </ComposedChart>
                       </ResponsiveContainer>
