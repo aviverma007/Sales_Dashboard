@@ -2101,9 +2101,23 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
           // (see the LOCKED FORMULA comments there for why).
           const liveSaleableSqft = isSingle ? iFAll.reduce((s,r)=>s+(r.superArea||0),0) : null;
           const saleableAreaVal = isSingle ? `${(liveSaleableSqft/100000).toFixed(2)} Lakh sq ft` : `${sumSaleable} Lakh sq ft`;
+          // ══════════════════════════════════════════════════════════════════
+          // ⚠️ LOCKED FIXED VALUES — DO NOT CHANGE without explicit instruction ⚠️
+          // Builtup Area is a FIXED physical construction figure per project -
+          // it does not change with bookings/cancellations, so it is NEVER
+          // computed live from PDRN/INVR (unlike Saleable Area above). Source:
+          // projectMeta[project].builtupAreaSqft / .builtupArea in
+          // dashboard_data.json, set 31-Jul-2026:
+          //   Edition:  3,928,752 sqft = 39.29 Lakh sq ft
+          //   Sky Arc:  3,284,115 sqft = 32.84 Lakh sq ft
+          //   Trump:    1,374,380 sqft = 13.74 Lakh sq ft
+          // ══════════════════════════════════════════════════════════════════
+          const builtupAreaVal = isSingle
+            ? (m?.builtupArea || '—')
+            : `${(allMeta.reduce((s,mm)=>s+(mm.builtupAreaSqft||0),0)/100000).toFixed(2)} Lakh sq ft`;
           const fields=[
             {icon:'🌍',label:'Land Area',val:landAreaVal,color:T.teal},
-            {icon:'🏗️',label:'Builtup Area',val:isSingle&&m?(m.builtupArea||m.builtupSqft||'—'):`${(parseFloat(sumBuiltup)/100000).toFixed(2)} Lakh sq ft`,color:'#7c3aed'},
+            {icon:'🏗️',label:'Builtup Area',val:builtupAreaVal,color:'#7c3aed'},
             {icon:'📐',label:'Saleable Area',val:saleableAreaVal,color:T.amber},
             ...(isSingle&&m?[
               {icon:'🚀',label:'Launch Date',val:m.launchDate,color:'#0097a7'},
@@ -3389,11 +3403,13 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
 
                 {/* ── CP: Sales Value ₹Cr (bar) + % line ───────── */}
                 <GC style={{padding:16}}>
-                  <SH title="Top CP — Sales Value (₹Cr)" sub="BSP value by channel partner · % of TOTAL project sales (incl. direct) on orange line · scroll for more"/>
+                  <SH title="Top CP — Sales Value (₹Cr)" sub="Top 10 channel partners by BSP value, highest first · % of TOTAL project sales (incl. direct) on orange line"/>
                   {(()=>{
-                    const all=topCP;
-                    const WIN=14;
-                    const slice=all.slice(cpScroll2,cpScroll2+WIN);
+                    // Sorted by BSP descending (this chart's own metric) - was reusing
+                    // topCP's units-sort before, which put CPs in the wrong order for
+                    // a "Sales Value" chart. Strictly top 10, no scroll.
+                    const all=[...topCP].sort((a,b)=>b.bspCr-a.bspCr).slice(0,10);
+                    const slice=all;
                     // Denominator = total BSP across ALL booked (ACTIVE) units in the current
                     // filter, including direct sales with no broker - not just the sum of
                     // CP-attributed bookings (topCP skips rows with no brokerName entirely,
@@ -3444,13 +3460,6 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                             </ResponsiveContainer>
                           </div>
                         </div>
-                        {all.length>WIN&&(
-                          <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:8,marginTop:4}}>
-                            <button onClick={()=>setCpScroll2(s=>Math.max(0,s-WIN))} disabled={cpScroll2===0} style={{padding:'2px 10px',borderRadius:12,border:'1px solid rgba(0,151,167,0.3)',background:'rgba(0,151,167,0.06)',cursor:cpScroll2===0?'default':'pointer',fontSize:10,color:cpScroll2===0?T.textL:T.tealD,fontWeight:700}}>‹ Prev</button>
-                            <span style={{fontSize:9,color:T.textL}}>{cpScroll2+1}–{Math.min(cpScroll2+WIN,all.length)} of {all.length}</span>
-                            <button onClick={()=>setCpScroll2(s=>Math.min(all.length-WIN,s+WIN))} disabled={cpScroll2+WIN>=all.length} style={{padding:'2px 10px',borderRadius:12,border:'1px solid rgba(0,151,167,0.3)',background:'rgba(0,151,167,0.06)',cursor:cpScroll2+WIN>=all.length?'default':'pointer',fontSize:10,color:cpScroll2+WIN>=all.length?T.textL:T.tealD,fontWeight:700}}>Next ›</button>
-                          </div>
-                        )}
                       </>
                     );
                   })()}
@@ -3459,11 +3468,11 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
     
                 {/* ── CP: Top 10 Units Booked (line) ─────────────── */}
                 <GC style={{padding:16}}>
-                  <SH title="Top CP — Units Booked" sub="Top 10 channel partners by units · scroll for more · ₹Cr on line"/>
+                  <SH title="Top CP — Units Booked" sub="Top 10 channel partners by units, highest first · ₹Cr on line"/>
                   {(()=>{
-                    const all=topCP;
-                    const WIN=14;
-                    const slice=all.slice(cpScroll,cpScroll+WIN);
+                    // topCP is already sorted by units descending - just take top 10, no scroll.
+                    const all=topCP.slice(0,10);
+                    const slice=all;
                     const maxU=Math.max(...slice.map(d=>d.units),1);
                     return(
                       <>
@@ -3506,13 +3515,6 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                           </div>
                         </div>
                         </div>
-                        {all.length>WIN&&(
-                          <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:8,marginTop:4}}>
-                            <button onClick={()=>setCpScroll(s=>Math.max(0,s-WIN))} disabled={cpScroll===0} style={{padding:'2px 10px',borderRadius:12,border:'1px solid rgba(0,151,167,0.3)',background:'rgba(0,151,167,0.06)',cursor:cpScroll===0?'default':'pointer',fontSize:10,color:cpScroll===0?T.textL:T.tealD,fontWeight:700}}>‹ Prev</button>
-                            <span style={{fontSize:9,color:T.textL}}>{cpScroll+1}–{Math.min(cpScroll+WIN,all.length)} of {all.length}</span>
-                            <button onClick={()=>setCpScroll(s=>Math.min(all.length-WIN,s+WIN))} disabled={cpScroll+WIN>=all.length} style={{padding:'2px 10px',borderRadius:12,border:'1px solid rgba(0,151,167,0.3)',background:'rgba(0,151,167,0.06)',cursor:cpScroll+WIN>=all.length?'default':'pointer',fontSize:10,color:cpScroll+WIN>=all.length?T.textL:T.tealD,fontWeight:700}}>Next ›</button>
-                          </div>
-                        )}
                       </>
                     );
                   })()}
