@@ -2174,7 +2174,21 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
             {/* ROW 1: KPI CARDS — Merged pairs with pie charts */}
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr auto',gap:10,alignItems:'stretch'}}>
 
-              {/* CARD A2: Total Units — Total = INVR (total inventory), Booked = PDRN ACTIVE, Available = INVR Total - PDRN Booked */}
+              {/* ══════════════════════════════════════════════════════════════════
+                  ⚠️ LOCKED FORMULA — DO NOT CHANGE without explicit instruction ⚠️
+                  CARD A2: Total Units (PDRN)
+                    Total     = iFAll.length                    (INVR total inventory, all statuses)
+                    Booked    = pAAll.length                    (PDRN ACTIVE rows only)
+                    Available = Total − Booked                  (never sourced from INVR 'Available' status directly)
+                  Confirmed correct as of 31-Jul-2026 for all 3 projects:
+                    Edition:  956 total | 635 booked | 321 available (66%)
+                    Sky Arc:  947 total | 887 booked |  60 available (94%)
+                    Trump:    298 total | 227 booked |  71 available (76%)
+                  Do NOT revert to "Available = INVR Available status" or "Total = PDRN
+                  total (ACTIVE+CANCELLED)" — both were tried and produced mismatched,
+                  self-inconsistent numbers because PDRN and INVR have different total
+                  row counts per project (see commit history: edf67f3, 37f51f2).
+                  ══════════════════════════════════════════════════════════════════ */}
               <GC style={{padding:14}} cls="kc">
                 <SH title="Total Units (PDRN)" compact/>
                 {(()=>{
@@ -2222,7 +2236,21 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                 <div style={{position:'absolute',bottom:0,left:0,right:0,height:3,background:`linear-gradient(90deg,${T.teal},${T.amber})`,borderRadius:'0 0 14px 14px'}}/>
               </GC>
 
-              {/* CARD B2: Area — Total = INVR (total inventory area), Sold = PDRN ACTIVE Super Area, Available = INVR Total Area - PDRN Sold Area */}
+              {/* ══════════════════════════════════════════════════════════════════
+                  ⚠️ LOCKED FORMULA — DO NOT CHANGE without explicit instruction ⚠️
+                  CARD B2: Area (Lakh sq ft) — PDRN
+                    Total     = sum of iFAll[].superArea         (INVR total Super Area, all statuses)
+                    Sold      = sum of pAAll[].superArea         (PDRN ACTIVE rows' Super Area only)
+                    Available = Total − Sold                     (never sourced from INVR 'Available' status directly)
+                  Confirmed correct as of 31-Jul-2026 for all 3 projects:
+                    Edition:  31.31 L sqft total | 20.70 L sold | 10.61 L available (66%)
+                    Sky Arc:  25.63 L sqft total | 24.00 L sold |  1.62 L available (94%)
+                    Trump:    11.98 L sqft total |  8.91 L sold |  3.07 L available (74%)
+                  Booked/Sold area MUST use the Super Area column (not Carpet Area) per
+                  standing instruction. Do NOT revert to "Available = INVR Available+Mgmt
+                  status area" or "Total = PDRN total (ACTIVE+CANCELLED area)" — both were
+                  tried and produced mismatched numbers (see commit history: edf67f3, 37f51f2).
+                  ══════════════════════════════════════════════════════════════════ */}
               <GC style={{padding:14}} cls="kc">
                 <SH title="Area (Lakh sq ft) — PDRN" compact/>
                 {(()=>{

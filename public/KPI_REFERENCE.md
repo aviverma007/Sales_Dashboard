@@ -88,6 +88,40 @@ This lives in `src/App.jsx`, inside the `kpiEx` useMemo (search `currentMonthTar
 
 **Project Snapshot bar — top 2 milestone chips:** computed **live** from each project's own `milestonesUpcoming` (sorted by `totalCr` descending, top 2), not a stored value. See §4 below. This replaced a hand-maintained `projectMeta.majorMilestones` field that was stale (Sky Arc's stored chips didn't match its real top milestone; Trump had none at all).
 
+### 2a. ⚠️ LOCKED FORMULA — "Total Units (PDRN)" & "Area (Lakh sq ft) — PDRN" cards
+
+Added 31 Jul 2026 to the Sales Overview row (Card A2 / Card B2 in `src/App.jsx`, tagged with `⚠️ LOCKED FORMULA` comments in the code itself). **Do not change these formulas without an explicit instruction** — two other approaches were tried first and both produced self-inconsistent numbers:
+
+```
+Total Units      = iFAll.length                    (INVR total inventory, ALL statuses)
+Booked Units     = pAAll.length                    (PDRN ACTIVE rows only)
+Available Units  = Total Units − Booked Units
+
+Total Area       = SUM(iFAll[].superArea)           (INVR total Super Area, ALL statuses)
+Sold Area        = SUM(pAAll[].superArea)           (PDRN ACTIVE rows' Super Area only)
+Available Area   = Total Area − Sold Area
+```
+
+**Why not simpler alternatives:**
+- ❌ "Booked from PDRN + Available from INVR's own 'Available' status" — tried first, rejected. PDRN and INVR have **different total row counts per project** (Edition: 710 PDRN rows vs 956 INVR rows; Sky Arc: 1016 vs 947; Trump: 252 vs 298), so adding "PDRN booked" to "INVR available" produces a Total that matches neither source file (e.g. Trump showed a meaningless 301 when the correct INVR total is 298 and PDRN total is 252).
+- ❌ "Total = PDRN's own total (ACTIVE + CANCELLED)" — tried second, rejected per explicit instruction in favor of using INVR as the Total.
+- ✅ Current formula: Total always comes from **one single file** (INVR), Booked always comes from **one single file** (PDRN ACTIVE), and Available is simply the arithmetic difference — internally consistent, no cross-file mixing.
+
+**Confirmed correct values (31 Jul 2026):**
+
+| | Edition | Sky Arc | Trump |
+|---|---|---|---|
+| Total Units (INVR) | 956 | 947 | 298 |
+| Booked Units (PDRN ACTIVE) | 635 | 887 | 227 |
+| Available Units | 321 | 60 | 71 |
+| % Sold (units) | 66% | 94% | 76% |
+| Total Area (INVR) | 31.31 L sqft | 25.63 L sqft | 11.98 L sqft |
+| Sold Area (PDRN ACTIVE) | 20.70 L sqft | 24.00 L sqft | 8.91 L sqft |
+| Available Area | 10.61 L sqft | 1.62 L sqft | 3.07 L sqft |
+| % Sold (area) | 66% | 94% | 74% |
+
+Note Trump's units-% (76%) and area-% (74%) legitimately differ — booked units aren't perfectly proportional to booked area, this is not a bug.
+
 ---
 
 ## 3. Demand & Collection Page KPIs (all 3 projects, same formulas)
