@@ -2094,7 +2094,12 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
           // than the static projectMeta.saleableArea field, which can drift out
           // of sync with the current PDRN/INVR files. Multi-project view still
           // sums the stored per-project values (no single kpiEx to pull from).
-          const liveSaleableSqft = isSingle ? (kpiEx.bookedAreaSqft + kpiEx.availAreaSqft + kpiEx.mgmtAreaSqft) : null;
+          // Saleable Area: matches the "Area (Lakh sq ft) — PDRN" card's Total
+          // exactly (pure INVR total Super Area, single source) - do NOT mix
+          // PDRN booked area with INVR available/mgmt area here, that was the
+          // same cross-file-mixing bug already fixed on the two Overview cards
+          // (see the LOCKED FORMULA comments there for why).
+          const liveSaleableSqft = isSingle ? iFAll.reduce((s,r)=>s+(r.superArea||0),0) : null;
           const saleableAreaVal = isSingle ? `${(liveSaleableSqft/100000).toFixed(2)} Lakh sq ft` : `${sumSaleable} Lakh sq ft`;
           const fields=[
             {icon:'🌍',label:'Land Area',val:landAreaVal,color:T.teal},
