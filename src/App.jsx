@@ -3166,13 +3166,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                               <LabelList dataKey={fy} content={VLabel(FY_COLORS[fy])}/>
                             </Bar>
                           ))}
-                          <Line type="monotone" dataKey="avg" name="Average" stroke="#22c55e" strokeWidth={2} dot={{r:4,fill:'#22c55e',stroke:'#fff',strokeWidth:1.5}} activeDot={{r:6}}>
-                            <LabelList dataKey="avg" content={({x,y,value})=>{
-                              if(!value)return null;
-                              const cx=x, cy=y-10;
-                              return <text x={cx} y={cy} textAnchor="start" fill="#15803d" fontSize={10} fontWeight={900} transform={`rotate(-90 ${cx} ${cy})`}>{value.toLocaleString('en-IN')}</text>;
-                            }}/>
-                          </Line>
+                          <Line type="monotone" dataKey="avg" name="Average" stroke="#22c55e" strokeWidth={2} dot={{r:4,fill:'#22c55e',stroke:'#fff',strokeWidth:1.5}} activeDot={{r:6}}/>
                         </ComposedChart>
                       </ResponsiveContainer>
                     );
