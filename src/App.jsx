@@ -3382,13 +3382,15 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
 
                 {/* ── CP: Sales Value ₹Cr (bar) + % line ───────── */}
                 <GC style={{padding:16}}>
-                  <SH title="Top CP — Sales Value (₹Cr)" sub="Top 10 channel partners by BSP value, highest first · % of TOTAL project sales (incl. direct) on orange line"/>
+                  <SH title="Top CP — Sales Value (₹Cr)" sub="All channel partners by BSP value, descending · scroll for more · % of TOTAL project sales (incl. direct) on orange line"/>
                   {(()=>{
-                    // Sorted by BSP descending (this chart's own metric) - was reusing
-                    // topCP's units-sort before, which put CPs in the wrong order for
-                    // a "Sales Value" chart. Strictly top 10, no scroll.
-                    const all=[...topCP].sort((a,b)=>b.bspCr-a.bspCr).slice(0,10);
-                    const slice=all;
+                    // Sorted by BSP descending (this chart's own metric) across ALL CPs -
+                    // was reusing topCP's units-sort before, which put CPs in the wrong
+                    // order for a "Sales Value" chart. Scroll through in strict descending
+                    // order, 10 at a time.
+                    const allSorted=[...topCP].sort((a,b)=>b.bspCr-a.bspCr);
+                    const WIN=10;
+                    const slice=allSorted.slice(cpScroll2,cpScroll2+WIN);
                     // Denominator = total BSP across ALL booked (ACTIVE) units in the current
                     // filter, including direct sales with no broker - not just the sum of
                     // CP-attributed bookings (topCP skips rows with no brokerName entirely,
@@ -3439,6 +3441,13 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                             </ResponsiveContainer>
                           </div>
                         </div>
+                        {allSorted.length>WIN&&(
+                          <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:8,marginTop:4}}>
+                            <button onClick={()=>setCpScroll2(s=>Math.max(0,s-WIN))} disabled={cpScroll2===0} style={{padding:'2px 10px',borderRadius:12,border:'1px solid rgba(0,151,167,0.3)',background:'rgba(0,151,167,0.06)',cursor:cpScroll2===0?'default':'pointer',fontSize:10,color:cpScroll2===0?T.textL:T.tealD,fontWeight:700}}>‹ Prev</button>
+                            <span style={{fontSize:9,color:T.textL}}>{cpScroll2+1}–{Math.min(cpScroll2+WIN,allSorted.length)} of {allSorted.length}</span>
+                            <button onClick={()=>setCpScroll2(s=>Math.min(allSorted.length-WIN,s+WIN))} disabled={cpScroll2+WIN>=allSorted.length} style={{padding:'2px 10px',borderRadius:12,border:'1px solid rgba(0,151,167,0.3)',background:'rgba(0,151,167,0.06)',cursor:cpScroll2+WIN>=allSorted.length?'default':'pointer',fontSize:10,color:cpScroll2+WIN>=allSorted.length?T.textL:T.tealD,fontWeight:700}}>Next ›</button>
+                          </div>
+                        )}
                       </>
                     );
                   })()}
@@ -3447,11 +3456,13 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
     
                 {/* ── CP: Top 10 Units Booked (line) ─────────────── */}
                 <GC style={{padding:16}}>
-                  <SH title="Top CP — Units Booked" sub="Top 10 channel partners by units, highest first · ₹Cr on line"/>
+                  <SH title="Top CP — Units Booked" sub="All channel partners by units, descending · scroll for more · ₹Cr on line"/>
                   {(()=>{
-                    // topCP is already sorted by units descending - just take top 10, no scroll.
-                    const all=topCP.slice(0,10);
-                    const slice=all;
+                    // topCP is already sorted by units descending. Scroll through in
+                    // strict descending order, 10 at a time.
+                    const allSorted=topCP;
+                    const WIN=10;
+                    const slice=allSorted.slice(cpScroll,cpScroll+WIN);
                     const maxU=Math.max(...slice.map(d=>d.units),1);
                     return(
                       <>
@@ -3494,6 +3505,13 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                           </div>
                         </div>
                         </div>
+                        {allSorted.length>WIN&&(
+                          <div style={{display:'flex',alignItems:'center',justifyContent:'center',gap:8,marginTop:4}}>
+                            <button onClick={()=>setCpScroll(s=>Math.max(0,s-WIN))} disabled={cpScroll===0} style={{padding:'2px 10px',borderRadius:12,border:'1px solid rgba(0,151,167,0.3)',background:'rgba(0,151,167,0.06)',cursor:cpScroll===0?'default':'pointer',fontSize:10,color:cpScroll===0?T.textL:T.tealD,fontWeight:700}}>‹ Prev</button>
+                            <span style={{fontSize:9,color:T.textL}}>{cpScroll+1}–{Math.min(cpScroll+WIN,allSorted.length)} of {allSorted.length}</span>
+                            <button onClick={()=>setCpScroll(s=>Math.min(allSorted.length-WIN,s+WIN))} disabled={cpScroll+WIN>=allSorted.length} style={{padding:'2px 10px',borderRadius:12,border:'1px solid rgba(0,151,167,0.3)',background:'rgba(0,151,167,0.06)',cursor:cpScroll+WIN>=allSorted.length?'default':'pointer',fontSize:10,color:cpScroll+WIN>=allSorted.length?T.textL:T.tealD,fontWeight:700}}>Next ›</button>
+                          </div>
+                        )}
                       </>
                     );
                   })()}
