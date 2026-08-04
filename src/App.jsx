@@ -2230,7 +2230,6 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     </div>
                   );
                 })()}
-                <p style={{fontSize:7,color:T.textL,margin:'6px 0 0',fontStyle:'italic'}}>Total = INVR total units · Booked = PDRN ACTIVE rows · Available = Total − Booked</p>
                 <div style={{position:'absolute',bottom:0,left:0,right:0,height:3,background:`linear-gradient(90deg,${T.teal},${T.amber})`,borderRadius:'0 0 14px 14px'}}/>
               </GC>
 
@@ -2294,7 +2293,6 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     </div>
                   );
                 })()}
-                <p style={{fontSize:7,color:T.textL,margin:'6px 0 0',fontStyle:'italic'}}>Total = INVR total Super Area · Sold = PDRN ACTIVE Super Area · Available = Total − Sold</p>
                 <div style={{position:'absolute',bottom:0,left:0,right:0,height:3,background:`linear-gradient(90deg,${T.teal},${T.amber})`,borderRadius:'0 0 14px 14px'}}/>
               </GC>
 
