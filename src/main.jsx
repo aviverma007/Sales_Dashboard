@@ -25,7 +25,6 @@ const DASHBOARDS = [
   {key:'cost',     name:'Cost Intelligence', desc:'Cost analytics',               icon:'💰', g:'linear-gradient(135deg,#5c6bc0,#3949ab)', sessionKey:'cost_auth'},
   {key:'cost2',    name:'Cost 2',            desc:'Cost analytics II',            icon:'🧮', g:'linear-gradient(135deg,#7e57c2,#512da8)', sessionKey:'cost2_auth'},
   {key:'crm',      name:'CRM Intelligence',  desc:'Case management',              icon:'🎫', g:'linear-gradient(135deg,#1e88e5,#0d47a1)', sessionKey:'crm_auth'},
-  {key:'prpo',     name:'PR / PO Journey',   desc:'Procurement tracking',         icon:'📦', g:'linear-gradient(135deg,#ef6c00,#e65100)', sessionKey:'prpo_auth'},
   {key:'costbif',  name:'Cost Bifurcation',  desc:'Cost breakdown by Budget Head & Department', icon:'🧾', g:'linear-gradient(135deg,#00897b,#00695c)', sessionKey:'costbif_auth'},
 ];
 
