@@ -1797,14 +1797,21 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
       const rate=(s&&s.area>0)?(s.bsp/s.area):avgRatePerSqft;
       projRaw += rate*areaByType[t];
     });
-    // Unsold Value = current month's Target Rate (from monthlyTargets) x Unsold Area
-    // (Available + Management Unit), same rule for all 3 projects - matches the
-    // Target Rate shown in the Rate chart's own tooltip/callout for consistency.
+    // Unsold Value = current month's Target Rate (from monthlyTargets) x Unsold Area,
+    // same rule for all 3 projects - matches the Target Rate shown in the Rate
+    // chart's own tooltip/callout for consistency.
+    // ⚠️ LOCKED: Unsold Area MUST match the "Area (Lakh sq ft) — PDRN" card's own
+    // Available formula exactly (Total INVR area − Sold PDRN ACTIVE area), NOT
+    // INVR's own Available+Management status area directly - those two numbers
+    // differ slightly (e.g. Edition: 10.61L vs 10.70L) since INVR's "Booked"
+    // area and PDRN's "ACTIVE" area don't perfectly agree. Using Total-Sold here
+    // keeps every "unsold" figure on the Overview page tied to the same PDRN-
+    // consistent number.
     const projKeyForTargets = selProj.includes('SKY ARC') ? 'SMARTWORLD SKY ARC'
                             : selProj.includes('TRUMP')   ? 'TRUMP RESIDENCES GURGAON'
                             : 'SMARTWORLD THE EDITION';
     const currentMonthTargetRate = (raw?.monthlyTargets||[]).find(t=>t.projectFilter===projKeyForTargets&&t.label===TODAY_LABEL)?.targetRate || avgRatePerSqft;
-    const unsoldAreaForValue = availAreaSqft + mgmtAreaSqft;
+    const unsoldAreaForValue = Math.max(0, totalSuperArea - bookedAreaSqft);
     const totalProjCr    = +(totalBSPCr + (unsoldAreaForValue*currentMonthTargetRate)/1e7).toFixed(2);
     const unsoldValueCr  = +((unsoldAreaForValue*currentMonthTargetRate)/1e7).toFixed(2);
     const soldPctValue   = totalProjCr>0 ? Math.round(totalBSPCr/totalProjCr*100) : 0;
@@ -2307,7 +2314,11 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                   const unsoldBSP      = +kpiEx.unsoldValueCr;
                   const totalPotential = +kpiEx.totalProjCr;
                   const soldPct        = kpiEx.soldPctValue || 0;
-                  const availUnits     = iFAll.filter(r=>r.status==='Available'||r.status==='Management Unit').length;
+                  // availUnits MUST match the "Total Units (PDRN)" card's locked formula
+                  // (Total INVR - Booked PDRN ACTIVE), not INVR Available+Management status
+                  // count directly - those two counts can differ (e.g. Edition: 321 vs 324)
+                  // since PDRN and INVR don't have identical total row counts per project.
+                  const availUnits     = iFAll.length - pAAll.length;
                   const installmentTotal = kpiEx.demandRaisedCr || 0;
                   const totalReceived    = kpiEx.collectedCr || 0;
                   const upcomingAmt      = kpiEx.outstandingCr || 0;
@@ -2527,23 +2538,39 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const curQMonths=curQMonthsObj.map(o=>o.label);
                     const todayYMn=todayD.getFullYear()*100+(todayD.getMonth()+1);
                     const todayLabel=ml(todayD.getFullYear(),todayD.getMonth()+1);
-                    // Use numeric ym for correct date comparison (string compare fails: Jun < May alphabetically)
-                    const fyStartYU=(todayD.getMonth()+1)>=4?todayD.getFullYear():todayD.getFullYear()-1;
-                    const fyMonthsU=Array.from({length:12},(_,i)=>{let m=4+i,y=fyStartYU;if(m>12){m-=12;y++;}return{label:ml(y,m),ym:y*100+m};});
-                    const pastQMonths=fyMonthsU.filter(o=>o.ym<todayYMn).map(o=>o.label);   // carry-forward: all FY months so far
-                    const futureQMonths=fyMonthsU.filter(o=>o.ym>=todayYMn).map(o=>o.label); // spread across rest of FY
-                    // Gap = sum of (target - achieved) for past months in this quarter
-                    const missedUnits=pastQMonths.reduce((s,lbl)=>{
+                    // ⚠️ LOCKED LOGIC: "missed" shortfall for the catch-up projection must
+                    // come ONLY from the immediately-preceding fiscal quarter's 3 months
+                    // (e.g. if current quarter is Q2 Jul-Sep, last quarter = Q1 Apr-Jun) -
+                    // NOT from every month since the fiscal year started. Using absolute
+                    // month-index arithmetic (not fyMonthsU filtering) so this is correct
+                    // even when the last quarter crosses a fiscal-year/calendar-year
+                    // boundary (e.g. current quarter Q1 Apr-Jun -> last quarter is Q4
+                    // Jan-Mar of the SAME fiscal year, still same calendar year run).
+                    const curQStartAbsU=todayD.getFullYear()*12+(curQsMo-1);
+                    const lastQMonths=[3,2,1].map(back=>{
+                      const abs=curQStartAbsU-back, y=Math.floor(abs/12), m=(abs%12)+1;
+                      return ml(y,m);
+                    });
+                    // Gap = sum of (target - achieved) for LAST QUARTER's 3 months only
+                    const missedUnits=lastQMonths.reduce((s,lbl)=>{
                       const d=monthlyWithTargets.find(r=>r.label===lbl);
                       return s+Math.max(0,(d?.targetUnitsLine||0)-(d?.bookedUnits||0));
                     },0);
-                    // Redistribute missed units evenly across CURRENT QUARTER ONLY
+                    // Redistribute last quarter's missed units across CURRENT QUARTER ONLY,
+                    // as WHOLE UNITS (a housing unit can't be split into fractions). Uses
+                    // the "largest remainder" method: every month gets the same integer
+                    // floor share, then the leftover remainder (missedUnits % nRemaining)
+                    // is handed out one extra unit per month, earliest month first - e.g.
+                    // 5 missed over 3 months = [2,2,1], not [2,2,2] (which would overshoot
+                    // by 1) or a flat Math.round(5/3)=2 added to all three (same overshoot).
                     const nRemaining=curQMonths.length;
-                    const addPerMonth=nRemaining>0?Math.round(missedUnits/nRemaining):0;
+                    const addBase=nRemaining>0?Math.floor(missedUnits/nRemaining):0;
+                    const addRemainder=nRemaining>0?missedUnits%nRemaining:0;
                     const projMap={};
-                    curQMonths.forEach(lbl=>{
+                    curQMonths.forEach((lbl,idx)=>{
                       const base=monthlyWithTargets.find(d=>d.label===lbl)?.targetUnitsLine||0;
-                      projMap[lbl]=base+addPerMonth; // revised target = original + catch-up (CURRENT QUARTER ONLY)
+                      const addThisMonth=addBase+(idx<addRemainder?1:0);
+                      projMap[lbl]=base+addThisMonth; // revised target = original + whole-unit catch-up
                     });
                     // Green line ONLY shows on current quarter (Jul, Aug, Sep), not future quarters
 
@@ -2648,11 +2675,15 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const lblYmT=l=>{const p=l.match(/([A-Za-z]{3})'(\d{2})/);return p?(2000+parseInt(p[2]))*100+(moNT[p[1]]||0):0;};
                     const todayYMT=todayT.getFullYear()*100+(todayT.getMonth()+1);
                     const cqmObj=[0,1,2].map(i=>{let m=tQS+i,y=todayT.getFullYear();if(m>12){m-=12;y++;}return{label:ml2(y,m),ym:y*100+m};});
-                    const fyStartYT=(todayT.getMonth()+1)>=4?todayT.getFullYear():todayT.getFullYear()-1;
-                    const fyMonthsT=Array.from({length:12},(_,i)=>{let m=4+i,y=fyStartYT;if(m>12){m-=12;y++;}return{label:ml2(y,m),ym:y*100+m};});
-                    const pastCqmT=fyMonthsT.filter(o=>o.ym<todayYMT).map(o=>o.label);
-                    const futureCqmT=fyMonthsT.filter(o=>o.ym>=todayYMT).map(o=>o.label);
-                    const missedTsv=pastCqmT.reduce((s,lbl)=>{const d=monthlyWithTargets.find(r=>r.label===lbl);return s+Math.max(0,(d?.targetTsvLine||0)-(d?.bspCr||0));},0);
+                    // ⚠️ LOCKED LOGIC: same as Chart 1 - missed shortfall comes ONLY from
+                    // the immediately-preceding fiscal quarter's 3 months, via absolute
+                    // month-index arithmetic (correct across FY/calendar-year boundaries).
+                    const curQStartAbsT=todayT.getFullYear()*12+(tQS-1);
+                    const lastQMonthsT=[3,2,1].map(back=>{
+                      const abs=curQStartAbsT-back, y=Math.floor(abs/12), m=(abs%12)+1;
+                      return ml2(y,m);
+                    });
+                    const missedTsv=lastQMonthsT.reduce((s,lbl)=>{const d=monthlyWithTargets.find(r=>r.label===lbl);return s+Math.max(0,(d?.targetTsvLine||0)-(d?.bspCr||0));},0);
                     const cqmT=cqmObj.map(o=>o.label);
                     const addTsvPer=cqmT.length>0?+(missedTsv/cqmT.length).toFixed(1):0;
                     const tsvProjMap={};
@@ -2733,15 +2764,29 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const todayYMA3=todayA.getFullYear()*100+(todayA.getMonth()+1);
                     // Projection: same-quarter catch-up
                     const cqObjA2=[0,1,2].map(i=>{let m=aQS2+i,y=todayA.getFullYear();if(m>12){m-=12;y++;}return{label:ml4(y,m),ym:y*100+m};});
-                    const fyStartYA=(todayA.getMonth()+1)>=4?todayA.getFullYear():todayA.getFullYear()-1;
-                    const fyMonthsA=Array.from({length:12},(_,i)=>{let m=4+i,y=fyStartYA;if(m>12){m-=12;y++;}return{label:ml4(y,m),ym:y*100+m};});
-                    const pastCqA2=fyMonthsA.filter(o=>o.ym<todayYMA3).map(o=>o.label);
-                    const futureCqA2=fyMonthsA.filter(o=>o.ym>=todayYMA3).map(o=>o.label);
-                    const missedArea2=pastCqA2.reduce((s,lbl)=>{const d=monthlyWithTargets.find(r=>r.label===lbl);return s+Math.max(0,(d?.targetAreaSqft||0)-(d?.bookedAreaSqft||0));},0);
+                    // ⚠️ LOCKED LOGIC: same as Chart 1/2 - missed shortfall comes ONLY from
+                    // the immediately-preceding fiscal quarter's 3 months, via absolute
+                    // month-index arithmetic (correct across FY/calendar-year boundaries).
+                    const curQStartAbsA2=todayA.getFullYear()*12+(aQS2-1);
+                    const lastQMonthsA2=[3,2,1].map(back=>{
+                      const abs=curQStartAbsA2-back, y=Math.floor(abs/12), m=(abs%12)+1;
+                      return ml4(y,m);
+                    });
+                    const missedArea2=lastQMonthsA2.reduce((s,lbl)=>{const d=monthlyWithTargets.find(r=>r.label===lbl);return s+Math.max(0,(d?.targetAreaSqft||0)-(d?.bookedAreaSqft||0));},0);
                     const cqObjA2Months=cqObjA2.map(o=>o.label);
-                    const addAreaPer2=cqObjA2Months.length>0?Math.round(missedArea2/cqObjA2Months.length):0;
+                    // Same "largest remainder" whole-number distribution as the Units chart -
+                    // every month gets an equal floor share of the missed sqft, then the
+                    // leftover remainder is handed out 1 sqft at a time, earliest month
+                    // first, so the 3 months' catch-up always sums EXACTLY to missedArea2
+                    // (a flat Math.round(missed/3) applied to every month can overshoot).
+                    const addAreaBase=cqObjA2Months.length>0?Math.floor(missedArea2/cqObjA2Months.length):0;
+                    const addAreaRemainder=cqObjA2Months.length>0?Math.round(missedArea2)%cqObjA2Months.length:0;
                     const areaProjMap2={};
-                    cqObjA2Months.forEach(lbl=>{const base=monthlyWithTargets.find(d=>d.label===lbl)?.targetAreaSqft||0;areaProjMap2[lbl]=Math.round(base+addAreaPer2);});
+                    cqObjA2Months.forEach((lbl,idx)=>{
+                      const base=monthlyWithTargets.find(d=>d.label===lbl)?.targetAreaSqft||0;
+                      const addThisMonth=addAreaBase+(idx<addAreaRemainder?1:0);
+                      areaProjMap2[lbl]=Math.round(base+addThisMonth);
+                    });
                     const sortedAP2=Object.keys(areaProjMap2).sort((a,b)=>lblYmA2(a)-lblYmA2(b));
                     const lastALbl2=sortedAP2[sortedAP2.length-1];
                     const nqBMoA2=aQS2+3>12?aQS2-9:aQS2+3;const nqBYA2=aQS2+3>12?todayA.getFullYear()+1:todayA.getFullYear();
@@ -2938,19 +2983,24 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                         const mn=monNumR[m[1]]||0, calYr=parseInt(m[2]);
                         const fyYr=mn<=3?calYr:calYr+1;
                         const period=yearly?`FY${String(fyYr).padStart(2,'0')}`:`Q${mn<=3?4:Math.ceil((mn-3)/3)}'${String(fyYr).padStart(2,'0')}`;
-                        if(!map[period])map[period]={label:period,achBsp:0,achArea:0,tgtBsp:0,tgtArea:0,projSum:0,projN:0,reqSum:0,reqN:0,bridgeVal:null};
+                        if(!map[period])map[period]={label:period,achSum:0,achN:0,tgtSum:0,tgtN:0,projSum:0,projN:0,reqSum:0,reqN:0,bridgeVal:null};
                         const g=map[period];
-                        if(d.achieved!=null&&d.achievedBspCr>0&&d.achievedAreaSqft>0){g.achBsp+=d.achievedBspCr;g.achArea+=d.achievedAreaSqft;}
-                        if(d.targetTsvForRate>0&&d.targetAreaForRate>0){g.tgtBsp+=d.targetTsvForRate;g.tgtArea+=d.targetAreaForRate;}
+                        // ⚠️ LOCKED: simple average of the monthly rate values, NOT a
+                        // BSP/Area-weighted average - per instruction, verified against
+                        // manual calc (Edition Apr/May/Jun'26: (17021+19978+20968)/3 =
+                        // 19322.33, not the previously-used weighted ~19721).
+                        if(d.achieved!=null){g.achSum+=d.achieved;g.achN++;}
+                        if(d.target!=null){g.tgtSum+=d.target;g.tgtN++;}
+                        else if(d.targetLine!=null){g.tgtSum+=d.targetLine;g.tgtN++;}
                         if(d.projection!=null){g.projSum+=d.projection;g.projN++;}
                         if(d.requiredRate!=null){g.reqSum+=d.requiredRate;g.reqN++;}
                         if(d.bridge!=null)g.bridgeVal=d.bridge;
                       });
                       return Object.values(map).map(g=>({
                         label:g.label,month:g.label,isFuture:false,isCurrent:false,
-                        achieved:g.achArea>0?Math.round(g.achBsp*1e7/g.achArea):null,
-                        target:g.tgtArea>0?Math.round(g.tgtBsp*1e7/g.tgtArea):null,
-                        targetLine:g.tgtArea>0?Math.round(g.tgtBsp*1e7/g.tgtArea):null,
+                        achieved:g.achN>0?Math.round(g.achSum/g.achN):null,
+                        target:g.tgtN>0?Math.round(g.tgtSum/g.tgtN):null,
+                        targetLine:g.tgtN>0?Math.round(g.tgtSum/g.tgtN):null,
                         projection:g.projN>0?Math.round(g.projSum/g.projN):null,
                         requiredRate:g.reqN>0?Math.round(g.reqSum/g.reqN):null,
                         bridge:g.bridgeVal,
@@ -3054,6 +3104,14 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                   {(()=>{
                     const selProjs=filters.project?filters.project.split('||').filter(Boolean):[];
                     const editionOnly=selProjs.length===1&&selProjs[0]==='SMARTWORLD THE EDITION';
+                    // ⚠️ LOCKED: value the UNSOLD/available portion of a tower's TSV using
+                    // the CURRENT MONTH's Target Rate (from monthlyTargets), not the
+                    // tower's own achieved/average rate - per instruction. Falls back to
+                    // the tower's own rate only if no target rate is found for that month.
+                    const getTargetRate=(projKey)=>{
+                      const t=(raw?.monthlyTargets||[]).find(x=>x.projectFilter===projKey&&x.label===TODAY_LABEL);
+                      return t?.targetRate||null;
+                    };
 
                     let twData=[];
                     if(editionOnly){
@@ -3061,9 +3119,12 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                       const inv={};
                       iF.forEach(r=>{const t=r.tower||'';if(!t)return;if(!inv[t])inv[t]={booked:0,total:0};inv[t].total++;});
                       pAAll.forEach(r=>{const t=r.tower||'';if(!t)return;if(!inv[t])inv[t]={booked:0,total:0};inv[t].booked++;});
+                      const targetRateEd=getTargetRate('SMARTWORLD THE EDITION');
                       twData=Object.entries(inv).filter(([t])=>t).map(([t,v])=>{
                         const td=towerData.find(r=>r.tower===t&&r.project==='SMARTWORLD THE EDITION')||{};
-                        const totalBSP=(td.totalBSPCr||0)+(td.available||0)*(td.pricePerSqft||0)*((td.bookedArea||1)/(td.booked||1))/1e7;
+                        const avgAreaPerUnit=(td.bookedArea||1)/(td.booked||1);
+                        const rateForUnsold=targetRateEd||td.pricePerSqft||0;
+                        const totalBSP=(td.totalBSPCr||0)+(td.available||0)*avgAreaPerUnit*rateForUnsold/1e7;
                         const tsvPct=totalBSP>0?Math.round((td.totalBSPCr||0)/totalBSP*100):0;
                         return {tower:t, unitPct:v.total>0?Math.round(v.booked/v.total*100):0,
                           tsvPct, booked:v.booked, total:v.total,
@@ -3072,9 +3133,10 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     } else {
                       const filtered=towerData.filter(r=>!selProjs.length||selProjs.includes(r.project));
                       twData=filtered.map(r=>{
-                        // Total potential BSP = sold BSP + (available units × avg rate × avg area)
+                        // Total potential BSP = sold BSP + (available units × avg area × TARGET RATE)
                         const avgArea = r.booked>0 ? (r.bookedArea/r.booked) : 0;
-                        const availBSP = (r.available||0)*avgArea*(r.pricePerSqft||0)/1e7;
+                        const rateForUnsold = getTargetRate(r.project) || r.pricePerSqft || 0;
+                        const availBSP = (r.available||0)*avgArea*rateForUnsold/1e7;
                         const totalBSP = (r.totalBSPCr||0) + availBSP;
                         const tsvPct = totalBSP>0 ? Math.round((r.totalBSPCr||0)/totalBSP*100) : 0;
                         return {tower:r.tower+(selProjs.length!==1?` (${(r.project||'').split(' ').pop()})` :''),
