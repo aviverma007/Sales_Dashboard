@@ -2983,19 +2983,24 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                         const mn=monNumR[m[1]]||0, calYr=parseInt(m[2]);
                         const fyYr=mn<=3?calYr:calYr+1;
                         const period=yearly?`FY${String(fyYr).padStart(2,'0')}`:`Q${mn<=3?4:Math.ceil((mn-3)/3)}'${String(fyYr).padStart(2,'0')}`;
-                        if(!map[period])map[period]={label:period,achBsp:0,achArea:0,tgtBsp:0,tgtArea:0,projSum:0,projN:0,reqSum:0,reqN:0,bridgeVal:null};
+                        if(!map[period])map[period]={label:period,achSum:0,achN:0,tgtSum:0,tgtN:0,projSum:0,projN:0,reqSum:0,reqN:0,bridgeVal:null};
                         const g=map[period];
-                        if(d.achieved!=null&&d.achievedBspCr>0&&d.achievedAreaSqft>0){g.achBsp+=d.achievedBspCr;g.achArea+=d.achievedAreaSqft;}
-                        if(d.targetTsvForRate>0&&d.targetAreaForRate>0){g.tgtBsp+=d.targetTsvForRate;g.tgtArea+=d.targetAreaForRate;}
+                        // ⚠️ LOCKED: simple average of the monthly rate values, NOT a
+                        // BSP/Area-weighted average - per instruction, verified against
+                        // manual calc (Edition Apr/May/Jun'26: (17021+19978+20968)/3 =
+                        // 19322.33, not the previously-used weighted ~19721).
+                        if(d.achieved!=null){g.achSum+=d.achieved;g.achN++;}
+                        if(d.target!=null){g.tgtSum+=d.target;g.tgtN++;}
+                        else if(d.targetLine!=null){g.tgtSum+=d.targetLine;g.tgtN++;}
                         if(d.projection!=null){g.projSum+=d.projection;g.projN++;}
                         if(d.requiredRate!=null){g.reqSum+=d.requiredRate;g.reqN++;}
                         if(d.bridge!=null)g.bridgeVal=d.bridge;
                       });
                       return Object.values(map).map(g=>({
                         label:g.label,month:g.label,isFuture:false,isCurrent:false,
-                        achieved:g.achArea>0?Math.round(g.achBsp*1e7/g.achArea):null,
-                        target:g.tgtArea>0?Math.round(g.tgtBsp*1e7/g.tgtArea):null,
-                        targetLine:g.tgtArea>0?Math.round(g.tgtBsp*1e7/g.tgtArea):null,
+                        achieved:g.achN>0?Math.round(g.achSum/g.achN):null,
+                        target:g.tgtN>0?Math.round(g.tgtSum/g.tgtN):null,
+                        targetLine:g.tgtN>0?Math.round(g.tgtSum/g.tgtN):null,
                         projection:g.projN>0?Math.round(g.projSum/g.projN):null,
                         requiredRate:g.reqN>0?Math.round(g.reqSum/g.reqN):null,
                         bridge:g.bridgeVal,
