@@ -154,20 +154,33 @@ def main():
             availableArea=round(avail_area),bookedUnits=bunits,availUnits=avail_units,avgPricePerSqft=rate))
 
         # towerData
+        # ⚠️ LOCKED: `total` (physical unit count per tower) MUST come from INVR
+        # (current unit inventory: Booked + Available + Management Unit), NOT from
+        # PDRN booked+cancelled+available. PDRN 'cancelled' rows are historical
+        # transaction records for units that already exist in INVR as Available
+        # (relisted) or Booked (resold) - adding cancelled on top double-counts
+        # those units and inflates the tower total beyond the real unit count.
+        # 'booked'/'cancelled'/BSP figures still come from PDRN (transaction-level
+        # money data); only unit-count totals are sourced from INVR.
         d['towerData']=[t for t in d['towerData'] if t.get('project')!=P['key']]
-        tw=defaultdict(lambda:dict(booked=0,cancelled=0,avail=0,ba=0.0,ca=0.0,cp=0.0,bsp=0.0))
-        for r in inva:
-            if r['tower']: tw[r['tower']]['avail']+=1
+        tw=defaultdict(lambda:dict(booked=0,cancelled=0,avail=0,mgmt=0,invrBooked=0,ba=0.0,ca=0.0,cp=0.0,bsp=0.0))
+        for r in iv:
+            t=r['tower']
+            if not t: continue
+            if r['status']=='Available': tw[t]['avail']+=1
+            elif r['status']=='Booked': tw[t]['invrBooked']+=1
+            else: tw[t]['mgmt']+=1  # Management Unit or any other INVR status
         for r in pd:
             t=r['tower'] or 'Unknown'
             if r['status']=='ACTIVE': tw[t]['booked']+=1; tw[t]['ba']+=r['superArea']; tw[t]['cp']+=r['carpet']; tw[t]['bsp']+=r['bsp']
             elif r['status']=='CANCELLED': tw[t]['cancelled']+=1; tw[t]['ca']+=r['superArea']
         for t,v in sorted(tw.items()):
-            tot=v['booked']+v['cancelled']+v['avail']
+            tot=v['invrBooked']+v['avail']+v['mgmt']
             d['towerData'].append(dict(tower=t,project=P['key'],booked=v['booked'],cancelled=v['cancelled'],
                 bookedArea=round(v['ba']),cancelledArea=round(v['ca']),carpetArea=round(v['cp']),
                 pricePerSqft=round(v['bsp']/v['ba']) if v['ba']>0 else 0,totalBSPCr=round(v['bsp']/1e7,1),
-                total=tot,available=v['avail'],pctSold=round(v['booked']/tot*100) if tot>0 else 0))
+                total=tot,available=v['avail'],management=v['mgmt'],
+                pctSold=round(v['booked']/tot*100) if tot>0 else 0))
 
         # cpVsDirect
         cpu=cpb=du=db=0
