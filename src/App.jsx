@@ -1571,8 +1571,10 @@ function AppInner({overviewOnly=false}) {
   const chartRangeCompact=chartRangeMonths>0&&chartRangeMonths<=12;
   // Sales & Pricing Trend chart offsets (must be at component level — hooks rules)
   const TODAY_LABEL=(()=>{const d=new Date();return d.toLocaleString('en-US',{month:'short'}).slice(0,3)+"'"+String(d.getFullYear()).slice(2);})();
-  // Reset chart offsets to -1 (auto-center) whenever filters change
-  useEffect(()=>{setAllOff(0);setChartOff(0);setCpScroll(0);setCpScroll2(0);setChartRangeIdx([0,999]);},[filters.project,filters.fy,filters.quarter,filters.month,filters.broker]);
+  // Reset chart offsets to -1 (auto-center on last quarter + current quarter + upcoming months)
+  // whenever filters change. -1 is a sentinel meaning "let each chart compute its own smart
+  // default (def)" - NEVER 0, which would force the view back to the very first month of data.
+  useEffect(()=>{setAllOff(-1);setChartOff(-1);setCpScroll(0);setCpScroll2(0);setChartRangeIdx([0,999]);},[filters.project,filters.fy,filters.quarter,filters.month,filters.broker]);
   // Initialize offset so current month is bar #2 (index 1 in view), show 1 past + current + 11 future
   const _initOff=(data,WIN=13)=>{const idx=data.findIndex(d=>d.label===TODAY_LABEL);return idx>=1?idx-1:Math.max(0,idx);};
   const [uOff,setUOff]=useState(-1);
@@ -2613,7 +2615,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const parseM=l=>{const p=l.match(/([A-Za-z]{3})'(\d{2})/);if(!p)return'';const mn={Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'};return(p[2]>='90'?'19':'20')+p[2]+'-'+mn[p[1]];};const dataF=(chartMonthFrom&&chartGranularity==='monthly')?data.filter(d=>parseM(d.label)>=chartMonthFrom):data;
                     const dataFinal=chartMonthFrom?dataF:data;
                     const cur=dataFinal.findIndex(d=>d.isCurrent);
-                    const def=cur>=2?cur-2:Math.max(0,dataFinal.length-WIN);
+                    const def=cur>=3?cur-3:Math.max(0,dataFinal.length-WIN);
                     const off=(chartMonthFrom&&chartGranularity==='monthly')?Math.min(Math.max(chartOff<0?0:chartOff,0),Math.max(0,dataFinal.length-WIN)):Math.min(Math.max(chartOff<0?def:chartOff,0),Math.max(0,dataFinal.length-WIN));
                     const sl=dataFinal.slice(off,off+WIN);
                     const hasDateFilter=!!(filters.fy||filters.quarter||filters.month);
@@ -2704,7 +2706,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const parseM=l=>{const p=l.match(/([A-Za-z]{3})'(\d{2})/);if(!p)return'';const mn={Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'};return(p[2]>='90'?'19':'20')+p[2]+'-'+mn[p[1]];};const dataF=(chartMonthFrom&&chartGranularity==='monthly')?data.filter(d=>parseM(d.label)>=chartMonthFrom):data;
                     const dataFinal=chartMonthFrom?dataF:data;
                     const cur=dataFinal.findIndex(d=>d.isCurrent);
-                    const def=cur>=2?cur-2:Math.max(0,dataFinal.length-WIN);
+                    const def=cur>=3?cur-3:Math.max(0,dataFinal.length-WIN);
                     const off=(chartMonthFrom&&chartGranularity==='monthly')?Math.min(Math.max(chartOff<0?0:chartOff,0),Math.max(0,dataFinal.length-WIN)):Math.min(Math.max(chartOff<0?def:chartOff,0),Math.max(0,dataFinal.length-WIN));
                     const sl=dataFinal.slice(off,off+WIN);
                     const hasDateFilter=!!(filters.fy||filters.quarter||filters.month);
@@ -2803,7 +2805,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const parseM=l=>{const p=l.match(/([A-Za-z]{3})'(\d{2})/);if(!p)return'';const mn={Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'};return(p[2]>='90'?'19':'20')+p[2]+'-'+mn[p[1]];};const dataF=(chartMonthFrom&&chartGranularity==='monthly')?data.filter(d=>parseM(d.label)>=chartMonthFrom):data;
                     const dataFinal=chartMonthFrom?dataF:data;
                     const cur=dataFinal.findIndex(d=>d.isCurrent);
-                    const def=cur>=2?cur-2:Math.max(0,dataFinal.length-WIN);
+                    const def=cur>=3?cur-3:Math.max(0,dataFinal.length-WIN);
                     const off=(chartMonthFrom&&chartGranularity==='monthly')?Math.min(Math.max(chartOff<0?0:chartOff,0),Math.max(0,dataFinal.length-WIN)):Math.min(Math.max(chartOff<0?def:chartOff,0),Math.max(0,dataFinal.length-WIN));
                     const sl=dataFinal.slice(off,off+WIN);
                     const hasDateFilter=!!(filters.fy||filters.quarter||filters.month);
@@ -3012,7 +3014,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const cur=dataFinal.findIndex(d=>d.isCurrent);
                     // Start from first month with actual rate data so achieved line is visible
                     const firstActualIdx=dataFinal.findIndex(d=>d.achieved!=null&&d.achieved>0);
-                    const def=firstActualIdx>=0?Math.max(0,firstActualIdx):cur>=2?cur-2:Math.max(0,dataFinal.length-WIN);
+                    const def=firstActualIdx>=0?Math.max(0,firstActualIdx):cur>=3?cur-3:Math.max(0,dataFinal.length-WIN);
                     const off=(chartMonthFrom&&chartGranularity==='monthly')?Math.min(Math.max(chartOff<0?0:chartOff,0),Math.max(0,dataFinal.length-WIN)):Math.min(Math.max(chartOff<0?def:chartOff,0),Math.max(0,dataFinal.length-WIN));
                     const sl=dataFinal.slice(off,off+WIN);
                     const hasDateFilter=!!(filters.fy||filters.quarter||filters.month);
