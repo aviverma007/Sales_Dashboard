@@ -1797,14 +1797,21 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
       const rate=(s&&s.area>0)?(s.bsp/s.area):avgRatePerSqft;
       projRaw += rate*areaByType[t];
     });
-    // Unsold Value = current month's Target Rate (from monthlyTargets) x Unsold Area
-    // (Available + Management Unit), same rule for all 3 projects - matches the
-    // Target Rate shown in the Rate chart's own tooltip/callout for consistency.
+    // Unsold Value = current month's Target Rate (from monthlyTargets) x Unsold Area,
+    // same rule for all 3 projects - matches the Target Rate shown in the Rate
+    // chart's own tooltip/callout for consistency.
+    // ⚠️ LOCKED: Unsold Area MUST match the "Area (Lakh sq ft) — PDRN" card's own
+    // Available formula exactly (Total INVR area − Sold PDRN ACTIVE area), NOT
+    // INVR's own Available+Management status area directly - those two numbers
+    // differ slightly (e.g. Edition: 10.61L vs 10.70L) since INVR's "Booked"
+    // area and PDRN's "ACTIVE" area don't perfectly agree. Using Total-Sold here
+    // keeps every "unsold" figure on the Overview page tied to the same PDRN-
+    // consistent number.
     const projKeyForTargets = selProj.includes('SKY ARC') ? 'SMARTWORLD SKY ARC'
                             : selProj.includes('TRUMP')   ? 'TRUMP RESIDENCES GURGAON'
                             : 'SMARTWORLD THE EDITION';
     const currentMonthTargetRate = (raw?.monthlyTargets||[]).find(t=>t.projectFilter===projKeyForTargets&&t.label===TODAY_LABEL)?.targetRate || avgRatePerSqft;
-    const unsoldAreaForValue = availAreaSqft + mgmtAreaSqft;
+    const unsoldAreaForValue = Math.max(0, totalSuperArea - bookedAreaSqft);
     const totalProjCr    = +(totalBSPCr + (unsoldAreaForValue*currentMonthTargetRate)/1e7).toFixed(2);
     const unsoldValueCr  = +((unsoldAreaForValue*currentMonthTargetRate)/1e7).toFixed(2);
     const soldPctValue   = totalProjCr>0 ? Math.round(totalBSPCr/totalProjCr*100) : 0;
