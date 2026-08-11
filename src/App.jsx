@@ -2307,7 +2307,11 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                   const unsoldBSP      = +kpiEx.unsoldValueCr;
                   const totalPotential = +kpiEx.totalProjCr;
                   const soldPct        = kpiEx.soldPctValue || 0;
-                  const availUnits     = iFAll.filter(r=>r.status==='Available'||r.status==='Management Unit').length;
+                  // availUnits MUST match the "Total Units (PDRN)" card's locked formula
+                  // (Total INVR - Booked PDRN ACTIVE), not INVR Available+Management status
+                  // count directly - those two counts can differ (e.g. Edition: 321 vs 324)
+                  // since PDRN and INVR don't have identical total row counts per project.
+                  const availUnits     = iFAll.length - pAAll.length;
                   const installmentTotal = kpiEx.demandRaisedCr || 0;
                   const totalReceived    = kpiEx.collectedCr || 0;
                   const upcomingAmt      = kpiEx.outstandingCr || 0;
