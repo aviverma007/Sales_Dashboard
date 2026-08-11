@@ -3104,6 +3104,14 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                   {(()=>{
                     const selProjs=filters.project?filters.project.split('||').filter(Boolean):[];
                     const editionOnly=selProjs.length===1&&selProjs[0]==='SMARTWORLD THE EDITION';
+                    // ⚠️ LOCKED: value the UNSOLD/available portion of a tower's TSV using
+                    // the CURRENT MONTH's Target Rate (from monthlyTargets), not the
+                    // tower's own achieved/average rate - per instruction. Falls back to
+                    // the tower's own rate only if no target rate is found for that month.
+                    const getTargetRate=(projKey)=>{
+                      const t=(raw?.monthlyTargets||[]).find(x=>x.projectFilter===projKey&&x.label===TODAY_LABEL);
+                      return t?.targetRate||null;
+                    };
 
                     let twData=[];
                     if(editionOnly){
@@ -3111,9 +3119,12 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                       const inv={};
                       iF.forEach(r=>{const t=r.tower||'';if(!t)return;if(!inv[t])inv[t]={booked:0,total:0};inv[t].total++;});
                       pAAll.forEach(r=>{const t=r.tower||'';if(!t)return;if(!inv[t])inv[t]={booked:0,total:0};inv[t].booked++;});
+                      const targetRateEd=getTargetRate('SMARTWORLD THE EDITION');
                       twData=Object.entries(inv).filter(([t])=>t).map(([t,v])=>{
                         const td=towerData.find(r=>r.tower===t&&r.project==='SMARTWORLD THE EDITION')||{};
-                        const totalBSP=(td.totalBSPCr||0)+(td.available||0)*(td.pricePerSqft||0)*((td.bookedArea||1)/(td.booked||1))/1e7;
+                        const avgAreaPerUnit=(td.bookedArea||1)/(td.booked||1);
+                        const rateForUnsold=targetRateEd||td.pricePerSqft||0;
+                        const totalBSP=(td.totalBSPCr||0)+(td.available||0)*avgAreaPerUnit*rateForUnsold/1e7;
                         const tsvPct=totalBSP>0?Math.round((td.totalBSPCr||0)/totalBSP*100):0;
                         return {tower:t, unitPct:v.total>0?Math.round(v.booked/v.total*100):0,
                           tsvPct, booked:v.booked, total:v.total,
@@ -3122,9 +3133,10 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     } else {
                       const filtered=towerData.filter(r=>!selProjs.length||selProjs.includes(r.project));
                       twData=filtered.map(r=>{
-                        // Total potential BSP = sold BSP + (available units × avg rate × avg area)
+                        // Total potential BSP = sold BSP + (available units × avg area × TARGET RATE)
                         const avgArea = r.booked>0 ? (r.bookedArea/r.booked) : 0;
-                        const availBSP = (r.available||0)*avgArea*(r.pricePerSqft||0)/1e7;
+                        const rateForUnsold = getTargetRate(r.project) || r.pricePerSqft || 0;
+                        const availBSP = (r.available||0)*avgArea*rateForUnsold/1e7;
                         const totalBSP = (r.totalBSPCr||0) + availBSP;
                         const tsvPct = totalBSP>0 ? Math.round((r.totalBSPCr||0)/totalBSP*100) : 0;
                         return {tower:r.tower+(selProjs.length!==1?` (${(r.project||'').split(' ').pop()})` :''),
