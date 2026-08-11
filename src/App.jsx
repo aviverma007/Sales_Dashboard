@@ -2640,7 +2640,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const dataFinal=chartMonthFrom?dataF:data;
                     const cur=dataFinal.findIndex(d=>d.isCurrent);
                     const def=cur>=3?cur-3:Math.max(0,dataFinal.length-WIN);
-                    const off=(chartMonthFrom&&chartGranularity==='monthly')?Math.min(Math.max(chartOff<0?0:chartOff,0),Math.max(0,dataFinal.length-WIN)):Math.min(Math.max(chartOff<0?def:chartOff,0),Math.max(0,dataFinal.length-WIN));
+                    const off=(chartRangeIdx[0]>0&&chartGranularity==='monthly')?Math.min(Math.max(chartOff<0?0:chartOff,0),Math.max(0,dataFinal.length-WIN)):Math.min(Math.max(chartOff<0?def:chartOff,0),Math.max(0,dataFinal.length-WIN));
                     const sl=dataFinal.slice(off,off+WIN);
                     const hasDateFilter=!!(filters.fy||filters.quarter||filters.month);
                     const totalAchievedUnits=hasDateFilter?pA.length:kpiEx.bookedUnits;
@@ -2731,7 +2731,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const dataFinal=chartMonthFrom?dataF:data;
                     const cur=dataFinal.findIndex(d=>d.isCurrent);
                     const def=cur>=3?cur-3:Math.max(0,dataFinal.length-WIN);
-                    const off=(chartMonthFrom&&chartGranularity==='monthly')?Math.min(Math.max(chartOff<0?0:chartOff,0),Math.max(0,dataFinal.length-WIN)):Math.min(Math.max(chartOff<0?def:chartOff,0),Math.max(0,dataFinal.length-WIN));
+                    const off=(chartRangeIdx[0]>0&&chartGranularity==='monthly')?Math.min(Math.max(chartOff<0?0:chartOff,0),Math.max(0,dataFinal.length-WIN)):Math.min(Math.max(chartOff<0?def:chartOff,0),Math.max(0,dataFinal.length-WIN));
                     const sl=dataFinal.slice(off,off+WIN);
                     const hasDateFilter=!!(filters.fy||filters.quarter||filters.month);
                     const totalAchievedTsv=hasDateFilter?+(pA.reduce((s,r)=>s+(r.bsp||0),0)/1e7).toFixed(1):kpiEx.totalBSPCr;
@@ -2830,7 +2830,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const dataFinal=chartMonthFrom?dataF:data;
                     const cur=dataFinal.findIndex(d=>d.isCurrent);
                     const def=cur>=3?cur-3:Math.max(0,dataFinal.length-WIN);
-                    const off=(chartMonthFrom&&chartGranularity==='monthly')?Math.min(Math.max(chartOff<0?0:chartOff,0),Math.max(0,dataFinal.length-WIN)):Math.min(Math.max(chartOff<0?def:chartOff,0),Math.max(0,dataFinal.length-WIN));
+                    const off=(chartRangeIdx[0]>0&&chartGranularity==='monthly')?Math.min(Math.max(chartOff<0?0:chartOff,0),Math.max(0,dataFinal.length-WIN)):Math.min(Math.max(chartOff<0?def:chartOff,0),Math.max(0,dataFinal.length-WIN));
                     const sl=dataFinal.slice(off,off+WIN);
                     const hasDateFilter=!!(filters.fy||filters.quarter||filters.month);
                     const totalAchievedArea=hasDateFilter?+(pA.reduce((s,r)=>s+(r.superArea||0),0)/100000).toFixed(2):+((kpiEx.bookedAreaSqft||0)/100000).toFixed(2);
@@ -3039,7 +3039,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     // Start from first month with actual rate data so achieved line is visible
                     const firstActualIdx=dataFinal.findIndex(d=>d.achieved!=null&&d.achieved>0);
                     const def=firstActualIdx>=0?Math.max(0,firstActualIdx):cur>=3?cur-3:Math.max(0,dataFinal.length-WIN);
-                    const off=(chartMonthFrom&&chartGranularity==='monthly')?Math.min(Math.max(chartOff<0?0:chartOff,0),Math.max(0,dataFinal.length-WIN)):Math.min(Math.max(chartOff<0?def:chartOff,0),Math.max(0,dataFinal.length-WIN));
+                    const off=(chartRangeIdx[0]>0&&chartGranularity==='monthly')?Math.min(Math.max(chartOff<0?0:chartOff,0),Math.max(0,dataFinal.length-WIN)):Math.min(Math.max(chartOff<0?def:chartOff,0),Math.max(0,dataFinal.length-WIN));
                     const sl=dataFinal.slice(off,off+WIN);
                     const hasDateFilter=!!(filters.fy||filters.quarter||filters.month);
                     const pAWithRate=pA.filter(r=>r.superArea>0);
