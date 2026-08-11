@@ -2538,17 +2538,25 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const curQMonths=curQMonthsObj.map(o=>o.label);
                     const todayYMn=todayD.getFullYear()*100+(todayD.getMonth()+1);
                     const todayLabel=ml(todayD.getFullYear(),todayD.getMonth()+1);
-                    // Use numeric ym for correct date comparison (string compare fails: Jun < May alphabetically)
-                    const fyStartYU=(todayD.getMonth()+1)>=4?todayD.getFullYear():todayD.getFullYear()-1;
-                    const fyMonthsU=Array.from({length:12},(_,i)=>{let m=4+i,y=fyStartYU;if(m>12){m-=12;y++;}return{label:ml(y,m),ym:y*100+m};});
-                    const pastQMonths=fyMonthsU.filter(o=>o.ym<todayYMn).map(o=>o.label);   // carry-forward: all FY months so far
-                    const futureQMonths=fyMonthsU.filter(o=>o.ym>=todayYMn).map(o=>o.label); // spread across rest of FY
-                    // Gap = sum of (target - achieved) for past months in this quarter
-                    const missedUnits=pastQMonths.reduce((s,lbl)=>{
+                    // ⚠️ LOCKED LOGIC: "missed" shortfall for the catch-up projection must
+                    // come ONLY from the immediately-preceding fiscal quarter's 3 months
+                    // (e.g. if current quarter is Q2 Jul-Sep, last quarter = Q1 Apr-Jun) -
+                    // NOT from every month since the fiscal year started. Using absolute
+                    // month-index arithmetic (not fyMonthsU filtering) so this is correct
+                    // even when the last quarter crosses a fiscal-year/calendar-year
+                    // boundary (e.g. current quarter Q1 Apr-Jun -> last quarter is Q4
+                    // Jan-Mar of the SAME fiscal year, still same calendar year run).
+                    const curQStartAbsU=todayD.getFullYear()*12+(curQsMo-1);
+                    const lastQMonths=[3,2,1].map(back=>{
+                      const abs=curQStartAbsU-back, y=Math.floor(abs/12), m=(abs%12)+1;
+                      return ml(y,m);
+                    });
+                    // Gap = sum of (target - achieved) for LAST QUARTER's 3 months only
+                    const missedUnits=lastQMonths.reduce((s,lbl)=>{
                       const d=monthlyWithTargets.find(r=>r.label===lbl);
                       return s+Math.max(0,(d?.targetUnitsLine||0)-(d?.bookedUnits||0));
                     },0);
-                    // Redistribute missed units evenly across CURRENT QUARTER ONLY
+                    // Redistribute last quarter's missed units evenly across CURRENT QUARTER ONLY
                     const nRemaining=curQMonths.length;
                     const addPerMonth=nRemaining>0?Math.round(missedUnits/nRemaining):0;
                     const projMap={};
@@ -2659,11 +2667,15 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const lblYmT=l=>{const p=l.match(/([A-Za-z]{3})'(\d{2})/);return p?(2000+parseInt(p[2]))*100+(moNT[p[1]]||0):0;};
                     const todayYMT=todayT.getFullYear()*100+(todayT.getMonth()+1);
                     const cqmObj=[0,1,2].map(i=>{let m=tQS+i,y=todayT.getFullYear();if(m>12){m-=12;y++;}return{label:ml2(y,m),ym:y*100+m};});
-                    const fyStartYT=(todayT.getMonth()+1)>=4?todayT.getFullYear():todayT.getFullYear()-1;
-                    const fyMonthsT=Array.from({length:12},(_,i)=>{let m=4+i,y=fyStartYT;if(m>12){m-=12;y++;}return{label:ml2(y,m),ym:y*100+m};});
-                    const pastCqmT=fyMonthsT.filter(o=>o.ym<todayYMT).map(o=>o.label);
-                    const futureCqmT=fyMonthsT.filter(o=>o.ym>=todayYMT).map(o=>o.label);
-                    const missedTsv=pastCqmT.reduce((s,lbl)=>{const d=monthlyWithTargets.find(r=>r.label===lbl);return s+Math.max(0,(d?.targetTsvLine||0)-(d?.bspCr||0));},0);
+                    // ⚠️ LOCKED LOGIC: same as Chart 1 - missed shortfall comes ONLY from
+                    // the immediately-preceding fiscal quarter's 3 months, via absolute
+                    // month-index arithmetic (correct across FY/calendar-year boundaries).
+                    const curQStartAbsT=todayT.getFullYear()*12+(tQS-1);
+                    const lastQMonthsT=[3,2,1].map(back=>{
+                      const abs=curQStartAbsT-back, y=Math.floor(abs/12), m=(abs%12)+1;
+                      return ml2(y,m);
+                    });
+                    const missedTsv=lastQMonthsT.reduce((s,lbl)=>{const d=monthlyWithTargets.find(r=>r.label===lbl);return s+Math.max(0,(d?.targetTsvLine||0)-(d?.bspCr||0));},0);
                     const cqmT=cqmObj.map(o=>o.label);
                     const addTsvPer=cqmT.length>0?+(missedTsv/cqmT.length).toFixed(1):0;
                     const tsvProjMap={};
@@ -2744,11 +2756,15 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const todayYMA3=todayA.getFullYear()*100+(todayA.getMonth()+1);
                     // Projection: same-quarter catch-up
                     const cqObjA2=[0,1,2].map(i=>{let m=aQS2+i,y=todayA.getFullYear();if(m>12){m-=12;y++;}return{label:ml4(y,m),ym:y*100+m};});
-                    const fyStartYA=(todayA.getMonth()+1)>=4?todayA.getFullYear():todayA.getFullYear()-1;
-                    const fyMonthsA=Array.from({length:12},(_,i)=>{let m=4+i,y=fyStartYA;if(m>12){m-=12;y++;}return{label:ml4(y,m),ym:y*100+m};});
-                    const pastCqA2=fyMonthsA.filter(o=>o.ym<todayYMA3).map(o=>o.label);
-                    const futureCqA2=fyMonthsA.filter(o=>o.ym>=todayYMA3).map(o=>o.label);
-                    const missedArea2=pastCqA2.reduce((s,lbl)=>{const d=monthlyWithTargets.find(r=>r.label===lbl);return s+Math.max(0,(d?.targetAreaSqft||0)-(d?.bookedAreaSqft||0));},0);
+                    // ⚠️ LOCKED LOGIC: same as Chart 1/2 - missed shortfall comes ONLY from
+                    // the immediately-preceding fiscal quarter's 3 months, via absolute
+                    // month-index arithmetic (correct across FY/calendar-year boundaries).
+                    const curQStartAbsA2=todayA.getFullYear()*12+(aQS2-1);
+                    const lastQMonthsA2=[3,2,1].map(back=>{
+                      const abs=curQStartAbsA2-back, y=Math.floor(abs/12), m=(abs%12)+1;
+                      return ml4(y,m);
+                    });
+                    const missedArea2=lastQMonthsA2.reduce((s,lbl)=>{const d=monthlyWithTargets.find(r=>r.label===lbl);return s+Math.max(0,(d?.targetAreaSqft||0)-(d?.bookedAreaSqft||0));},0);
                     const cqObjA2Months=cqObjA2.map(o=>o.label);
                     const addAreaPer2=cqObjA2Months.length>0?Math.round(missedArea2/cqObjA2Months.length):0;
                     const areaProjMap2={};
