@@ -1,0 +1,48 @@
+{
+  "projects": [
+    {
+      "code": "2010",
+      "name": "SMARTWORLD THE EDITION",
+      "shortName": "Edition",
+      "totalUnits": 956,
+      "totalArea": 3146918,
+      "booked": 634,
+      "available": 312,
+      "managementUnits": 10,
+      "areaUnit": "sq ft"
+    },
+    {
+      "code": "1070",
+      "name": "Smartworld Sky Arc",
+      "shortName": "Sky Arc",
+      "totalUnits": 948,
+      "totalArea": 2565350,
+      "booked": 890,
+      "available": 49,
+      "managementUnits": 9,
+      "areaUnit": "sq ft"
+    },
+    {
+      "code": "1072",
+      "name": "Trump Residences Gurgaon",
+      "shortName": "Trump",
+      "totalUnits": 298,
+      "totalArea": 1197834,
+      "booked": 227,
+      "available": 71,
+      "managementUnits": 0,
+      "areaUnit": "sq ft"
+    }
+  ],
+  "summary": {
+    "totalUnits": 2202,
+    "totalArea": 6910102,
+    "totalBooked": 1751,
+    "totalAvailable": 432,
+    "totalManagementUnits": 19,
+    "averageUnitSize": 3138.1,
+    "bookingPercentage": 79.4,
+    "availablePercentage": 19.6,
+    "lastUpdated": "2026-08-11"
+  }
+}
