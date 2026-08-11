@@ -6,6 +6,7 @@ import Cost2App from './Cost2App';
 import CRMApp from './CRMApp';
 import PRPOApp from './PRPOApp';
 import CostBifurcationApp from './CostBifurcationApp';
+import PRJourneyApp from './PRJourneyApp';
 import './index.css';
 
 const USERS = {
@@ -17,6 +18,7 @@ const USERS = {
   'PRPO':    { password: 'Smart@2026', profile: 'prpo',     sessionKey: 'prpo_auth' },
   'Admin':   { password: 'Smart@2026', profile: 'admin',    sessionKey: 'admin_auth' },
   'Cost':    { password: 'cost',       profile: 'costbif',  sessionKey: 'costbif_auth' },
+  'mm-id':   { password: 'Smart@12345', profile: 'prjourney', sessionKey: 'prjourney_auth' },
 };
 
 const DASHBOARDS = [
@@ -26,6 +28,7 @@ const DASHBOARDS = [
   {key:'cost2',    name:'Cost 2',            desc:'Cost analytics II',            icon:'🧮', g:'linear-gradient(135deg,#7e57c2,#512da8)', sessionKey:'cost2_auth'},
   {key:'crm',      name:'CRM Intelligence',  desc:'Case management',              icon:'🎫', g:'linear-gradient(135deg,#1e88e5,#0d47a1)', sessionKey:'crm_auth'},
   {key:'costbif',  name:'Cost Bifurcation',  desc:'Cost breakdown by Budget Head & Department', icon:'🧾', g:'linear-gradient(135deg,#00897b,#00695c)', sessionKey:'costbif_auth'},
+  {key:'prjourney', name:'PR/PO Journey',    desc:'Purchase Request to PO release flow tracking', icon:'🛣️', g:'linear-gradient(135deg,#d32f2f,#b71c1c)', sessionKey:'prjourney_auth'},
 ];
 
 function AdminMenu({ onOpen, onLogout }) {
@@ -72,6 +75,7 @@ function Portal() {
     if (sessionStorage.getItem('prpo_auth')    === '1') return 'prpo';
     if (sessionStorage.getItem('admin_auth')   === '1') return 'admin';
     if (sessionStorage.getItem('costbif_auth') === '1') return 'costbif';
+    if (sessionStorage.getItem('prjourney_auth') === '1') return 'prjourney';
     return null;
   });
 
@@ -99,6 +103,7 @@ function Portal() {
   if (profile === 'crm')   return <CRMApp />;
   if (profile === 'prpo')  return <PRPOApp />;
   if (profile === 'costbif') return <CostBifurcationApp />;
+  if (profile === 'prjourney') return <PRJourneyApp />;
   if (profile === 'admin') return <AdminMenu onOpen={setProfile} onLogout={()=>{sessionStorage.removeItem('admin_auth');window.location.reload();}} />;
 
   return (
