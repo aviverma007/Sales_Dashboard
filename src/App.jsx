@@ -2556,13 +2556,21 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                       const d=monthlyWithTargets.find(r=>r.label===lbl);
                       return s+Math.max(0,(d?.targetUnitsLine||0)-(d?.bookedUnits||0));
                     },0);
-                    // Redistribute last quarter's missed units evenly across CURRENT QUARTER ONLY
+                    // Redistribute last quarter's missed units across CURRENT QUARTER ONLY,
+                    // as WHOLE UNITS (a housing unit can't be split into fractions). Uses
+                    // the "largest remainder" method: every month gets the same integer
+                    // floor share, then the leftover remainder (missedUnits % nRemaining)
+                    // is handed out one extra unit per month, earliest month first - e.g.
+                    // 5 missed over 3 months = [2,2,1], not [2,2,2] (which would overshoot
+                    // by 1) or a flat Math.round(5/3)=2 added to all three (same overshoot).
                     const nRemaining=curQMonths.length;
-                    const addPerMonth=nRemaining>0?Math.round(missedUnits/nRemaining):0;
+                    const addBase=nRemaining>0?Math.floor(missedUnits/nRemaining):0;
+                    const addRemainder=nRemaining>0?missedUnits%nRemaining:0;
                     const projMap={};
-                    curQMonths.forEach(lbl=>{
+                    curQMonths.forEach((lbl,idx)=>{
                       const base=monthlyWithTargets.find(d=>d.label===lbl)?.targetUnitsLine||0;
-                      projMap[lbl]=base+addPerMonth; // revised target = original + catch-up (CURRENT QUARTER ONLY)
+                      const addThisMonth=addBase+(idx<addRemainder?1:0);
+                      projMap[lbl]=base+addThisMonth; // revised target = original + whole-unit catch-up
                     });
                     // Green line ONLY shows on current quarter (Jul, Aug, Sep), not future quarters
 
