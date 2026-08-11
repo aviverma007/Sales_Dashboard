@@ -2774,9 +2774,19 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     });
                     const missedArea2=lastQMonthsA2.reduce((s,lbl)=>{const d=monthlyWithTargets.find(r=>r.label===lbl);return s+Math.max(0,(d?.targetAreaSqft||0)-(d?.bookedAreaSqft||0));},0);
                     const cqObjA2Months=cqObjA2.map(o=>o.label);
-                    const addAreaPer2=cqObjA2Months.length>0?Math.round(missedArea2/cqObjA2Months.length):0;
+                    // Same "largest remainder" whole-number distribution as the Units chart -
+                    // every month gets an equal floor share of the missed sqft, then the
+                    // leftover remainder is handed out 1 sqft at a time, earliest month
+                    // first, so the 3 months' catch-up always sums EXACTLY to missedArea2
+                    // (a flat Math.round(missed/3) applied to every month can overshoot).
+                    const addAreaBase=cqObjA2Months.length>0?Math.floor(missedArea2/cqObjA2Months.length):0;
+                    const addAreaRemainder=cqObjA2Months.length>0?Math.round(missedArea2)%cqObjA2Months.length:0;
                     const areaProjMap2={};
-                    cqObjA2Months.forEach(lbl=>{const base=monthlyWithTargets.find(d=>d.label===lbl)?.targetAreaSqft||0;areaProjMap2[lbl]=Math.round(base+addAreaPer2);});
+                    cqObjA2Months.forEach((lbl,idx)=>{
+                      const base=monthlyWithTargets.find(d=>d.label===lbl)?.targetAreaSqft||0;
+                      const addThisMonth=addAreaBase+(idx<addAreaRemainder?1:0);
+                      areaProjMap2[lbl]=Math.round(base+addThisMonth);
+                    });
                     const sortedAP2=Object.keys(areaProjMap2).sort((a,b)=>lblYmA2(a)-lblYmA2(b));
                     const lastALbl2=sortedAP2[sortedAP2.length-1];
                     const nqBMoA2=aQS2+3>12?aQS2-9:aQS2+3;const nqBYA2=aQS2+3>12?todayA.getFullYear()+1:todayA.getFullYear();
