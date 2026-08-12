@@ -2583,40 +2583,48 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const todayYMn=todayD.getFullYear()*100+(todayD.getMonth()+1);
                     const todayLabel=ml(todayD.getFullYear(),todayD.getMonth()+1);
                     // ⚠️ LOCKED LOGIC: "missed" shortfall for the catch-up projection must
-                    // come ONLY from the immediately-preceding fiscal quarter's 3 months
-                    // (e.g. if current quarter is Q2 Jul-Sep, last quarter = Q1 Apr-Jun) -
-                    // NOT from every month since the fiscal year started. Using absolute
-                    // month-index arithmetic (not fyMonthsU filtering) so this is correct
-                    // even when the last quarter crosses a fiscal-year/calendar-year
-                    // boundary (e.g. current quarter Q1 Apr-Jun -> last quarter is Q4
-                    // Jan-Mar of the SAME fiscal year, still same calendar year run).
+                    // come from the immediately-preceding fiscal quarter's 3 months PLUS
+                    // any already-passed months of the CURRENT quarter, combined as ONE
+                    // NET total - NOT a per-month sum of max(0,target-achieved) (which
+                    // discards any month's overachievement instead of netting it against
+                    // another month's shortfall in the same span). E.g. last quarter
+                    // target=9 total, achieved=8 total -> net missed=1, even if one month
+                    // overachieved and another fell short by more than 1 individually.
+                    // Using absolute month-index arithmetic so this is correct even when
+                    // the last quarter crosses a fiscal-year/calendar-year boundary.
                     const curQStartAbsU=todayD.getFullYear()*12+(curQsMo-1);
                     const lastQMonths=[3,2,1].map(back=>{
                       const abs=curQStartAbsU-back, y=Math.floor(abs/12), m=(abs%12)+1;
                       return ml(y,m);
                     });
-                    // Gap = sum of (target - achieved) for LAST QUARTER's 3 months only
-                    const missedUnits=lastQMonths.reduce((s,lbl)=>{
-                      const d=monthlyWithTargets.find(r=>r.label===lbl);
-                      return s+Math.max(0,(d?.targetUnitsLine||0)-(d?.bookedUnits||0));
-                    },0);
-                    // Redistribute last quarter's missed units across CURRENT QUARTER ONLY,
-                    // as WHOLE UNITS (a housing unit can't be split into fractions). Uses
-                    // the "largest remainder" method: every month gets the same integer
-                    // floor share, then the leftover remainder (missedUnits % nRemaining)
-                    // is handed out one extra unit per month, earliest month first - e.g.
-                    // 5 missed over 3 months = [2,2,1], not [2,2,2] (which would overshoot
-                    // by 1) or a flat Math.round(5/3)=2 added to all three (same overshoot).
-                    const nRemaining=curQMonths.length;
+                    // Split current quarter into already-PASSED months (before today - these
+                    // keep their own final numbers, no more catch-up/badge) and REMAINING
+                    // months (today onward - only these absorb the rolled-forward catch-up).
+                    const passedCurQMonths=curQMonthsObj.filter(o=>o.ym<todayYMn).map(o=>o.label);
+                    const remainingCurQMonths=curQMonthsObj.filter(o=>o.ym>=todayYMn).map(o=>o.label);
+                    const spanMonths=[...lastQMonths,...passedCurQMonths];
+                    const spanTarget=spanMonths.reduce((s,lbl)=>{const d=monthlyWithTargets.find(r=>r.label===lbl);return s+(d?.targetUnitsLine||0);},0);
+                    const spanAchieved=spanMonths.reduce((s,lbl)=>{const d=monthlyWithTargets.find(r=>r.label===lbl);return s+(d?.bookedUnits||0);},0);
+                    const missedUnits=Math.max(0,spanTarget-spanAchieved);
+                    // Redistribute the pending catch-up across ONLY the REMAINING months of
+                    // the current quarter (today's month + any future months still in this
+                    // quarter) as WHOLE UNITS (a housing unit can't be split into fractions).
+                    // Uses the "largest remainder" method: every remaining month gets the
+                    // same integer floor share, then the leftover remainder is handed out
+                    // one extra unit per month, earliest first - e.g. 5 missed over 3
+                    // remaining months = [2,2,1], not [2,2,2] (which would overshoot by 1).
+                    const nRemaining=remainingCurQMonths.length;
                     const addBase=nRemaining>0?Math.floor(missedUnits/nRemaining):0;
                     const addRemainder=nRemaining>0?missedUnits%nRemaining:0;
                     const projMap={};
-                    curQMonths.forEach((lbl,idx)=>{
+                    remainingCurQMonths.forEach((lbl,idx)=>{
                       const base=monthlyWithTargets.find(d=>d.label===lbl)?.targetUnitsLine||0;
                       const addThisMonth=addBase+(idx<addRemainder?1:0);
                       projMap[lbl]=base+addThisMonth; // revised target = original + whole-unit catch-up
                     });
-                    // Green line ONLY shows on current quarter (Jul, Aug, Sep), not future quarters
+                    // Green line/badge ONLY shows on REMAINING current-quarter months - an
+                    // already-passed month (even within this same quarter) keeps its own
+                    // final achieved/target with no catch-up badge, per instruction.
 
                     const rawData=monthlyWithTargets.map(d=>({
                       label:d.label,isFuture:d.isFuture,isCurrent:d.label===TODAY_LABEL,
@@ -2719,16 +2727,21 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const lblYmT=l=>{const p=l.match(/([A-Za-z]{3})'(\d{2})/);return p?(2000+parseInt(p[2]))*100+(moNT[p[1]]||0):0;};
                     const todayYMT=todayT.getFullYear()*100+(todayT.getMonth()+1);
                     const cqmObj=[0,1,2].map(i=>{let m=tQS+i,y=todayT.getFullYear();if(m>12){m-=12;y++;}return{label:ml2(y,m),ym:y*100+m};});
-                    // ⚠️ LOCKED LOGIC: same as Chart 1 - missed shortfall comes ONLY from
-                    // the immediately-preceding fiscal quarter's 3 months, via absolute
-                    // month-index arithmetic (correct across FY/calendar-year boundaries).
+                    // ⚠️ LOCKED LOGIC: same as Chart 1 - NET shortfall (not per-month
+                    // floored sum) across last quarter + already-passed months of the
+                    // current quarter, distributed across ONLY the remaining months.
                     const curQStartAbsT=todayT.getFullYear()*12+(tQS-1);
                     const lastQMonthsT=[3,2,1].map(back=>{
                       const abs=curQStartAbsT-back, y=Math.floor(abs/12), m=(abs%12)+1;
                       return ml2(y,m);
                     });
-                    const missedTsv=lastQMonthsT.reduce((s,lbl)=>{const d=monthlyWithTargets.find(r=>r.label===lbl);return s+Math.max(0,(d?.targetTsvLine||0)-(d?.bspCr||0));},0);
-                    const cqmT=cqmObj.map(o=>o.label);
+                    const passedCurQMonthsT=cqmObj.filter(o=>o.ym<todayYMT).map(o=>o.label);
+                    const remainingCurQMonthsT=cqmObj.filter(o=>o.ym>=todayYMT).map(o=>o.label);
+                    const spanMonthsT=[...lastQMonthsT,...passedCurQMonthsT];
+                    const spanTargetT=spanMonthsT.reduce((s,lbl)=>{const d=monthlyWithTargets.find(r=>r.label===lbl);return s+(d?.targetTsvLine||0);},0);
+                    const spanAchievedT=spanMonthsT.reduce((s,lbl)=>{const d=monthlyWithTargets.find(r=>r.label===lbl);return s+(d?.bspCr||0);},0);
+                    const missedTsv=Math.max(0,+(spanTargetT-spanAchievedT).toFixed(1));
+                    const cqmT=remainingCurQMonthsT;
                     const addTsvPer=cqmT.length>0?+(missedTsv/cqmT.length).toFixed(1):0;
                     const tsvProjMap={};
                     cqmT.forEach(lbl=>{const base=monthlyWithTargets.find(d=>d.label===lbl)?.targetTsvLine||0;tsvProjMap[lbl]=+(base+addTsvPer).toFixed(1);});
@@ -2808,21 +2821,28 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const todayYMA3=todayA.getFullYear()*100+(todayA.getMonth()+1);
                     // Projection: same-quarter catch-up
                     const cqObjA2=[0,1,2].map(i=>{let m=aQS2+i,y=todayA.getFullYear();if(m>12){m-=12;y++;}return{label:ml4(y,m),ym:y*100+m};});
-                    // ⚠️ LOCKED LOGIC: same as Chart 1/2 - missed shortfall comes ONLY from
-                    // the immediately-preceding fiscal quarter's 3 months, via absolute
-                    // month-index arithmetic (correct across FY/calendar-year boundaries).
+                    // ⚠️ LOCKED LOGIC: same as Chart 1/2 - NET shortfall (not per-month
+                    // floored sum) across last quarter + already-passed months of the
+                    // current quarter, distributed as whole sqft across ONLY the
+                    // remaining months.
                     const curQStartAbsA2=todayA.getFullYear()*12+(aQS2-1);
                     const lastQMonthsA2=[3,2,1].map(back=>{
                       const abs=curQStartAbsA2-back, y=Math.floor(abs/12), m=(abs%12)+1;
                       return ml4(y,m);
                     });
-                    const missedArea2=lastQMonthsA2.reduce((s,lbl)=>{const d=monthlyWithTargets.find(r=>r.label===lbl);return s+Math.max(0,(d?.targetAreaSqft||0)-(d?.bookedAreaSqft||0));},0);
-                    const cqObjA2Months=cqObjA2.map(o=>o.label);
+                    const passedCurQMonthsA2=cqObjA2.filter(o=>o.ym<todayYMA3).map(o=>o.label);
+                    const remainingCurQMonthsA2=cqObjA2.filter(o=>o.ym>=todayYMA3).map(o=>o.label);
+                    const spanMonthsA2=[...lastQMonthsA2,...passedCurQMonthsA2];
+                    const spanTargetA2=spanMonthsA2.reduce((s,lbl)=>{const d=monthlyWithTargets.find(r=>r.label===lbl);return s+(d?.targetAreaSqft||0);},0);
+                    const spanAchievedA2=spanMonthsA2.reduce((s,lbl)=>{const d=monthlyWithTargets.find(r=>r.label===lbl);return s+(d?.bookedAreaSqft||0);},0);
+                    const missedArea2=Math.max(0,spanTargetA2-spanAchievedA2);
+                    const cqObjA2Months=remainingCurQMonthsA2;
                     // Same "largest remainder" whole-number distribution as the Units chart -
                     // every month gets an equal floor share of the missed sqft, then the
                     // leftover remainder is handed out 1 sqft at a time, earliest month
-                    // first, so the 3 months' catch-up always sums EXACTLY to missedArea2
-                    // (a flat Math.round(missed/3) applied to every month can overshoot).
+                    // first, so the remaining months' catch-up always sums EXACTLY to
+                    // missedArea2 (a flat Math.round(missed/n) applied to every month can
+                    // overshoot).
                     const addAreaBase=cqObjA2Months.length>0?Math.floor(missedArea2/cqObjA2Months.length):0;
                     const addAreaRemainder=cqObjA2Months.length>0?Math.round(missedArea2)%cqObjA2Months.length:0;
                     const areaProjMap2={};
