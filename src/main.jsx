@@ -7,18 +7,20 @@ import CRMApp from './CRMApp';
 import PRPOApp from './PRPOApp';
 import CostBifurcationApp from './CostBifurcationApp';
 import PRJourneyApp from './PRJourneyApp';
+import SmartworldSuiteApp from './SmartworldSuiteApp';
 import './index.css';
 
 const USERS = {
-  'Sales':   { password: 'Smart@2026', profile: 'sales',    sessionKey: 'sd_auth' },
-  'Swsales': { password: 'Smart@2026', profile: 'swsales',  sessionKey: 'swsales_auth' },
-  'CostOld': { password: 'Smart@2026', profile: 'cost',     sessionKey: 'cost_auth' },
-  'Cost2':   { password: 'Smart@2026', profile: 'cost2',    sessionKey: 'cost2_auth' },
-  'CRM':     { password: 'Smart@2026', profile: 'crm',      sessionKey: 'crm_auth' },
-  'PRPO':    { password: 'Smart@2026', profile: 'prpo',     sessionKey: 'prpo_auth' },
-  'Admin':   { password: 'Smart@2026', profile: 'admin',    sessionKey: 'admin_auth' },
-  'Cost':    { password: 'cost',       profile: 'costbif',  sessionKey: 'costbif_auth' },
-  'mm-id':   { password: 'Smart@12345', profile: 'prjourney', sessionKey: 'prjourney_auth' },
+  'Sales':      { password: 'Smart@2026', profile: 'sales',      sessionKey: 'sd_auth' },
+  'Swsales':    { password: 'Smart@2026', profile: 'swsales',    sessionKey: 'swsales_auth' },
+  'CostOld':    { password: 'Smart@2026', profile: 'cost',       sessionKey: 'cost_auth' },
+  'Cost2':      { password: 'Smart@2026', profile: 'cost2',      sessionKey: 'cost2_auth' },
+  'CRM':        { password: 'Smart@2026', profile: 'crm',        sessionKey: 'crm_auth' },
+  'PRPO':       { password: 'Smart@2026', profile: 'prpo',       sessionKey: 'prpo_auth' },
+  'Admin':      { password: 'Smart@2026', profile: 'admin',      sessionKey: 'admin_auth' },
+  'Cost':       { password: 'cost',       profile: 'costbif',    sessionKey: 'costbif_auth' },
+  'mm-id':      { password: 'Smart@12345', profile: 'prjourney', sessionKey: 'prjourney_auth' },
+  'SalesIntel': { password: 'sales',      profile: 'salesintel', sessionKey: 'salesintel_auth' },
 };
 
 const DASHBOARDS = [
@@ -29,6 +31,7 @@ const DASHBOARDS = [
   {key:'crm',      name:'CRM Intelligence',  desc:'Case management',              icon:'🎫', g:'linear-gradient(135deg,#1e88e5,#0d47a1)', sessionKey:'crm_auth'},
   {key:'costbif',  name:'Cost Bifurcation',  desc:'Cost breakdown by Budget Head & Department', icon:'🧾', g:'linear-gradient(135deg,#00897b,#00695c)', sessionKey:'costbif_auth'},
   {key:'prjourney', name:'PR/PO Journey',    desc:'Purchase Request to PO release flow tracking', icon:'🛣️', g:'linear-gradient(135deg,#d32f2f,#b71c1c)', sessionKey:'prjourney_auth'},
+  {key:'salesintel', name:'Sales Intelligence', desc:'Footfall · RM · Inventory · Bookings', icon:'🧭', g:'linear-gradient(135deg,#B8893C,#7A5C24)', sessionKey:'salesintel_auth'},
 ];
 
 function AdminMenu({ onOpen, onLogout }) {
@@ -76,6 +79,7 @@ function Portal() {
     if (sessionStorage.getItem('admin_auth')   === '1') return 'admin';
     if (sessionStorage.getItem('costbif_auth') === '1') return 'costbif';
     if (sessionStorage.getItem('prjourney_auth') === '1') return 'prjourney';
+    if (sessionStorage.getItem('salesintel_auth') === '1') return 'salesintel';
     return null;
   });
 
@@ -104,6 +108,7 @@ function Portal() {
   if (profile === 'prpo')  return <PRPOApp />;
   if (profile === 'costbif') return <CostBifurcationApp />;
   if (profile === 'prjourney') return <PRJourneyApp />;
+  if (profile === 'salesintel') return <SmartworldSuiteApp />;
   if (profile === 'admin') return <AdminMenu onOpen={setProfile} onLogout={()=>{sessionStorage.removeItem('admin_auth');window.location.reload();}} />;
 
   return (
