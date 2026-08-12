@@ -3,7 +3,7 @@
 <style>
  *{margin:0;padding:0;box-sizing:border-box}html,body{height:100%}
  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:#F4F2EC}
- #rmtop{background:rgba(255,255,255,0.95);-webkit-backdrop-filter:blur(24px);backdrop-filter:blur(24px);border-bottom:1px solid rgba(255,255,255,0.9);box-shadow:0 2px 20px rgba(0,60,100,0.12);padding:0 24px;display:flex;align-items:center;gap:26px;flex-wrap:wrap}
+ #rmtop{background:rgba(255,255,255,0.95);-webkit-backdrop-filter:blur(24px);backdrop-filter:blur(24px);border-bottom:1px solid rgba(255,255,255,0.9);box-shadow:0 2px 20px rgba(0,60,100,0.12);padding:0 24px;display:flex;align-items:center;gap:26px;flex-wrap:wrap;position:relative;z-index:200}
  #rmtop .brand{display:flex;align-items:center;gap:12px;padding:11px 0}
  #rmtop .brand img{height:28px;display:block}
  #rmtop .brand .sub{font-family:'Inter',sans-serif;font-size:14px;color:#0d2137;border-left:1px solid rgba(0,151,167,0.25);padding-left:12px}
@@ -19,16 +19,19 @@ header{background:rgba(255,255,255,0.95)!important}.topbar{justify-content:flex-
 *{font-family:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif!important}
 html,body{background:#F4F2EC!important;}
 header{background:rgba(255,255,255,0.95)!important;color:#0d2137!important;border-bottom:1px solid rgba(255,255,255,0.9)!important;
-  box-shadow:0 2px 20px rgba(0,60,100,0.12)!important;-webkit-backdrop-filter:blur(24px);backdrop-filter:blur(24px);}
+  box-shadow:0 2px 20px rgba(0,60,100,0.12)!important;-webkit-backdrop-filter:blur(24px);backdrop-filter:blur(24px);
+  position:relative!important;z-index:200!important;}
 header *{color:#0d2137!important;}
 header select,header input,header .msbtn,header .filt label{color:#0d2137!important;}
 header label{color:#546e7a!important;}
-.card,.kpi,.dwb,.mspanel,.k,.rec,.leaderboard,.momentum,.scorecard{
+.card,.kpi{
   background:rgba(255,255,255,0.90)!important;
   -webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);
   border:1px solid rgba(0,151,167,0.12)!important;
   box-shadow:0 2px 16px rgba(0,60,100,0.08)!important;
 }
+.mspanel{background:#fff!important;border:1px solid rgba(0,151,167,0.2)!important;box-shadow:0 12px 34px rgba(20,33,61,.2)!important;}
+.dwb{background:transparent!important;}
 ::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-thumb{background:rgba(0,151,167,0.4);border-radius:2px}
 nav,.tabs{background:rgba(255,255,255,0.85)!important;-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);}
 .tab.active,button.subtab.active{color:#006978!important;border-bottom-color:#0097a7!important;}
@@ -119,16 +122,19 @@ nav,.tabs{background:rgba(255,255,255,0.85)!important;-webkit-backdrop-filter:bl
 *{font-family:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif!important}
 html,body{background:#F4F2EC!important;}
 header{background:rgba(255,255,255,0.95)!important;color:#0d2137!important;border-bottom:1px solid rgba(255,255,255,0.9)!important;
-  box-shadow:0 2px 20px rgba(0,60,100,0.12)!important;-webkit-backdrop-filter:blur(24px);backdrop-filter:blur(24px);}
+  box-shadow:0 2px 20px rgba(0,60,100,0.12)!important;-webkit-backdrop-filter:blur(24px);backdrop-filter:blur(24px);
+  position:relative!important;z-index:200!important;}
 header *{color:#0d2137!important;}
 header select,header input,header .msbtn,header .filt label{color:#0d2137!important;}
 header label{color:#546e7a!important;}
-.card,.kpi,.dwb,.mspanel,.k,.rec,.leaderboard,.momentum,.scorecard{
+.card,.kpi{
   background:rgba(255,255,255,0.90)!important;
   -webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);
   border:1px solid rgba(0,151,167,0.12)!important;
   box-shadow:0 2px 16px rgba(0,60,100,0.08)!important;
 }
+.mspanel{background:#fff!important;border:1px solid rgba(0,151,167,0.2)!important;box-shadow:0 12px 34px rgba(20,33,61,.2)!important;}
+.dwb{background:transparent!important;}
 ::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-thumb{background:rgba(0,151,167,0.4);border-radius:2px}
 nav,.tabs{background:rgba(255,255,255,0.85)!important;-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);}
 .tab.active,button.subtab.active{color:#006978!important;border-bottom-color:#0097a7!important;}
@@ -369,16 +375,19 @@ renderMain();
 *{font-family:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif!important}
 html,body{background:#F4F2EC!important;}
 header{background:rgba(255,255,255,0.95)!important;color:#0d2137!important;border-bottom:1px solid rgba(255,255,255,0.9)!important;
-  box-shadow:0 2px 20px rgba(0,60,100,0.12)!important;-webkit-backdrop-filter:blur(24px);backdrop-filter:blur(24px);}
+  box-shadow:0 2px 20px rgba(0,60,100,0.12)!important;-webkit-backdrop-filter:blur(24px);backdrop-filter:blur(24px);
+  position:relative!important;z-index:200!important;}
 header *{color:#0d2137!important;}
 header select,header input,header .msbtn,header .filt label{color:#0d2137!important;}
 header label{color:#546e7a!important;}
-.card,.kpi,.dwb,.mspanel,.k,.rec,.leaderboard,.momentum,.scorecard{
+.card,.kpi{
   background:rgba(255,255,255,0.90)!important;
   -webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);
   border:1px solid rgba(0,151,167,0.12)!important;
   box-shadow:0 2px 16px rgba(0,60,100,0.08)!important;
 }
+.mspanel{background:#fff!important;border:1px solid rgba(0,151,167,0.2)!important;box-shadow:0 12px 34px rgba(20,33,61,.2)!important;}
+.dwb{background:transparent!important;}
 ::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-thumb{background:rgba(0,151,167,0.4);border-radius:2px}
 nav,.tabs{background:rgba(255,255,255,0.85)!important;-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);}
 .tab.active,button.subtab.active{color:#006978!important;border-bottom-color:#0097a7!important;}
