@@ -1571,8 +1571,10 @@ function AppInner({overviewOnly=false}) {
   const chartRangeCompact=chartRangeMonths>0&&chartRangeMonths<=12;
   // Sales & Pricing Trend chart offsets (must be at component level — hooks rules)
   const TODAY_LABEL=(()=>{const d=new Date();return d.toLocaleString('en-US',{month:'short'}).slice(0,3)+"'"+String(d.getFullYear()).slice(2);})();
-  // Reset chart offsets to -1 (auto-center) whenever filters change
-  useEffect(()=>{setAllOff(0);setChartOff(0);setCpScroll(0);setCpScroll2(0);setChartRangeIdx([0,999]);},[filters.project,filters.fy,filters.quarter,filters.month,filters.broker]);
+  // Reset chart offsets to -1 (auto-center on last quarter + current quarter + upcoming months)
+  // whenever filters change. -1 is a sentinel meaning "let each chart compute its own smart
+  // default (def)" - NEVER 0, which would force the view back to the very first month of data.
+  useEffect(()=>{setAllOff(-1);setChartOff(-1);setCpScroll(0);setCpScroll2(0);setChartRangeIdx([0,999]);},[filters.project,filters.fy,filters.quarter,filters.month,filters.broker]);
   // Initialize offset so current month is bar #2 (index 1 in view), show 1 past + current + 11 future
   const _initOff=(data,WIN=13)=>{const idx=data.findIndex(d=>d.label===TODAY_LABEL);return idx>=1?idx-1:Math.max(0,idx);};
   const [uOff,setUOff]=useState(-1);
@@ -1761,7 +1763,10 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
   const kpiEx=useMemo(()=>{
     // Use project-specific kpiExtra when a single project is selected
     const selProj = filters.project || '';
-    const dk = selProj.includes('SKY ARC') ? (raw?.skyarcKpiExtra || {})
+    const selProjsKE = selProj?selProj.split('||').filter(Boolean):[];
+    const singleProjKE = selProjsKE.length===1;
+    const dk = !singleProjKE ? {}
+             : selProj.includes('SKY ARC') ? (raw?.skyarcKpiExtra || {})
              : selProj.includes('TRUMP')   ? (raw?.trumpKpiExtra  || {})
              : (raw?.kpiExtra || {});
     // Areas: ALWAYS compute live from PDRN ACTIVE rows first (single source of
@@ -1810,11 +1815,32 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
     const projKeyForTargets = selProj.includes('SKY ARC') ? 'SMARTWORLD SKY ARC'
                             : selProj.includes('TRUMP')   ? 'TRUMP RESIDENCES GURGAON'
                             : 'SMARTWORLD THE EDITION';
-    const currentMonthTargetRate = (raw?.monthlyTargets||[]).find(t=>t.projectFilter===projKeyForTargets&&t.label===TODAY_LABEL)?.targetRate || avgRatePerSqft;
-    const unsoldAreaForValue = Math.max(0, totalSuperArea - bookedAreaSqft);
-    const totalProjCr    = +(totalBSPCr + (unsoldAreaForValue*currentMonthTargetRate)/1e7).toFixed(2);
-    const unsoldValueCr  = +((unsoldAreaForValue*currentMonthTargetRate)/1e7).toFixed(2);
-    const soldPctValue   = totalProjCr>0 ? Math.round(totalBSPCr/totalProjCr*100) : 0;
+    let totalProjCr, unsoldValueCr, soldPctValue;
+    if(singleProjKE){
+      const currentMonthTargetRate = (raw?.monthlyTargets||[]).find(t=>t.projectFilter===projKeyForTargets&&t.label===TODAY_LABEL)?.targetRate || avgRatePerSqft;
+      const unsoldAreaForValue = Math.max(0, totalSuperArea - bookedAreaSqft);
+      totalProjCr    = +(totalBSPCr + (unsoldAreaForValue*currentMonthTargetRate)/1e7).toFixed(2);
+      unsoldValueCr  = +((unsoldAreaForValue*currentMonthTargetRate)/1e7).toFixed(2);
+      soldPctValue   = totalProjCr>0 ? Math.round(totalBSPCr/totalProjCr*100) : 0;
+    } else {
+      // ⚠️ Multiple/All projects selected: each project has its OWN current-month
+      // target rate - must sum per-project unsold value, not apply one project's
+      // rate (picked via substring match) to the combined unsold area of all of them.
+      const projsForCalc = selProjsKE.length ? selProjsKE : ['SMARTWORLD THE EDITION','SMARTWORLD SKY ARC','TRUMP RESIDENCES GURGAON'];
+      let unsoldValueSum=0, bspSum=0;
+      projsForCalc.forEach(pk=>{
+        const soldAreaP=pAAll.filter(r=>r.project===pk).reduce((s,r)=>s+(r.superArea||0),0);
+        const totalAreaP=iFAll.filter(r=>r.project===pk).reduce((s,r)=>s+(r.superArea||0),0);
+        const bspP=pAAll.filter(r=>r.project===pk).reduce((s,r)=>s+(r.bsp||0),0)/1e7;
+        const unsoldAreaP=Math.max(0,totalAreaP-soldAreaP);
+        const rateP=(raw?.monthlyTargets||[]).find(t=>t.projectFilter===pk&&t.label===TODAY_LABEL)?.targetRate || (soldAreaP>0?(bspP*1e7/soldAreaP):0);
+        unsoldValueSum+=(unsoldAreaP*rateP)/1e7;
+        bspSum+=bspP;
+      });
+      unsoldValueCr = +unsoldValueSum.toFixed(2);
+      totalProjCr   = +(bspSum+unsoldValueSum).toFixed(2);
+      soldPctValue  = totalProjCr>0 ? Math.round(bspSum/totalProjCr*100) : 0;
+    }
     // Demand/Collected/Outstanding: all 3 projects now use PDRN ('Total Demand Amount' /
     // 'Total Received' columns, active bookings incl. Temporary Surrender), per instruction.
     const pdrnDemandCr  = +(pAAll.reduce((s,r)=>s+(r.demand||0),0)/1e7).toFixed(2);
@@ -2068,7 +2094,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
 
         {/* Filter strip */}
         <div onClick={e=>e.stopPropagation()} style={{maxWidth:1440,margin:'0 auto',padding:'4px 24px 8px',display:'flex',alignItems:'flex-end',gap:10,flexWrap:'wrap'}}>
-          <FSel label="Project"    options={availProj}                           value={filters.project}  onChange={v=>sf('project',v)}   multi={false} openId="project"    activeOpen={activeFilter} setActiveOpen={setActiveFilter} mandatory={true}/>
+          <FSel label="Project"    options={availProj}                           value={filters.project}  onChange={v=>sf('project',v)}   multi={true} openId="project"    activeOpen={activeFilter} setActiveOpen={setActiveFilter} mandatory={false}/>
           <FSel label="Fin. Year"  options={fo.financialYears||[]}               value={filters.fy}       onChange={v=>sf('fy',v)}         multi={true} openId="fy"         activeOpen={activeFilter} setActiveOpen={setActiveFilter}/>
           <FSel label="Quarter"       options={FY_QUARTERS}                              value={filters.quarter}  onChange={v=>sf('quarter',v)}    multi={true} openId="quarter"    activeOpen={activeFilter} setActiveOpen={setActiveFilter}/>
           <FSel label="Month"        options={MONTHS_LIST}                              value={filters.month}    onChange={v=>sf('month',v)}      multi={true} openId="month"      activeOpen={activeFilter} setActiveOpen={setActiveFilter} disabled={chartGranularity!=='monthly'}/>
@@ -2613,8 +2639,8 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const parseM=l=>{const p=l.match(/([A-Za-z]{3})'(\d{2})/);if(!p)return'';const mn={Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'};return(p[2]>='90'?'19':'20')+p[2]+'-'+mn[p[1]];};const dataF=(chartMonthFrom&&chartGranularity==='monthly')?data.filter(d=>parseM(d.label)>=chartMonthFrom):data;
                     const dataFinal=chartMonthFrom?dataF:data;
                     const cur=dataFinal.findIndex(d=>d.isCurrent);
-                    const def=cur>=2?cur-2:Math.max(0,dataFinal.length-WIN);
-                    const off=(chartMonthFrom&&chartGranularity==='monthly')?Math.min(Math.max(chartOff<0?0:chartOff,0),Math.max(0,dataFinal.length-WIN)):Math.min(Math.max(chartOff<0?def:chartOff,0),Math.max(0,dataFinal.length-WIN));
+                    const def=cur>=3?cur-3:Math.max(0,dataFinal.length-WIN);
+                    const off=(chartRangeIdx[0]>0&&chartGranularity==='monthly')?Math.min(Math.max(chartOff<0?0:chartOff,0),Math.max(0,dataFinal.length-WIN)):Math.min(Math.max(chartOff<0?def:chartOff,0),Math.max(0,dataFinal.length-WIN));
                     const sl=dataFinal.slice(off,off+WIN);
                     const hasDateFilter=!!(filters.fy||filters.quarter||filters.month);
                     const totalAchievedUnits=hasDateFilter?pA.length:kpiEx.bookedUnits;
@@ -2704,8 +2730,8 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const parseM=l=>{const p=l.match(/([A-Za-z]{3})'(\d{2})/);if(!p)return'';const mn={Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'};return(p[2]>='90'?'19':'20')+p[2]+'-'+mn[p[1]];};const dataF=(chartMonthFrom&&chartGranularity==='monthly')?data.filter(d=>parseM(d.label)>=chartMonthFrom):data;
                     const dataFinal=chartMonthFrom?dataF:data;
                     const cur=dataFinal.findIndex(d=>d.isCurrent);
-                    const def=cur>=2?cur-2:Math.max(0,dataFinal.length-WIN);
-                    const off=(chartMonthFrom&&chartGranularity==='monthly')?Math.min(Math.max(chartOff<0?0:chartOff,0),Math.max(0,dataFinal.length-WIN)):Math.min(Math.max(chartOff<0?def:chartOff,0),Math.max(0,dataFinal.length-WIN));
+                    const def=cur>=3?cur-3:Math.max(0,dataFinal.length-WIN);
+                    const off=(chartRangeIdx[0]>0&&chartGranularity==='monthly')?Math.min(Math.max(chartOff<0?0:chartOff,0),Math.max(0,dataFinal.length-WIN)):Math.min(Math.max(chartOff<0?def:chartOff,0),Math.max(0,dataFinal.length-WIN));
                     const sl=dataFinal.slice(off,off+WIN);
                     const hasDateFilter=!!(filters.fy||filters.quarter||filters.month);
                     const totalAchievedTsv=hasDateFilter?+(pA.reduce((s,r)=>s+(r.bsp||0),0)/1e7).toFixed(1):kpiEx.totalBSPCr;
@@ -2803,8 +2829,8 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const parseM=l=>{const p=l.match(/([A-Za-z]{3})'(\d{2})/);if(!p)return'';const mn={Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'};return(p[2]>='90'?'19':'20')+p[2]+'-'+mn[p[1]];};const dataF=(chartMonthFrom&&chartGranularity==='monthly')?data.filter(d=>parseM(d.label)>=chartMonthFrom):data;
                     const dataFinal=chartMonthFrom?dataF:data;
                     const cur=dataFinal.findIndex(d=>d.isCurrent);
-                    const def=cur>=2?cur-2:Math.max(0,dataFinal.length-WIN);
-                    const off=(chartMonthFrom&&chartGranularity==='monthly')?Math.min(Math.max(chartOff<0?0:chartOff,0),Math.max(0,dataFinal.length-WIN)):Math.min(Math.max(chartOff<0?def:chartOff,0),Math.max(0,dataFinal.length-WIN));
+                    const def=cur>=3?cur-3:Math.max(0,dataFinal.length-WIN);
+                    const off=(chartRangeIdx[0]>0&&chartGranularity==='monthly')?Math.min(Math.max(chartOff<0?0:chartOff,0),Math.max(0,dataFinal.length-WIN)):Math.min(Math.max(chartOff<0?def:chartOff,0),Math.max(0,dataFinal.length-WIN));
                     const sl=dataFinal.slice(off,off+WIN);
                     const hasDateFilter=!!(filters.fy||filters.quarter||filters.month);
                     const totalAchievedArea=hasDateFilter?+(pA.reduce((s,r)=>s+(r.superArea||0),0)/100000).toFixed(2):+((kpiEx.bookedAreaSqft||0)/100000).toFixed(2);
@@ -3012,8 +3038,8 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const cur=dataFinal.findIndex(d=>d.isCurrent);
                     // Start from first month with actual rate data so achieved line is visible
                     const firstActualIdx=dataFinal.findIndex(d=>d.achieved!=null&&d.achieved>0);
-                    const def=firstActualIdx>=0?Math.max(0,firstActualIdx):cur>=2?cur-2:Math.max(0,dataFinal.length-WIN);
-                    const off=(chartMonthFrom&&chartGranularity==='monthly')?Math.min(Math.max(chartOff<0?0:chartOff,0),Math.max(0,dataFinal.length-WIN)):Math.min(Math.max(chartOff<0?def:chartOff,0),Math.max(0,dataFinal.length-WIN));
+                    const def=firstActualIdx>=0?Math.max(0,firstActualIdx):cur>=3?cur-3:Math.max(0,dataFinal.length-WIN);
+                    const off=(chartRangeIdx[0]>0&&chartGranularity==='monthly')?Math.min(Math.max(chartOff<0?0:chartOff,0),Math.max(0,dataFinal.length-WIN)):Math.min(Math.max(chartOff<0?def:chartOff,0),Math.max(0,dataFinal.length-WIN));
                     const sl=dataFinal.slice(off,off+WIN);
                     const hasDateFilter=!!(filters.fy||filters.quarter||filters.month);
                     const pAWithRate=pA.filter(r=>r.superArea>0);
@@ -3114,6 +3140,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     };
 
                     let twData=[];
+                    const PROJ_SHORT={'SMARTWORLD THE EDITION':'Edition','SMARTWORLD SKY ARC':'Sky Arc','TRUMP RESIDENCES GURGAON':'Trump'};
                     if(editionOnly){
                       // Live from PDRN (booked = ACTIVE rows) + INVR (total inventory per tower) + towerData for BSP
                       const inv={};
@@ -3132,18 +3159,46 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                       });
                     } else {
                       const filtered=towerData.filter(r=>!selProjs.length||selProjs.includes(r.project));
-                      twData=filtered.map(r=>{
-                        // Total potential BSP = sold BSP + (available units × avg area × TARGET RATE)
-                        const avgArea = r.booked>0 ? (r.bookedArea/r.booked) : 0;
-                        const rateForUnsold = getTargetRate(r.project) || r.pricePerSqft || 0;
-                        const availBSP = (r.available||0)*avgArea*rateForUnsold/1e7;
-                        const totalBSP = (r.totalBSPCr||0) + availBSP;
-                        const tsvPct = totalBSP>0 ? Math.round((r.totalBSPCr||0)/totalBSP*100) : 0;
-                        return {tower:r.tower+(selProjs.length!==1?` (${(r.project||'').split(' ').pop()})` :''),
-                          unitPct:r.pctSold||0, tsvPct,
-                          booked:r.booked, total:r.total||r.booked+r.cancelled,
-                          bspCr:r.totalBSPCr||0, avgRate:r.pricePerSqft||0};
-                      });
+                      const multiProj=selProjs.length!==1;
+                      if(multiProj){
+                        // ⚠️ Multiple/All projects selected: aggregate to PROJECT-WISE bars
+                        // instead of listing every tower across every project.
+                        const byProj={};
+                        filtered.forEach(r=>{
+                          const key=r.project;
+                          if(!byProj[key])byProj[key]={booked:0,cancelled:0,total:0,bspCr:0,bookedArea:0,available:0};
+                          const p=byProj[key];
+                          p.booked+=r.booked||0; p.cancelled+=r.cancelled||0;
+                          p.total+=(r.total||((r.booked||0)+(r.cancelled||0)))||0;
+                          p.bspCr+=(r.totalBSPCr||0); p.bookedArea+=(r.bookedArea||0);
+                          p.available+=(r.available||0);
+                        });
+                        twData=Object.entries(byProj).map(([proj,v])=>{
+                          const avgArea=v.booked>0?(v.bookedArea/v.booked):0;
+                          const ratePerSqft=v.bookedArea>0?Math.round(v.bspCr*1e7/v.bookedArea):0;
+                          const rateForUnsold=getTargetRate(proj)||ratePerSqft||0;
+                          const availBSP=(v.available||0)*avgArea*rateForUnsold/1e7;
+                          const totalBSP=v.bspCr+availBSP;
+                          const tsvPct=totalBSP>0?Math.round(v.bspCr/totalBSP*100):0;
+                          return {tower:PROJ_SHORT[proj]||proj,
+                            unitPct:v.total>0?Math.round(v.booked/v.total*100):0, tsvPct,
+                            booked:v.booked, total:v.total,
+                            bspCr:+v.bspCr.toFixed(1), avgRate:ratePerSqft};
+                        });
+                      } else {
+                        twData=filtered.map(r=>{
+                          // Total potential BSP = sold BSP + (available units × avg area × TARGET RATE)
+                          const avgArea = r.booked>0 ? (r.bookedArea/r.booked) : 0;
+                          const rateForUnsold = getTargetRate(r.project) || r.pricePerSqft || 0;
+                          const availBSP = (r.available||0)*avgArea*rateForUnsold/1e7;
+                          const totalBSP = (r.totalBSPCr||0) + availBSP;
+                          const tsvPct = totalBSP>0 ? Math.round((r.totalBSPCr||0)/totalBSP*100) : 0;
+                          return {tower:r.tower,
+                            unitPct:r.pctSold||0, tsvPct,
+                            booked:r.booked, total:r.total||r.booked+r.cancelled,
+                            bspCr:r.totalBSPCr||0, avgRate:r.pricePerSqft||0};
+                        });
+                      }
                     }
                     twData=twData.sort((a,b)=>a.tower.localeCompare(b.tower));
                     return(
@@ -3183,9 +3238,13 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const FYS=['FY2023-24','FY2024-25','FY2025-26'];
                     const FY_COLORS={[FYS[0]]:'#0077b6',[FYS[1]]:'#0097a7',[FYS[2]]:'#1a3a5c'};
                     const FY_LABELS={[FYS[0]]:'FY 2024',[FYS[1]]:'FY 2025',[FYS[2]]:'FY 2026'};
+                    const PROJ_SHORT={'SMARTWORLD THE EDITION':'Edition','SMARTWORLD SKY ARC':'Sky Arc','TRUMP RESIDENCES GURGAON':'Trump'};
+                    const selProjs=filters.project?filters.project.split('||').filter(Boolean):[];
+                    const multiProj=selProjs.length!==1;
                     const map={};
                     pAAll.forEach(r=>{
-                      const t=r.tower||'';const fy=r.bookingFY||'';
+                      const t=multiProj?(PROJ_SHORT[r.project]||r.project||''):(r.tower||'');
+                      const fy=r.bookingFY||'';
                       if(!t||!fy)return;
                       if(!map[t])map[t]={};
                       if(!map[t][fy])map[t][fy]={bsp:0,area:0};
@@ -3445,6 +3504,71 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                 <div style={{flex:1,height:1,background:'rgba(26,58,92,0.15)',borderRadius:1}}/>
               </div>
               <div style={{display:'flex',flexDirection:'column',gap:12}}>
+
+                {/* ── CP: Project-wise Bifurcation (shown only when specific CP(s) selected) ───── */}
+                {!!filters.broker && (()=>{
+                  const brks=filters.broker.split('||').filter(Boolean);
+                  if(!brks.length) return null;
+                  // Deliberately ignores the Project filter - shows this CP's full
+                  // footprint across every project it has sold in.
+                  const rows=(raw?.pdrn||[]).filter(r=>r.status==='ACTIVE'&&r.bookingStatusRaw==='ACTIVE'&&brks.includes(r.brokerName));
+                  const PROJ_SHORT={'SMARTWORLD THE EDITION':'Edition','SMARTWORLD SKY ARC':'Sky Arc','TRUMP RESIDENCES GURGAON':'Trump'};
+                  const byProj={};
+                  rows.forEach(r=>{
+                    const key=r.project;
+                    if(!byProj[key])byProj[key]={units:0,bspCr:0,area:0};
+                    byProj[key].units++; byProj[key].bspCr+=(r.bsp||0)/1e7; byProj[key].area+=(r.superArea||0);
+                  });
+                  const data=Object.entries(byProj).map(([p,v])=>({project:PROJ_SHORT[p]||p,
+                    units:v.units, bspCr:+v.bspCr.toFixed(1),
+                    avgRate:v.area>0?Math.round(v.bspCr*1e7/v.area):0})).sort((a,b)=>b.bspCr-a.bspCr);
+                  const totalUnits=data.reduce((s,d)=>s+d.units,0);
+                  const totalBsp=+data.reduce((s,d)=>s+d.bspCr,0).toFixed(1);
+                  const TH={padding:'8px 10px',fontSize:10,fontWeight:800,color:T.textM,textTransform:'uppercase',letterSpacing:0.5,borderBottom:'1px solid rgba(0,100,140,0.12)',background:'rgba(0,100,140,0.03)',whiteSpace:'nowrap'};
+                  const TD={padding:'8px 10px',fontSize:12,borderBottom:'1px solid rgba(0,100,140,0.06)',verticalAlign:'middle'};
+                  if(!data.length) return (
+                    <GC style={{padding:16}}>
+                      <SH title={`Project-wise Bifurcation — ${brks.join(', ')}`} sub="No active bookings found for this CP"/>
+                    </GC>
+                  );
+                  return (
+                    <GC style={{padding:16}}>
+                      <SH title={`Project-wise Bifurcation — ${brks.join(', ')}`} sub="Selected channel partner(s)' sales split across all projects · independent of the Project filter above"/>
+                      <div style={{overflowX:'auto'}}>
+                        <table style={{width:'100%',borderCollapse:'collapse'}}>
+                          <thead><tr>
+                            <th style={{...TH,textAlign:'left'}}>Project</th>
+                            <th style={{...TH,textAlign:'right'}}>Units</th>
+                            <th style={{...TH,textAlign:'right'}}>Sales (₹Cr)</th>
+                            <th style={{...TH,textAlign:'right'}}>Avg Rate</th>
+                            <th style={{...TH,textAlign:'center',minWidth:110}}>% of CP Sales</th>
+                          </tr></thead>
+                          <tbody>
+                            {data.map((d,i)=>{
+                              const pct=totalBsp>0?Math.round(d.bspCr/totalBsp*100):0;
+                              return (
+                                <tr key={i} style={{background:i%2===0?'transparent':'rgba(0,100,140,0.02)'}}>
+                                  <td style={{...TD,fontWeight:800,color:T.navy}}>{d.project}</td>
+                                  <td style={{...TD,textAlign:'right',fontWeight:700,color:T.tealD}}>{d.units}</td>
+                                  <td style={{...TD,textAlign:'right',fontWeight:800,color:T.tealD}}>₹{d.bspCr} Cr</td>
+                                  <td style={{...TD,textAlign:'right'}}>₹{d.avgRate.toLocaleString('en-IN')}/sqft</td>
+                                  <td style={{...TD}}><div style={{display:'flex',alignItems:'center',gap:6}}><div style={{flex:1,height:6,background:'rgba(0,100,140,0.1)',borderRadius:3,overflow:'hidden'}}><div style={{width:pct+'%',height:'100%',background:T.amber,borderRadius:3}}/></div><span style={{fontSize:10,fontWeight:800,color:T.amber,minWidth:28}}>{pct}%</span></div></td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                          <tfoot><tr>
+                            <td style={{...TD,fontWeight:900,color:T.navy,borderBottom:'none'}}>Total</td>
+                            <td style={{...TD,textAlign:'right',fontWeight:900,color:T.navy,borderBottom:'none'}}>{totalUnits}</td>
+                            <td style={{...TD,textAlign:'right',fontWeight:900,color:T.navy,borderBottom:'none'}}>₹{totalBsp} Cr</td>
+                            <td style={{...TD,borderBottom:'none'}}></td>
+                            <td style={{...TD,borderBottom:'none'}}></td>
+                          </tr></tfoot>
+                        </table>
+                      </div>
+                    </GC>
+                  );
+                })()}
 
                 {/* ── CP: Sales Value ₹Cr (bar) + % line ───────── */}
                 <GC style={{padding:16}}>
