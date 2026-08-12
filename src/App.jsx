@@ -84,9 +84,19 @@ const toQuarterly=(data,labelKey='label')=>{
     const fq=monNum<=3?4:Math.ceil((monNum-3)/3);
     const q=`Q${fq}'${String(fyYr).padStart(2,'0')}`;
     if(!qMap[q]){qMap[q]={...d,[labelKey]:q,month:q};Object.keys(d).forEach(k=>{if(typeof d[k]==='number')qMap[q][k]=0;});}
-    Object.keys(d).forEach(k=>{if(typeof d[k]==='number')qMap[q][k]=+(qMap[q][k]+d[k]).toFixed(1);});
+    // ⚠️ LOCKED: accumulate the RAW (unrounded) sum every step - do NOT call
+    // .toFixed()/round() inside this loop. Rounding after every single monthly
+    // addition compounds: e.g. 11 additions of 0.08 each round UP to 0.1 every
+    // time (0.08->0.1, +0.08=0.18->0.2, ...), drifting the running total from
+    // the true ~0.9 up to 1.1+ well before all months are even added. Round
+    // exactly ONCE, after the full loop, in the second pass below.
+    Object.keys(d).forEach(k=>{if(typeof d[k]==='number')qMap[q][k]=qMap[q][k]+d[k];});
   });
-  return Object.values(qMap);
+  return Object.values(qMap).map(row=>{
+    const out={...row};
+    Object.keys(out).forEach(k=>{if(typeof out[k]==='number')out[k]=+out[k].toFixed(1);});
+    return out;
+  });
 };
 
 // Same fiscal-year convention as toQuarterly (Apr-Mar), but collapses a whole
@@ -103,9 +113,17 @@ const toYearly=(data,labelKey='label')=>{
     const fyYr=monNum<=3?calYr:calYr+1;
     const y=`FY${String(fyYr).padStart(2,'0')}`;
     if(!yMap[y]){yMap[y]={...d,[labelKey]:y,month:y};Object.keys(d).forEach(k=>{if(typeof d[k]==='number')yMap[y][k]=0;});}
-    Object.keys(d).forEach(k=>{if(typeof d[k]==='number')yMap[y][k]=+(yMap[y][k]+d[k]).toFixed(1);});
+    // ⚠️ LOCKED: same fix as toQuarterly - accumulate the RAW sum across all 12
+    // months, round ONCE at the end. Rounding after every monthly addition
+    // compounded over 12 months (e.g. Sky Arc FY27 area target: true total
+    // ~1.02L, but rounding-every-step drifted it up to a displayed 1.2L).
+    Object.keys(d).forEach(k=>{if(typeof d[k]==='number')yMap[y][k]=yMap[y][k]+d[k];});
   });
-  return Object.values(yMap);
+  return Object.values(yMap).map(row=>{
+    const out={...row};
+    Object.keys(out).forEach(k=>{if(typeof out[k]==='number')out[k]=+out[k].toFixed(1);});
+    return out;
+  });
 };
 
 const ChartControls=({mode,setMode,offset,setOffset,total,window:win=6})=>{
