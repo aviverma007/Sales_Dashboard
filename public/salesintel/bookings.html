@@ -241,7 +241,7 @@ function momentumCard(base){
  const opt=sel=>keys.map(k=>`<option value="${k}" ${k===sel?'selected':''}>${perLabel(k,g)}</option>`).join('');
  const dv=Math.round((sB.v-sA.v)/(sA.v||1)*100),dn=Math.round((sB.n-sA.n)/(sA.n||1)*100),da=Math.round((sB.avg-sA.avg)/(sA.avg||1)*100);
  const say=`From ${perLabel(A,g)} to ${perLabel(Bk,g)}, bookings ${dn>=0?'rose':'fell'} ${Math.abs(dn)}% (${fN(sA.n)} → ${fN(sB.n)}) and value ${dv>=0?'rose':'fell'} ${Math.abs(dv)}% (${CR(sA.v)} → ${CR(sB.v)}). Average ticket ${da>=0?'up':'down'} ${Math.abs(da)}% (${CR(sA.avg)} → ${CR(sB.avg)}).`;
- return `<div class="card" style="background:linear-gradient(180deg,#FBF7EE,#fff);border-color:#ECD9B0"><h3>Momentum &amp; comparison
+ return `<div class="card" style="background:linear-gradient(180deg,#FBF7EE,#fff);border-color:#ECD9B0;margin-bottom:24px"><h3>Momentum &amp; comparison
    <span class="seg"><button data-act="mgran" data-v="q" class="${g==='q'?'on':''}">Quarter</button><button data-act="mgran" data-v="y" class="${g==='y'?'on':''}">Year</button></span></h3>
   <div class="cap">compare any two periods · respects the filters above (project, channel, config, status)</div>
   <div style="display:flex;gap:10px;align-items:flex-end;margin-bottom:12px;flex-wrap:wrap">
