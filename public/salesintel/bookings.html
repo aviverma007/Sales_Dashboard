@@ -10,12 +10,12 @@
  .sub{font-size:11px;letter-spacing:2.5px;text-transform:uppercase;color:#A9B2C7}
  .filters{display:flex;gap:13px;align-items:flex-end;flex-wrap:wrap}
  .filt>label{display:block;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:#A9B2C7;margin-bottom:5px}
- select,.dinp{appearance:none;background:#1D2A4A;color:#fff;border:1px solid #33406B;border-radius:7px;padding:9px 13px;font-size:13.5px;font-family:inherit;cursor:pointer;min-width:130px}
- select{padding-right:34px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23B8893C' d='M6 8 0 0h12z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
+ select,.dinp{appearance:none;background:rgba(255,255,255,0.92);color:#0d2137;border:1px solid rgba(0,151,167,0.3);border-radius:7px;padding:9px 13px;font-size:13.5px;font-family:inherit;cursor:pointer;min-width:130px}
+ select{padding-right:34px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%230097a7' d='M6 8 0 0h12z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
  select:focus,.dinp:focus{outline:2px solid var(--gold)}
  .dinp::-webkit-calendar-picker-indicator{filter:invert(.7)}
  .ms{position:relative}
- .msbtn{background:#1D2A4A;color:#fff;border:1px solid #33406B;border-radius:7px;padding:9px 14px;font-size:13.5px;font-family:inherit;cursor:pointer;min-width:170px;text-align:left}
+ .msbtn{background:rgba(255,255,255,0.92);color:#0d2137;border:1px solid rgba(0,151,167,0.3);border-radius:7px;padding:9px 14px;font-size:13.5px;font-family:inherit;cursor:pointer;min-width:170px;text-align:left}
  .msbtn:hover{border-color:var(--gold)}
  .mspanel{position:absolute;top:calc(100% + 6px);left:0;background:#fff;border:1px solid var(--line);border-radius:9px;box-shadow:0 12px 34px rgba(20,33,61,.2);padding:8px;z-index:60;display:none;min-width:280px;max-height:340px;overflow:auto}
  .mspanel.open{display:block}
@@ -86,10 +86,7 @@ header{background:rgba(255,255,255,0.95)!important}.topbar{justify-content:flex-
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 *{font-family:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif!important}
-html,body{
-  background:linear-gradient(rgba(0,20,40,.22),rgba(0,20,40,.22)),url(/bg.jpg)!important;
-  background-size:cover!important;background-position:center!important;background-attachment:fixed!important;
-}
+html,body{background:#F4F2EC!important;}
 header{background:rgba(255,255,255,0.95)!important;color:#0d2137!important;border-bottom:1px solid rgba(255,255,255,0.9)!important;
   box-shadow:0 2px 20px rgba(0,60,100,0.12)!important;-webkit-backdrop-filter:blur(24px);backdrop-filter:blur(24px);}
 header *{color:#0d2137!important;}
@@ -242,9 +239,9 @@ function momentumCard(base){
    <span class="seg"><button data-act="mgran" data-v="q" class="${g==='q'?'on':''}">Quarter</button><button data-act="mgran" data-v="y" class="${g==='y'?'on':''}">Year</button></span></h3>
   <div class="cap">compare any two periods · respects the filters above (project, channel, config, status)</div>
   <div style="display:flex;gap:10px;align-items:flex-end;margin-bottom:12px;flex-wrap:wrap">
-    <div><div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--mut);margin-bottom:4px">Compare</div><select class="mselA" data-act="mA" style="background:#1D2A4A">${opt(A)}</select></div>
+    <div><div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--mut);margin-bottom:4px">Compare</div><select class="mselA" data-act="mA" style="background:rgba(255,255,255,0.92);color:#0d2137">${opt(A)}</select></div>
     <div style="align-self:center;color:var(--mut);padding-bottom:8px">vs</div>
-    <div><div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--mut);margin-bottom:4px">With</div><select data-act="mB" style="background:#1D2A4A">${opt(Bk)}</select></div>
+    <div><div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--mut);margin-bottom:4px">With</div><select data-act="mB" style="background:rgba(255,255,255,0.92);color:#0d2137">${opt(Bk)}</select></div>
   </div>
   <table class="cmp"><thead><tr><th>Metric</th><th data-act="per" data-v="${A}" data-g="${g}" style="cursor:pointer;color:var(--blue)">${perLabel(A,g)}</th><th data-act="per" data-v="${Bk}" data-g="${g}" style="cursor:pointer;color:var(--blue)">${perLabel(Bk,g)}</th><th>Change</th></tr></thead><tbody>
    ${row('Bookings',fN,sA.n,sB.n)}
