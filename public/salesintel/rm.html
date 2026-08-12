@@ -3,17 +3,40 @@
 <style>
  *{margin:0;padding:0;box-sizing:border-box}html,body{height:100%}
  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:#F4F2EC}
- #rmtop{background:linear-gradient(115deg,#111C36,#1E3163 55%,#2A4488);border-bottom:3px solid #B8893C;padding:0 24px;display:flex;align-items:center;gap:26px;flex-wrap:wrap}
+ #rmtop{background:rgba(255,255,255,0.95);-webkit-backdrop-filter:blur(24px);backdrop-filter:blur(24px);border-bottom:1px solid rgba(255,255,255,0.9);box-shadow:0 2px 20px rgba(0,60,100,0.12);padding:0 24px;display:flex;align-items:center;gap:26px;flex-wrap:wrap}
  #rmtop .brand{display:flex;align-items:center;gap:12px;padding:11px 0}
  #rmtop .brand img{height:28px;display:block}
- #rmtop .brand .sub{font-family:Georgia,serif;font-size:14px;color:#EAECF2;border-left:1px solid rgba(255,255,255,.28);padding-left:12px}
+ #rmtop .brand .sub{font-family:'Inter',sans-serif;font-size:14px;color:#0d2137;border-left:1px solid rgba(0,151,167,0.25);padding-left:12px}
  #rmtabs{display:flex;gap:2px;margin-left:6px;align-self:flex-end}
- #rmtabs .subtab{background:none;border:none;color:#B9C1D4;font-family:inherit;font-size:13.5px;font-weight:500;padding:12px 18px 11px;cursor:pointer;position:relative}
- #rmtabs .subtab:hover{color:#fff}
- #rmtabs .subtab.active{color:#fff}
- #rmtabs .subtab.active::after{content:"";position:absolute;left:14px;right:14px;bottom:0;height:3px;background:#B8893C;border-radius:3px 3px 0 0}
+ #rmtabs .subtab{background:none;border:none;color:#546e7a;font-family:inherit;font-size:13.5px;font-weight:500;padding:12px 18px 11px;cursor:pointer;position:relative}
+ #rmtabs .subtab:hover{color:#006978}
+ #rmtabs .subtab.active{color:#006978;font-weight:800}
+ #rmtabs .subtab.active::after{content:"";position:absolute;left:14px;right:14px;bottom:0;height:3px;background:#0097a7;border-radius:3px 3px 0 0}
  #rmframe{width:100%;height:calc(100vh - 51px);border:none;display:block;background:#F4F2EC}
-header{background:linear-gradient(115deg,#111C36,#1E3163 55%,#2A4488)!important}.topbar{justify-content:flex-start;gap:26px}.card{transition:box-shadow .15s ease,transform .15s ease}.card:hover{transform:translateY(-1px);box-shadow:0 2px 4px rgba(20,33,61,.06),0 14px 40px rgba(20,33,61,.10)}.kpi .v{letter-spacing:-.5px}</style></head><body>
+header{background:rgba(255,255,255,0.95)!important}.topbar{justify-content:flex-start;gap:26px}.card{transition:box-shadow .15s ease,transform .15s ease}.card:hover{transform:translateY(-1px);box-shadow:0 2px 4px rgba(20,33,61,.06),0 14px 40px rgba(20,33,61,.10)}.kpi .v{letter-spacing:-.5px}</style>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+*{font-family:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif!important}
+html,body{
+  background:linear-gradient(rgba(0,20,40,.22),rgba(0,20,40,.22)),url(/bg.jpg)!important;
+  background-size:cover!important;background-position:center!important;background-attachment:fixed!important;
+}
+header{background:rgba(255,255,255,0.95)!important;color:#0d2137!important;border-bottom:1px solid rgba(255,255,255,0.9)!important;
+  box-shadow:0 2px 20px rgba(0,60,100,0.12)!important;-webkit-backdrop-filter:blur(24px);backdrop-filter:blur(24px);}
+header *{color:#0d2137!important;}
+header select,header input,header .msbtn,header .filt label{color:#0d2137!important;}
+header label{color:#546e7a!important;}
+.card,.kpi,.dwb,.mspanel,.k,.rec,.leaderboard,.momentum,.scorecard{
+  background:rgba(255,255,255,0.90)!important;
+  -webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);
+  border:1px solid rgba(0,151,167,0.12)!important;
+  box-shadow:0 2px 16px rgba(0,60,100,0.08)!important;
+}
+::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-thumb{background:rgba(0,151,167,0.4);border-radius:2px}
+nav,.tabs{background:rgba(255,255,255,0.85)!important;-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);}
+.tab.active,button.subtab.active{color:#006978!important;border-bottom-color:#0097a7!important;}
+</style>
+</head><body>
 <div id="rmtop">
  
  <div id="rmtabs">
@@ -26,11 +49,11 @@ header{background:linear-gradient(115deg,#111C36,#1E3163 55%,#2A4488)!important}
 <html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Smartworld · RM Performance</title>
 <style>
-  :root{--ink:#14213D;--ink-soft:#2B3553;--slate:#5A6478;--slate-light:#8A93A6;--bg:#F4F2EC;--card:#FFFFFF;--line:#E4E0D6;--gold:#B8893C;--gold-soft:#E9DCC2;--teal:#2E7D6F;--teal-soft:#DDEFE9;--clay:#C2674A;--amber:#C99A3B;--blue:#3C6DB0;--plum:#7A5C84;--red:#B5453A;--red-soft:#F1E0DD;--green:#4B7B3F;--green-soft:#E2EEDD;--shadow:0 1px 2px rgba(20,33,61,.04),0 8px 28px rgba(20,33,61,.06)}
+  :root{--ink:#0d2137;--ink-soft:#2B3553;--slate:#5A6478;--slate-light:#8A93A6;--bg:#F4F2EC;--card:#FFFFFF;--line:#E4E0D6;--gold:#0097a7;--gold-soft:rgba(0,151,167,0.14);--teal:#2e7d32;--teal-soft:rgba(46,125,50,0.14);--clay:#C2674A;--amber:#C99A3B;--blue:#3C6DB0;--plum:#7A5C84;--red:#B5453A;--red-soft:#F1E0DD;--green:#4B7B3F;--green-soft:#E2EEDD;--shadow:0 1px 2px rgba(20,33,61,.04),0 8px 28px rgba(20,33,61,.06)}
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink);line-height:1.45;font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased}
   .wrap{max-width:1180px;margin:0 auto;padding:0 28px}
-  header{background:var(--ink);color:#fff;border-bottom:3px solid var(--gold)}
+  header{background:rgba(255,255,255,0.95);color:#0d2137;border-bottom:1px solid rgba(255,255,255,0.9);box-shadow:0 2px 20px rgba(0,60,100,0.12)}
   .topbar{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:18px 0;flex-wrap:wrap}
   .brand{display:flex;align-items:center;gap:14px}.brand .sub{font-size:11px;letter-spacing:2.5px;text-transform:uppercase;color:#A9B2C7}
   .filters{display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap}
@@ -93,7 +116,30 @@ header{background:linear-gradient(115deg,#111C36,#1E3163 55%,#2A4488)!important}
   .note{background:var(--gold-soft);border-bottom:1px solid #DCCBA6}.note .wrap{padding:9px 28px;font-size:12.5px;color:#6E5A2E;display:flex;gap:8px;align-items:center}
   footer{border-top:1px solid var(--line);color:var(--slate-light);font-size:11.5px;padding:20px 0;text-align:center}
   @media(max-width:980px){.g2{grid-template-columns:1fr}.rprofile{grid-template-columns:repeat(2,1fr)}}
-</style></head><body>
+</style>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+*{font-family:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif!important}
+html,body{
+  background:linear-gradient(rgba(0,20,40,.22),rgba(0,20,40,.22)),url(/bg.jpg)!important;
+  background-size:cover!important;background-position:center!important;background-attachment:fixed!important;
+}
+header{background:rgba(255,255,255,0.95)!important;color:#0d2137!important;border-bottom:1px solid rgba(255,255,255,0.9)!important;
+  box-shadow:0 2px 20px rgba(0,60,100,0.12)!important;-webkit-backdrop-filter:blur(24px);backdrop-filter:blur(24px);}
+header *{color:#0d2137!important;}
+header select,header input,header .msbtn,header .filt label{color:#0d2137!important;}
+header label{color:#546e7a!important;}
+.card,.kpi,.dwb,.mspanel,.k,.rec,.leaderboard,.momentum,.scorecard{
+  background:rgba(255,255,255,0.90)!important;
+  -webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);
+  border:1px solid rgba(0,151,167,0.12)!important;
+  box-shadow:0 2px 16px rgba(0,60,100,0.08)!important;
+}
+::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-thumb{background:rgba(0,151,167,0.4);border-radius:2px}
+nav,.tabs{background:rgba(255,255,255,0.85)!important;-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);}
+.tab.active,button.subtab.active{color:#006978!important;border-bottom-color:#0097a7!important;}
+</style>
+</head><body>
 <header><div class="wrap topbar">
   
   <div class="filters">
@@ -323,7 +369,30 @@ cTo.onchange=e=>{state.cTo=dayOfIso(e.target.value);if(state.period==="custom"){
 renderMain();
 %%RMEND%%</body></html>
 </script>
-<script type="text/plain" id="doc_perf"><!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><style>body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#F4F2EC;color:#14213D;min-height:100vh;display:flex;align-items:center;justify-content:center}.box{text-align:center;max-width:460px;padding:44px}.mark{width:54px;height:54px;border-radius:14px;background:#14213D;color:#fff;display:flex;align-items:center;justify-content:center;margin:0 auto 18px;font-family:Georgia,serif;font-size:24px}.box h1{font-family:Georgia,serif;font-size:23px;margin:0 0 10px;font-weight:500}.box p{color:#5A6478;font-size:14px;line-height:1.55;margin:0}.tag{display:inline-block;margin-top:20px;font-size:11px;letter-spacing:1.4px;text-transform:uppercase;color:#B8893C;border:1px solid #E4E0D6;border-radius:22px;padding:6px 16px;background:#fff}</style></head><body><div class="box"><div class="mark">RM</div><h1>Performance — under development</h1><p>The RM performance view is being finalised and validated against the latest booking data. It will appear here once ready.</p><div class="tag">Coming soon</div></div></body></html></script>
+<script type="text/plain" id="doc_perf"><!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><style>body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#F4F2EC;color:#0d2137;min-height:100vh;display:flex;align-items:center;justify-content:center}.box{text-align:center;max-width:460px;padding:44px}.mark{width:54px;height:54px;border-radius:14px;background:#0d2137;color:#fff;display:flex;align-items:center;justify-content:center;margin:0 auto 18px;font-family:Georgia,serif;font-size:24px}.box h1{font-family:Georgia,serif;font-size:23px;margin:0 0 10px;font-weight:500}.box p{color:#5A6478;font-size:14px;line-height:1.55;margin:0}.tag{display:inline-block;margin-top:20px;font-size:11px;letter-spacing:1.4px;text-transform:uppercase;color:#0097a7;border:1px solid #E4E0D6;border-radius:22px;padding:6px 16px;background:#fff}</style>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+*{font-family:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif!important}
+html,body{
+  background:linear-gradient(rgba(0,20,40,.22),rgba(0,20,40,.22)),url(/bg.jpg)!important;
+  background-size:cover!important;background-position:center!important;background-attachment:fixed!important;
+}
+header{background:rgba(255,255,255,0.95)!important;color:#0d2137!important;border-bottom:1px solid rgba(255,255,255,0.9)!important;
+  box-shadow:0 2px 20px rgba(0,60,100,0.12)!important;-webkit-backdrop-filter:blur(24px);backdrop-filter:blur(24px);}
+header *{color:#0d2137!important;}
+header select,header input,header .msbtn,header .filt label{color:#0d2137!important;}
+header label{color:#546e7a!important;}
+.card,.kpi,.dwb,.mspanel,.k,.rec,.leaderboard,.momentum,.scorecard{
+  background:rgba(255,255,255,0.90)!important;
+  -webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);
+  border:1px solid rgba(0,151,167,0.12)!important;
+  box-shadow:0 2px 16px rgba(0,60,100,0.08)!important;
+}
+::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-thumb{background:rgba(0,151,167,0.4);border-radius:2px}
+nav,.tabs{background:rgba(255,255,255,0.85)!important;-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);}
+.tab.active,button.subtab.active{color:#006978!important;border-bottom-color:#0097a7!important;}
+</style>
+</head><body><div class="box"><div class="mark">RM</div><h1>Performance — under development</h1><p>The RM performance view is being finalised and validated against the latest booking data. It will appear here once ready.</p><div class="tag">Coming soon</div></div></body></html></script>
 <script>
 (function(){
  var frame=document.getElementById('rmframe'),cache={},END='<'+'/scr'+'ipt>';

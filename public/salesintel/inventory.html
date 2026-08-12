@@ -2,10 +2,10 @@
 <title>Smartworld · Inventory</title>
 <style>
  *{margin:0;padding:0;box-sizing:border-box}
- :root{--ink:#14213D;--ink-soft:#2B3553;--slate:#5A6478;--mut:#8A93A6;--gold:#B8893C;--gold-soft:#E9DCC2;--bg:#F4F2EC;--card:#FFFFFF;--line:#E4E0D6;--av:#2E7D6F;--bk:#8A93A6;--blk:#C99A3B;--teal:#2E7D6F;--clay:#C2674A;--amber:#C99A3B;--blue:#3C6DB0;--plum:#7A5C84;--red:#B5453A;--green:#4B7B3F;--shadow:0 1px 2px rgba(20,33,61,.04),0 8px 28px rgba(20,33,61,.06)}
+ :root{--ink:#0d2137;--ink-soft:#2B3553;--slate:#5A6478;--mut:#8A93A6;--gold:#0097a7;--gold-soft:rgba(0,151,167,0.14);--bg:#F4F2EC;--card:#FFFFFF;--line:#E4E0D6;--av:#2e7d32;--bk:#8A93A6;--blk:#C99A3B;--teal:#2e7d32;--clay:#C2674A;--amber:#C99A3B;--blue:#3C6DB0;--plum:#7A5C84;--red:#B5453A;--green:#4B7B3F;--shadow:0 1px 2px rgba(20,33,61,.04),0 8px 28px rgba(20,33,61,.06)}
  body{background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-size:14px;line-height:1.45}
  .num,.v,h1,h2,h3,.disp{font-family:Georgia,"Times New Roman",serif}
- header{background:var(--ink);color:#fff;border-bottom:3px solid var(--gold)}
+ header{background:rgba(255,255,255,0.95);color:#0d2137;border-bottom:1px solid rgba(255,255,255,0.9);box-shadow:0 2px 20px rgba(0,60,100,0.12)}
  .topbar{max-width:1200px;margin:0 auto;padding:15px 22px;display:flex;align-items:center;justify-content:space-between;gap:22px;flex-wrap:wrap}
  .brand{display:flex;align-items:center;gap:14px}
  .brand img{height:30px;display:block}
@@ -91,7 +91,30 @@
  .strow{border-radius:4px}.strow:hover{background:#faf8f1}
  .kv{display:grid;grid-template-columns:160px 1fr;gap:9px 14px;font-size:13.5px;margin-top:8px}.kv .k{color:var(--mut)}
  .back{background:none;border:none;color:var(--gold);font-size:13px;cursor:pointer;margin-bottom:10px;font-family:inherit}
-.recpgr{display:flex;align-items:center;justify-content:space-between;margin-top:12px;font-size:12px;color:var(--mut)}.recpgr .pgb{font-family:inherit;font-size:12px;background:#fff;border:1px solid var(--line);border-radius:7px;padding:5px 12px;margin-left:8px;cursor:pointer;color:var(--ink)}.recpgr .pgb:hover:not(:disabled){border-color:var(--gold)}.recpgr .pgb:disabled{opacity:.4;cursor:default}.kpi .v small,.dkpi .v small{font-size:12px;color:var(--mut);font-weight:400}header{background:linear-gradient(115deg,#111C36,#1E3163 55%,#2A4488)!important}.topbar{justify-content:flex-start;gap:26px}.card{transition:box-shadow .15s ease,transform .15s ease}.card:hover{transform:translateY(-1px);box-shadow:0 2px 4px rgba(20,33,61,.06),0 14px 40px rgba(20,33,61,.10)}.kpi .v{letter-spacing:-.5px}</style></head><body>
+.recpgr{display:flex;align-items:center;justify-content:space-between;margin-top:12px;font-size:12px;color:var(--mut)}.recpgr .pgb{font-family:inherit;font-size:12px;background:#fff;border:1px solid var(--line);border-radius:7px;padding:5px 12px;margin-left:8px;cursor:pointer;color:var(--ink)}.recpgr .pgb:hover:not(:disabled){border-color:var(--gold)}.recpgr .pgb:disabled{opacity:.4;cursor:default}.kpi .v small,.dkpi .v small{font-size:12px;color:var(--mut);font-weight:400}header{background:rgba(255,255,255,0.95)!important}.topbar{justify-content:flex-start;gap:26px}.card{transition:box-shadow .15s ease,transform .15s ease}.card:hover{transform:translateY(-1px);box-shadow:0 2px 4px rgba(20,33,61,.06),0 14px 40px rgba(20,33,61,.10)}.kpi .v{letter-spacing:-.5px}</style>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+*{font-family:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif!important}
+html,body{
+  background:linear-gradient(rgba(0,20,40,.22),rgba(0,20,40,.22)),url(/bg.jpg)!important;
+  background-size:cover!important;background-position:center!important;background-attachment:fixed!important;
+}
+header{background:rgba(255,255,255,0.95)!important;color:#0d2137!important;border-bottom:1px solid rgba(255,255,255,0.9)!important;
+  box-shadow:0 2px 20px rgba(0,60,100,0.12)!important;-webkit-backdrop-filter:blur(24px);backdrop-filter:blur(24px);}
+header *{color:#0d2137!important;}
+header select,header input,header .msbtn,header .filt label{color:#0d2137!important;}
+header label{color:#546e7a!important;}
+.card,.kpi,.dwb,.mspanel,.k,.rec,.leaderboard,.momentum,.scorecard{
+  background:rgba(255,255,255,0.90)!important;
+  -webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);
+  border:1px solid rgba(0,151,167,0.12)!important;
+  box-shadow:0 2px 16px rgba(0,60,100,0.08)!important;
+}
+::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-thumb{background:rgba(0,151,167,0.4);border-radius:2px}
+nav,.tabs{background:rgba(255,255,255,0.85)!important;-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);}
+.tab.active,button.subtab.active{color:#006978!important;border-bottom-color:#0097a7!important;}
+</style>
+</head><body>
 <header><div class="topbar"><div class="filters" id="filters"></div></div></header>
 <div class="wrap">
  <div class="kpis" id="kpis"></div>
