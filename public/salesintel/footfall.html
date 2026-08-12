@@ -300,7 +300,7 @@ function momentumCard(rows,dIdx){const g=state.mgran;
  const va=m.get(A)||0,vb=m.get(B)||0,delta=va?((vb-va)/va*100):0,col=delta>=0?"var(--teal)":"var(--clay)",sign=delta>=0?"+":"";
  const seg=`<div class="mseg"><button data-mg="Q" class="${g==='Q'?'on':''}">Quarter</button><button data-mg="Y" class="${g==='Y'?'on':''}">Year</button></div>`;
  const partial=(B===keys[keys.length-1]);
- return `<div class="card"><div class="mhead"><h3 style="margin:0;margin-bottom:24px">Momentum &amp; comparison</h3>${seg}</div><div class="cap">Footfall in two periods, side by side \u00b7 pick either period</div>
+ return `<div class="card" style="margin-bottom:24px"><div class="mhead"><h3 style="margin:0;margin-bottom:12px">Momentum &amp; comparison</h3>${seg}</div><div class="cap">Footfall in two periods, side by side \u00b7 pick either period</div>
   <div class="mcmp"><div class="msel"><label>Period A</label><select id="mA">${opt(A)}</select></div><div class="msel"><label>Period B</label><select id="mB">${opt(B)}</select></div></div>
   <table class="cmp"><thead><tr><th>Metric</th><th>${lab(A)}</th><th>${lab(B)}</th><th>\u0394</th></tr></thead>
   <tbody><tr><td>Site visits</td><td>${fNum(va)}</td><td>${fNum(vb)}</td><td style="color:${col}">${sign}${delta.toFixed(1)}%</td></tr></tbody></table>
