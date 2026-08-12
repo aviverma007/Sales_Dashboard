@@ -296,7 +296,7 @@ function renderMain(){
  <div class="card"><h3>Booking trend <span class="seg"><button data-act="gran" data-v="m" class="${state.gran==='m'?'on':''}">Monthly</button><button data-act="gran" data-v="q" class="${state.gran==='q'?'on':''}">Quarterly</button><button data-act="gran" data-v="y" class="${state.gran==='y'?'on':''}">Yearly</button></span></h3>
    <div class="cap">bars = booking value in ₹ Cr (labelled) · gold line = booking count · click a ${state.gran==='m'?'month':state.gran==='q'?'quarter':'year'}</div>${trendSVG(base,state.gran,true)}</div>
  ${pieCard(base)}
- <div class="grid g2">
+ <div class="grid g2" style="margin-top:24px">
    <div class="card"><h3>Bookings by project</h3><div class="cap">Orchard &amp; Gems shown last · click a project</div>${metricBars(base,u=>u[0],Psh,'p','n',projSort)}</div>
    <div class="card"><h3>Bookings by configuration</h3><div class="cap">unit mix by BHK · click a config</div>${metricBars(base,u=>u[2],CFG,'cfg','n')}</div>
  </div>
