@@ -2662,6 +2662,25 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                       })(),
                     }));
                     const data=uMode==='quarterly'?toQuarterly(rawData,'label').map(q=>({...q,isFuture:false,isCurrent:false})):uMode==='yearly'?toYearly(rawData,'label').map(q=>({...q,isFuture:false,isCurrent:false})):rawData;
+                    // ⚠️ LOCKED: Quarterly/Yearly badge fix. toQuarterly/toYearly sums the
+                    // 'projection' field, but that field is intentionally null for already-
+                    // PASSED months (correct for monthly-view rendering - a passed month
+                    // shouldn't show a catch-up badge of its own). Summed naively across a
+                    // quarter/year, this SKIPS every passed month's real target entirely
+                    // (contributes 0, not its real target), undercounting the period's true
+                    // adjusted total. Fix: for the period containing TODAY only, overwrite
+                    // its projection with (period's own correctly-summed real 'target' field
+                    // + the same missedUnits pending catch-up) - e.g. Trump Q2'27: real
+                    // target sum 9 + missed 2 = 11, not the naive 8 (Aug+Sep's projections
+                    // alone, skipping Jul's real target of 3).
+                    if(uMode==='quarterly'||uMode==='yearly'){
+                      const monNumMap={Jan:1,Feb:2,Mar:3,Apr:4,May:5,Jun:6,Jul:7,Aug:8,Sep:9,Oct:10,Nov:11,Dec:12};
+                      const m0=curQMonths[0].match(/([A-Za-z]{3})'(\d{2})/);
+                      const mn0=monNumMap[m0[1]]||0, calYr0=parseInt(m0[2]), fyYr0=mn0<=3?calYr0:calYr0+1;
+                      const curPeriodLabel=uMode==='quarterly'?`Q${mn0<=3?4:Math.ceil((mn0-3)/3)}'${String(fyYr0).padStart(2,'0')}`:`FY${String(fyYr0).padStart(2,'0')}`;
+                      const curRow=data.find(d=>d.label===curPeriodLabel);
+                      if(curRow) curRow.projection=(curRow.target||0)+missedUnits;
+                    }
                     const parseM=l=>{const p=l.match(/([A-Za-z]{3})'(\d{2})/);if(!p)return'';const mn={Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'};return(p[2]>='90'?'19':'20')+p[2]+'-'+mn[p[1]];};const dataF=(chartMonthFrom&&chartGranularity==='monthly')?data.filter(d=>parseM(d.label)>=chartMonthFrom):data;
                     const dataFinal=chartMonthFrom?dataF:data;
                     const cur=dataFinal.findIndex(d=>d.isCurrent);
@@ -2758,6 +2777,18 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                       bridge:(d.label===lastTsvLbl?tsvProjMap[lastTsvLbl]:d.label===nqBLblT?(monthlyWithTargets.find(r=>r.label===nqBLblT)?.targetTsvLine||null):null),
                     }));
                     const data=tsvMode==='quarterly'?toQuarterly(rawDataTsv,'label').map(q=>({...q,isFuture:false,isCurrent:false})):tsvMode==='yearly'?toYearly(rawDataTsv,'label').map(q=>({...q,isFuture:false,isCurrent:false})):rawDataTsv;
+                    // ⚠️ LOCKED: same quarterly/yearly badge fix as Chart 1 - overwrite the
+                    // current period's projection with its own correctly-summed real
+                    // 'target' + missedTsv, instead of the naive sum that skips passed
+                    // months' real target contribution.
+                    if(tsvMode==='quarterly'||tsvMode==='yearly'){
+                      const monNumMap={Jan:1,Feb:2,Mar:3,Apr:4,May:5,Jun:6,Jul:7,Aug:8,Sep:9,Oct:10,Nov:11,Dec:12};
+                      const m0=cqmT[0]?.match(/([A-Za-z]{3})'(\d{2})/)||cqmObj[0].label.match(/([A-Za-z]{3})'(\d{2})/);
+                      const mn0=monNumMap[m0[1]]||0, calYr0=parseInt(m0[2]), fyYr0=mn0<=3?calYr0:calYr0+1;
+                      const curPeriodLabelT=tsvMode==='quarterly'?`Q${mn0<=3?4:Math.ceil((mn0-3)/3)}'${String(fyYr0).padStart(2,'0')}`:`FY${String(fyYr0).padStart(2,'0')}`;
+                      const curRowT=data.find(d=>d.label===curPeriodLabelT);
+                      if(curRowT) curRowT.projection=+((curRowT.target||0)+missedTsv).toFixed(1);
+                    }
                     const parseM=l=>{const p=l.match(/([A-Za-z]{3})'(\d{2})/);if(!p)return'';const mn={Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'};return(p[2]>='90'?'19':'20')+p[2]+'-'+mn[p[1]];};const dataF=(chartMonthFrom&&chartGranularity==='monthly')?data.filter(d=>parseM(d.label)>=chartMonthFrom):data;
                     const dataFinal=chartMonthFrom?dataF:data;
                     const cur=dataFinal.findIndex(d=>d.isCurrent);
@@ -2864,6 +2895,18 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                       bridge:(d.label===lastALbl2?+(areaProjMap2[lastALbl2]/100000).toFixed(2):d.label===nqBLblA2?(monthlyWithTargets.find(r=>r.label===nqBLblA2)?.targetAreaSqft?+(monthlyWithTargets.find(r=>r.label===nqBLblA2).targetAreaSqft/100000).toFixed(2):null):null),
                     }));
                     const data=suMode==='quarterly'?toQuarterly(rawDataA,'label').map(q=>({...q,isFuture:false,isCurrent:false})):suMode==='yearly'?toYearly(rawDataA,'label').map(q=>({...q,isFuture:false,isCurrent:false})):rawDataA;
+                    // ⚠️ LOCKED: same quarterly/yearly badge fix as Chart 1/2 - overwrite
+                    // the current period's projection with its own correctly-summed real
+                    // 'target' + missedArea2, instead of the naive sum that skips passed
+                    // months' real target contribution.
+                    if(suMode==='quarterly'||suMode==='yearly'){
+                      const monNumMap={Jan:1,Feb:2,Mar:3,Apr:4,May:5,Jun:6,Jul:7,Aug:8,Sep:9,Oct:10,Nov:11,Dec:12};
+                      const m0=cqObjA2[0].label.match(/([A-Za-z]{3})'(\d{2})/);
+                      const mn0=monNumMap[m0[1]]||0, calYr0=parseInt(m0[2]), fyYr0=mn0<=3?calYr0:calYr0+1;
+                      const curPeriodLabelA=suMode==='quarterly'?`Q${mn0<=3?4:Math.ceil((mn0-3)/3)}'${String(fyYr0).padStart(2,'0')}`:`FY${String(fyYr0).padStart(2,'0')}`;
+                      const curRowA=data.find(d=>d.label===curPeriodLabelA);
+                      if(curRowA) curRowA.projection=+((curRowA.target||0)+missedArea2/100000).toFixed(2);
+                    }
                     const parseM=l=>{const p=l.match(/([A-Za-z]{3})'(\d{2})/);if(!p)return'';const mn={Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'};return(p[2]>='90'?'19':'20')+p[2]+'-'+mn[p[1]];};const dataF=(chartMonthFrom&&chartGranularity==='monthly')?data.filter(d=>parseM(d.label)>=chartMonthFrom):data;
                     const dataFinal=chartMonthFrom?dataF:data;
                     const cur=dataFinal.findIndex(d=>d.isCurrent);
