@@ -3176,21 +3176,31 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                       const t=(raw?.monthlyTargets||[]).find(x=>x.projectFilter===projKey&&x.label===TODAY_LABEL);
                       return t?.targetRate||null;
                     };
-                    // ⚠️ LOCKED: unsold area for TSV% valuation must be the ACTUAL INVR
-                    // Available+Management Unit area for that tower/project, NOT an
-                    // estimate (avg booked-unit size × available unit count) - the two
-                    // can differ meaningfully since unsold units aren't necessarily the
-                    // same average size as sold ones. Verified against Sky Arc Tower TA:
-                    // real unsold area = 30,650 (Available) + 2,690 (Management) =
-                    // 33,340 sqft, matching exactly.
-                    const realUnsoldAreaByTower={}, realUnsoldAreaByProj={};
+                    // ⚠️ LOCKED: unsold area for TSV% valuation = Total tower area (INVR,
+                    // ALL rows regardless of status) MINUS Booked tower area (PDRN ACTIVE
+                    // rows) - the SAME "Total − Booked" convention as the project-level
+                    // "Area (Lakh sq ft) — PDRN" card, just applied per tower instead of
+                    // per project. This is NOT the same as summing INVR's own Available+
+                    // Management status rows directly - PDRN and INVR don't always agree
+                    // on exactly which units are booked, so the two methods can differ by
+                    // a small margin per tower. Verified: summed across all towers this
+                    // reconciles exactly with each project's own Area-card total:
+                    //   Edition: 10.61L | Sky Arc: 1.65L | Trump: 3.07L
+                    const totalAreaByTower={}, totalAreaByProj={};
                     iF.forEach(r=>{
-                      if(r.status==='Available'||r.status==='Management Unit'){
-                        const tKey=r.project+'||'+(r.tower||'');
-                        realUnsoldAreaByTower[tKey]=(realUnsoldAreaByTower[tKey]||0)+(r.superArea||0);
-                        realUnsoldAreaByProj[r.project]=(realUnsoldAreaByProj[r.project]||0)+(r.superArea||0);
-                      }
+                      const tKey=r.project+'||'+(r.tower||'');
+                      totalAreaByTower[tKey]=(totalAreaByTower[tKey]||0)+(r.superArea||0);
+                      totalAreaByProj[r.project]=(totalAreaByProj[r.project]||0)+(r.superArea||0);
                     });
+                    const bookedAreaByTower={}, bookedAreaByProj={};
+                    pAAll.forEach(r=>{
+                      const tKey=r.project+'||'+(r.tower||'');
+                      bookedAreaByTower[tKey]=(bookedAreaByTower[tKey]||0)+(r.superArea||0);
+                      bookedAreaByProj[r.project]=(bookedAreaByProj[r.project]||0)+(r.superArea||0);
+                    });
+                    const realUnsoldAreaByTower={}, realUnsoldAreaByProj={};
+                    Object.keys(totalAreaByTower).forEach(k=>{realUnsoldAreaByTower[k]=Math.max(0,(totalAreaByTower[k]||0)-(bookedAreaByTower[k]||0));});
+                    Object.keys(totalAreaByProj).forEach(k=>{realUnsoldAreaByProj[k]=Math.max(0,(totalAreaByProj[k]||0)-(bookedAreaByProj[k]||0));});
 
                     let twData=[];
                     const PROJ_SHORT={'SMARTWORLD THE EDITION':'Edition','SMARTWORLD SKY ARC':'Sky Arc','TRUMP RESIDENCES GURGAON':'Trump'};
