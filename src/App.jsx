@@ -3176,6 +3176,21 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                       const t=(raw?.monthlyTargets||[]).find(x=>x.projectFilter===projKey&&x.label===TODAY_LABEL);
                       return t?.targetRate||null;
                     };
+                    // ⚠️ LOCKED: unsold area for TSV% valuation must be the ACTUAL INVR
+                    // Available+Management Unit area for that tower/project, NOT an
+                    // estimate (avg booked-unit size × available unit count) - the two
+                    // can differ meaningfully since unsold units aren't necessarily the
+                    // same average size as sold ones. Verified against Sky Arc Tower TA:
+                    // real unsold area = 30,650 (Available) + 2,690 (Management) =
+                    // 33,340 sqft, matching exactly.
+                    const realUnsoldAreaByTower={}, realUnsoldAreaByProj={};
+                    iF.forEach(r=>{
+                      if(r.status==='Available'||r.status==='Management Unit'){
+                        const tKey=r.project+'||'+(r.tower||'');
+                        realUnsoldAreaByTower[tKey]=(realUnsoldAreaByTower[tKey]||0)+(r.superArea||0);
+                        realUnsoldAreaByProj[r.project]=(realUnsoldAreaByProj[r.project]||0)+(r.superArea||0);
+                      }
+                    });
 
                     let twData=[];
                     const PROJ_SHORT={'SMARTWORLD THE EDITION':'Edition','SMARTWORLD SKY ARC':'Sky Arc','TRUMP RESIDENCES GURGAON':'Trump'};
@@ -3187,9 +3202,9 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                       const targetRateEd=getTargetRate('SMARTWORLD THE EDITION');
                       twData=Object.entries(inv).filter(([t])=>t).map(([t,v])=>{
                         const td=towerData.find(r=>r.tower===t&&r.project==='SMARTWORLD THE EDITION')||{};
-                        const avgAreaPerUnit=(td.bookedArea||1)/(td.booked||1);
                         const rateForUnsold=targetRateEd||td.pricePerSqft||0;
-                        const totalBSP=(td.totalBSPCr||0)+(td.available||0)*avgAreaPerUnit*rateForUnsold/1e7;
+                        const unsoldArea=realUnsoldAreaByTower['SMARTWORLD THE EDITION||'+t]||0;
+                        const totalBSP=(td.totalBSPCr||0)+unsoldArea*rateForUnsold/1e7;
                         const tsvPct=totalBSP>0?Math.round((td.totalBSPCr||0)/totalBSP*100):0;
                         return {tower:t, unitPct:v.total>0?Math.round(v.booked/v.total*100):0,
                           tsvPct, booked:v.booked, total:v.total,
@@ -3212,10 +3227,10 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                           p.available+=(r.available||0);
                         });
                         twData=Object.entries(byProj).map(([proj,v])=>{
-                          const avgArea=v.booked>0?(v.bookedArea/v.booked):0;
                           const ratePerSqft=v.bookedArea>0?Math.round(v.bspCr*1e7/v.bookedArea):0;
                           const rateForUnsold=getTargetRate(proj)||ratePerSqft||0;
-                          const availBSP=(v.available||0)*avgArea*rateForUnsold/1e7;
+                          const unsoldArea=realUnsoldAreaByProj[proj]||0;
+                          const availBSP=unsoldArea*rateForUnsold/1e7;
                           const totalBSP=v.bspCr+availBSP;
                           const tsvPct=totalBSP>0?Math.round(v.bspCr/totalBSP*100):0;
                           return {tower:PROJ_SHORT[proj]||proj,
@@ -3225,10 +3240,10 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                         });
                       } else {
                         twData=filtered.map(r=>{
-                          // Total potential BSP = sold BSP + (available units × avg area × TARGET RATE)
-                          const avgArea = r.booked>0 ? (r.bookedArea/r.booked) : 0;
+                          // Total potential BSP = sold BSP + (REAL unsold INVR area × current TARGET RATE)
                           const rateForUnsold = getTargetRate(r.project) || r.pricePerSqft || 0;
-                          const availBSP = (r.available||0)*avgArea*rateForUnsold/1e7;
+                          const unsoldArea = realUnsoldAreaByTower[r.project+'||'+r.tower] || 0;
+                          const availBSP = unsoldArea*rateForUnsold/1e7;
                           const totalBSP = (r.totalBSPCr||0) + availBSP;
                           const tsvPct = totalBSP>0 ? Math.round((r.totalBSPCr||0)/totalBSP*100) : 0;
                           return {tower:r.tower,
