@@ -447,12 +447,17 @@ def main():
     advance_note = (f"\u26a0\ufe0f Advance Money: \u20b9{adv_all_raw} Cr received before SAP demand was raised. "
                     f"GST @5% back-calculated (\u20b9{adv_all_gst} Cr) to show net W/O Tax of \u20b9{adv_all_net} Cr.")
 
+    # ⚠️ LOCKED: raw source data tags a handful of units with the combined label
+    # 'Tower-1 & 2' (not split individually) - tower_acc is keyed by that raw
+    # value, but displayed as 'Tower-1 & 2 (PH)' to flag it as a distinct small
+    # bucket, not a data-entry mistake. Matches the rename in rebuild_overview.py.
     tower_order = ['Tower-1', 'Tower-2', 'Tower-1 & 2']
+    TOWER_DISPLAY = {'Tower-1 & 2': 'Tower-1 & 2 (PH)'}
     towerKpi = []
     for t in tower_order:
         v = tower_acc.get(t, {})
         towerKpi.append({
-            'tower': t,
+            'tower': TOWER_DISPLAY.get(t, t),
             'tlp_dem': round(v.get('tlp_dem', 0) / 1e7, 2),
             'clp_dem': round(v.get('clp_dem', 0) / 1e7, 2),
             'tlp_rec': round(v.get('tlp_rec', 0) / 1e7, 2),

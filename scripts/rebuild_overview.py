@@ -163,15 +163,23 @@ def main():
         # 'booked'/'cancelled'/BSP figures still come from PDRN (transaction-level
         # money data); only unit-count totals are sourced from INVR.
         d['towerData']=[t for t in d['towerData'] if t.get('project')!=P['key']]
+        # ⚠️ LOCKED: Trump's raw PDRN/INVR 'Tower' column has a handful of units
+        # tagged with the combined label 'Tower-1 & 2' (not split into Tower-1 or
+        # Tower-2 individually) - renamed to 'Tower-1 & 2 (PH)' to flag it as a
+        # distinct small bucket, not a data-entry mistake to silently merge into
+        # one of the two real towers. Applied here so it survives future re-runs
+        # of this script (not just a one-off edit to the JSON output).
+        def normTower(t):
+            return 'Tower-1 & 2 (PH)' if t=='Tower-1 & 2' else t
         tw=defaultdict(lambda:dict(booked=0,cancelled=0,avail=0,mgmt=0,invrBooked=0,ba=0.0,ca=0.0,cp=0.0,bsp=0.0))
         for r in iv:
-            t=r['tower']
+            t=normTower(r['tower'])
             if not t: continue
             if r['status']=='Available': tw[t]['avail']+=1
             elif r['status']=='Booked': tw[t]['invrBooked']+=1
             else: tw[t]['mgmt']+=1  # Management Unit or any other INVR status
         for r in pd:
-            t=r['tower'] or 'Unknown'
+            t=normTower(r['tower'] or 'Unknown')
             if r['status']=='ACTIVE': tw[t]['booked']+=1; tw[t]['ba']+=r['superArea']; tw[t]['cp']+=r['carpet']; tw[t]['bsp']+=r['bsp']
             elif r['status']=='CANCELLED': tw[t]['cancelled']+=1; tw[t]['ca']+=r['superArea']
         for t,v in sorted(tw.items()):
