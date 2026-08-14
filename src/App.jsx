@@ -3230,14 +3230,20 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     // reconciles exactly with each project's own Area-card total:
                     //   Edition: 10.61L | Sky Arc: 1.65L | Trump: 3.07L
                     const totalAreaByTower={}, totalAreaByProj={};
+                    // ⚠️ LOCKED: same tower-name normalization as towerData/towerKpi -
+                    // must match here too, since this map is looked up later using
+                    // towerData's (already-renamed) tower field. Without this, the
+                    // renamed 'Tower-1 & 2 (PH)' entry would silently fail to find its
+                    // unsold area (key mismatch against the raw unrenamed value here).
+                    const normTowerUA=t=>t==='Tower-1 & 2'?'Tower-1 & 2 (PH)':t;
                     iF.forEach(r=>{
-                      const tKey=r.project+'||'+(r.tower||'');
+                      const tKey=r.project+'||'+normTowerUA(r.tower||'');
                       totalAreaByTower[tKey]=(totalAreaByTower[tKey]||0)+(r.superArea||0);
                       totalAreaByProj[r.project]=(totalAreaByProj[r.project]||0)+(r.superArea||0);
                     });
                     const bookedAreaByTower={}, bookedAreaByProj={};
                     pAAll.forEach(r=>{
-                      const tKey=r.project+'||'+(r.tower||'');
+                      const tKey=r.project+'||'+normTowerUA(r.tower||'');
                       bookedAreaByTower[tKey]=(bookedAreaByTower[tKey]||0)+(r.superArea||0);
                       bookedAreaByProj[r.project]=(bookedAreaByProj[r.project]||0)+(r.superArea||0);
                     });
@@ -3345,11 +3351,18 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     const FY_COLORS={[FYS[0]]:'#0077b6',[FYS[1]]:'#0097a7',[FYS[2]]:'#1a3a5c'};
                     const FY_LABELS={[FYS[0]]:'FY 2024',[FYS[1]]:'FY 2025',[FYS[2]]:'FY 2026'};
                     const PROJ_SHORT={'SMARTWORLD THE EDITION':'Edition','SMARTWORLD SKY ARC':'Sky Arc','TRUMP RESIDENCES GURGAON':'Trump'};
+                    // ⚠️ LOCKED: same rename as towerData/towerKpi - Trump's raw PDRN
+                    // 'Tower' column has a small bucket literally tagged 'Tower-1 & 2'
+                    // (not split into Tower-1 or Tower-2 individually); this chart groups
+                    // directly by r.tower from live PDRN rows (bypassing the pre-computed
+                    // towerData where the rename was first applied), so it needs its own
+                    // normalization here too.
+                    const normTowerRM=t=>t==='Tower-1 & 2'?'Tower-1 & 2 (PH)':t;
                     const selProjs=filters.project?filters.project.split('||').filter(Boolean):[];
                     const multiProj=selProjs.length!==1;
                     const map={};
                     pAAll.forEach(r=>{
-                      const t=multiProj?(PROJ_SHORT[r.project]||r.project||''):(r.tower||'');
+                      const t=multiProj?(PROJ_SHORT[r.project]||r.project||''):normTowerRM(r.tower||'');
                       const fy=r.bookingFY||'';
                       if(!t||!fy)return;
                       if(!map[t])map[t]={};
@@ -3552,11 +3565,16 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                 {(()=>{
                   const INIT=10;
                   const SHORT={'SMARTWORLD THE EDITION':'THE EDITION','Smartworld Sky Arc':'Sky Arc','Trump Residences Gurgaon':'Residences Gurgaon','Smartworld Le Courtyard':'Le Courtyard','Smartworld Suites':'Suites'};
+                  // ⚠️ LOCKED: same tower-name normalization as towerData/towerKpi/Rate
+                  // Movement chart - this table groups directly from raw.pdrn (raw,
+                  // unrenamed tower values), so needs its own normalization too.
+                  const normTowerBS=t=>t==='Tower-1 & 2'?'Tower-1 & 2 (PH)':t;
                   const tMap={};
                   (raw?.pdrn||[]).forEach(r=>{
-                    const key=r.project+'||'+r.tower;
+                    const tName=normTowerBS(r.tower);
+                    const key=r.project+'||'+tName;
                     if(!r.tower)return;
-                    if(!tMap[key])tMap[key]={project:r.project,tower:r.tower,booked:0,cancelled:0,bookedBsp:0,bookedArea:0,cancelledArea:0};
+                    if(!tMap[key])tMap[key]={project:r.project,tower:tName,booked:0,cancelled:0,bookedBsp:0,bookedArea:0,cancelledArea:0};
                     if(r.status==='ACTIVE'){tMap[key].booked++;tMap[key].bookedBsp+=(r.bsp||0);tMap[key].bookedArea+=(r.superArea||0);}
                     else if(r.status==='CANCELLED'){tMap[key].cancelled++;tMap[key].cancelledArea+=(r.superArea||0);}
                   });
