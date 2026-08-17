@@ -2662,24 +2662,30 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                       })(),
                     }));
                     const data=uMode==='quarterly'?toQuarterly(rawData,'label').map(q=>({...q,isFuture:false,isCurrent:false})):uMode==='yearly'?toYearly(rawData,'label').map(q=>({...q,isFuture:false,isCurrent:false})):rawData;
-                    // ⚠️ LOCKED: Quarterly/Yearly badge fix. toQuarterly/toYearly sums the
-                    // 'projection' field, but that field is intentionally null for already-
-                    // PASSED months (correct for monthly-view rendering - a passed month
-                    // shouldn't show a catch-up badge of its own). Summed naively across a
-                    // quarter/year, this SKIPS every passed month's real target entirely
-                    // (contributes 0, not its real target), undercounting the period's true
-                    // adjusted total. Fix: for the period containing TODAY only, overwrite
-                    // its projection with (period's own correctly-summed real 'target' field
-                    // + the same missedUnits pending catch-up) - e.g. Trump Q2'27: real
-                    // target sum 9 + missed 2 = 11, not the naive 8 (Aug+Sep's projections
-                    // alone, skipping Jul's real target of 3).
-                    if(uMode==='quarterly'||uMode==='yearly'){
+                    // ⚠️ LOCKED: two DIFFERENT badge formulas depending on granularity -
+                    // QUARTERLY keeps the catch-up formula (this period's own target sum +
+                    // missed carry-forward rolled in from last quarter/already-passed
+                    // months) - e.g. Trump Q2'27: real target sum 9 + missed 2 = 11, not
+                    // the naive 8 (Aug+Sep's projections alone, skipping Jul's real target).
+                    // YEARLY switches to "Balance Target" = full-year target - achieved so
+                    // far (both already correctly summed by toYearly) - i.e. how much is
+                    // left to hit this year's AOP, not a catch-up-inflated number. Matches
+                    // the same split already applied to the Area chart. Verified Sky Arc
+                    // FY27: 1.05L target - 0.31L achieved = 0.74L -> displays 0.7L.
+                    if(uMode==='quarterly'){
                       const monNumMap={Jan:1,Feb:2,Mar:3,Apr:4,May:5,Jun:6,Jul:7,Aug:8,Sep:9,Oct:10,Nov:11,Dec:12};
                       const m0=curQMonths[0].match(/([A-Za-z]{3})'(\d{2})/);
                       const mn0=monNumMap[m0[1]]||0, calYr0=parseInt(m0[2]), fyYr0=mn0<=3?calYr0:calYr0+1;
-                      const curPeriodLabel=uMode==='quarterly'?`Q${mn0<=3?4:Math.ceil((mn0-3)/3)}'${String(fyYr0).padStart(2,'0')}`:`FY${String(fyYr0).padStart(2,'0')}`;
+                      const curPeriodLabel=`Q${mn0<=3?4:Math.ceil((mn0-3)/3)}'${String(fyYr0).padStart(2,'0')}`;
                       const curRow=data.find(d=>d.label===curPeriodLabel);
                       if(curRow) curRow.projection=(curRow.target||0)+missedUnits;
+                    } else if(uMode==='yearly'){
+                      const monNumMap={Jan:1,Feb:2,Mar:3,Apr:4,May:5,Jun:6,Jul:7,Aug:8,Sep:9,Oct:10,Nov:11,Dec:12};
+                      const m0=curQMonths[0].match(/([A-Za-z]{3})'(\d{2})/);
+                      const mn0=monNumMap[m0[1]]||0, calYr0=parseInt(m0[2]), fyYr0=mn0<=3?calYr0:calYr0+1;
+                      const curYearLabel=`FY${String(fyYr0).padStart(2,'0')}`;
+                      const curRow=data.find(d=>d.label===curYearLabel);
+                      if(curRow) curRow.projection=Math.max(0,(curRow.target||0)-(curRow.achieved||0));
                     }
                     const parseM=l=>{const p=l.match(/([A-Za-z]{3})'(\d{2})/);if(!p)return'';const mn={Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'};return(p[2]>='90'?'19':'20')+p[2]+'-'+mn[p[1]];};const dataF=(chartMonthFrom&&chartGranularity==='monthly')?data.filter(d=>parseM(d.label)>=chartMonthFrom):data;
                     const dataFinal=chartMonthFrom?dataF:data;
@@ -2709,8 +2715,8 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                           <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.1)" vertical={false}/>
                           <XAxis dataKey="label" tick={({x,y,payload})=>{const d=sl.find(s=>s.label===payload.value);return <text x={x} y={y+10} textAnchor="middle" fontSize={9} fill={d?.isCurrent?T.tealD:d?.isFuture?'#90a4ae':T.textM} fontWeight={d?.isCurrent?900:600}>{payload.value}</text>;}} axisLine={false} tickLine={false}/>
                           <YAxis tick={{fill:T.textM,fontSize:12}} axisLine={false} tickLine={false} width={32}/>
-                          <Tooltip content={({active,payload,label})=>{if(!active||!payload?.length)return null;const d=sl.find(s=>s.label===label);return(<div style={{background:'rgba(255,255,255,0.97)',border:'1px solid rgba(0,151,167,0.3)',borderRadius:10,padding:'8px 12px',fontSize:10}}><p style={{color:T.tealD,fontWeight:800,margin:'0 0 4px'}}>{label}</p>{d?.achieved!=null&&<p style={{color:T.tealD,margin:0,fontWeight:700}}>Achieved: {d.achieved} units</p>}{d?.target!=null&&<p style={{color:'#607d8b',margin:0}}>Target: {d.target} units</p>}{d?.projection!=null&&<p style={{color:'#22c55e',margin:0,fontWeight:700}}>▲ Adjusted Target: {d.projection} units<br/><span style={{fontSize:9,color:'#86efac'}}>incl. catch-up from missed targets</span></p>}</div>);}}/>
-                          <Legend wrapperStyle={{fontSize:10,fontWeight:700}} iconSize={8} payload={[{value:"Target",type:"rect",color:"#b0bec5"},{value:"Achieved",type:"rect",color:'#16a34a'},{value:"Adjusted Target",type:"line",color:"#22c55e"}]}/>
+                          <Tooltip content={({active,payload,label})=>{if(!active||!payload?.length)return null;const d=sl.find(s=>s.label===label);const badgeLabelU=uMode==='yearly'?'Balance Target':'Adjusted Target';return(<div style={{background:'rgba(255,255,255,0.97)',border:'1px solid rgba(0,151,167,0.3)',borderRadius:10,padding:'8px 12px',fontSize:10}}><p style={{color:T.tealD,fontWeight:800,margin:'0 0 4px'}}>{label}</p>{d?.achieved!=null&&<p style={{color:T.tealD,margin:0,fontWeight:700}}>Achieved: {d.achieved} units</p>}{d?.target!=null&&<p style={{color:'#607d8b',margin:0}}>Target: {d.target} units</p>}{d?.projection!=null&&<p style={{color:'#22c55e',margin:0,fontWeight:700}}>▲ {badgeLabelU}: {d.projection} units{uMode!=='yearly'&&<><br/><span style={{fontSize:9,color:'#86efac'}}>incl. catch-up from missed targets</span></>}</p>}</div>);}}/>
+                          <Legend wrapperStyle={{fontSize:10,fontWeight:700}} iconSize={8} payload={[{value:"Target",type:"rect",color:"#b0bec5"},{value:"Achieved",type:"rect",color:'#16a34a'},{value:uMode==='yearly'?"Balance Target":"Adjusted Target",type:"line",color:"#22c55e"}]}/>
                           <Bar dataKey="target" name="Target" fill="#b0bec5" fillOpacity={0.75} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={1000} animationEasing="ease-out">
                             {sl.map((d,i)=><Cell key={'tgt'+i} fill={d.isFuture?'#d3dce0':'#b0bec5'} fillOpacity={d.isFuture?0.5:0.75}/>)}
                             <LabelList dataKey="target" position="insideTop" style={{fill:'#455a64',fontSize:9,fontWeight:700}} formatter={v=>v>0?v:''}/>
