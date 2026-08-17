@@ -25,7 +25,7 @@ const USERS = {
 
 const DASHBOARDS = [
   {key:'sales',    name:'Sales Dashboard',   desc:'Overview · Collections · P&L', icon:'📊', g:'linear-gradient(135deg,#0097a7,#006978)', sessionKey:'sd_auth'},
-  {key:'swsales',  name:'Sales (Overview)',  desc:'Overview + Collections only',  icon:'📈', g:'linear-gradient(135deg,#26a69a,#00796b)', sessionKey:'swsales_auth'},
+  {key:'swsales',  name:'Sales (Overview)',  desc:'Overview only',  icon:'📈', g:'linear-gradient(135deg,#26a69a,#00796b)', sessionKey:'swsales_auth'},
   {key:'cost',     name:'Cost Intelligence', desc:'Cost analytics',               icon:'💰', g:'linear-gradient(135deg,#5c6bc0,#3949ab)', sessionKey:'cost_auth'},
   {key:'cost2',    name:'Cost 2',            desc:'Cost analytics II',            icon:'🧮', g:'linear-gradient(135deg,#7e57c2,#512da8)', sessionKey:'cost2_auth'},
   {key:'crm',      name:'CRM Intelligence',  desc:'Case management',              icon:'🎫', g:'linear-gradient(135deg,#1e88e5,#0d47a1)', sessionKey:'crm_auth'},

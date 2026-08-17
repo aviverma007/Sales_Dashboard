@@ -2031,7 +2031,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
   );
 
   // Tab labels
-  const tabs=overviewOnly?[{k:'overview',l:'Overview'},{k:'collections',l:'Demands & Collections'}]:[{k:'overview',l:'Overview'},{k:'collections',l:'Demands & Collections'},{k:'pnl',l:'P&L'}];
+  const tabs=overviewOnly?[{k:'overview',l:'Overview'}]:[{k:'overview',l:'Overview'},{k:'collections',l:'Demands & Collections'},{k:'pnl',l:'P&L'}];
 
   return (
     <ZoomCtx.Provider value={{ pinnedId, setPinnedId }}>
