@@ -2895,17 +2895,29 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                       bridge:(d.label===lastALbl2?+(areaProjMap2[lastALbl2]/100000).toFixed(2):d.label===nqBLblA2?(monthlyWithTargets.find(r=>r.label===nqBLblA2)?.targetAreaSqft?+(monthlyWithTargets.find(r=>r.label===nqBLblA2).targetAreaSqft/100000).toFixed(2):null):null),
                     }));
                     const data=suMode==='quarterly'?toQuarterly(rawDataA,'label').map(q=>({...q,isFuture:false,isCurrent:false})):suMode==='yearly'?toYearly(rawDataA,'label').map(q=>({...q,isFuture:false,isCurrent:false})):rawDataA;
-                    // ⚠️ LOCKED: same quarterly/yearly badge fix as Chart 1/2 - overwrite
-                    // the current period's projection with its own correctly-summed real
-                    // 'target' + missedArea2, instead of the naive sum that skips passed
-                    // months' real target contribution.
-                    if(suMode==='quarterly'||suMode==='yearly'){
+                    // ⚠️ LOCKED: two DIFFERENT badge formulas depending on granularity -
+                    // QUARTERLY keeps the catch-up formula (this period's own target sum +
+                    // missed carry-forward rolled in from last quarter/already-passed
+                    // months) - matches Chart 1/2's quarterly badge.
+                    // YEARLY switches to "Balance Target" = full-year target - achieved so
+                    // far (both already correctly summed by toYearly, post the compounding-
+                    // rounding fix) - i.e. how much is left to hit this year's AOP, not a
+                    // catch-up-inflated number. Verified: Sky Arc FY27 = 1.05L target -
+                    // 0.31L achieved = 0.74L -> displays as 0.7L, per instruction.
+                    if(suMode==='quarterly'){
                       const monNumMap={Jan:1,Feb:2,Mar:3,Apr:4,May:5,Jun:6,Jul:7,Aug:8,Sep:9,Oct:10,Nov:11,Dec:12};
                       const m0=cqObjA2[0].label.match(/([A-Za-z]{3})'(\d{2})/);
                       const mn0=monNumMap[m0[1]]||0, calYr0=parseInt(m0[2]), fyYr0=mn0<=3?calYr0:calYr0+1;
-                      const curPeriodLabelA=suMode==='quarterly'?`Q${mn0<=3?4:Math.ceil((mn0-3)/3)}'${String(fyYr0).padStart(2,'0')}`:`FY${String(fyYr0).padStart(2,'0')}`;
+                      const curPeriodLabelA=`Q${mn0<=3?4:Math.ceil((mn0-3)/3)}'${String(fyYr0).padStart(2,'0')}`;
                       const curRowA=data.find(d=>d.label===curPeriodLabelA);
                       if(curRowA) curRowA.projection=+((curRowA.target||0)+missedArea2/100000).toFixed(2);
+                    } else if(suMode==='yearly'){
+                      const monNumMap={Jan:1,Feb:2,Mar:3,Apr:4,May:5,Jun:6,Jul:7,Aug:8,Sep:9,Oct:10,Nov:11,Dec:12};
+                      const m0=cqObjA2[0].label.match(/([A-Za-z]{3})'(\d{2})/);
+                      const mn0=monNumMap[m0[1]]||0, calYr0=parseInt(m0[2]), fyYr0=mn0<=3?calYr0:calYr0+1;
+                      const curYearLabelA=`FY${String(fyYr0).padStart(2,'0')}`;
+                      const curRowA=data.find(d=>d.label===curYearLabelA);
+                      if(curRowA) curRowA.projection=Math.max(0,+((curRowA.target||0)-(curRowA.achieved||0)).toFixed(2));
                     }
                     const parseM=l=>{const p=l.match(/([A-Za-z]{3})'(\d{2})/);if(!p)return'';const mn={Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12'};return(p[2]>='90'?'19':'20')+p[2]+'-'+mn[p[1]];};const dataF=(chartMonthFrom&&chartGranularity==='monthly')?data.filter(d=>parseM(d.label)>=chartMonthFrom):data;
                     const dataFinal=chartMonthFrom?dataF:data;
@@ -2942,14 +2954,15 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                           <Tooltip content={({active,payload,label})=>{
                             if(!active||!payload?.length)return null;
                             const d=sl.find(s=>s.label===label);
+                            const badgeLabel=suMode==='yearly'?'Balance Target':'Adjusted Target';
                             return(<div style={{background:'rgba(255,255,255,0.97)',border:'1px solid rgba(0,151,167,0.3)',borderRadius:10,padding:'8px 12px',fontSize:10}}>
                               <p style={{color:T.tealD,fontWeight:800,margin:'0 0 4px'}}>{label}</p>
                               {d?.achieved!=null&&<p style={{color:T.teal,margin:'0 0 2px',fontWeight:700}}>Achieved: {d.achieved} L sqft</p>}
                               {d?.target!=null&&<p style={{color:'#607d8b',margin:'0 0 2px'}}>Target: {d.target} L sqft</p>}
-                              {d?.projection!=null&&<p style={{color:'#22c55e',margin:0,fontWeight:700}}>▲ Adjusted Target: {d.projection} L sqft</p>}
+                              {d?.projection!=null&&<p style={{color:'#22c55e',margin:0,fontWeight:700}}>▲ {badgeLabel}: {d.projection} L sqft</p>}
                             </div>);
                           }}/>
-                          <Legend wrapperStyle={{fontSize:10,fontWeight:700}} iconSize={8} payload={[{value:'Target',type:'rect',color:'#b0bec5'},{value:'Achieved',type:'rect',color:T.teal},{value:'Adjusted Target',type:'line',color:'#22c55e'}]}/>
+                          <Legend wrapperStyle={{fontSize:10,fontWeight:700}} iconSize={8} payload={[{value:'Target',type:'rect',color:'#b0bec5'},{value:'Achieved',type:'rect',color:T.teal},{value:suMode==='yearly'?'Balance Target':'Adjusted Target',type:'line',color:'#22c55e'}]}/>
                           <Bar dataKey="target" name="Target" fill="#b0bec5" fillOpacity={0.75} radius={[3,3,0,0]} barSize={18} isAnimationActive={true} animationDuration={1000}>
                             {sl.map((d,i)=><Cell key={'tgt'+i} fill={d.isFuture?'#d3dce0':'#b0bec5'} fillOpacity={d.isFuture?0.5:0.75}/>)}
                             <LabelList dataKey="target" position="insideTop" style={{fill:'#455a64',fontSize:9,fontWeight:700}} formatter={v=>v>0?v.toString():''}/>
