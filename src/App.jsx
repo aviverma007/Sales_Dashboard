@@ -3878,6 +3878,64 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                   })()}
                 </GC>
 
+                {/* ── CP: Cancelled vs Rebooked & Rebooking % ─────────────── */}
+                <GC style={{padding:16}}>
+                  <SH title="CP Wise Cancellation & Rebooking" sub="Cancelled bookings per channel partner, how many of those units are now active again, and the resulting rebooking rate"/>
+                  {(()=>{
+                    // A cancelled unit counts as "rebooked" if that same unit (matched by
+                    // project+unit no.) currently exists as an ACTIVE booking in PDRN -
+                    // i.e. the cancellation was superseded by a fresh booking, regardless
+                    // of which CP (or direct sale) brought in the replacement buyer.
+                    const activeUnitKeys=new Set(pAAll.map(r=>r.project+'||'+r.unit));
+                    const cpMap={};
+                    pCAll.forEach(r=>{
+                      const b=r.brokerName; if(!b) return;
+                      if(!cpMap[b]) cpMap[b]={name:b,cancelled:0,rebooked:0,cancelledBspCr:0};
+                      cpMap[b].cancelled++;
+                      cpMap[b].cancelledBspCr+=(r.bsp||0)/1e7;
+                      if(activeUnitKeys.has(r.project+'||'+r.unit)) cpMap[b].rebooked++;
+                    });
+                    const all=Object.values(cpMap)
+                      .map(r=>({...r,cancelledBspCr:+r.cancelledBspCr.toFixed(1),stillVacant:r.cancelled-r.rebooked,rebookPct:r.cancelled>0?Math.round(r.rebooked/r.cancelled*100):0}))
+                      .sort((a,b)=>b.cancelled-a.cancelled);
+                    if(!all.length) return <p style={{fontSize:12,color:T.textL,textAlign:'center',padding:30}}>No cancelled bookings for the current filter.</p>;
+                    const WIN=10;
+                    const slice=all.slice(0,WIN);
+                    return(
+                      <ResponsiveContainer width="100%" height={300}>
+                        <ComposedChart data={slice} margin={{top:28,right:36,bottom:70,left:0}} barSize={22} barGap={2}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,60,100,0.08)" vertical={false}/>
+                          <XAxis dataKey="name" tick={{fill:T.textM,fontSize:9,fontWeight:600}} axisLine={false} tickLine={false} angle={-35} textAnchor="end" interval={0} height={80} tickFormatter={v=>v?.length>18?v.slice(0,18)+'…':v}/>
+                          <YAxis yAxisId="l" tick={{fill:T.textM,fontSize:11}} axisLine={false} tickLine={false} width={30} label={{value:'Units',angle:-90,position:'insideLeft',style:{fill:T.textM,fontWeight:700,fontSize:10}}}/>
+                          <YAxis yAxisId="r" orientation="right" tickFormatter={v=>v+'%'} domain={[0,100]} tick={{fill:'#7c3aed',fontSize:9}} axisLine={false} tickLine={false} width={30}/>
+                          <Tooltip content={({active,payload,label})=>{
+                            if(!active||!payload?.length) return null;
+                            const d=slice.find(r=>r.name===label)||{};
+                            return(<div style={{background:'#fff',border:'1px solid #e5e7eb',borderRadius:8,padding:'8px 12px',fontSize:11,boxShadow:'0 2px 8px rgba(0,0,0,0.1)'}}>
+                              <p style={{margin:'0 0 4px',fontWeight:800,color:T.navy}}>{label}</p>
+                              <p style={{margin:'0 0 2px',color:T.red}}>Cancelled: <strong>{d.cancelled}</strong> (₹{d.cancelledBspCr} Cr)</p>
+                              <p style={{margin:'0 0 2px',color:T.teal}}>Rebooked: <strong>{d.rebooked}</strong></p>
+                              <p style={{margin:'0 0 2px',color:T.amber}}>Still Vacant: <strong>{d.stillVacant}</strong></p>
+                              <p style={{margin:0,color:'#7c3aed',fontWeight:700}}>Rebooking Rate: {d.rebookPct}%</p>
+                            </div>);
+                          }}/>
+                          <Legend wrapperStyle={{fontSize:10,fontWeight:700}} iconSize={8}/>
+                          <Bar yAxisId="l" dataKey="rebooked" name="Rebooked" stackId="c" fill={T.teal} radius={[0,0,0,0]}/>
+                          <Bar yAxisId="l" dataKey="stillVacant" name="Still Vacant" stackId="c" fill={T.red} fillOpacity={0.75} radius={[3,3,0,0]}>
+                            <LabelList content={({x,y,width,index})=>{
+                              const d=slice[index]; if(!d||!d.cancelled) return null;
+                              return <text x={x+width/2} y={y-6} textAnchor="middle" fill={T.red} fontSize={9} fontWeight={800}>{d.cancelled}</text>;
+                            }}/>
+                          </Bar>
+                          <Line yAxisId="r" type="monotone" dataKey="rebookPct" name="Rebooking %" stroke="#7c3aed" strokeWidth={2.5} dot={{r:4,fill:'#7c3aed',stroke:'#fff',strokeWidth:1.5}} activeDot={{r:6}}>
+                            <LabelList dataKey="rebookPct" position="top" offset={14} style={{fill:'#7c3aed',fontSize:9,fontWeight:800}} formatter={v=>v+'%'}/>
+                          </Line>
+                        </ComposedChart>
+                      </ResponsiveContainer>
+                    );
+                  })()}
+                </GC>
+
           </div>{/* end CP wise grid */}
               </>)}
 
