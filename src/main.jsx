@@ -82,6 +82,11 @@ function Portal() {
     if (sessionStorage.getItem('salesintel_auth') === '1') return 'salesintel';
     return null;
   });
+  // Tracks whether the CURRENT dashboard (profile) was opened from the Admin
+  // Console, so the dashboard's own header can (a) make its logo a "back to
+  // menu" button instead of a static logo, and (b) hide its own logout button
+  // - only Admin gets this treatment; a normal direct login keeps its logout.
+  const [fromAdmin, setFromAdmin] = useState(false);
 
   const [u, setU]       = useState('');
   const [p, setP]       = useState('');
@@ -100,16 +105,19 @@ function Portal() {
     }
   };
 
-  if (profile === 'sales')   return <App />;
-  if (profile === 'swsales') return <App overviewOnly={true} />;
-  if (profile === 'cost')    return <CostApp />;
-  if (profile === 'cost2') return <Cost2App />;
-  if (profile === 'crm')   return <CRMApp />;
-  if (profile === 'prpo')  return <PRPOApp />;
-  if (profile === 'costbif') return <CostBifurcationApp />;
-  if (profile === 'prjourney') return <PRJourneyApp />;
-  if (profile === 'salesintel') return <SmartworldSuiteApp />;
-  if (profile === 'admin') return <AdminMenu onOpen={setProfile} onLogout={()=>{sessionStorage.removeItem('admin_auth');window.location.reload();}} />;
+  const openFromAdmin = (key) => { setFromAdmin(true); setProfile(key); };
+  const backToAdminMenu = () => { setProfile('admin'); };
+
+  if (profile === 'sales')   return <App overviewOnly={false} onBackToMenu={fromAdmin?backToAdminMenu:undefined} hideLogout={fromAdmin}/>;
+  if (profile === 'swsales') return <App overviewOnly={true} onBackToMenu={fromAdmin?backToAdminMenu:undefined} hideLogout={fromAdmin}/>;
+  if (profile === 'cost')    return <CostApp onBackToMenu={fromAdmin?backToAdminMenu:undefined} hideLogout={fromAdmin}/>;
+  if (profile === 'cost2') return <Cost2App onBackToMenu={fromAdmin?backToAdminMenu:undefined} hideLogout={fromAdmin}/>;
+  if (profile === 'crm')   return <CRMApp onBackToMenu={fromAdmin?backToAdminMenu:undefined} hideLogout={fromAdmin}/>;
+  if (profile === 'prpo')  return <PRPOApp onBackToMenu={fromAdmin?backToAdminMenu:undefined} hideLogout={fromAdmin}/>;
+  if (profile === 'costbif') return <CostBifurcationApp onBackToMenu={fromAdmin?backToAdminMenu:undefined} hideLogout={fromAdmin}/>;
+  if (profile === 'prjourney') return <PRJourneyApp onBackToMenu={fromAdmin?backToAdminMenu:undefined} hideLogout={fromAdmin}/>;
+  if (profile === 'salesintel') return <SmartworldSuiteApp onBackToMenu={fromAdmin?backToAdminMenu:undefined} hideLogout={fromAdmin}/>;
+  if (profile === 'admin') return <AdminMenu onOpen={openFromAdmin} onLogout={()=>{sessionStorage.removeItem('admin_auth');window.location.reload();}} />;
 
   return (
     <div style={{minHeight:'100vh',backgroundImage:'url(/bg.jpg)',backgroundSize:'cover',backgroundPosition:'center',display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'Inter,sans-serif'}}>

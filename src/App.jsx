@@ -404,6 +404,21 @@ const SH = ({title,sub,light=false,compact=false}) => (
   </div>
 );
 
+// ─── COLLAPSIBLE SECTION HEADER (single-pager Overview) ──────────────────────
+// Wraps the existing colored section-header bar pattern with a click-to-toggle
+// chevron. `open` state is owned by the caller (App keeps them all collapsed
+// by default except the top KPI row, which never uses this component).
+const CollapsibleSH = ({icon,title,g,shadowColor,open,onToggle}) => (
+  <div style={{display:'flex',alignItems:'center',gap:12,cursor:'pointer'}} onClick={onToggle}>
+    <div style={{background:g,borderRadius:10,padding:'5px 18px',display:'flex',alignItems:'center',gap:8,boxShadow:`0 2px 10px ${shadowColor}`}}>
+      <span style={{fontSize:13}}>{icon}</span>
+      <span style={{fontSize:11,fontWeight:900,color:'#fff',textTransform:'uppercase',letterSpacing:1}}>{title}</span>
+    </div>
+    <div style={{flex:1,height:1,background:`${shadowColor}`,borderRadius:1}}/>
+    <span style={{fontSize:13,color:T.tealD,transition:'transform 0.2s',transform:open?'rotate(180deg)':'rotate(0deg)',flexShrink:0}}>▾</span>
+  </div>
+);
+
 // ─── FILTER SELECT ────────────────────────────────────────────────────────────
 const FSel = ({label,options,value,onChange,multi=false,openId='',activeOpen=null,setActiveOpen=()=>{},mandatory=false,disabled=false}) => {
   const open    = !disabled&&activeOpen===openId;
@@ -1507,8 +1522,8 @@ const PnLTab = ({T, GC, SH, filters, sf, raw}) => {
   );
 };
 
-export default function App({overviewOnly=false}) {
-  return <AppErrorBoundary><AppInner overviewOnly={overviewOnly}/></AppErrorBoundary>;
+export default function App({overviewOnly=false, onBackToMenu, hideLogout}) {
+  return <AppErrorBoundary><AppInner overviewOnly={overviewOnly} onBackToMenu={onBackToMenu} hideLogout={hideLogout}/></AppErrorBoundary>;
 }
 
 
@@ -1518,7 +1533,7 @@ const getProjectFiles = (project) => {
   return {dapp:'/data/dapp_kpi.json', pnl:'/data/pnl_data.json'};
 };
 
-function AppInner({overviewOnly=false}) {
+function AppInner({overviewOnly=false, onBackToMenu, hideLogout}) {
   const [authed, setAuthed] = useState(()=>sessionStorage.getItem('sd_auth')==='1');
   const [raw,setRaw]=useState(null);
   const [loading,setLoading]=useState(true);
@@ -1554,6 +1569,13 @@ function AppInner({overviewOnly=false}) {
   const [chartGranularity,setChartGranularity]=useState('monthly');
   const uMode=chartGranularity, tsvMode=chartGranularity, rMode=chartGranularity, suMode=chartGranularity;
   const [cancelTab,setCancelTab]=useState('overview');
+  // Single-pager Overview: every section below the top KPI row starts
+  // collapsed and expands on click. "Sales Overview" (KPI row) itself is
+  // never collapsible - it's always visible.
+  const [secOpen,setSecOpen]=useState({trend:false,towerType:false,cp:false,cancelled:false});
+  const toggleSec=(k)=>setSecOpen(s=>({...s,[k]:!s[k]}));
+  // Show/hide the tab selector + filter bar entirely, to reclaim vertical space
+  const [showFilterBar,setShowFilterBar]=useState(true);
   const [showTowerType,setShowTowerType]=useState(false);
   // Chart month range slider (independent of top filters, only affects the 4 Sales & Pricing Trend charts)
   const ALL_CHART_MONTHS=useMemo(()=>{
@@ -2073,8 +2095,11 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
       {/* ── HEADER ── */}
       <header style={{position:'sticky',top:0,zIndex:200,background:'rgba(255,255,255,0.95)',WebkitBackdropFilter:'blur(24px)',borderBottom:'1px solid rgba(255,255,255,0.9)',boxShadow:'0 2px 20px rgba(0,60,100,0.12)'}}>
         <div style={{maxWidth:1440,margin:'0 auto',padding:'0 24px',display:'flex',alignItems:'center',justifyContent:'space-between',height:54}}>
-          {/* Logo */}
-          <div style={{display:'flex',alignItems:'center',gap:12}}>
+          {/* Logo — clickable "back to menu" button when opened from the Admin Console */}
+          <div
+            onClick={onBackToMenu}
+            title={onBackToMenu?'Back to dashboard menu':undefined}
+            style={{display:'flex',alignItems:'center',gap:12,cursor:onBackToMenu?'pointer':'default'}}>
             <div style={{width:38,height:38,borderRadius:9,background:'#0d1f3c',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 4px 14px rgba(0,30,80,0.3)',flexShrink:0,overflow:'hidden'}}>
               <img src="/swd-logo.png" alt="SWD" style={{width:26,height:26,objectFit:'contain'}}/>
             </div>
@@ -2085,6 +2110,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
           </div>
 
           {/* Tabs */}
+          {showFilterBar && (
           <div style={{display:'flex',gap:4,background:'rgba(0,100,140,0.08)',borderRadius:10,padding:4}}>
             {tabs.map(t=>(
               <button key={t.k} className="tab" onClick={()=>setTab(t.k)} style={{
@@ -2095,6 +2121,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
               }}>{t.l}</button>
             ))}
           </div>
+          )}
 
           {/* Right */}
           <div style={{display:'flex',alignItems:'center',gap:14}}>
@@ -2104,13 +2131,20 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
               <span style={{color:T.green,fontSize:10,fontWeight:700}}>LIVE</span>
             </div>
             <span style={{color:T.textM,fontSize:11,fontWeight:700}}>{new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})}</span>
-            <button onClick={()=>{['sd_auth','swsales_auth','cost_auth','cost2_auth','crm_auth','prpo_auth','costbif_auth'].forEach(k=>sessionStorage.removeItem(k));window.location.reload();}} style={{display:'flex',alignItems:'center',gap:6,padding:'6px 14px',borderRadius:10,border:'1px solid rgba(200,40,40,0.25)',background:'rgba(211,47,47,0.07)',cursor:'pointer',fontSize:11,fontWeight:700,color:T.red,fontFamily:'Inter,sans-serif',transition:'all 0.15s'}} onMouseOver={e=>{e.currentTarget.style.background='rgba(211,47,47,0.14)';}} onMouseOut={e=>{e.currentTarget.style.background='rgba(211,47,47,0.07)';}}>
-              🔒 Logout
+            <button onClick={()=>setShowFilterBar(v=>!v)} title={showFilterBar?'Hide tabs & filters':'Show tabs & filters'} style={{display:'flex',alignItems:'center',gap:5,padding:'6px 12px',borderRadius:10,border:'1px solid rgba(0,100,140,0.18)',background:'rgba(0,151,167,0.06)',cursor:'pointer',fontSize:11,fontWeight:700,color:T.tealD,fontFamily:'Inter,sans-serif'}}>
+              <span style={{fontSize:11,transition:'transform 0.2s',display:'inline-block',transform:showFilterBar?'rotate(180deg)':'rotate(0deg)'}}>▾</span>
+              {showFilterBar?'Hide Filters':'Show Filters'}
             </button>
+            {!hideLogout && (
+              <button onClick={()=>{['sd_auth','swsales_auth','cost_auth','cost2_auth','crm_auth','prpo_auth','costbif_auth'].forEach(k=>sessionStorage.removeItem(k));window.location.reload();}} style={{display:'flex',alignItems:'center',gap:6,padding:'6px 14px',borderRadius:10,border:'1px solid rgba(200,40,40,0.25)',background:'rgba(211,47,47,0.07)',cursor:'pointer',fontSize:11,fontWeight:700,color:T.red,fontFamily:'Inter,sans-serif',transition:'all 0.15s'}} onMouseOver={e=>{e.currentTarget.style.background='rgba(211,47,47,0.14)';}} onMouseOut={e=>{e.currentTarget.style.background='rgba(211,47,47,0.07)';}}>
+                🔒 Logout
+              </button>
+            )}
           </div>
         </div>
 
         {/* Filter strip */}
+        {showFilterBar && (
         <div onClick={e=>e.stopPropagation()} style={{maxWidth:1440,margin:'0 auto',padding:'4px 24px 8px',display:'flex',alignItems:'flex-end',gap:10,flexWrap:'wrap'}}>
           <FSel label="Project"    options={availProj}                           value={filters.project}  onChange={v=>sf('project',v)}   multi={true} openId="project"    activeOpen={activeFilter} setActiveOpen={setActiveFilter} mandatory={false}/>
           <FSel label="Fin. Year"  options={fo.financialYears||[]}               value={filters.fy}       onChange={v=>sf('fy',v)}         multi={true} openId="fy"         activeOpen={activeFilter} setActiveOpen={setActiveFilter}/>
@@ -2126,7 +2160,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
             </button>
           )}
         </div>
-
+        )}
         {/* ── PROJECT SNAPSHOT BAR ── */}
         {(()=>{
           const meta=raw?.projectMeta||{};
@@ -2498,13 +2532,11 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
             {/* ROW 2: SALES & PRICING TREND — Target vs Achieved */}
             <div style={{display:'flex',flexDirection:'column',gap:12}}>
 
-              {/* ── SECTION: Sales & Pricing Trend ── */}
-              <div style={{display:'flex',alignItems:'center',gap:12}}>
-                <div style={{background:'linear-gradient(135deg,#b45309,#f59e0b)',borderRadius:10,padding:'5px 18px',display:'flex',alignItems:'center',gap:8,boxShadow:'0 2px 10px rgba(245,158,11,0.3)'}}>
-                  <span style={{fontSize:13}}>📈</span>
-                  <span style={{fontSize:11,fontWeight:900,color:'#fff',textTransform:'uppercase',letterSpacing:1}}>Sales & Pricing Trend</span>
-                </div>
-                <div style={{flex:1,height:1,background:'rgba(245,158,11,0.15)',borderRadius:1}}/>
+              {/* ── SECTION: Sales & Pricing Trend (collapsible) ── */}
+              <CollapsibleSH icon="📈" title="Sales & Pricing Trend" g="linear-gradient(135deg,#b45309,#f59e0b)" shadowColor="rgba(245,158,11,0.3)" open={secOpen.trend} onToggle={()=>toggleSec('trend')}/>
+              {secOpen.trend && (<>
+              <div style={{display:'flex',alignItems:'center',gap:12,marginTop:-4}}>
+                <div style={{flex:1}}/>
 
                 {!showTowerType&&(
                   <div style={{display:'flex',alignItems:'center',border:'1.5px solid rgba(0,151,167,0.3)',borderRadius:20,padding:2,background:'#fff'}}>
@@ -3637,15 +3669,11 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                   </>);
                 })()}
               </GC>
+              </>)}
 
-              {/* ── SECTION: CP Wise Sales — always visible ── */}
-              <div style={{display:'flex',alignItems:'center',gap:10,margin:'16px 0 10px',animation:'flipIn 0.7s cubic-bezier(0.4,0,0.2,1) forwards'}}>
-                <div style={{background:'linear-gradient(135deg,#1a3a5c,#2a5a8c)',borderRadius:10,padding:'5px 18px',display:'flex',alignItems:'center',gap:8,boxShadow:'0 2px 10px rgba(26,58,92,0.3)'}}>
-                  <span style={{fontSize:13}}>🤝</span>
-                  <span style={{fontSize:11,fontWeight:900,color:'#fff',textTransform:'uppercase',letterSpacing:1}}>CP Wise Sales</span>
-                </div>
-                <div style={{flex:1,height:1,background:'rgba(26,58,92,0.15)',borderRadius:1}}/>
-              </div>
+              {/* ── SECTION: CP Wise Sales (collapsible) ── */}
+              <CollapsibleSH icon="🤝" title="CP Wise Sales" g="linear-gradient(135deg,#1a3a5c,#2a5a8c)" shadowColor="rgba(26,58,92,0.3)" open={secOpen.cp} onToggle={()=>toggleSec('cp')}/>
+              {secOpen.cp && (<>
               <div style={{display:'flex',flexDirection:'column',gap:12}}>
 
                 {/* ── CP: Project-wise Bifurcation (shown only when specific CP(s) selected) ───── */}
@@ -3851,11 +3879,14 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                 </GC>
 
           </div>{/* end CP wise grid */}
+              </>)}
 
             </div>{/* end ROW 2 */}
 
-            {/* ══ CANCELLED UNIT STATUS — REBOOKED vs VACANT ══ */}
-            <GC style={{padding:16}}>
+            {/* ══ CANCELLED UNIT STATUS — REBOOKED vs VACANT (collapsible) ══ */}
+            <CollapsibleSH icon="🚫" title="Cancelled Unit Status" g="linear-gradient(135deg,#455a64,#607d8b)" shadowColor="rgba(69,90,100,0.3)" open={secOpen.cancelled} onToggle={()=>toggleSec('cancelled')}/>
+            {secOpen.cancelled && (
+            <GC style={{padding:16,marginTop:10}}>
               <SH title="Cancelled Unit Status" sub="Rebooked · Still Vacant · Vacancy Duration"/>
               {(()=>{
                 const {summary,buckets,byProject,vacantUnits}=cancelledUnitStatus;
@@ -4006,6 +4037,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                 );
               })()}
             </GC>
+            )}
 
 
 
