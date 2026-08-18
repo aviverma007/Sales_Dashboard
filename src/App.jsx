@@ -3612,7 +3612,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
 
               {/* Tower-wise Booking Status table */}
               <GC style={{padding:16,marginTop:4,display:showTowerType?'block':'none',animation:showTowerType?'flipIn 0.8s cubic-bezier(0.4,0,0.2,1) forwards':'none'}}>
-                <SH title="Tower-wise Booking Status" sub="Booked · Cancelled · Booked Area (L sqft) · Avg Price/sq ft"/>
+                <SH title="Tower-wise Booking Status" sub="Booked · Cancelled/Rebooked · Booked Area (L sqft) · Avg Price/sq ft"/>
                 {(()=>{
                   const INIT=10;
                   const SHORT={'SMARTWORLD THE EDITION':'THE EDITION','Smartworld Sky Arc':'Sky Arc','Trump Residences Gurgaon':'Residences Gurgaon','Smartworld Le Courtyard':'Le Courtyard','Smartworld Suites':'Suites'};
@@ -3620,14 +3620,21 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                   // Movement chart - this table groups directly from raw.pdrn (raw,
                   // unrenamed tower values), so needs its own normalization too.
                   const normTowerBS=t=>t==='Tower-1 & 2'?'Tower-1 & 2 (PH)':t;
+                  // Same "rebooked" definition as the CP Wise Cancellation & Rebooking
+                  // chart: a cancelled unit counts as rebooked if that same unit (by
+                  // project + unit no.) currently exists as an ACTIVE booking in PDRN.
+                  const activeUnitKeysBS=new Set((raw?.pdrn||[]).filter(r=>r.status==='ACTIVE').map(r=>r.project+'||'+r.unit));
                   const tMap={};
                   (raw?.pdrn||[]).forEach(r=>{
                     const tName=normTowerBS(r.tower);
                     const key=r.project+'||'+tName;
                     if(!r.tower)return;
-                    if(!tMap[key])tMap[key]={project:r.project,tower:tName,booked:0,cancelled:0,bookedBsp:0,bookedArea:0,cancelledArea:0};
+                    if(!tMap[key])tMap[key]={project:r.project,tower:tName,booked:0,cancelled:0,rebooked:0,bookedBsp:0,bookedArea:0,cancelledArea:0};
                     if(r.status==='ACTIVE'){tMap[key].booked++;tMap[key].bookedBsp+=(r.bsp||0);tMap[key].bookedArea+=(r.superArea||0);}
-                    else if(r.status==='CANCELLED'){tMap[key].cancelled++;tMap[key].cancelledArea+=(r.superArea||0);}
+                    else if(r.status==='CANCELLED'){
+                      tMap[key].cancelled++;tMap[key].cancelledArea+=(r.superArea||0);
+                      if(activeUnitKeysBS.has(r.project+'||'+r.unit)) tMap[key].rebooked++;
+                    }
                   });
                   const sp=filters.project?filters.project.split('||').filter(Boolean):[];
                   const rows=Object.values(tMap).filter(r=>sp.length===0||sp.includes(r.project)).map(r=>({...r,successPct:r.booked+r.cancelled>0?Math.round(r.booked/(r.booked+r.cancelled)*100):0,avgRate:r.bookedArea>0?Math.round(r.bookedBsp/r.bookedArea):0,totalSalesCr:+(r.bookedBsp/1e7).toFixed(1)})).sort((a,b)=>b.booked-a.booked);
@@ -3641,7 +3648,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                           <th style={{...TH,textAlign:'left'}}>Project</th>
                           <th style={{...TH,textAlign:'left'}}>Tower</th>
                           <th style={{...TH,textAlign:'right'}}>Booked</th>
-                          <th style={{...TH,textAlign:'right'}}>Cancelled</th>
+                          <th style={{...TH,textAlign:'right'}}>Cancelled/Rebooked</th>
                           <th style={{...TH,textAlign:'center',minWidth:110}}>Success %</th>
                           <th style={{...TH,textAlign:'right'}}>Booked Area</th>
                           <th style={{...TH,textAlign:'right'}}>Cancelled Area</th>
@@ -3654,7 +3661,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                               <td style={{...TD,color:T.textM,fontWeight:600}}>{SHORT[r.project]||r.project}</td>
                               <td style={{...TD,fontWeight:800,color:T.navy}}>{r.tower}</td>
                               <td style={{...TD,textAlign:'right'}}><span style={{display:'inline-flex',alignItems:'center',gap:4,justifyContent:'flex-end'}}><span style={{width:8,height:8,borderRadius:'50%',background:T.teal,flexShrink:0}}/>{r.booked}</span></td>
-                              <td style={{...TD,textAlign:'right'}}><span style={{display:'inline-flex',alignItems:'center',gap:4,justifyContent:'flex-end'}}><span style={{width:8,height:8,borderRadius:'50%',background:'#ef4444',flexShrink:0}}/><span style={{color:'#ef4444',fontWeight:700}}>{r.cancelled}</span></span></td>
+                              <td style={{...TD,textAlign:'right'}}><span style={{display:'inline-flex',alignItems:'center',gap:4,justifyContent:'flex-end'}}><span style={{width:8,height:8,borderRadius:'50%',background:'#ef4444',flexShrink:0}}/><span style={{color:'#ef4444',fontWeight:700}}>{r.cancelled}</span><span style={{color:T.textL,fontWeight:600}}>/</span><span style={{color:T.teal,fontWeight:700}}>{r.rebooked}</span></span></td>
                               <td style={{...TD}}><div style={{display:'flex',alignItems:'center',gap:6}}><div style={{flex:1,height:6,background:'rgba(0,100,140,0.1)',borderRadius:3,overflow:'hidden'}}><div style={{width:r.successPct+'%',height:'100%',background:r.successPct>=90?'#22c55e':r.successPct>=80?T.teal:'#f59e0b',borderRadius:3}}/></div><span style={{fontSize:10,fontWeight:800,color:r.successPct>=90?'#16a34a':r.successPct>=80?T.tealD:'#b45309',minWidth:28}}>{r.successPct}%</span></div></td>
                               <td style={{...TD,textAlign:'right',color:T.textM}}>{(r.bookedArea/100000).toFixed(2)} L sqft</td>
                               <td style={{...TD,textAlign:'right',color:T.textM}}>{r.cancelledArea.toLocaleString('en-IN')} sq ft</td>
