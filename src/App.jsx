@@ -1572,7 +1572,7 @@ function AppInner({overviewOnly=false, onBackToMenu, hideLogout}) {
   // Single-pager Overview: every section below the top KPI row starts
   // collapsed and expands on click. "Sales Overview" (KPI row) itself is
   // never collapsible - it's always visible.
-  const [secOpen,setSecOpen]=useState({trend:false,towerType:false,cp:false,cancelled:false});
+  const [secOpen,setSecOpen]=useState({trend:true,towerType:false,cp:false,cancelled:false});
   const toggleSec=(k)=>setSecOpen(s=>({...s,[k]:!s[k]}));
   // Show/hide the tab selector + filter bar entirely, to reclaim vertical space
   const [showFilterBar,setShowFilterBar]=useState(true);
