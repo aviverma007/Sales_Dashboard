@@ -203,8 +203,8 @@ const TableView = ({title, headers, rows, onFlipBack}) => (
       <span style={{fontSize:15,fontWeight:900,color:T.tealD,textTransform:'uppercase',letterSpacing:0.5}}>{title}</span>
       <button onClick={onFlipBack} style={{padding:'3px 10px',borderRadius:16,border:'1px solid rgba(0,151,167,0.3)',background:T.teal,color:'#fff',fontSize:10,fontWeight:800,cursor:'pointer'}}>📊 Chart</button>
     </div>
-    <div style={{flex:1,overflowY:'auto'}}>
-      <table style={{width:'100%',borderCollapse:'collapse',fontSize:10}}>
+    <div style={{flex:1,overflowY:'auto',overflowX:'auto'}}>
+      <table style={{width:'100%',borderCollapse:'collapse',fontSize:10,minWidth:420}}>
         <thead><tr style={{borderBottom:'2px solid rgba(0,151,167,0.15)'}}>{headers.map((h,i)=><th key={i} style={{padding:'5px 8px',textAlign:'left',fontSize:10,fontWeight:800,color:'#546e7a',textTransform:'uppercase',whiteSpace:'nowrap'}}>{h}</th>)}</tr></thead>
         <tbody>{rows.map((row,i)=><tr key={i} style={{borderBottom:'1px solid rgba(0,100,140,0.06)'}}>{row.map((cell,j)=><td key={j} style={{padding:'5px 8px',color:'#0d2137',fontWeight:600}}>{cell}</td>)}</tr>)}</tbody>
       </table>
@@ -428,14 +428,14 @@ const FSel = ({label,options,value,onChange,multi=false,openId='',activeOpen=nul
     const vals=value?value.split('||').filter(Boolean):[];
     const toggle=v=>{const n=vals.includes(v)?vals.filter(x=>x!==v):[...vals,v];onChange(n.join('||'));};
     return(
-      <div style={{display:'flex',flexDirection:'column',gap:2,position:'relative'}}>
+      <div className="fsel-wrap" style={{display:'flex',flexDirection:'column',gap:2,position:'relative'}}>
         <label style={{color:T.textM,fontSize:10,fontWeight:800,letterSpacing:1,textTransform:'uppercase'}}>{label}</label>
-        <div onClick={setOpen} style={{background:disabled?'rgba(0,0,0,0.04)':'rgba(255,255,255,0.88)',border:`1px solid ${disabled?'rgba(0,60,100,0.1)':vals.length?T.teal:'rgba(0,100,140,0.25)'}`,borderRadius:7,color:disabled?'rgba(100,110,120,0.5)':vals.length?T.tealD:T.textM,padding:'5px 10px',fontSize:12,fontFamily:'Inter,sans-serif',minWidth:120,cursor:disabled?'not-allowed':'pointer',fontWeight:vals.length?600:400,userSelect:'none',display:'flex',justifyContent:'space-between',alignItems:'center',gap:6,opacity:disabled?0.6:1}}>
+        <div className="fsel-trigger" onClick={setOpen} style={{background:disabled?'rgba(0,0,0,0.04)':'rgba(255,255,255,0.88)',border:`1px solid ${disabled?'rgba(0,60,100,0.1)':vals.length?T.teal:'rgba(0,100,140,0.25)'}`,borderRadius:7,color:disabled?'rgba(100,110,120,0.5)':vals.length?T.tealD:T.textM,padding:'5px 10px',fontSize:12,fontFamily:'Inter,sans-serif',minWidth:120,cursor:disabled?'not-allowed':'pointer',fontWeight:vals.length?600:400,userSelect:'none',display:'flex',justifyContent:'space-between',alignItems:'center',gap:6,opacity:disabled?0.6:1}}>
           <span style={{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:130}}>{disabled?'Locked':vals.length?vals.join(', '):'All'}</span>
           <span style={{fontSize:8,opacity:0.6}}>{disabled?'🔒':open?'▲':'▼'}</span>
         </div>
         {open&&(
-          <div onClick={e=>e.stopPropagation()} style={{position:'absolute',top:'100%',left:0,zIndex:999,background:'#fff',border:`1px solid ${T.teal}30`,borderRadius:8,boxShadow:'0 8px 24px rgba(0,80,120,0.15)',minWidth:200,maxHeight:260,overflowY:'auto',padding:4,marginTop:2}}>
+          <div className="fsel-panel" onClick={e=>e.stopPropagation()} style={{position:'absolute',top:'100%',left:0,zIndex:999,background:'#fff',border:`1px solid ${T.teal}30`,borderRadius:8,boxShadow:'0 8px 24px rgba(0,80,120,0.15)',minWidth:200,maxHeight:260,overflowY:'auto',padding:4,marginTop:2}}>
             <div style={{display:'flex',gap:4,padding:'5px 8px 6px',borderBottom:'1px solid rgba(0,151,167,0.1)',marginBottom:3}}>
               <button onClick={()=>onChange(options.join('||'))} style={{flex:1,padding:'3px 8px',borderRadius:6,border:`1px solid ${T.teal}40`,background:`${T.teal}0d`,color:T.tealD,fontSize:10,fontWeight:800,cursor:'pointer'}}>✓ All</button>
               {!mandatory&&<button onClick={()=>onChange('')} style={{flex:1,padding:'3px 8px',borderRadius:6,border:'1px solid rgba(200,40,40,0.3)',background:'rgba(200,40,40,0.06)',color:'#c62828',fontSize:10,fontWeight:800,cursor:'pointer'}}>✕ Clear</button>}
@@ -463,14 +463,14 @@ const FSel = ({label,options,value,onChange,multi=false,openId='',activeOpen=nul
 
   // Single select — styled custom dropdown
   return(
-    <div style={{display:'flex',flexDirection:'column',gap:2,position:'relative'}}>
+    <div className="fsel-wrap" style={{display:'flex',flexDirection:'column',gap:2,position:'relative'}}>
       <label style={{color:T.textM,fontSize:10,fontWeight:800,letterSpacing:1,textTransform:'uppercase'}}>{label}</label>
-      <div onClick={setOpen} style={{background:disabled?'rgba(0,0,0,0.04)':'rgba(255,255,255,0.88)',border:`1px solid ${disabled?'rgba(0,60,100,0.1)':value?T.teal:'rgba(0,100,140,0.25)'}`,borderRadius:7,color:disabled?'rgba(100,110,120,0.5)':value?T.tealD:T.textM,padding:'5px 10px',fontSize:12,fontFamily:'Inter,sans-serif',minWidth:140,cursor:disabled?'not-allowed':'pointer',fontWeight:value?600:400,userSelect:'none',display:'flex',justifyContent:'space-between',alignItems:'center',gap:6,opacity:disabled?0.6:1}}>
+      <div className="fsel-trigger" onClick={setOpen} style={{background:disabled?'rgba(0,0,0,0.04)':'rgba(255,255,255,0.88)',border:`1px solid ${disabled?'rgba(0,60,100,0.1)':value?T.teal:'rgba(0,100,140,0.25)'}`,borderRadius:7,color:disabled?'rgba(100,110,120,0.5)':value?T.tealD:T.textM,padding:'5px 10px',fontSize:12,fontFamily:'Inter,sans-serif',minWidth:140,cursor:disabled?'not-allowed':'pointer',fontWeight:value?600:400,userSelect:'none',display:'flex',justifyContent:'space-between',alignItems:'center',gap:6,opacity:disabled?0.6:1}}>
         <span style={{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:160}}>{disabled?'Locked':value||'All'}</span>
         <span style={{fontSize:8,opacity:0.6}}>{disabled?'🔒':open?'▲':'▼'}</span>
       </div>
       {open&&(
-        <div onClick={e=>e.stopPropagation()} style={{position:'absolute',top:'100%',left:0,zIndex:999,background:'#fff',border:`1px solid ${T.teal}30`,borderRadius:8,boxShadow:'0 8px 24px rgba(0,80,120,0.15)',minWidth:220,maxHeight:260,overflowY:'auto',padding:4,marginTop:2}}>
+        <div className="fsel-panel" onClick={e=>e.stopPropagation()} style={{position:'absolute',top:'100%',left:0,zIndex:999,background:'#fff',border:`1px solid ${T.teal}30`,borderRadius:8,boxShadow:'0 8px 24px rgba(0,80,120,0.15)',minWidth:220,maxHeight:260,overflowY:'auto',padding:4,marginTop:2}}>
           {options.map(o=>(
             <div key={o} onClick={()=>{if(mandatory&&value===o)return;onChange(o);setActiveOpen(null);}}
               style={{display:'flex',alignItems:'center',gap:8,padding:'8px 12px',borderRadius:6,cursor:'pointer',
@@ -697,7 +697,7 @@ const SummaryBar = ({raw, filters, T, GC}) => {
   ];
 
   return (
-    <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10,marginBottom:4}}>
+    <div className="rg rg-4" style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10,marginBottom:4}}>
       {cards.map(({label,value,sub,color})=>(
         <GC key={label} style={{padding:'13px 16px'}} cls="kc">
           <div style={{position:'absolute',top:0,left:0,right:0,height:3,background:color,borderRadius:'14px 14px 0 0'}}/>
@@ -910,7 +910,7 @@ const CollectionsTab = ({T, GC, SH, filters={}, setFilters=()=>{}, raw}) => {
 
     {/* SECTION 1: KPI SUMMARY */}
     <SectionHead title="Demand & Collection Summary" icon="📊"/>
-    <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:10}}>
+    <div className="rg rg-5" style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:10}}>
       <GC style={{padding:13}} cls="kc">
         <p style={{fontSize:8,color:T.textM,fontWeight:700,textTransform:'uppercase',margin:'0 0 4px',letterSpacing:0.5}}>Total Sales Value (BSP)</p>
         <p style={{fontSize:24,fontWeight:900,color:'#1d4ed8',margin:'0 0 4px',letterSpacing:-0.5}}>₹{((filters?.project?.includes('SKY ARC') ? raw?.skyarcKpiExtra?.totalBSPCr : filters?.project?.includes('TRUMP') ? raw?.trumpKpiExtra?.totalBSPCr : raw?.kpiExtra?.totalBSPCr)||0).toFixed(0)} Cr</p>
@@ -1002,7 +1002,7 @@ const CollectionsTab = ({T, GC, SH, filters={}, setFilters=()=>{}, raw}) => {
 
     {/* SECTION 4: TOWER-WISE */}
     <SectionHead title="Tower-wise Collection" icon="🏢"/>
-    <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10}}>
+    <div className="rg rg-3" style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10}}>
       {towers.map((tw,i)=>{
         const dem=demKey?tw[demKey]||0:(tw.tlp_dem+tw.clp_dem+(tw.he_dem||0)+(tw.hl_dem||0));
         const rec=recKey?tw[recKey]||0:(tw.tlp_rec+tw.clp_rec+(tw.he_rec||0)+(tw.hl_rec||0));
@@ -1028,7 +1028,7 @@ const CollectionsTab = ({T, GC, SH, filters={}, setFilters=()=>{}, raw}) => {
               <p style={{fontSize:7,color:'#1d4ed8',fontWeight:700,textTransform:'uppercase',margin:0}}>Total Sales Value (BSP)</p>
               <p style={{fontSize:12,fontWeight:900,color:'#1d4ed8',margin:0}}>₹{bspCr.toFixed(1)} Cr</p>
             </div>}
-            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:6}}>
+            <div className="rg rg-3-tight" style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:6}}>
               {[['Demand',dem,T.amber],['Received',rec,T.tealD],['Outstanding',out,T.red]].map(([l,v,c])=>(
                 <div key={l} style={{background:'rgba(0,100,140,0.04)',borderRadius:6,padding:'5px 7px'}}>
                   <p style={{fontSize:7,color:T.textM,fontWeight:700,textTransform:'uppercase',margin:'0 0 2px'}}>{l}</p>
@@ -1323,7 +1323,7 @@ const PnLTab = ({T, GC, SH, filters, sf, raw}) => {
 
 
       {/* KPI Row */}
-      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10,marginBottom:10}}>
+      <div className="rg rg-3" style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10,marginBottom:10}}>
         <KpiCard label="Collection" value={`₹${totalRevenue.toFixed(1)} Cr`} sub="Total received from customers (W/O GST)" color="#0097a7"/>
         <KpiCard label="Total Expenditure (Actual)" value={`₹${totalExpense.toLocaleString('en-IN',{maximumFractionDigits:2})} Cr`} sub="Actual spend to date" color="#ef4444"/>
         <div style={{position:'relative',overflow:'hidden',background:'rgba(255,255,255,0.92)',backdropFilter:'blur(12px)',borderRadius:14,padding:'16px 18px',boxShadow:'0 2px 16px rgba(0,80,120,0.08)',border:`2px solid ${pnl>=0?'#10b981':'#ef4444'}`}}>
@@ -1342,7 +1342,7 @@ const PnLTab = ({T, GC, SH, filters, sf, raw}) => {
 
 
             {/* Charts Row */}
-      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginBottom:16}}>
+      <div className="rg rg-2" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginBottom:16}}>
 
 
                 {/* Project Expense Pie */}
@@ -2087,6 +2087,42 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
         .tab:hover{background:rgba(255,255,255,0.5)!important}
         .card-text{text-shadow:0 1px 3px rgba(255,255,255,0.8)}
         .kc p,.kc span,.kc div{font-weight:inherit}
+
+        /* ══════════════════════════════════════════════════════════════
+           RESPONSIVE (MOBILE / TABLET) OVERRIDES
+           Desktop layout above is untouched — these only kick in below
+           the breakpoints, using !important to win over the inline
+           desktop styles set on the same elements.
+        ══════════════════════════════════════════════════════════════ */
+        @media (max-width:1024px){
+          .rg-4, .rg-5, .rg-3, .rg-3auto { grid-template-columns:repeat(2,1fr)!important; }
+          .hdr-sub { display:none!important; }
+          .main-content { padding:14px 16px 20px!important; }
+          .filter-strip, .snap-outer { padding-left:16px!important; padding-right:16px!important; }
+          .hdr-row { padding-left:16px!important; padding-right:16px!important; }
+        }
+        @media (max-width:640px){
+          .rg-4, .rg-5, .rg-3, .rg-3auto, .rg-2 { grid-template-columns:1fr!important; }
+          .rg-3-tight { gap:4px!important; }
+          .hdr-row { height:auto!important; padding:8px 10px!important; gap:8px!important; }
+          .hdr-logo > div:first-child { width:32px!important; height:32px!important; }
+          .hdr-logo div[style*="font-size:15"], .hdr-logo div { font-size:13px!important; }
+          .hdr-date { display:none!important; }
+          .hdr-right { gap:6px!important; }
+          .hdr-filtbtn-txt { display:none; }
+          .hdr-tabs { order:3; flex-basis:100%; }
+          .main-content { padding:10px 10px 16px!important; }
+          .filter-strip { padding:4px 10px 8px!important; gap:8px!important; }
+          .filter-strip .fsel-wrap { flex:1 1 45%!important; }
+          .fsel-trigger { min-width:0!important; width:100%!important; }
+          .fsel-panel { max-width:82vw!important; }
+          .snap-outer { padding:0 10px 8px!important; }
+          .snap-bar { flex-wrap:nowrap!important; overflow-x:auto!important; padding:7px 12px!important; -webkit-overflow-scrolling:touch; }
+          .snap-bar > div { flex-shrink:0!important; }
+        }
+        @media (max-width:420px){
+          .filter-strip .fsel-wrap { flex:1 1 100%!important; }
+        }
       `}</style>
 
       {/* BG overlay — very subtle darkening for readability */}
@@ -2094,9 +2130,10 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
 
       {/* ── HEADER ── */}
       <header style={{position:'sticky',top:0,zIndex:200,background:'rgba(255,255,255,0.95)',WebkitBackdropFilter:'blur(24px)',borderBottom:'1px solid rgba(255,255,255,0.9)',boxShadow:'0 2px 20px rgba(0,60,100,0.12)'}}>
-        <div style={{maxWidth:1440,margin:'0 auto',padding:'0 24px',display:'flex',alignItems:'center',justifyContent:'space-between',height:54}}>
+        <div className="hdr-row" style={{maxWidth:1440,margin:'0 auto',padding:'0 24px',display:'flex',alignItems:'center',justifyContent:'space-between',height:54,gap:10,flexWrap:'wrap'}}>
           {/* Logo — clickable "back to menu" button when opened from the Admin Console */}
           <div
+            className="hdr-logo"
             onClick={onBackToMenu}
             title={onBackToMenu?'Back to dashboard menu':undefined}
             style={{display:'flex',alignItems:'center',gap:12,cursor:onBackToMenu?'pointer':'default'}}>
@@ -2105,38 +2142,38 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
             </div>
             <div>
               <div style={{fontWeight:900,fontSize:15,letterSpacing:0.5,color:T.navy}}>Project Snapshot</div>
-              <div style={{color:T.textM,fontSize:9,letterSpacing:1.5,fontWeight:700}}>SMARTWORLD GROUP · SALES INTELLIGENCE</div>
+              <div className="hdr-sub" style={{color:T.textM,fontSize:9,letterSpacing:1.5,fontWeight:700}}>SMARTWORLD GROUP · SALES INTELLIGENCE</div>
             </div>
           </div>
 
           {/* Tabs */}
           {showFilterBar && (
-          <div style={{display:'flex',gap:4,background:'rgba(0,100,140,0.08)',borderRadius:10,padding:4}}>
+          <div className="hdr-tabs" style={{display:'flex',gap:4,background:'rgba(0,100,140,0.08)',borderRadius:10,padding:4,overflowX:'auto',WebkitOverflowScrolling:'touch'}}>
             {tabs.map(t=>(
               <button key={t.k} className="tab" onClick={()=>setTab(t.k)} style={{
                 background:tab===t.k?'rgba(255,255,255,0.95)':'transparent',
                 border:'none',borderRadius:7,padding:'6px 16px',fontSize:11,fontWeight:tab===t.k?700:500,
                 color:tab===t.k?T.tealD:T.text,cursor:'pointer',fontFamily:'Inter,sans-serif',fontWeight:tab===t.k?800:600,
-                boxShadow:tab===t.k?'0 2px 8px rgba(0,80,120,0.12)':'none',
+                boxShadow:tab===t.k?'0 2px 8px rgba(0,80,120,0.12)':'none',whiteSpace:'nowrap',flexShrink:0,
               }}>{t.l}</button>
             ))}
           </div>
           )}
 
           {/* Right */}
-          <div style={{display:'flex',alignItems:'center',gap:14}}>
+          <div className="hdr-right" style={{display:'flex',alignItems:'center',gap:14,flexWrap:'wrap'}}>
 
-            <div style={{display:'flex',alignItems:'center',gap:5,background:'rgba(46,125,50,0.1)',border:'1px solid rgba(46,125,50,0.3)',borderRadius:16,padding:'3px 10px'}}>
+            <div className="hdr-live" style={{display:'flex',alignItems:'center',gap:5,background:'rgba(46,125,50,0.1)',border:'1px solid rgba(46,125,50,0.3)',borderRadius:16,padding:'3px 10px'}}>
               <div style={{width:6,height:6,borderRadius:'50%',background:T.greenL,animation:'pulse 2s ease infinite'}}/>
               <span style={{color:T.green,fontSize:10,fontWeight:700}}>LIVE</span>
             </div>
-            <span style={{color:T.textM,fontSize:11,fontWeight:700}}>{new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})}</span>
-            <button onClick={()=>setShowFilterBar(v=>!v)} title={showFilterBar?'Hide tabs & filters':'Show tabs & filters'} style={{display:'flex',alignItems:'center',gap:5,padding:'6px 12px',borderRadius:10,border:'1px solid rgba(0,100,140,0.18)',background:'rgba(0,151,167,0.06)',cursor:'pointer',fontSize:11,fontWeight:700,color:T.tealD,fontFamily:'Inter,sans-serif'}}>
+            <span className="hdr-date" style={{color:T.textM,fontSize:11,fontWeight:700}}>{new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})}</span>
+            <button className="hdr-filtbtn" onClick={()=>setShowFilterBar(v=>!v)} title={showFilterBar?'Hide tabs & filters':'Show tabs & filters'} style={{display:'flex',alignItems:'center',gap:5,padding:'6px 12px',borderRadius:10,border:'1px solid rgba(0,100,140,0.18)',background:'rgba(0,151,167,0.06)',cursor:'pointer',fontSize:11,fontWeight:700,color:T.tealD,fontFamily:'Inter,sans-serif',whiteSpace:'nowrap'}}>
               <span style={{fontSize:11,transition:'transform 0.2s',display:'inline-block',transform:showFilterBar?'rotate(180deg)':'rotate(0deg)'}}>▾</span>
-              {showFilterBar?'Hide Filters':'Show Filters'}
+              <span className="hdr-filtbtn-txt">{showFilterBar?'Hide Filters':'Show Filters'}</span>
             </button>
             {!hideLogout && (
-              <button onClick={()=>{['sd_auth','swsales_auth','cost_auth','cost2_auth','crm_auth','prpo_auth','costbif_auth'].forEach(k=>sessionStorage.removeItem(k));window.location.reload();}} style={{display:'flex',alignItems:'center',gap:6,padding:'6px 14px',borderRadius:10,border:'1px solid rgba(200,40,40,0.25)',background:'rgba(211,47,47,0.07)',cursor:'pointer',fontSize:11,fontWeight:700,color:T.red,fontFamily:'Inter,sans-serif',transition:'all 0.15s'}} onMouseOver={e=>{e.currentTarget.style.background='rgba(211,47,47,0.14)';}} onMouseOut={e=>{e.currentTarget.style.background='rgba(211,47,47,0.07)';}}>
+              <button onClick={()=>{['sd_auth','swsales_auth','cost_auth','cost2_auth','crm_auth','prpo_auth','costbif_auth'].forEach(k=>sessionStorage.removeItem(k));window.location.reload();}} style={{display:'flex',alignItems:'center',gap:6,padding:'6px 14px',borderRadius:10,border:'1px solid rgba(200,40,40,0.25)',background:'rgba(211,47,47,0.07)',cursor:'pointer',fontSize:11,fontWeight:700,color:T.red,fontFamily:'Inter,sans-serif',transition:'all 0.15s',whiteSpace:'nowrap'}} onMouseOver={e=>{e.currentTarget.style.background='rgba(211,47,47,0.14)';}} onMouseOut={e=>{e.currentTarget.style.background='rgba(211,47,47,0.07)';}}>
                 🔒 Logout
               </button>
             )}
@@ -2145,7 +2182,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
 
         {/* Filter strip */}
         {showFilterBar && (
-        <div onClick={e=>e.stopPropagation()} style={{maxWidth:1440,margin:'0 auto',padding:'4px 24px 8px',display:'flex',alignItems:'flex-end',gap:10,flexWrap:'wrap'}}>
+        <div className="filter-strip" onClick={e=>e.stopPropagation()} style={{maxWidth:1440,margin:'0 auto',padding:'4px 24px 8px',display:'flex',alignItems:'flex-end',gap:10,flexWrap:'wrap'}}>
           <FSel label="Project"    options={availProj}                           value={filters.project}  onChange={v=>sf('project',v)}   multi={true} openId="project"    activeOpen={activeFilter} setActiveOpen={setActiveFilter} mandatory={false}/>
           <FSel label="Fin. Year"  options={fo.financialYears||[]}               value={filters.fy}       onChange={v=>sf('fy',v)}         multi={true} openId="fy"         activeOpen={activeFilter} setActiveOpen={setActiveFilter}/>
           <FSel label="Quarter"       options={FY_QUARTERS}                              value={filters.quarter}  onChange={v=>sf('quarter',v)}    multi={true} openId="quarter"    activeOpen={activeFilter} setActiveOpen={setActiveFilter}/>
@@ -2210,8 +2247,8 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
             ]:[]),
           ];
           return(
-            <div style={{maxWidth:1440,margin:'0 auto',padding:'0 24px 8px'}}>
-              <div style={{display:'flex',alignItems:'center',background:'linear-gradient(135deg,rgba(0,105,120,0.07),rgba(0,188,212,0.05))',border:'1px solid rgba(0,151,167,0.15)',borderRadius:10,padding:'7px 20px',gap:0,flexWrap:'wrap'}}>
+            <div className="snap-outer" style={{maxWidth:1440,margin:'0 auto',padding:'0 24px 8px'}}>
+              <div className="snap-bar" style={{display:'flex',alignItems:'center',background:'linear-gradient(135deg,rgba(0,105,120,0.07),rgba(0,188,212,0.05))',border:'1px solid rgba(0,151,167,0.15)',borderRadius:10,padding:'7px 20px',gap:0,flexWrap:'wrap',overflowX:'auto',WebkitOverflowScrolling:'touch'}}>
                 <div style={{display:'flex',alignItems:'center',gap:8,paddingRight:16,borderRight:'1px solid rgba(0,151,167,0.12)',marginRight:16,flexShrink:0}}>
                   <div style={{width:28,height:28,borderRadius:7,background:'linear-gradient(135deg,#006978,#00bcd4)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:14}}>🏢</div>
                   <div>
@@ -2235,7 +2272,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
       </header>
 
       {/* ── MAIN CONTENT — floats on BG ── */}
-      <div style={{position:'relative',zIndex:1,maxWidth:1440,margin:'0 auto',padding:'16px 24px 24px',animation:'fadeIn 0.35s ease'}}>
+      <div className="main-content" style={{position:'relative',zIndex:1,maxWidth:1440,margin:'0 auto',padding:'16px 24px 24px',animation:'fadeIn 0.35s ease'}}>
 
         {/* ── Summary Bar — always visible across all tabs ── */}
         
@@ -2255,7 +2292,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
               <div style={{flex:1,height:1,background:'rgba(0,151,167,0.15)',borderRadius:1}}/>
             </div>
             {/* ROW 1: KPI CARDS — Merged pairs with pie charts */}
-            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr auto',gap:10,alignItems:'stretch'}}>
+            <div className="rg rg-3auto" style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr auto',gap:10,alignItems:'stretch'}}>
 
               {/* ══════════════════════════════════════════════════════════════════
                   ⚠️ LOCKED FORMULA — DO NOT CHANGE without explicit instruction ⚠️
@@ -2449,7 +2486,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                         <div style={{height:5,background:'rgba(0,100,140,0.1)',borderRadius:3,overflow:'hidden',marginBottom:5}}>
                           <div style={{width:Math.min(collectedPct,100)+'%',height:'100%',background:`linear-gradient(90deg,${T.teal},${T.tealD})`,borderRadius:3,transition:'width 0.6s ease'}}/>
                         </div>
-                        <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:4}}>
+                        <div className="rg rg-3-tight" style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:4}}>
                           {[
                             {l:'Demand Raised', v:installmentTotal.toFixed(0), c:T.navy,    sub:'W/O GST'},
                             {l:'Collected',     v:totalReceived.toFixed(0),    c:'#059669', sub:'W/O GST'},
@@ -2593,7 +2630,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
               {/* Month Range Slider removed per instruction - charts use their own individual scrollers */}
 
               {/* 2x2 chart grid */}
-              <div style={{
+              <div className="rg rg-2" style={{
                 display:showTowerType?'none':'grid',
                 gridTemplateColumns:'1fr 1fr',gap:12,
                 transformOrigin:'center center',
@@ -3254,7 +3291,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                 </div>
                 <div style={{flex:1,height:1,background:'rgba(0,151,167,0.15)',borderRadius:1}}/>
               </div>
-              <div style={{display:showTowerType?'grid':'none',gridTemplateColumns:'1fr 1fr',gap:12,transformOrigin:'center center',animation:showTowerType?'flipIn 0.8s cubic-bezier(0.4,0,0.2,1) forwards':'none'}}>
+              <div className="rg rg-2" style={{display:showTowerType?'grid':'none',gridTemplateColumns:'1fr 1fr',gap:12,transformOrigin:'center center',animation:showTowerType?'flipIn 0.8s cubic-bezier(0.4,0,0.2,1) forwards':'none'}}>
 
                 {/* ── CHART: Tower Wise % Sold ─────────────────────── */}
                 <GC style={{padding:16}}>
@@ -3960,7 +3997,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                 return(
                   <div>
                     {/* KPI row */}
-                    <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10,marginBottom:14}}>
+                    <div className="rg rg-4" style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:10,marginBottom:14}}>
                       {[
                         {label:'Total Cancelled',val:summary.totalCancelled,color:T.textM,icon:'🚫'},
                         {label:'Rebooked ✅',val:summary.rebooked,color:T.teal,icon:'🔄'},
@@ -3984,7 +4021,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                     </div>
 
                     {activeTab==='overview'&&(
-                      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+                      <div className="rg rg-2" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
                         {/* Vacancy duration buckets */}
                         <div>
                           <p style={{fontSize:10,fontWeight:800,color:T.textM,textTransform:'uppercase',margin:'0 0 8px',letterSpacing:0.4}}>Vacancy Duration (Still Vacant Units)</p>
@@ -4119,7 +4156,7 @@ const cnt={};(raw?.pdrn||[]).forEach(r=>{if(!selProjs.includes(r.project))return
                 <div style={{flex:1,height:1,background:'rgba(0,151,167,0.15)',borderRadius:1}}/>
               </div>
               {/* Top 3 KPI cards */}
-              <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12,marginBottom:12}}>
+              <div className="rg rg-3" style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12,marginBottom:12}}>
                 {[
                   {label:'Total Booked Area',value:`${(areaSummary.bookedArea/100000)?.toFixed(2)} L`,sub:'sqft',icon:'🏢',color:T.teal},
                   {label:'Available Area',value:`${(areaSummary.availableArea/1e6)?.toFixed(2)}M`,sub:'sq ft',icon:'🔓',color:T.amber},

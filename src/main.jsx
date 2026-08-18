@@ -36,12 +36,22 @@ const DASHBOARDS = [
 
 function AdminMenu({ onOpen, onLogout }) {
   return (
-    <div style={{minHeight:'100vh',backgroundImage:'url(/bg.jpg)',backgroundSize:'cover',backgroundPosition:'center',display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'Inter,sans-serif',padding:24}}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');`}</style>
-      <div style={{background:'rgba(255,255,255,0.97)',borderRadius:22,padding:'34px 38px',width:760,maxWidth:'100%',boxShadow:'0 24px 80px rgba(0,40,80,0.28)'}}>
-        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:22}}>
-          <div style={{display:'flex',alignItems:'center',gap:14}}>
-            <div style={{width:56,height:56,borderRadius:16,background:'#0d1f3c',display:'flex',alignItems:'center',justifyContent:'center',overflow:'hidden'}}>
+    <div style={{minHeight:'100vh',backgroundImage:'url(/bg.jpg)',backgroundSize:'cover',backgroundPosition:'center',display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'Inter,sans-serif',padding:16,boxSizing:'border-box'}}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+        .admin-card{transition:transform .18s ease,box-shadow .18s ease}
+        .admin-card:hover{transform:translateY(-4px)!important;box-shadow:0 16px 34px rgba(0,40,70,0.30)!important}
+        @media(max-width:640px){
+          .admin-grid{grid-template-columns:repeat(2,1fr)!important;}
+          .admin-hdr{flex-wrap:wrap;gap:10px!important}
+          .admin-hdr-logo div:first-child{width:44px!important;height:44px!important}
+          .admin-hdr h2{font-size:17px!important}
+        }
+      `}</style>
+      <div style={{background:'rgba(255,255,255,0.97)',borderRadius:22,padding:'28px 24px',width:'100%',maxWidth:760,boxShadow:'0 24px 80px rgba(0,40,80,0.28)',boxSizing:'border-box'}}>
+        <div className="admin-hdr" style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:22,gap:14}}>
+          <div className="admin-hdr-logo" style={{display:'flex',alignItems:'center',gap:14}}>
+            <div style={{width:56,height:56,borderRadius:16,background:'#0d1f3c',display:'flex',alignItems:'center',justifyContent:'center',overflow:'hidden',flexShrink:0}}>
               <img src="/swd-logo.png" alt="SWD" style={{width:40,height:40,objectFit:'contain'}}/>
             </div>
             <div>
@@ -49,16 +59,14 @@ function AdminMenu({ onOpen, onLogout }) {
               <p style={{fontSize:12,color:'#546e7a',margin:0,fontWeight:500}}>Smartworld Group · Open any dashboard</p>
             </div>
           </div>
-          <button onClick={onLogout} style={{background:'rgba(211,47,47,0.9)',color:'#fff',border:'none',borderRadius:10,padding:'9px 18px',fontSize:12,fontWeight:800,cursor:'pointer'}}>🚪 Logout</button>
+          <button onClick={onLogout} style={{background:'rgba(211,47,47,0.9)',color:'#fff',border:'none',borderRadius:10,padding:'9px 18px',fontSize:12,fontWeight:800,cursor:'pointer',flexShrink:0}}>🚪 Logout</button>
         </div>
-        <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:14}}>
+        <div className="admin-grid" style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:14}}>
           {DASHBOARDS.map(d=>(
-            <button key={d.key} onClick={()=>{sessionStorage.setItem(d.sessionKey,'1');onOpen(d.key);}} style={{background:d.g,color:'#fff',border:'none',borderRadius:16,padding:'20px 16px',textAlign:'left',cursor:'pointer',boxShadow:'0 8px 22px rgba(0,40,70,0.18)',transition:'transform .18s ease, box-shadow .18s ease'}}
-              onMouseOver={e=>{e.currentTarget.style.transform='translateY(-4px)';e.currentTarget.style.boxShadow='0 16px 34px rgba(0,40,70,0.30)';}}
-              onMouseOut={e=>{e.currentTarget.style.transform='none';e.currentTarget.style.boxShadow='0 8px 22px rgba(0,40,70,0.18)';}}>
-              <div style={{fontSize:30,marginBottom:8,filter:'drop-shadow(0 2px 4px rgba(0,0,0,0.25))'}}>{d.icon}</div>
-              <div style={{fontSize:15,fontWeight:900,marginBottom:2}}>{d.name}</div>
-              <div style={{fontSize:10.5,fontWeight:600,opacity:0.9}}>{d.desc}</div>
+            <button key={d.key} className="admin-card" onClick={()=>{sessionStorage.setItem(d.sessionKey,'1');onOpen(d.key);}} style={{background:d.g,color:'#fff',border:'none',borderRadius:16,padding:'20px 16px',textAlign:'left',cursor:'pointer',boxShadow:'0 8px 22px rgba(0,40,70,0.18)'}}>
+              <div style={{fontSize:28,marginBottom:8,filter:'drop-shadow(0 2px 4px rgba(0,0,0,0.25))'}}>{d.icon}</div>
+              <div style={{fontSize:14,fontWeight:900,marginBottom:2}}>{d.name}</div>
+              <div style={{fontSize:10,fontWeight:600,opacity:0.9}}>{d.desc}</div>
             </button>
           ))}
         </div>
@@ -120,9 +128,9 @@ function Portal() {
   if (profile === 'admin') return <AdminMenu onOpen={openFromAdmin} onLogout={()=>{sessionStorage.removeItem('admin_auth');window.location.reload();}} />;
 
   return (
-    <div style={{minHeight:'100vh',backgroundImage:'url(/bg.jpg)',backgroundSize:'cover',backgroundPosition:'center',display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'Inter,sans-serif'}}>
+    <div style={{minHeight:'100vh',backgroundImage:'url(/bg.jpg)',backgroundSize:'cover',backgroundPosition:'center',display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'Inter,sans-serif',padding:16,boxSizing:'border-box'}}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');`}</style>
-      <form onSubmit={e=>{e.preventDefault();submit();}} onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();submit();}}} style={{background:'rgba(255,255,255,0.97)',borderRadius:20,padding:'40px 44px',width:360,boxShadow:'0 24px 80px rgba(0,40,80,0.25)',backdropFilter:'blur(12px)'}}>
+      <form onSubmit={e=>{e.preventDefault();submit();}} onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();submit();}}} style={{background:'rgba(255,255,255,0.97)',borderRadius:20,padding:'40px 44px',width:'100%',maxWidth:360,boxShadow:'0 24px 80px rgba(0,40,80,0.25)',backdropFilter:'blur(12px)',boxSizing:'border-box'}}>
         <div style={{textAlign:'center',marginBottom:28}}>
           <div style={{margin:'0 auto 14px',width:80,height:80,borderRadius:20,background:'#0d1f3c',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 8px 28px rgba(0,30,80,0.35)',overflow:'hidden'}}>
             <img src="/swd-logo.png" alt="SWD" style={{width:56,height:56,objectFit:'contain'}}/>
